@@ -1,4 +1,6 @@
 import React, { useEffect } from 'react';
+import { SWRConfig } from 'swr';
+import axios from 'axios';
 
 import {
   Box,
@@ -18,7 +20,8 @@ import {
 
 import { 
   near as nearConfig, 
-  REGISTRY_CONTRACT_ID
+  REGISTRY_CONTRACT_ID,
+  API_HOST
 } from 'config';
 
 import { RegistryContract } from 'types';
@@ -74,7 +77,12 @@ export const Root: React.FC = () => {
   }, [location, homeBodyBg, otherPageBodyBg]);
 
   return (
-    <>
+    <SWRConfig 
+      value={{
+        refreshInterval: 3000,
+        fetcher: (api, option) => fetch(`${API_HOST}/${api}`, option).then(res => res.json())
+      }}
+    >
       <Box position="relative" zIndex="99" bgColor={headerBg}>
         <Header />
       </Box>
@@ -82,6 +90,6 @@ export const Root: React.FC = () => {
       <Box mt={16}>
         <Footer />
       </Box>
-    </>
+    </SWRConfig>
   );
 }

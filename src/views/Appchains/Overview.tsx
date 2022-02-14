@@ -14,6 +14,7 @@ type OverviewProps = {
 }
 
 export const Overview: React.FC<OverviewProps> = ({ appchainId, onDrawerClose }) => {
+
   return (
     <>
       <DrawerHeader borderBottomWidth="0">

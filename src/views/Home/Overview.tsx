@@ -1,4 +1,5 @@
 import React from 'react';
+import useSWR from 'swr';
 
 import { 
   Container,
@@ -7,9 +8,8 @@ import {
   Image,
   Flex,
   Text,
-  HStack,
+  Skeleton,
   Heading,
-  Button,
   useColorModeValue,
   Box
 } from '@chakra-ui/react';
@@ -44,6 +44,8 @@ const Card: React.FC = ({ children }) => {
 }
 
 export const Overview: React.FC = () => {
+  const { data } = useSWR('overview');
+
   return (
     <Container>
       <Grid 
@@ -62,7 +64,9 @@ export const Overview: React.FC = () => {
                     <Image src={totalAppchainsIcon} w="100%" h="100%" />
                   </Box>
                   <Box ml={5} textAlign={{ base: 'right', md: 'left' }}>
-                    <Heading fontSize="2xl">480</Heading>
+                    <Skeleton isLoaded={!!data}>
+                      <Heading fontSize="2xl">{data?.totalAppchains || 'loading'}</Heading>
+                    </Skeleton>
                     <Text variant="gray" mt={3}>Total Appchains</Text>
                   </Box>
                 </Flex>

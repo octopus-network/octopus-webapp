@@ -30,7 +30,7 @@ export const Appchains: React.FC = () => {
 
   useEffect(() => {
     if (drawerIOpen) {
-      (document.getElementById('root') as any).style = 'transition: all .3s ease-in-out; transform: translateX(-10%)';
+      (document.getElementById('root') as any).style = 'transition: all .3s ease-in-out; transform: translateX(-15%)';
     } else {
       (document.getElementById('root') as any).style = 'transition: all .15s ease-in-out; transform: translateX(0)';
     }

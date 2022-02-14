@@ -16,10 +16,11 @@
     "react-icons": "^3.0.0",
     "react-router": "6.0",
     "react-router-dom": "6.0",
-    "react-scripts": "4.0.3",
+    "react-scripts": "^4.0.3",
     "react-spring": "^9.4.2",
     "recharts": "^2.1.9",
     "styled-components": "^5.3.3",
+    "swr": "^1.2.1",
     "zustand": "^3.7.0"
   },
   "scripts": {
