@@ -83,14 +83,14 @@ export const Overview: React.FC = () => {
   useEffect(() => {
     if (isTotalAppchainsHovering) {
       totalAppchainsHoveringApi.start({ transform: 'translateX(0px)', opacity: 1 });
-      totalAppchainsIconHoveringApi.start({ transform: 'translate3d(5px, 5px, 0)' });
+      totalAppchainsIconHoveringApi.start({ transform: 'translate3d(3px, 3px, 0)' });
     } else {
       totalAppchainsHoveringApi.start({ transform: 'translateX(-10px)', opacity: 0 });
       totalAppchainsIconHoveringApi.start({ transform: 'translate3d(0px, 0px, 0px)' });
     }
 
     if (isTotalAnnualizedFeeHovering) {
-      iconHoveringApi.start({ transform: 'translate3d(5px, 5px, 0)' });
+      iconHoveringApi.start({ transform: 'translate3d(3px, 3px, 0)' });
     } else {
       iconHoveringApi.start({ transform: 'translate3d(0px, 0px, 0px)' });
     }
@@ -119,7 +119,7 @@ export const Overview: React.FC = () => {
                   </Box>
                   <Box ml={5} flex={1}>
                     <Skeleton isLoaded={!!data}>
-                      <Heading fontSize="2xl">{data?.totalAppchains || 'loading'}</Heading>
+                      <Heading fontSize="2xl">{data?.appchainsCount || 'loading'}</Heading>
                     </Skeleton>
                     <Flex alignItems="center" mt={2}
                       justifyContent="space-between" position="relative">
@@ -147,9 +147,9 @@ export const Overview: React.FC = () => {
                     <Skeleton isLoaded={!!data}>
                       <Heading fontSize="2xl">
                         {
-                          data?.totalAnnualizedFee ? 
+                          data ? 
                           '$' + DecimalUtil.beautify(
-                            DecimalUtil.fromString(data?.totalAnnualizedFee)
+                            DecimalUtil.fromString(data.totalAnnualizedFee)
                           ) : 'loading' 
                         }
                       </Heading>

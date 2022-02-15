@@ -1,4 +1,5 @@
 import React from 'react';
+import useSWR from 'swr';
 
 import {
   Flex,
@@ -23,6 +24,8 @@ import {
   ChevronRightIcon 
 } from '@chakra-ui/icons';
 
+import { AppchainInfo } from 'types';
+
 import rank1Icon from 'assets/icons/rank1.png';
 import rank2Icon from 'assets/icons/rank2.png';
 import rank3Icon from 'assets/icons/rank3.png';
@@ -31,11 +34,12 @@ import { useNavigate } from 'react-router-dom';
 
 type VotingItemProps = {
   rank: number;
+  data: AppchainInfo;
 }
 
 const rankIcons = [rank1Icon, rank2Icon, rank3Icon];
 
-const VotingItem: React.FC<VotingItemProps> = ({ rank }) => {
+const VotingItem: React.FC<VotingItemProps> = ({ rank, data }) => {
   const hoverBg = useColorModeValue('gray.100', 'whiteAlpha.100');
   const rankBg = useColorModeValue('gray.300', 'whiteAlpha.300');
 
@@ -52,7 +56,7 @@ const VotingItem: React.FC<VotingItemProps> = ({ rank }) => {
         backgroundColor: hoverBg,
         transform: 'scale(1.01)'
       }}
-      onClick={() => navigate(`/appchains/overview/debio-network`)}>
+      onClick={() => navigate(`/appchains/overview/${data.appchain_id}`)}>
       <Grid templateColumns={{ base: 'repeat(6, 1fr)', md: 'repeat(11, 1fr)' }} alignItems="center" gap={6}>
         <GridItem colSpan={1} display={{ base: 'none', md: 'table-cell' }}>
           <Box boxSize="28px" borderRadius="full">
@@ -68,8 +72,12 @@ const VotingItem: React.FC<VotingItemProps> = ({ rank }) => {
         </GridItem>
         <GridItem colSpan={3}>
           <HStack>
-            <Box boxSize={7} bg="gray.300" borderRadius="full" display={{ base: 'none', md: 'block' }}></Box>
-            <Heading fontSize="md" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">debio-network</Heading>
+            <Box boxSize={7} bg="gray.300" borderRadius="full" display={{ base: 'none', md: 'block' }}>
+              <Image src={data.appchain_metadata?.fungible_token_metadata?.icon as any} w="100%" />
+            </Box>
+            <Heading fontSize="md" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">
+              {data.appchain_id}
+            </Heading>
           </HStack>
         </GridItem>
         <GridItem colSpan={4} display={{ base: 'none', md: 'table-cell' }}>
@@ -97,6 +105,8 @@ const VotingItem: React.FC<VotingItemProps> = ({ rank }) => {
 
 export const Voting: React.FC = () => {
   const bg = useColorModeValue('white', '#25263c');
+
+  const { data: appchains } = useSWR('appchains/voting');
 
   return (
     <>
@@ -129,10 +139,12 @@ export const Voting: React.FC = () => {
           </Grid>
         </Box>
         <List>
-          <VotingItem rank={1} />
-          <VotingItem rank={2} />
-          <VotingItem rank={3} />
-          <VotingItem rank={4} />
+          {
+            appchains?.length ?
+            appchains.map((appchain: AppchainInfo, idx: number) => (
+              <VotingItem data={appchain} key={`booting-item-${idx}`} rank={idx + 1} />
+            )) : null
+          }
         </List>
       </Box>
     </>

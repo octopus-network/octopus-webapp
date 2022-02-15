@@ -1,9 +1,11 @@
 import React from 'react';
+import useSWR from 'swr';
 
 import {
   Flex,
   Heading,
   SimpleGrid,
+  Skeleton,
   Box,
   VStack,
   Text,
@@ -12,8 +14,16 @@ import {
 } from '@chakra-ui/react';
 
 import bootingIcon from 'assets/icons/booting.png';
+import votingIcon from 'assets/icons/voting.png';
+import establishIcon from 'assets/icons/establish.png';
 
-const StatCard: React.FC = () => {
+type StatCardProps = {
+  label: string;
+  value: number | undefined;
+  icon: any;
+}
+
+const StatCard: React.FC<StatCardProps> = ({ label, value, icon }) => {
   const bg = useColorModeValue('white', '#25263c');
 
   const bgGradient = useColorModeValue(
@@ -33,11 +43,15 @@ const StatCard: React.FC = () => {
         bgGradient={bgGradient}>
         <Flex pl={4} pr={4} alignItems="center" justifyContent="space-between">
           <VStack alignItems="flex-start">
-            <Heading fontSize="3xl">12</Heading>
-            <Text variant="gray">Booting</Text>
+            <Skeleton isLoaded={value !== undefined}>
+              <Heading fontSize="3xl">
+                {value !== undefined ? value : 'loading'}
+              </Heading>
+            </Skeleton>
+            <Text variant="gray">{label}</Text>
           </VStack>
           <Box boxSize={14}>
-            <Image src={bootingIcon} w="100%" />
+            <Image src={icon} w="100%" />
           </Box>
         </Flex>
       </Box>
@@ -46,15 +60,19 @@ const StatCard: React.FC = () => {
 }
 
 export const Statistics: React.FC = () => {
+  const { data: statistics } = useSWR(`statistics`);
+
   return (
     <>
       <Flex alignItems="center" justifyContent="space-between">
         <Heading fontSize="xl">Data Statistics</Heading>
       </Flex>
       <SimpleGrid gap={8} mt={8} columns={{ base: 1, md: 3 }}>
-        <StatCard />
-        <StatCard />
-        <StatCard />
+        <StatCard label="Booting" value={statistics?.bootingAppchainsCount} icon={bootingIcon} />
+        <StatCard label="Voting" value={statistics?.votingAppchainsCount} icon={votingIcon} />
+        <StatCard label="Establish" value={
+          statistics ? statistics.preAuditAppchainsCount + statistics.auditingAppchainsCount : undefined
+        } icon={establishIcon} />
       </SimpleGrid>
     </>
   );

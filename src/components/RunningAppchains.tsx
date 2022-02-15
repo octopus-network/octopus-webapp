@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import useSWR from 'swr';
-import { DecimalUtil } from 'utils';
 
 import {
   Flex,
@@ -22,8 +21,13 @@ import {
 import { ChevronRightIcon } from '@chakra-ui/icons';
 import { Link as RouterLink } from 'react-router-dom';
 import { HiOutlineArrowNarrowRight } from 'react-icons/hi';
+import { DecimalUtil, ZERO_DECIMAL } from 'utils';
 
 import { OCT_TOKEN_DECIMALS } from 'config';
+
+import {
+  AppchainInfo
+} from 'types';
 
 type RunningAppchainsProps = {
   showMore?: boolean;
@@ -31,7 +35,7 @@ type RunningAppchainsProps = {
 
 type RunnintItemProps = {
   whiteBg?: boolean;
-  data: any;
+  data: AppchainInfo;
 }
 
 const RunningItem: React.FC<RunnintItemProps> = ({ whiteBg = false, data }) => {
@@ -40,7 +44,24 @@ const RunningItem: React.FC<RunnintItemProps> = ({ whiteBg = false, data }) => {
   const iconBg = useColorModeValue('white', 'white');
   const gray = useColorModeValue('gray.200', 'whiteAlpha.200');
 
-  const icon = useMemo(() => data.appchain_metadata?.fungible_token_metadata?.icon, [data]);
+  const icon = useMemo(() => data.appchain_metadata?.fungible_token_metadata?.icon || '', [data]);
+
+  const { data: prices } = useSWR(`prices/OCT,${data.appchain_metadata?.fungible_token_metadata?.symbol}`);
+  const { data: appchainSettings } = useSWR(`appchain-settings/${data.appchain_id}`);
+
+  const apy = useMemo(() => {
+    if (!appchainSettings || !prices) return ZERO_DECIMAL;
+    const { fungible_token_metadata } = data.appchain_metadata || {};
+    const rewardsPerYear = DecimalUtil
+      .fromString(
+        appchainSettings.era_reward, 
+        fungible_token_metadata.decimals
+      ).mul(365).mul(prices[fungible_token_metadata.symbol]);
+    
+    return rewardsPerYear.mul(100).div(
+      DecimalUtil.fromString(data.total_stake, OCT_TOKEN_DECIMALS).mul(prices['OCT'])
+    );
+  }, [prices, data, appchainSettings]);
 
   return (
     <Box bg={bg} borderRadius="lg" p={6}>
@@ -76,7 +97,7 @@ const RunningItem: React.FC<RunnintItemProps> = ({ whiteBg = false, data }) => {
         <VStack alignItems="flex-start">
           <Text variant="gray">APY</Text>
           <Heading fontSize="xl">
-            3.98%
+            { apy.gt(ZERO_DECIMAL) ? `${DecimalUtil.beautify(apy)}%` : '-' }
           </Heading>
         </VStack>
       </Flex>

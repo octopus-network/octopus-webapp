@@ -1,4 +1,5 @@
 import React from 'react';
+import useSWR from 'swr';
 
 import {
   Flex,
@@ -7,6 +8,7 @@ import {
   Tooltip,
   useColorModeValue,
   Icon,
+  Image,
   Grid,
   List,
   GridItem,
@@ -18,9 +20,16 @@ import {
   ChevronRightIcon 
 } from '@chakra-ui/icons';
 
+import { DecimalUtil } from 'utils';
+import { AppchainInfo } from 'types';
 import { useNavigate } from 'react-router-dom';
+import { OCT_TOKEN_DECIMALS } from 'config';
 
-const BootingItem: React.FC = () => {
+type BootingItemProps = {
+  data: AppchainInfo;
+}
+
+const BootingItem: React.FC<BootingItemProps> = ({ data }) => {
   const hoverBg = useColorModeValue('gray.100', 'whiteAlpha.100');
   const navigate = useNavigate();
   
@@ -35,19 +44,21 @@ const BootingItem: React.FC = () => {
         backgroundColor: hoverBg,
         transform: 'scale(1.01)'
       }}
-      onClick={() => navigate(`/appchains/overview/debio-network`)}>
+      onClick={() => navigate(`/appchains/overview/${data.appchain_id}`)}>
       <Grid templateColumns={{ base: 'repeat(7, 1fr)', md: 'repeat(10, 1fr)' }} alignItems="center" gap={6}>
         <GridItem colSpan={3}>
           <HStack>
-            <Box boxSize={8} bg="gray.300" borderRadius="full" display={{ base: 'none', md: 'block' }}></Box>
-            <Heading fontSize="md" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">debio-network</Heading>
+            <Box boxSize={8} bg="gray.300" borderRadius="full" display={{ base: 'none', md: 'block' }}>
+              <Image src={data.appchain_metadata?.fungible_token_metadata?.icon as any} w="100%" />
+            </Box>
+            <Heading fontSize="md" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">{data.appchain_id}</Heading>
           </HStack>
         </GridItem>
         <GridItem colSpan={3} display={{ base: 'none', md: 'table-cell' }}>
-          <Heading fontSize="md">12</Heading>
+          <Heading fontSize="md">{data.validator_count}</Heading>
         </GridItem>
         <GridItem colSpan={3}>
-          <Heading fontSize="md">4000 OCT</Heading>
+          <Heading fontSize="md">{DecimalUtil.beautify(DecimalUtil.fromString(data.total_stake, OCT_TOKEN_DECIMALS))} OCT</Heading>
         </GridItem>
         <GridItem colSpan={1} textAlign="right">
           <Icon as={ChevronRightIcon} boxSize={6} className="octo-gray" opacity=".8" />
@@ -59,6 +70,8 @@ const BootingItem: React.FC = () => {
 
 export const Booting: React.FC = () => {
   const bg = useColorModeValue('white', '#25263c');
+
+  const { data: appchains } = useSWR('appchains/booting');
 
   return (
     <>
@@ -80,9 +93,12 @@ export const Booting: React.FC = () => {
           </Grid>
         </Box>
         <List>
-          <BootingItem />
-          <BootingItem />
-          <BootingItem />
+          {
+            appchains?.length ?
+            appchains.map((appchain: AppchainInfo, idx: number) => (
+              <BootingItem data={appchain} key={`booting-item-${idx}`} />
+            )) : null
+          }
         </List>
       </Box>
     </>
