@@ -162,7 +162,7 @@ export const Chart: React.FC = () => {
         </HStack>
       </Flex>
       <Skeleton isLoaded={prices.length > 0}>
-      <Box height="120px" mt={6}>
+      <Box height="120px" mt={4}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             width={500}

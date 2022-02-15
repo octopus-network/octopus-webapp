@@ -79,8 +79,8 @@ export const Root: React.FC = () => {
   return (
     <SWRConfig 
       value={{
-        refreshInterval: 3000,
-        fetcher: (api, option) => fetch(`${API_HOST}/${api}`, option).then(res => res.json())
+        refreshInterval: 15 * 1000,
+        fetcher: api => axios.get(`${API_HOST}/${api}`).then(res => res.data)
       }}
     >
       <Box position="relative" zIndex="99" bgColor={headerBg}>
