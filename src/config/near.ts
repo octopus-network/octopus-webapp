@@ -1,5 +1,7 @@
 const NETWORK = process.env.REACT_APP_OCT_NETWORK || 'testnet';
 
+export const FAILED_TO_REDIRECT_MESSAGE = 'Failed to redirect to sign transaction';
+
 export const near = {
   networkId: NETWORK,
   nodeUrl: `https://rpc.${NETWORK}.near.org`,

@@ -6,8 +6,6 @@ import {
   Image,
   HStack,
   Heading,
-  Button,
-  Icon,
   Link,
   Menu,
   MenuItem,
@@ -17,16 +15,15 @@ import {
   MenuButton,
   MenuGroup,
   MenuDivider,
-  useDisclosure,
-  useBoolean
+  useDisclosure
 } from '@chakra-ui/react';
 
 import { 
-  ColorModeSwitcher
+  ColorModeSwitcher,
+  LoginButton
 } from 'components';
 
 import { 
-  AiOutlineUser, 
   AiOutlinePoweroff, 
   AiOutlineDashboard 
 } from 'react-icons/ai';
@@ -36,8 +33,6 @@ import logo from 'assets/logo.png';
 import octoAvatar from 'assets/icons/avatar.png';
 
 import { useGlobalStore } from 'stores';
-
-import { REGISTRY_CONTRACT_ID } from 'config';
 
 type NavLinkProps = {
   path: string;
@@ -61,14 +56,8 @@ const NavLink: React.FC<NavLinkProps> = ({ path, label }) => {
 export const Header: React.FC = () => {
 
   const { global } = useGlobalStore();
-  const [isLoging, setIsLoging] = useBoolean();
 
   const { isOpen: isMenuOpen, onOpen: onMenuOpen, onClose: onMenuClose } = useDisclosure();
-
-  const onLogin = (e: any) => {
-    setIsLoging.on();
-    global.wallet?.requestSignIn(REGISTRY_CONTRACT_ID, 'Octopus Webapp');
-  }
 
   const onLogout = () => {
     global.wallet?.signOut();
@@ -94,10 +83,10 @@ export const Header: React.FC = () => {
           {
             global.accountId ?
             <Menu isOpen={isMenuOpen} placement="top-end">
-              <MenuButton as={Box} onMouseEnter={onMenuOpen}>
+              <MenuButton as={Box} onMouseEnter={onMenuOpen} onMouseLeave={onMenuClose}>
                 <Avatar boxSize={9} src={octoAvatar} />
               </MenuButton>
-              <MenuList onMouseEnter={onMenuOpen} onMouseLeave={onMenuClose}>
+              <MenuList onMouseEnter={onMenuOpen} onMouseLeave={onMenuClose} mt={-1}>
                 <MenuGroup title={global.accountId}>
                   <RouterLink to="/user/dashboard">
                     <MenuItem icon={<AiOutlineDashboard />}>Dashboard</MenuItem>
@@ -107,10 +96,7 @@ export const Header: React.FC = () => {
                 <MenuItem onClick={onLogout} icon={<AiOutlinePoweroff />}>Logout</MenuItem>
               </MenuList>
             </Menu> :
-            <Button variant="octo-linear" onClick={onLogin} 
-              isLoading={isLoging} isDisabled={isLoging}>
-              <Icon as={AiOutlineUser} boxSize={5} mr={2} /> Login
-            </Button>
+            <LoginButton />
           }
         </HStack>
       </Flex>

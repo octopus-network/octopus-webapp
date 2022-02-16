@@ -33,3 +33,7 @@
 .transition {
   transition: all .3s ease;
 }
+
+.chakra-toast__inner {
+  min-width: 0!important;
+}

@@ -16,6 +16,8 @@ import {
 import { Statistics } from './Statistics';
 import { Booting } from './Booting';
 import { Voting } from './Voting';
+import { Established } from './Established';
+
 import { Overview } from './Overview';
 
 import { useParams, useNavigate } from 'react-router-dom';
@@ -57,6 +59,9 @@ export const Appchains: React.FC = () => {
         </Box>
         <Box mt={10}>
           <Voting />
+        </Box>
+        <Box mt={10}>
+          <Established />
         </Box>
       </Container>
       <Drawer 

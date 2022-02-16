@@ -3,16 +3,17 @@ import useSWR from 'swr';
 
 import {
   Flex,
+  Tooltip,
+  Text,
   HStack,
   Heading,
-  Tooltip,
-  useColorModeValue,
   Icon,
-  Avatar,
-  Grid,
-  List,
-  GridItem,
   Box,
+  Grid,
+  GridItem,
+  List,
+  Avatar,
+  useColorModeValue
 } from '@chakra-ui/react';
 
 import { 
@@ -20,10 +21,12 @@ import {
   ChevronRightIcon 
 } from '@chakra-ui/icons';
 
-import { DecimalUtil } from 'utils';
+import {
+  StateBadge
+} from 'components';
+
 import { AppchainInfo } from 'types';
 import { useNavigate } from 'react-router-dom';
-import { OCT_TOKEN_DECIMALS } from 'config';
 
 type BootingItemProps = {
   data: AppchainInfo;
@@ -53,10 +56,12 @@ const BootingItem: React.FC<BootingItemProps> = ({ data }) => {
           </HStack>
         </GridItem>
         <GridItem colSpan={3} display={{ base: 'none', md: 'table-cell' }}>
-          <Heading fontSize="md">{data.validator_count}</Heading>
+          <Heading fontSize="md">{data.appchain_owner}</Heading>
         </GridItem>
         <GridItem colSpan={3}>
-          <Heading fontSize="md">{DecimalUtil.beautify(DecimalUtil.fromString(data.total_stake, OCT_TOKEN_DECIMALS))} OCT</Heading>
+          <Flex>
+            <StateBadge state={data.appchain_state} />
+          </Flex>
         </GridItem>
         <GridItem colSpan={1} textAlign="right">
           <Icon as={ChevronRightIcon} boxSize={6} className="octo-gray" opacity=".8" />
@@ -66,35 +71,36 @@ const BootingItem: React.FC<BootingItemProps> = ({ data }) => {
   );
 }
 
-export const Booting: React.FC = () => {
+export const Established: React.FC = () => {
   const bg = useColorModeValue('white', '#25263c');
 
-  const { data: appchains } = useSWR('appchains/booting');
+  const { data: preAuditAppchains } = useSWR('appchains/pre-audit');
 
   return (
     <>
-      <Flex>
-        <Tooltip label="Booting Appchains">
+      <Flex alignItems="center" justifyContent="space-between">
+        <Tooltip label="Voting Appchains">
           <HStack>
-            <Heading fontSize="xl">Booting</Heading>
+            <Heading fontSize="xl">Established</Heading>
             <Icon as={QuestionOutlineIcon} boxSize={4} className="octo-gray" />
           </HStack>
         </Tooltip>
+        
       </Flex>
       <Box mt={8} bg={bg} p={6} borderRadius="lg">
         <Box p={4}>
           <Grid templateColumns={{ base: 'repeat(7, 1fr)', md: 'repeat(10, 1fr)' }} className="octo-gray" gap={6}>
             <GridItem colSpan={3}>ID</GridItem>
-            <GridItem colSpan={3} display={{ base: 'none', md: 'table-cell' }}>Validators</GridItem>
-            <GridItem colSpan={3}>Staked</GridItem>
+            <GridItem colSpan={3} display={{ base: 'none', md: 'table-cell' }}>Founder</GridItem>
+            <GridItem colSpan={3}>State</GridItem>
             <GridItem colSpan={1}/>
           </Grid>
         </Box>
         <List>
           {
-            appchains?.length ?
-            appchains.map((appchain: AppchainInfo, idx: number) => (
-              <BootingItem data={appchain} key={`booting-item-${idx}`} />
+            preAuditAppchains?.length ?
+            preAuditAppchains.map((appchain: AppchainInfo, idx: number) => (
+              <BootingItem data={appchain} key={`established-item-${idx}`} />
             )) : null
           }
         </List>

@@ -8,7 +8,18 @@ const themeConfig = {
     useSystemColorMode: false
   },
   colors: {
-    octoBlue: '#2468f2'
+    'octo-blue': {
+      50: '#e9f0fe',
+      100: '#d3e1fc',
+      200: '#a7c3fa',
+      300: '#7ca4f7',
+      400: '#5086f5',
+      500: '#2468f2',
+      600: '#1d53c2',
+      700: '#163e91',
+      800: '#0e2a61',
+      900: '#071530'
+    }
   },
   styles: {
     global: (props: GlobalStyleProps) => ({

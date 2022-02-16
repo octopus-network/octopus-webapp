@@ -9,7 +9,10 @@ export const ONE_HUNDRED_DECIMAL = new Decimal(100);
 
 export class DecimalUtil {
   
-  public static fromString(input: string, shift = 0): Decimal {
+  public static fromString(input: string | undefined, shift = 0): Decimal {
+    if (!input) {
+      return ZERO_DECIMAL;
+    }
     return new Decimal(input||0).div(new Decimal(10).pow(shift));
   }
 

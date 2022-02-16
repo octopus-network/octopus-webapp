@@ -26,3 +26,12 @@ export function sleep(ts = 1000) {
 export function getAuthKey(appchainId: string, networkId: string, cloudVendor: string, accessKey: string) {
   return `appchain-${appchainId}-network-${networkId}-cloud-${cloudVendor}-${accessKey}`;
 }
+
+export function toValidUrl(url: string | undefined) {
+  if (!url) {
+    return 'https://www.oct.network';
+  }
+  if (!/^http(s)?/.test(url)) {
+    return `https://${url}`;
+  }
+}

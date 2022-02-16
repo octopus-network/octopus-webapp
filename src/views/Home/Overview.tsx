@@ -20,12 +20,16 @@ import {
 import {
   useSpring,
   animated,
-  config,
 } from 'react-spring';
 
-import totalAppchainsIcon from 'assets/icons/total-appchains.png';
-import totalAnnualizedFeeIcon from 'assets/icons/total-annualized-fee.png';
+import dotIcon from 'assets/icons/dot.png';
+import dotIcon2 from 'assets/icons/dot2.png';
+
+import squareIcon from 'assets/icons/square.png';
+import squareIcon2 from 'assets/icons/square2.png';
+
 import { HiOutlineArrowNarrowRight } from 'react-icons/hi';
+
 import { Chart } from './Chart';
 import { DecimalUtil } from 'utils';
 import { useNavigate } from 'react-router-dom';
@@ -112,9 +116,12 @@ export const Overview: React.FC = () => {
                 onMouseLeave={setIsTotalAppchainsHovering.off}>
                 <Flex 
                   alignItems="center">
-                  <Box boxSize={12}>
+                  <Box boxSize={10} position="relative">
+                    <Box boxSize={6} position="absolute" top="-3px" left="-5px" zIndex={0}>
+                      <Image src={dotIcon} w="100%" h="100%" />
+                    </Box>
                     <animated.div style={totalAppchainsIconHoveringProps}>
-                      <Image src={totalAppchainsIcon} w="100%" h="100%" />
+                      <Image src={dotIcon2} w="100%" h="100%" />
                     </animated.div>
                   </Box>
                   <Box ml={5} flex={1}>
@@ -138,9 +145,12 @@ export const Overview: React.FC = () => {
                 onMouseLeave={setIsTotalAnnualizedFeeHovering.off}>
                 <Flex 
                   alignItems="center">
-                  <Box boxSize={12}>
+                  <Box boxSize={10} position="relative">
+                    <Box boxSize={6} position="absolute" top="-3px" left="-5px" zIndex={0}>
+                      <Image src={squareIcon} w="100%" h="100%" />
+                    </Box>
                     <animated.div style={iconHoveringProps}>
-                      <Image src={totalAnnualizedFeeIcon} w="100%" h="100%" />
+                      <Image src={squareIcon2} w="100%" h="100%" />
                     </animated.div>
                   </Box>
                   <Box ml={5}>

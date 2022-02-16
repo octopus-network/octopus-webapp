@@ -4,7 +4,7 @@ import useSWR from 'swr';
 import {
   Flex,
   Heading,
-  Image,
+  Avatar,
   Text,
   HStack,
   Box,
@@ -41,8 +41,7 @@ type RunnintItemProps = {
 const RunningItem: React.FC<RunnintItemProps> = ({ whiteBg = false, data }) => {
 
   const bg = useColorModeValue(whiteBg ? 'white' : '#f6f7fa', '#15172c');
-  const iconBg = useColorModeValue('white', 'white');
-  const gray = useColorModeValue('gray.200', 'whiteAlpha.200');
+  const iconBg = useColorModeValue('white', 'whiteAlpha.100');
 
   const icon = useMemo(() => data.appchain_metadata?.fungible_token_metadata?.icon || '', [data]);
 
@@ -67,12 +66,10 @@ const RunningItem: React.FC<RunnintItemProps> = ({ whiteBg = false, data }) => {
     <Box bg={bg} borderRadius="lg" p={6}>
       <Flex justifyContent="space-between">
         <HStack>
-          <Box boxSize={10} borderRadius="full" bg={icon ? iconBg : gray} overflow="hidden">
-            <Image src={icon} w="100%" />
-          </Box>
+          <Avatar src={icon as any} style={icon ? { backgroundColor: iconBg } : {}} name={data.appchain_id} boxSize={10} />
           <Heading fontSize="lg">{data.appchain_id}</Heading>
         </HStack>
-        <Button variant="ghost" color="octoBlue" size="sm">
+        <Button variant="ghost" colorScheme="octo-blue" size="sm">
           Enter <Icon as={HiOutlineArrowNarrowRight} ml={1} />
         </Button>
       </Flex>
@@ -97,7 +94,7 @@ const RunningItem: React.FC<RunnintItemProps> = ({ whiteBg = false, data }) => {
         <VStack alignItems="flex-start">
           <Text variant="gray">APY</Text>
           <Heading fontSize="xl">
-            { apy.gt(ZERO_DECIMAL) ? `${DecimalUtil.beautify(apy)}%` : '-' }
+            { apy.gt(ZERO_DECIMAL) ? `${DecimalUtil.beautify(apy, 2)}%` : '-' }
           </Heading>
         </VStack>
       </Flex>
