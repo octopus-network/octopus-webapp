@@ -173,7 +173,7 @@ export const Overview: React.FC = () => {
         </GridItem>
         <GridItem colSpan={{ base: 3, md: 6 }}>
           <Card>
-            <Chart />
+            <Chart data={data?.totalStaked} />
           </Card>
         </GridItem>
       </Grid>

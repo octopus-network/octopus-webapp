@@ -6,3 +6,5 @@ export * from './RunningAppchains';
 export * from './StateBadge';
 export * from './LoginButton';
 export * from './AmountInput';
+export * from './Breadcrumb';
+export * from './BaseModal';

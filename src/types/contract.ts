@@ -61,3 +61,26 @@ export class RegistryContract extends Contract {
   }
 
 }
+
+
+export class AnchorContract extends Contract {
+  enable_delegation(args: {}, gas: string): Promise<void> {
+    return this.enable_delegation(args, gas);
+  }
+
+  disable_delegation(args: {}, gas: string): Promise<void> {
+    return this.disable_delegation(args, gas);
+  }
+
+  decrease_stake(args: { amount: string }, gas: string): Promise<void> {
+    return this.decrease_stake(args, gas);
+  }
+
+  get_protocol_settings(): Promise<any> {
+    return this.get_protocol_settings();
+  }
+
+  get_validator_deposit_of(args: { validator_id: string }): Promise<string> {
+    return this.get_validator_deposit_of(args);
+  } 
+}

@@ -69,7 +69,7 @@ const VotePopover: React.FC<VotePopoverProps> = ({ isOpen, appchainId, voteType,
 
   const [withdrawPanel, setWithdrawPanel] = useBoolean(false);
 
-  const { data: balances } = useSWR(`balances/${global.accountId}`);
+  const { data: balances } = useSWR(global.accountId ? `balances/${global.accountId}` : null);
 
   const [popoverProps, popoverApi] = useSpring(() => ({
     opacity: 0,
@@ -185,6 +185,10 @@ const VotePopover: React.FC<VotePopoverProps> = ({ isOpen, appchainId, voteType,
     
   }
 
+  const setMaxAmount = () => {
+    setAmount(voted.toString());
+  }
+
   return (
     <animated.div style={popoverProps}>
     <Box 
@@ -210,6 +214,9 @@ const VotePopover: React.FC<VotePopoverProps> = ({ isOpen, appchainId, voteType,
             <Flex mt={2} justifyContent="flex-end">
               <HStack>
                 <Text variant="gray" fontSize="sm">Voted: {DecimalUtil.beautify(voted)}</Text>
+                <Button size="xs" colorScheme="octo-blue" variant="ghost" onClick={setMaxAmount}>
+                  max
+                </Button>
               </HStack>
             </Flex> : null
           }

@@ -44,13 +44,13 @@ export const Footer: React.FC = () => {
         </HStack>
         <HStack spacing={3}>
           <Text variant="gray">&copy; 2022 Octopus Network</Text>
-          <Link variant="gray-hover-blue">
+          <Link variant="gray-hover-blue" href="https://twitter.com/oct_network" isExternal>
             <Icon as={AiFillTwitterCircle} boxSize={5} />
           </Link>
-          <Link variant="gray-hover-blue">
+          <Link variant="gray-hover-blue" href="https://github.com/octopus-network" isExternal>
             <Icon as={AiFillGithub} boxSize={5} />
           </Link>
-          <Link variant="gray-hover-blue">
+          <Link variant="gray-hover-blue" href="https://discord.com/invite/6GTJBkZA9Q" isExternal>
             <Icon as={FaDiscord} boxSize={5} />
           </Link>
         </HStack>

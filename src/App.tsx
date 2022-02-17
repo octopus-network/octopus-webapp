@@ -11,7 +11,8 @@ import {
 import {
   Root,
   Home,
-  Appchains
+  Appchains,
+  Appchain
 } from 'views';
 
 export const App = () => (
@@ -23,6 +24,7 @@ export const App = () => (
           <Route path="home" element={<Home />} />
           <Route path="appchains" element={<Appchains />} />
           <Route path="appchains/overview/:appchainId" element={<Appchains />} />
+          <Route path="appchains/:id" element={<Appchain />} />
         </Route>
       </Routes>
     </Router>

@@ -43,7 +43,7 @@ export const Overview: React.FC<OverviewProps> = ({ appchainId, onDrawerClose })
   const { data: appchain } = useSWR<AppchainInfo>(`appchain/${appchainId}`);
   const footerBg = useColorModeValue('#f6f7fa', '#15172c');
 
-  const { data: balances } = useSWR(`balances/${global.accountId}`);
+  const { data: balances } = useSWR(global.accountId ? `balances/${global.accountId}` : null);
 
   useEffect(() => {
     global.registry?.get_owner().then(owner => {
@@ -62,7 +62,7 @@ export const Overview: React.FC<OverviewProps> = ({ appchainId, onDrawerClose })
       <DrawerBody>
         <Flex alignItems="center" justifyContent="space-between">
           <HStack>
-            <Avatar src={appchain?.appchain_metadata.fungible_token_metadata.icon as any} 
+            <Avatar src={appchain?.appchain_metadata?.fungible_token_metadata.icon as any} 
               name={appchainId} boxSize={10} />
             <VStack alignItems="flex-start" spacing={0}>
               <Heading fontSize="xl">{appchainId}</Heading>

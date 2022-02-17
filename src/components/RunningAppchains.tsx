@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import useSWR from 'swr';
+import styled from 'styled-components';
 
 import {
   Flex,
@@ -38,6 +39,18 @@ type RunnintItemProps = {
   data: AppchainInfo;
 }
 
+const EnterButton = styled(Button)`
+  svg {
+    transition: .6s ease;
+    transform: translateX(0px);
+  }
+  &:hover {
+    svg {
+      transform: translateX(5px);
+    }
+  }
+`;
+
 const RunningItem: React.FC<RunnintItemProps> = ({ whiteBg = false, data }) => {
 
   const bg = useColorModeValue(whiteBg ? 'white' : '#f6f7fa', '#15172c');
@@ -69,9 +82,11 @@ const RunningItem: React.FC<RunnintItemProps> = ({ whiteBg = false, data }) => {
           <Avatar src={icon as any} style={icon ? { backgroundColor: iconBg } : {}} name={data.appchain_id} boxSize={10} />
           <Heading fontSize="lg">{data.appchain_id}</Heading>
         </HStack>
-        <Button variant="ghost" colorScheme="octo-blue" size="sm">
-          Enter <Icon as={HiOutlineArrowNarrowRight} ml={1} />
-        </Button>
+        <RouterLink to={`/appchains/${data?.appchain_id}`}>
+          <EnterButton variant="ghost" colorScheme="octo-blue" size="sm">
+            Enter <Icon as={HiOutlineArrowNarrowRight} ml={1} />
+          </EnterButton>
+        </RouterLink>
       </Flex>
       <Flex mt={6} justifyContent="space-between">
         <VStack alignItems="flex-start">

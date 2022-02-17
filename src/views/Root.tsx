@@ -36,7 +36,7 @@ import {
 
 import { Outlet } from 'react-router-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
-
+import { useMatchMutate } from 'hooks';
 import { useGlobalStore } from 'stores';
 
 const LoadingSpinner = () => {
@@ -67,6 +67,8 @@ export const Root: React.FC = () => {
   const urlParams = useMemo(() => new URLSearchParams(window.location.search), []);
 
   const { updateGlobal, global } = useGlobalStore();
+
+  const matchMutate = useMatchMutate();
 
   // init global
   useEffect(() => {
@@ -125,9 +127,13 @@ export const Root: React.FC = () => {
     if (/appchains\/join/.test(location.pathname)) {
       navigate('/appchains');
     } else if (/appchains\/overview/.test(location.pathname)) {
-      axios.post(`${API_HOST}/update-appchains`);
+      axios.post(`${API_HOST}/update-appchains`).then(() => {
+        // refresh cache
+        matchMutate(/^appchain\//);
+        matchMutate(/^appchains\//);
+      });
     }
-  }, [location.pathname, navigate]);
+  }, [location.pathname, navigate, matchMutate]);
 
   // check tx status
   useEffect(() => {
@@ -144,6 +150,7 @@ export const Root: React.FC = () => {
         description: decodeURIComponent(errorMessage),
         status: 'error'
       });
+      clearMessageAndHashes();
       return;
     } else if (transactionHashes) {
       toastIdRef.current = toast({
@@ -183,22 +190,32 @@ export const Root: React.FC = () => {
 
           checkRedirect();
         }
+      }).catch(err => {
+        toast.update(toastIdRef.current, {
+          description: err?.kind?.ExecutionError || err.toString(),
+          duration: 5000,
+          status: 'error'
+        });
       });
       
-    // clear message
+    clearMessageAndHashes();
+
+  }, [global, urlParams]);
+
+  const clearMessageAndHashes = useCallback(() => {
     const { protocol, host, pathname, hash } = window.location;
     urlParams.delete('errorMessage');
+    urlParams.delete('errorCode');
     urlParams.delete('transactionHashes');
     const params = urlParams.toString();
     const newUrl = `${protocol}//${host}${pathname}${params ? '?' + params : ''}${hash}`;
     window.history.pushState({ path: newUrl }, '', newUrl);
-
-  }, [global, urlParams]);
+  }, [urlParams]);
 
   return (
     <SWRConfig 
       value={{
-        refreshInterval: 10 * 1000,
+        refreshInterval: 30 * 1000,
         fetcher: api => axios.get(`${API_HOST}/${api}`).then(res => res.data)
       }}
     >

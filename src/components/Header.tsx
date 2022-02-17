@@ -47,7 +47,7 @@ const NavLink: React.FC<NavLinkProps> = ({ path, label }) => {
     <Link 
       as={RouterLink} 
       to={path} 
-      aria-selected={locationPath === path}>
+      aria-selected={new RegExp(`^${path}`).test(locationPath)}>
       <Heading fontSize="sm" fontWeight={600}>{label}</Heading>
     </Link>
   );

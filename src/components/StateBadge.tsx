@@ -14,7 +14,7 @@ const state2color: Record<string, string> = {
   'InQueue': 'teal',
   'Staging': 'blue',
   'Booting': 'orange',
-  'Active': 'cyan'
+  'Active': 'octo-blue.500'
 }
 
 const state2label: Record<string, string> = {
@@ -32,13 +32,13 @@ type StateBadgeProps = {
 }
 
 export const StateBadge: React.FC<StateBadgeProps> = ({ state }) => {
- 
-  return (
+  
+  return state ? (
     <Flex bg="rgba(56, 161, 105, .1)" p="3px 6px" borderRadius="3xl" w="auto">
       <HStack>
         <Box bg={state2color[state]} boxSize="8px" borderRadius="full" />
         <Heading fontSize="14px" color={state2color[state]}>{state2label[state]}</Heading>
       </HStack>
     </Flex>
-  );
+  ) : null;
 }

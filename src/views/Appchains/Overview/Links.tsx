@@ -136,36 +136,36 @@ export const Links: React.FC<LinksProps> = ({ data }) => {
     <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
       {
         data?.appchain_metadata?.website_url ?
-        <Link href={toValidUrl(data?.appchain_metadata.website_url)} isExternal>
+        <Link href={toValidUrl(data?.appchain_metadata?.website_url)} isExternal>
           <LinkBox 
             icons={[website1, website2]} 
             title="Website" 
-            href={data?.appchain_metadata.website_url} />
+            href={data?.appchain_metadata?.website_url} />
         </Link> : null
       }
-      <Link href={toValidUrl(data?.appchain_metadata.github_address)} isExternal>
+      <Link href={toValidUrl(data?.appchain_metadata?.github_address)} isExternal>
         <LinkBox 
           icons={[github1, github2]} 
           title="Github" 
-          href={data?.appchain_metadata.github_address} />
+          href={data?.appchain_metadata?.github_address} />
       </Link>
-      <Link href={toValidUrl(data?.appchain_metadata.function_spec_url)} isExternal>
+      <Link href={toValidUrl(data?.appchain_metadata?.function_spec_url)} isExternal>
         <LinkBox 
           icons={[functionSpec1, functionSpec2]} 
           title="Function Spec" 
-          href={data?.appchain_metadata.function_spec_url} />
+          href={data?.appchain_metadata?.function_spec_url} />
       </Link>
-      <Link href={toValidUrl(data?.appchain_metadata.github_release)} isExternal>
+      <Link href={toValidUrl(data?.appchain_metadata?.github_release)} isExternal>
         <LinkBox 
           icons={[release1, release2]} 
           title="Release" 
-          href={data?.appchain_metadata.github_release} />
+          href={data?.appchain_metadata?.github_release} />
       </Link>
       <LinkBox 
         icons={[email1, email2]} 
         title="Email" 
         onClick={onCopyEmail}
-        copy={data?.appchain_metadata.contact_email} />
+        copy={data?.appchain_metadata?.contact_email} />
     </SimpleGrid>
   );
 }

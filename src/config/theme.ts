@@ -40,9 +40,14 @@ const themeConfig = {
         })
       }
     },
+    Heading: {
+      baseStyle: {
+        fontWeight: 700
+      }
+    },
     Container: {
       baseStyle: {
-        maxW: 'container.lg'
+        maxW: '1200px'
       }
     },
     Button: {
@@ -78,7 +83,56 @@ const themeConfig = {
           _active: {
             filter: 'brightness(90%)'
           }
-        })
+        }),
+        'octo-white': (props: GlobalStyleProps) => ({
+          color: mode('#1B1A1C', 'white')(props),
+          bg: mode('whiteAlpha.900', 'whiteAlpha.100')(props),
+          transition: 'all .3s cubic-bezier(.4, 0, .2, 1)',
+          _hover: {
+            bg: mode('whiteAlpha.700', 'whiteAlpha.200')(props),
+            color: '#2468f2',
+            filter: 'brightness(110%)'
+          },
+          _active: {
+            filter: 'brightness(90%)'
+          }
+        }),
+        'white': {
+          color: 'black',
+          bg: 'whiteAlpha.900',
+          transition: 'all .3s cubic-bezier(.4, 0, .2, 1)',
+          _hover: {
+            bg: 'whiteAlpha.800',
+            filter: 'brightness(110%)'
+          },
+          _active: {
+            filter: 'brightness(90%)'
+          }
+        },
+        'whiteAlpha': {
+          color: '#fff',
+          bg: 'whiteAlpha.500',
+          transition: 'all .3s cubic-bezier(.4, 0, .2, 1)',
+          _hover: {
+            bg: 'whiteAlpha.600',
+            filter: 'brightness(110%)'
+          },
+          _active: {
+            filter: 'brightness(90%)'
+          }
+        },
+        'whiteAlphaGhost': {
+          color: 'rgba(2255, 255, 255, .8)',
+          transition: 'all .3s cubic-bezier(.4, 0, .2, 1)',
+          _hover: {
+            color: '#fff',
+            bg: 'whiteAlpha.300',
+            filter: 'brightness(110%)'
+          },
+          _active: {
+            filter: 'brightness(90%)'
+          }
+        }
       }
     },
     CloseButton: {
@@ -99,6 +153,9 @@ const themeConfig = {
         },
         _focus: {
           boxShadow: 'none'
+        },
+        _active: {
+          boxShadow: 'none'
         }
       },
       variants: {
@@ -111,6 +168,13 @@ const themeConfig = {
         }),
         'gray-hover-blue': (props: GlobalStyleProps) => ({
           color: mode('#929AA6', '#A6A0BB')(props)
+        }),
+        'gray-underline-black': (props: GlobalStyleProps) => ({
+          color: mode('#929AA6', '#A6A0BB')(props),
+          _hover: {
+            color: mode('#1B1A1C', '#1B1A1C')(props),
+            textDecoration: 'underline'
+          }
         })
       }
     },

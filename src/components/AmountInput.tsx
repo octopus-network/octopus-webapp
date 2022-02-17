@@ -17,7 +17,7 @@ type AmountInputPropos = Omit<InputProps, 'onChange' | 'value' | 'ref'> & {
 
 export const AmountInput: React.FC<AmountInputPropos> = ({ onChange, refObj, value, ...props }) => {
   const gray = useColorModeValue('#929AA6', '#A6A0BB');
-  const bg = useColorModeValue('blackAlpha.100', 'whiteAlpha.100');
+  const bg = useColorModeValue('#f5f7fa', 'whiteAlpha.100');
 
   const _onChange = (e: React.BaseSyntheticEvent) => {
     const targetValue = e.target.value.replaceAll(',', '');

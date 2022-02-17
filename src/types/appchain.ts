@@ -39,3 +39,45 @@ export type AppchainInfo = {
   validator_count: number;
   voting_score: string;
 }
+
+export type IndexRange = {
+  start_index: string;
+  end_index: string;
+}
+
+export type AnchorStatus = {
+  total_stake_in_next_era: string;
+  validator_count_in_next_era: string;
+  delegator_count_in_next_era: string;
+  index_range_of_appchain_notification_history: IndexRange;
+  index_range_of_validator_set_history: IndexRange;
+  index_range_of_anchor_event_history: IndexRange,
+  index_range_of_staking_history: IndexRange,
+  index_range_of_appchain_message_processing_results: IndexRange,
+  permissionless_actions_status: {
+    switching_era_number: string;
+    distributing_reward_era_number: string;
+  };
+  asset_transfer_is_paused: boolean;
+  rewards_withdrawal_is_paused: boolean;
+}
+
+export type AppchainInfoWithAnchorStatus = AppchainInfo & {
+  anchor_status?: AnchorStatus;
+}
+
+export type RewardHistory = {
+  era_number: string;
+  total_reward: string;
+  unwithdrawn_reward: string;
+}
+
+export type Validator = {
+  validator_id: string;
+  validator_id_in_appchain: string;
+  deposit_amount: string;
+  total_stake: string;
+  delegators_count: string;
+  can_be_delegated_to: boolean;
+  rewards: RewardHistory[];
+}
