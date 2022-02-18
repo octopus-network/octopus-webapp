@@ -13,7 +13,8 @@ import {
 import { 
   AppchainInfoWithAnchorStatus, 
   AnchorContract, 
-  AppchainSettings 
+  AppchainSettings, 
+  TokenContract
 } from 'types';
 
 import { useParams } from 'react-router-dom';
@@ -34,22 +35,48 @@ export const Appchain: React.FC = () => {
 
   const [appchainApi, setAppchainApi] = useState<ApiPromise>();
 
-  const anchor = useMemo(() => appchain ? new AnchorContract(
-    global.wallet?.account() as any,
-    appchain.appchain_anchor,
-    {
-      viewMethods: [
-        'get_protocol_settings',
-        'get_validator_deposit_of'
-      ],
-      changeMethods: [
-        'enable_delegation',
-        'disable_delegation',
-        'decrease_stake'
-      ]
+  const [anchor, setAnchor] = useState<AnchorContract>();
+  const [wrappedAppchainToken, setWrappedAppchainToken] = useState<TokenContract>();
+
+  useEffect(() => {
+    if (!appchain || !global.accountId) {
+      return;
     }
-  ) : null, [appchain, global]);
-  
+
+    const anchorContract = new AnchorContract(
+      global.wallet?.account() as any,
+      appchain.appchain_anchor,
+      {
+        viewMethods: [
+          'get_protocol_settings',
+          'get_validator_deposit_of',
+          'get_wrapped_appchain_token',
+          'get_delegator_deposit_of'
+        ],
+        changeMethods: [
+          'enable_delegation',
+          'disable_delegation',
+          'decrease_stake',
+          'withdraw_validator_rewards'
+        ]
+      }
+    );
+
+    anchorContract.get_wrapped_appchain_token().then(wrappedToken => {
+      setWrappedAppchainToken(new TokenContract(
+        global.wallet?.account() as any,
+        wrappedToken.contract_account,
+        {
+          viewMethods: ['storage_balance_of', 'ft_balance_of'],
+          changeMethods: []
+        }
+      ));
+    });
+
+    setAnchor(anchorContract);
+
+  }, [appchain, global]);
+
   useEffect(() => {
     if (!appchainSettings) {
       return;
@@ -73,7 +100,7 @@ export const Appchain: React.FC = () => {
             <Descriptions appchain={appchain} appchainApi={appchainApi} appchainSettings={appchainSettings} />
           </GridItem>
           <GridItem colSpan={{ base: 3, lg: 2 }}>
-            <MyStaking appchain={appchain} anchor={anchor} />
+            <MyStaking appchain={appchain} anchor={anchor} wrappedAppchainToken={wrappedAppchainToken} />
             <Box mt={5}>
               <MyNode appchainId={id} />
             </Box>

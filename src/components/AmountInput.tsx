@@ -35,7 +35,7 @@ export const AmountInput: React.FC<AmountInputPropos> = ({ onChange, refObj, val
   const beautifyValue = useMemo(() => beautify(value), [value]);
 
   return (
-    <Box p={2} bg={bg} borderRadius="lg">
+    <Box p="10px 15px" bg={bg} borderRadius="lg">
       <Input
         {...props}
         fontWeight={600}

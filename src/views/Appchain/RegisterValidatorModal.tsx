@@ -33,7 +33,7 @@ import { DecimalUtil, ZERO_DECIMAL } from 'utils';
 
 type RegisterValidatorModalProps = {
   appchain: AppchainInfoWithAnchorStatus | undefined;
-  anchor: AnchorContract | null;
+  anchor: AnchorContract | undefined;
   isOpen: boolean;
   onClose: () => void;
 }

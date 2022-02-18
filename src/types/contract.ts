@@ -1,6 +1,9 @@
 import { Contract } from 'near-api-js';
 
-import { StorageDeposit } from 'types';
+import { 
+  StorageDeposit, 
+  WrappedAppchainToken 
+} from 'types';
 
 type FtBalanceOfArgs = {
   account_id: string
@@ -83,4 +86,16 @@ export class AnchorContract extends Contract {
   get_validator_deposit_of(args: { validator_id: string }): Promise<string> {
     return this.get_validator_deposit_of(args);
   } 
+
+  get_delegator_deposit_of(args: { delegator_id: string, validator_id: string }): Promise<string> {
+    return this.get_delegator_deposit_of(args);
+  } 
+
+  withdraw_validator_rewards(args: { validator_id: string }, gas: string): Promise<void> {
+    return this.withdraw_validator_rewards(args, gas);
+  }
+
+  get_wrapped_appchain_token(): Promise<WrappedAppchainToken> {
+    return this.get_wrapped_appchain_token();
+  }
 }

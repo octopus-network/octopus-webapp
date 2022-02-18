@@ -147,17 +147,17 @@ export const Descriptions: React.FC<DescriptionsProps> = ({ appchain, appchainAp
         </VStack>
       </Flex>
       <SimpleGrid columns={{ base: 3, md: 5 }} spacing={4} mt={8} bg={linksBg} borderRadius="lg">
-        <Link href={toValidUrl(appchain?.appchain_metadata.website_url)} isExternal>
+        <Link href={toValidUrl(appchain?.appchain_metadata?.website_url)} isExternal>
           <LinkBox icon={websiteIcon} label="Website" />
         </Link>
         <Link href={`${global?.network?.octopus.explorerUrl}/${appchain?.appchain_id}`} isExternal>
           <LinkBox icon={explorerIcon} label="Explorer" />
         </Link>
         <LinkBox icon={bridgeIcon} label="Bridge" />
-        <Link href={toValidUrl(appchain?.appchain_metadata.function_spec_url)} isExternal>
+        <Link href={toValidUrl(appchain?.appchain_metadata?.function_spec_url)} isExternal>
           <LinkBox icon={functionSpecIcon} label="Function Spec" />
         </Link>
-        <Link href={toValidUrl(appchain?.appchain_metadata.github_address)} isExternal>
+        <Link href={toValidUrl(appchain?.appchain_metadata?.github_address)} isExternal>
           <LinkBox icon={githubIcon} label="Github" />
         </Link>
       </SimpleGrid>

@@ -79,11 +79,19 @@ export type Validator = {
   total_stake: string;
   delegators_count: string;
   can_be_delegated_to: boolean;
-  rewards: RewardHistory[];
 }
 
 export type AppchainSettings = {
   rpc_endpoint: string;
   subql_endpoint: string;
   era_reward: string;
+}
+
+export type WrappedAppchainToken = {
+  metadata: FungibleTokenMetadata;
+  contract_account: string;
+  premined_beneficiary: string;
+  premined_balance: string;
+  changed_balance: string;
+  price_in_usd: string;
 }

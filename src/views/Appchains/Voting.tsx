@@ -35,6 +35,7 @@ import rank3Icon from 'assets/icons/rank3.png';
 import { useNavigate } from 'react-router-dom';
 import { DecimalUtil, ZERO_DECIMAL } from 'utils';
 import { OCT_TOKEN_DECIMALS } from 'primitives';
+import { Empty } from 'components';
 
 type VotingItemProps = {
   rank: number;
@@ -179,23 +180,29 @@ export const Voting: React.FC = () => {
         </HStack>
       </Flex>
       <Box mt={8} bg={bg} p={6} borderRadius="lg">
-        <Box p={4}>
-          <Grid templateColumns={{ base: 'repeat(6, 1fr)', md: 'repeat(11, 1fr)' }} className="octo-gray" gap={6}>
-            <GridItem colSpan={1} display={{ base: 'none', md: 'table-cell' }}>Rank</GridItem>
-            <GridItem colSpan={3}>ID</GridItem>
-            <GridItem colSpan={4} display={{ base: 'none', md: 'table-cell' }}>Votes</GridItem>
-            <GridItem colSpan={2}>Score</GridItem>
-            <GridItem colSpan={1}/>
-          </Grid>
-        </Box>
-        <List>
-          {
-            appchains?.length ?
-            appchains.map((appchain: AppchainInfo, idx: number) => (
-              <VotingItem data={appchain} key={`voting-item-${idx}`} rank={idx + 1} highestVotes={highestVotes} />
-            )) : null
-          }
-        </List>
+        {
+          appchains?.length ?
+          <>
+            <Box p={4}>
+              <Grid templateColumns={{ base: 'repeat(6, 1fr)', md: 'repeat(11, 1fr)' }} className="octo-gray" gap={6}>
+                <GridItem colSpan={1} display={{ base: 'none', md: 'table-cell' }}>Rank</GridItem>
+                <GridItem colSpan={3}>ID</GridItem>
+                <GridItem colSpan={4} display={{ base: 'none', md: 'table-cell' }}>Votes</GridItem>
+                <GridItem colSpan={2}>Score</GridItem>
+                <GridItem colSpan={1}/>
+              </Grid>
+            </Box>
+            <List>
+              {
+                appchains.map((appchain: AppchainInfo, idx: number) => (
+                  <VotingItem data={appchain} key={`voting-item-${idx}`} rank={idx + 1} highestVotes={highestVotes} />
+                ))
+              }
+            </List>
+          </> : 
+          <Empty />
+        }
+        
       </Box>
     </>
   );

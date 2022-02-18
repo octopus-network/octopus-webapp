@@ -1,4 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
+import useSWR from 'swr';
+import Decimal from 'decimal.js';
+
 import { BounceLoader } from 'react-spinners';
 import { DecimalUtil, ZERO_DECIMAL } from 'utils';
 import { encodeAddress } from '@polkadot/util-crypto';
@@ -16,10 +19,16 @@ import {
   Spinner,
   VStack,
   useToast,
-  useBoolean
+  useBoolean,
+  Skeleton
 } from '@chakra-ui/react';
 
-import { Validator, AnchorContract, FungibleTokenMetadata } from 'types';
+import {
+  Validator,
+  AnchorContract,
+  FungibleTokenMetadata,
+  RewardHistory
+} from 'types';
 
 import {
   OCT_TOKEN_DECIMALS,
@@ -28,46 +37,64 @@ import {
 } from 'primitives';
 
 import { useGlobalStore } from 'stores';
-
+import { ChevronDownIcon } from '@chakra-ui/icons';
 import { StateBadge } from 'components';
 
-type ValidatorProps = {
+type ValidatorRowProps = {
   validator: Validator;
+  appchainId: string | undefined;
   ftMetadata: FungibleTokenMetadata | undefined;
-  anchor: AnchorContract | null;
+  anchor: AnchorContract | undefined;
   appchainValidators: string[] | undefined;
+  validatorSetHistoryEndIndex: string | undefined;
   showType: string;
+  onDelegate: (v: string) => void;
 }
 
-export const ValidatorRow: React.FC<ValidatorProps> = ({ validator, ftMetadata, anchor, appchainValidators, showType }) => {
+export const ValidatorRow: React.FC<ValidatorRowProps> = ({
+  validator,
+  ftMetadata,
+  anchor,
+  appchainValidators,
+  showType,
+  appchainId,
+  onDelegate,
+  validatorSetHistoryEndIndex
+}) => {
 
   const { global } = useGlobalStore();
   const toast = useToast();
 
   const isMyself = useMemo(() => global && validator &&
-    (global.accountId === validator?.validator_id), [global, validator]);
+    (global.accountId === validator.validator_id), [global, validator]);
 
   const [isTogglingDelegation, setIsTogglingDelegation] = useBoolean(false);
+  const [delegatedDeposits, setDelegatedDeposits] = useState<Decimal>();
 
-  const unwithdraedAmount = useMemo(() => {
-    if (!validator?.rewards.length) {
-      return ZERO_DECIMAL;
-    }
-
-    return validator.rewards.reduce(
-      (total, next) => total.plus(DecimalUtil.fromString(next.unwithdrawn_reward, ftMetadata?.decimals)),
-      ZERO_DECIMAL
-    );
-
-  }, [validator]);
-
-  const totalRewards = useMemo(() => validator ?
-    validator.rewards.reduce(
-      (total, next) => total.plus(DecimalUtil.fromString(next.total_reward, ftMetadata?.decimals)),
-      ZERO_DECIMAL
-    ) : ZERO_DECIMAL,
-    [validator]
+  const { data: rewards } = useSWR<RewardHistory[]>(
+    appchainId && validatorSetHistoryEndIndex ?
+      `rewards/${validator.validator_id}/${appchainId}/${validatorSetHistoryEndIndex}` : null
   );
+
+  const totalRewards = useMemo(() =>
+    rewards?.length ?
+      rewards?.reduce(
+        (total, next) => total.plus(DecimalUtil.fromString(next.total_reward, ftMetadata?.decimals)),
+        ZERO_DECIMAL
+      ) : ZERO_DECIMAL,
+    [rewards]
+  );
+
+  useEffect(() => {
+    anchor?.get_delegator_deposit_of({
+      delegator_id: global.accountId,
+      validator_id: validator.validator_id
+    }).then(amount => {
+      setDelegatedDeposits(
+        DecimalUtil.fromString(amount, OCT_TOKEN_DECIMALS)
+      );
+    });
+  }, [anchor, global]);
 
   const ss58Address = useMemo(() => {
     let ss58Address;
@@ -119,17 +146,14 @@ export const ValidatorRow: React.FC<ValidatorProps> = ({ validator, ftMetadata, 
         alignItems="center">
         <GridItem colSpan={2}>
           <VStack spacing={1} alignItems="flex-start">
-            <Text whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden" w="100%">
+            <Heading fontSize="md" whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden" w="100%">
               {validator.validator_id}
-            </Text>
-
-            <Text fontSize="xs" variant="gray" whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden" w="100%">
-              Rewards: {DecimalUtil.beautify(totalRewards)} {ftMetadata?.symbol}
-              {
-                unwithdraedAmount.gt(ZERO_DECIMAL) ?
-                  `, unclaimed: ${DecimalUtil.beautify(unwithdraedAmount)} ${ftMetadata?.symbol}` : ''
-              }
-            </Text>
+            </Heading>
+            <Skeleton isLoaded={!!rewards}>
+              <Text fontSize="xs" variant="gray" whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden" w="100%">
+                Rewards: {DecimalUtil.beautify(totalRewards)} {ftMetadata?.symbol}
+              </Text>
+            </Skeleton>
           </VStack>
         </GridItem>
         <GridItem colSpan={2} display={{ base: 'none', md: 'table-cell' }}>
@@ -163,6 +187,7 @@ export const ValidatorRow: React.FC<ValidatorProps> = ({ validator, ftMetadata, 
           <Heading fontSize="md">{validator.delegators_count}</Heading>
         </GridItem>
         <GridItem colSpan={1} textAlign="right">
+          <Skeleton isLoaded={!!delegatedDeposits}>
           {
             isMyself ?
 
@@ -175,9 +200,17 @@ export const ValidatorRow: React.FC<ValidatorProps> = ({ validator, ftMetadata, 
                   </Box>
                 </Tooltip> :
 
+              delegatedDeposits?.gt(ZERO_DECIMAL) ?
+
+              <Button size="sm" variant="outline" colorScheme="octo-blue" rightIcon={<ChevronDownIcon />}>
+                Actions
+              </Button> :
+
               <Button size="sm" colorScheme="octo-blue" variant="outline"
-                isDisabled={!validator.can_be_delegated_to}>Delegate</Button>
+                isDisabled={!validator.can_be_delegated_to || !global.accountId} 
+                onClick={() => onDelegate(validator.validator_id)}>Delegate</Button>
           }
+          </Skeleton>
         </GridItem>
       </Grid>
     ) : null

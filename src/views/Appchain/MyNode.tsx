@@ -184,7 +184,7 @@ export const MyNode: React.FC<MyNodeProps> = ({ appchainId }) => {
   }
 
   return (
-    <Box position="relative" p={6} pt={4} pb={6} borderRadius="lg" overflow="hidden" bg={bg}>
+    <Box position="relative" p={6} pt={4} pb={6} borderRadius="lg" bg={bg}>
       <Flex justifyContent="space-between" alignItems="center">
         <Heading fontSize="lg">My Node</Heading>
         <Menu>

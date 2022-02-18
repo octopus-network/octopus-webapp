@@ -25,6 +25,8 @@ import { AppchainInfo } from 'types';
 import { useNavigate } from 'react-router-dom';
 import { OCT_TOKEN_DECIMALS } from 'primitives';
 
+import { Empty } from 'components';
+
 type BootingItemProps = {
   data: AppchainInfo;
 }
@@ -82,22 +84,27 @@ export const Booting: React.FC = () => {
         </Tooltip>
       </Flex>
       <Box mt={8} bg={bg} p={6} borderRadius="lg">
-        <Box p={4}>
-          <Grid templateColumns={{ base: 'repeat(7, 1fr)', md: 'repeat(10, 1fr)' }} className="octo-gray" gap={6}>
-            <GridItem colSpan={3}>ID</GridItem>
-            <GridItem colSpan={3} display={{ base: 'none', md: 'table-cell' }}>Validators</GridItem>
-            <GridItem colSpan={3}>Staked</GridItem>
-            <GridItem colSpan={1}/>
-          </Grid>
-        </Box>
-        <List>
-          {
-            appchains?.length ?
-            appchains.map((appchain: AppchainInfo, idx: number) => (
-              <BootingItem data={appchain} key={`booting-item-${idx}`} />
-            )) : null
-          }
-        </List>
+        {
+          appchains?.length ?
+          <>
+            <Box p={4}>
+              <Grid templateColumns={{ base: 'repeat(7, 1fr)', md: 'repeat(10, 1fr)' }} className="octo-gray" gap={6}>
+                <GridItem colSpan={3}>ID</GridItem>
+                <GridItem colSpan={3} display={{ base: 'none', md: 'table-cell' }}>Validators</GridItem>
+                <GridItem colSpan={3}>Staked</GridItem>
+                <GridItem colSpan={1}/>
+              </Grid>
+            </Box>
+            <List>
+              {
+                appchains.map((appchain: AppchainInfo, idx: number) => (
+                  <BootingItem data={appchain} key={`booting-item-${idx}`} />
+                ))
+              }
+            </List>
+          </> : 
+          <Empty />
+        }
       </Box>
     </>
   );

@@ -19,13 +19,19 @@ import {
   PopoverTrigger,
   PopoverContent,
   PopoverBody,
-  useToast
+  useToast,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem
 } from '@chakra-ui/react';
 
-import { 
-  Validator, 
-  AnchorContract, 
-  AppchainInfoWithAnchorStatus
+import {
+  Validator,
+  AnchorContract,
+  RewardHistory,
+  AppchainInfoWithAnchorStatus,
+  TokenContract
 } from 'types';
 
 import {
@@ -34,6 +40,7 @@ import {
   FAILED_TO_REDIRECT_MESSAGE
 } from 'primitives';
 
+import { AiOutlineClose, AiOutlineMenu } from 'react-icons/ai';
 import { BsThreeDots } from 'react-icons/bs';
 import { AddIcon, MinusIcon } from '@chakra-ui/icons';
 
@@ -42,18 +49,20 @@ import empty from 'assets/empty.png';
 
 import { useGlobalStore } from 'stores';
 import { RegisterValidatorModal } from './RegisterValidatorModal';
+import { RewardsModal } from './RewardsModal';
 
 import { AmountInput } from 'components';
 import { DecimalUtil, ZERO_DECIMAL } from 'utils';
 
 type MyStakingProps = {
   appchain: AppchainInfoWithAnchorStatus | undefined;
-  anchor: AnchorContract | null;
+  anchor: AnchorContract | undefined;
+  wrappedAppchainToken: TokenContract | undefined;
 }
 
 type StakingPopoverProps = {
   type: 'increase' | 'decrease';
-  anchor: AnchorContract | null;
+  anchor: AnchorContract | undefined;
   helper?: string;
   trigger: any;
 }
@@ -88,22 +97,22 @@ const StakingPopover: React.FC<StakingPopoverProps> = ({ trigger, type, helper, 
     try {
       if (type === 'increase') {
         await global.octToken?.ft_transfer_call(
-            {
-              receiver_id: anchor?.contractId || '',
-              amount: amountStr,
-              msg: '"IncreaseStake"'
-            },
-            COMPLEX_CALL_GAS,
-            1,
-          );
+          {
+            receiver_id: anchor?.contractId || '',
+            amount: amountStr,
+            msg: '"IncreaseStake"'
+          },
+          COMPLEX_CALL_GAS,
+          1,
+        );
       } else {
         await anchor?.decrease_stake(
-          {  amount: DecimalUtil.toU64(amountInDecimal, OCT_TOKEN_DECIMALS).toString() },
+          { amount: DecimalUtil.toU64(amountInDecimal, OCT_TOKEN_DECIMALS).toString() },
           COMPLEX_CALL_GAS
         );
       }
-     
-    } catch(err: any) {
+
+    } catch (err: any) {
 
       if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
         return;
@@ -136,22 +145,22 @@ const StakingPopover: React.FC<StakingPopoverProps> = ({ trigger, type, helper, 
             <AmountInput placeholder="Amount of OCT" refObj={inputRef} onChange={v => setAmount(v)} value={amount} />
           </Box>
           <Box mt={3}>
-            <Button 
-              colorScheme="octo-blue" 
+            <Button
+              colorScheme="octo-blue"
               isDisabled={
                 isSubmiting ||
                 amountInDecimal.lte(ZERO_DECIMAL) ||
                 amountInDecimal.gt(octBalance)
-              } 
+              }
               onClick={onSubmit}
               isLoading={isSubmiting}
               isFullWidth>
               {
                 amountInDecimal.lte(ZERO_DECIMAL) ?
-                'Input Amount' :
-                amountInDecimal.gt(octBalance) ?
-                'Insufficient Balance' :
-                type === 'increase' ? 'Increase' : 'Decrease'
+                  'Input Amount' :
+                  amountInDecimal.gt(octBalance) ?
+                    'Insufficient Balance' :
+                    type === 'increase' ? 'Increase' : 'Decrease'
               }
             </Button>
           </Box>
@@ -161,21 +170,38 @@ const StakingPopover: React.FC<StakingPopoverProps> = ({ trigger, type, helper, 
   );
 }
 
-export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor }) => {
-  
+export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedAppchainToken }) => {
+
   const bg = useColorModeValue(
-    'linear-gradient(137deg,#1486ff 4%, #0c4df5)', 
+    'linear-gradient(137deg,#1486ff 4%, #0c4df5)',
     'linear-gradient(137deg,#1486ff 4%, #0c4df5)'
   );
 
   const whiteBg = useColorModeValue('white', '#15172c');
 
   const [registerValidatorModalOpen, setRegisterValidatorModalOpen] = useBoolean(false);
+  const [rewardsModalOpen, setRewardsModalOpen] = useBoolean(false);
 
   const { global } = useGlobalStore();
   const [deposit, setDeposit] = useState(ZERO_DECIMAL);
 
-  const { data: validators, error } = useSWR<Validator[]>(appchain  ? `validators/${appchain?.appchain_id}` : null);
+  const { data: validators, error } = useSWR<Validator[]>(appchain ? `validators/${appchain?.appchain_id}` : null);
+
+  const { data: rewards } = useSWR<RewardHistory[]>(
+    appchain?.anchor_status && global.accountId ?
+      `rewards/${global.accountId}/${appchain.appchain_id}/${appchain.anchor_status.index_range_of_validator_set_history.end_index}` : null
+  );
+
+  const unwithdraedRewards = useMemo(() => {
+    if (!rewards?.length) {
+      return ZERO_DECIMAL;
+    }
+
+    return rewards.reduce((total, next) => total.plus(
+      DecimalUtil.fromString(next.unwithdrawn_reward, appchain?.appchain_metadata?.fungible_token_metadata.decimals)
+    ), ZERO_DECIMAL);
+
+  }, [rewards]);
 
   const isInValidatorList = useMemo(() => validators?.some(v => v.validator_id === global.accountId) || false, [validators, global]);
 
@@ -197,66 +223,95 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor }) => {
       <Box bg={isInValidatorList ? bg : whiteBg} position="relative" p={6} pt={4} pb={6} borderRadius="lg">
         {
           isInValidatorList ?
-          <>
-            <Image position="absolute" bottom="0" right="0" h="110%" src={myStakingBg} zIndex={0} />
-            <Box position="relative" zIndex={1}>
-              <Flex justifyContent="space-between" alignItems="center">
-                <Heading fontSize="lg" color="white">My Staking</Heading>
-                <HStack spacing={0}>
-                  <Button size="sm" variant="whiteAlphaGhost">History</Button>
-                  <Button size="sm" variant="whiteAlphaGhost">
-                    <Icon as={BsThreeDots} boxSize={5} />
-                  </Button>
-                </HStack>
-              </Flex>
-              <VStack p={6} spacing={1}>
-                <Heading fontSize="3xl" color="white">{DecimalUtil.beautify(deposit)}</Heading>
-                <Text color="whiteAlpha.800">You Staked (OCT)</Text>
-              </VStack>
-              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                <StakingPopover 
-                  trigger={
-                    <Button variant="whiteAlpha"><Icon as={AddIcon} mr={2} boxSize={3} /> Decrease</Button>
-                  } 
-                  type="decrease"
-                  anchor={anchor}
-                  helper="Your decreased stakes will be claimable after 28 days" />
+            <>
+              <Image position="absolute" bottom="0" right="0" h="110%" src={myStakingBg} zIndex={0} />
+              <Box position="relative" zIndex={1}>
+                <Flex justifyContent="space-between" alignItems="center">
+                  <Heading fontSize="lg" color="white">My Staking</Heading>
+                  <HStack spacing={0}>
+                    <Box position="relative">
+                      <Button size="sm" variant="whiteAlphaGhost" onClick={setRewardsModalOpen.on}>Rewards</Button>
+                      {
+                        unwithdraedRewards.gt(ZERO_DECIMAL) ?
+                          <Box boxSize={2} borderRadius="full" bg="red" position="absolute" right="2px" top="2px" /> : null
+                      }
+                    </Box>
+                    <Menu>
+                      <MenuButton as={Button} size="sm" variant="whiteAlphaGhost">
+                        <Icon as={BsThreeDots} boxSize={5} />
+                      </MenuButton>
+                      <MenuList>
+                        <MenuItem>
+                          <Icon as={AiOutlineMenu} mr={2} boxSize={4} /> Staking History
+                        </MenuItem>
+                        <MenuItem color="red">
+                          <Icon as={AiOutlineClose} mr={2} boxSize={4} /> Unbond Validator
+                        </MenuItem>
+                      </MenuList>
+                    </Menu>
+  
+                  </HStack>
+                </Flex>
+                <VStack p={6} spacing={1}>
+                  <Heading fontSize="3xl" color="white">{DecimalUtil.beautify(deposit)}</Heading>
+                  <Text color="whiteAlpha.800">You Staked (OCT)</Text>
+                </VStack>
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                  <StakingPopover
+                    trigger={
+                      <Button variant="whiteAlpha"><Icon as={MinusIcon} mr={2} boxSize={3} /> Decrease</Button>
+                    }
+                    type="decrease"
+                    anchor={anchor}
+                    helper="Your decreased stakes will be claimable after 28 days" />
 
-                <StakingPopover 
-                  trigger={
-                    <Button variant="white"><Icon as={MinusIcon} mr={2} boxSize={3} />Increase</Button>
-                  } 
-                  type="increase"
-                  anchor={anchor} />
-                
-              </SimpleGrid>
-            </Box>
-          </> :
-          <Box>
-            <Flex justifyContent="space-between" alignItems="center">
-              <Heading fontSize="lg">My Staking</Heading>
-            </Flex>
-            <Center minH="125px">
-              <Box boxSize={20}>
-                <Image src={empty} w="100%" />
+                  <StakingPopover
+                    trigger={
+                      <Button variant="white"><Icon as={AddIcon} mr={2} boxSize={3} />Increase</Button>
+                    }
+                    type="increase"
+                    anchor={anchor} />
+
+                </SimpleGrid>
               </Box>
-            </Center>
-            <Button 
-              onClick={setRegisterValidatorModalOpen.on}
-              colorScheme="octo-blue" 
-              isLoading={!validators && !error} 
-              isDisabled={!validators && !error} 
-              isFullWidth>
-              Register Validator
-            </Button>
-          </Box>
+            </> :
+            <Box>
+              <Flex justifyContent="space-between" alignItems="center">
+                <Heading fontSize="lg">My Staking</Heading>
+              </Flex>
+              <Center minH="125px">
+                <Box boxSize={20}>
+                  <Image src={empty} w="100%" />
+                </Box>
+              </Center>
+              <Button
+                onClick={setRegisterValidatorModalOpen.on}
+                colorScheme="octo-blue"
+                isLoading={!validators && !error}
+                isDisabled={(!validators && !error) || !global.accountId}
+                isFullWidth>
+                {
+                  !global.accountId ?
+                    'Please Login' :
+                    'Register Validator'
+                }
+              </Button>
+            </Box>
         }
       </Box>
-      <RegisterValidatorModal 
-        isOpen={registerValidatorModalOpen} 
+      <RegisterValidatorModal
+        isOpen={registerValidatorModalOpen}
         onClose={setRegisterValidatorModalOpen.off}
         anchor={anchor}
         appchain={appchain} />
+
+      <RewardsModal
+        isOpen={rewardsModalOpen}
+        onClose={setRewardsModalOpen.off}
+        appchain={appchain}
+        anchor={anchor}
+        wrappedAppchainToken={wrappedAppchainToken}
+        rewards={rewards} />
     </>
   );
 }
