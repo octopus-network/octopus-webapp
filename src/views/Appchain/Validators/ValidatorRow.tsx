@@ -187,7 +187,7 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
           <Heading fontSize="md">{validator.delegators_count}</Heading>
         </GridItem>
         <GridItem colSpan={1} textAlign="right">
-          <Skeleton isLoaded={!!delegatedDeposits}>
+          <Skeleton isLoaded={!!delegatedDeposits || !global.accountId}>
           {
             isMyself ?
 
