@@ -134,15 +134,12 @@ export const Links: React.FC<LinksProps> = ({ data }) => {
 
   return (
     <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-      {
-        data?.appchain_metadata?.website_url ?
-        <Link href={toValidUrl(data?.appchain_metadata?.website_url)} isExternal>
-          <LinkBox 
-            icons={[website1, website2]} 
-            title="Website" 
-            href={data?.appchain_metadata?.website_url} />
-        </Link> : null
-      }
+      <Link href={toValidUrl(data?.appchain_metadata?.website_url)} isExternal>
+        <LinkBox 
+          icons={[website1, website2]} 
+          title="Website" 
+          href={data?.appchain_metadata?.website_url} />
+      </Link>
       <Link href={toValidUrl(data?.appchain_metadata?.github_address)} isExternal>
         <LinkBox 
           icons={[github1, github2]} 

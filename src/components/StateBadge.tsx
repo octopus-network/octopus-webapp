@@ -14,7 +14,9 @@ const state2color: Record<string, string> = {
   'InQueue': 'teal',
   'Staging': 'blue',
   'Booting': 'orange',
-  'Active': 'octo-blue.500'
+  'Active': 'octo-blue.500',
+  'Staker': 'orange',
+  'Validating': 'octo-blue.500'
 }
 
 const state2label: Record<string, string> = {
@@ -24,7 +26,9 @@ const state2label: Record<string, string> = {
   'InQueue': 'Voting',
   'Staging': 'Staking',
   'Booting': 'Booting',
-  'Active': 'Running'
+  'Active': 'Running',
+  'Staker': 'Staker',
+  'Validating': 'Validating'
 }
 
 type StateBadgeProps = {

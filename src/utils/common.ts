@@ -34,4 +34,5 @@ export function toValidUrl(url: string | undefined) {
   if (!/^http(s)?/.test(url)) {
     return `https://${url}`;
   }
+  return url;
 }

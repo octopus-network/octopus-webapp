@@ -1,4 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { ApiPromise, WsProvider } from '@polkadot/api';
+
 import useSWR from 'swr';
 
 import {
@@ -8,6 +10,12 @@ import {
   GridItem
 } from '@chakra-ui/react';
 
+import { 
+  AppchainInfoWithAnchorStatus, 
+  AnchorContract, 
+  AppchainSettings 
+} from 'types';
+
 import { useParams } from 'react-router-dom';
 import { Breadcrumb } from 'components';
 
@@ -15,14 +23,16 @@ import { Descriptions } from './Descriptions';
 import { MyStaking } from './MyStaking';
 import { MyNode } from './MyNode';
 import { Validators } from './Validators';
-import { AppchainInfoWithAnchorStatus, AnchorContract } from 'types';
 import { useGlobalStore } from 'stores';
 
 export const Appchain: React.FC = () => {
   const { id } = useParams();
 
   const { global } = useGlobalStore();
-  const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(`appchain/${id}`);
+  const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(id ? `appchain/${id}` : null);
+  const { data: appchainSettings } = useSWR<AppchainSettings>(id ? `appchain-settings/${id}` : null);
+
+  const [appchainApi, setAppchainApi] = useState<ApiPromise>();
 
   const anchor = useMemo(() => appchain ? new AnchorContract(
     global.wallet?.account() as any,
@@ -39,6 +49,18 @@ export const Appchain: React.FC = () => {
       ]
     }
   ) : null, [appchain, global]);
+  
+  useEffect(() => {
+    if (!appchainSettings) {
+      return;
+    }
+
+    const provider = new WsProvider(appchainSettings.rpc_endpoint);
+    const api = new ApiPromise({ provider });
+
+    api.isReady.then(api => setAppchainApi(api));
+
+  }, [appchainSettings]);
 
   return (
     <>
@@ -48,7 +70,7 @@ export const Appchain: React.FC = () => {
         </Box>
         <Grid templateColumns={{ base: 'repeat(3, 1fr)', lg: 'repeat(5, 1fr)' }} gap={5} mt={5}>
           <GridItem colSpan={3}>
-            <Descriptions data={appchain} />
+            <Descriptions appchain={appchain} appchainApi={appchainApi} appchainSettings={appchainSettings} />
           </GridItem>
           <GridItem colSpan={{ base: 3, lg: 2 }}>
             <MyStaking appchain={appchain} anchor={anchor} />
@@ -59,10 +81,9 @@ export const Appchain: React.FC = () => {
         </Grid>
         <Box mt={8}>
           <Validators 
-            appchainId={appchain?.appchain_id} 
-            anchor={anchor} 
-            era={appchain?.anchor_status?.index_range_of_validator_set_history?.end_index}
-            ftMetadata={appchain?.appchain_metadata?.fungible_token_metadata as any} />
+            appchain={appchain} 
+            appchainApi={appchainApi}
+            anchor={anchor} />
         </Box>
       </Container>
     </>

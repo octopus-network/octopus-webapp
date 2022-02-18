@@ -216,7 +216,7 @@ export const Root: React.FC = () => {
   return (
     <SWRConfig 
       value={{
-        refreshInterval: 30 * 1000,
+        refreshInterval: 60 * 1000,
         fetcher: api => axios.get(`${API_HOST}/${api}`).then(res => res.data)
       }}
     >

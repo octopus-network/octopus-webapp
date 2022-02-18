@@ -35,7 +35,7 @@ export class DecimalUtil {
 
   public static beautify(input: Decimal, fixed?: number): string {
    
-    if (!fixed) {
+    if (fixed === undefined) {
       fixed = 
         input.eq(ZERO_DECIMAL) ? 2 :
         input.gt(ZERO_DECIMAL) && input.lt(ONE_DECIMAL) ? 6 : 

@@ -81,3 +81,9 @@ export type Validator = {
   can_be_delegated_to: boolean;
   rewards: RewardHistory[];
 }
+
+export type AppchainSettings = {
+  rpc_endpoint: string;
+  subql_endpoint: string;
+  era_reward: string;
+}

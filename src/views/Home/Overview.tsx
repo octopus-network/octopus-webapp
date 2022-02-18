@@ -132,7 +132,7 @@ export const Overview: React.FC = () => {
                       justifyContent="space-between" position="relative">
                       <Text variant="gray">Total Appchains</Text>
                       <animated.div style={totalAppchainsHoveringProps} className="octo-blue">
-                        <Icon as={HiOutlineArrowNarrowRight} />
+                        <Icon as={HiOutlineArrowNarrowRight} boxSize={5} />
                       </animated.div>
                     </Flex>
                   </Box>

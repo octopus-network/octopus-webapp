@@ -97,6 +97,18 @@ const themeConfig = {
             filter: 'brightness(90%)'
           }
         }),
+        'octo-blue': {
+          color: 'white',
+          bg: '#2468f2',
+          transition: 'all .3s cubic-bezier(.4, 0, .2, 1)',
+          _hover: {
+            bg: '#5086f5',
+            filter: 'brightness(110%)'
+          },
+          _active: {
+            filter: 'brightness(90%)'
+          }
+        },
         'white': {
           color: 'black',
           bg: 'whiteAlpha.900',
