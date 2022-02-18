@@ -76,7 +76,7 @@ export const MyNode: React.FC<MyNodeProps> = ({ appchainId }) => {
 
   const [inputAccessKey, setInputAccessKey] = useState('');
 
-  const inputBg = useColorModeValue('blackAlpha.100', 'whiteAlpha.100');
+  const inputBg = useColorModeValue('#f5f7fa', 'whiteAlpha.100');
 
   const { data: deployConfig } = useSWR('deploy-config');
 

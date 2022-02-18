@@ -6,11 +6,10 @@ import {
   GridItem,
   Heading,
   Button,
-  FormControl,
-  FormLabel,
+  Tooltip,
   Switch,
   Text,
-  HStack,
+  Box,
   Spinner,
   VStack,
   useToast,
@@ -91,9 +90,10 @@ export const ValidatorRow: React.FC<ValidatorProps> = ({ validator, ftMetadata, 
         boxShadow: 'rgb(0 0 123 / 10%) 0px 0px 15px',
         transform: 'scaleX(0.99)'
       }}
-      templateColumns={{ base: 'repeat(6, 1fr)', md: 'repeat(8, 1fr)', lg: 'repeat(10, 1fr)' }}
+      templateColumns={{ base: 'repeat(5, 1fr)', md: 'repeat(8, 1fr)', lg: 'repeat(10, 1fr)' }}
       pl={6}
       pr={6}
+      gap={2}
       minH="65px"
       alignItems="center">
       <GridItem colSpan={2}>
@@ -110,7 +110,7 @@ export const ValidatorRow: React.FC<ValidatorProps> = ({ validator, ftMetadata, 
           </Text>
         </VStack>
       </GridItem>
-      <GridItem colSpan={1} display={{ base: 'none', md: 'table-cell' }}>
+      <GridItem colSpan={2} display={{ base: 'none', md: 'table-cell' }}>
 
       </GridItem>
       <GridItem colSpan={2}>
@@ -134,20 +134,19 @@ export const ValidatorRow: React.FC<ValidatorProps> = ({ validator, ftMetadata, 
       <GridItem colSpan={1} display={{ base: 'none', md: 'table-cell' }}>
         <Heading fontSize="md">{validator.delegators_count}</Heading>
       </GridItem>
-      <GridItem colSpan={2} textAlign="right">
+      <GridItem colSpan={1} textAlign="right">
         {
           isMyself ?
-            <FormControl display="flex" alignItems="center" justifyContent="flex-end">
-              <FormLabel htmlFor="can-be-delegate" mb={0}>
-                <Text variant="gray" fontSize="sm">Delegation</Text>
-              </FormLabel>
-              {
-                isTogglingDelegation ?
-                  <Spinner size="sm" color="octo-blue.500" /> :
+
+            isTogglingDelegation ?
+              <Spinner size="sm" color="octo-blue.500" /> :
+              <Tooltip label="Toggle delegation">
+                <Box>
                   <Switch id="can-be-delegate" isChecked={validator.can_be_delegated_to}
-                    onChange={toggleDelegation} />
-              }
-            </FormControl> :
+                    onChange={toggleDelegation} size="lg" />
+                </Box>
+              </Tooltip> :
+
             <Button size="sm" colorScheme="octo-blue" variant="outline"
               isDisabled={!validator.can_be_delegated_to}>Delegate</Button>
         }

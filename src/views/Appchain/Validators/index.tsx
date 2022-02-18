@@ -48,11 +48,11 @@ export const Validators: React.FC<ValidatorsProps> = ({ appchainId, anchor, ftMe
       </Flex>
       <Box p={2} bg={bg} mt={4} borderRadius="lg" pb={6}>
         <Box p={6}>
-          <Grid templateColumns={{ base: 'repeat(6, 1fr)', md: 'repeat(8, 1fr)', lg: 'repeat(10, 1fr)' }}>
+          <Grid templateColumns={{ base: 'repeat(5, 1fr)', md: 'repeat(8, 1fr)', lg: 'repeat(10, 1fr)' }} gap={2}>
             <GridItem colSpan={2}>
               <Text variant="gray">Validator ID</Text>
             </GridItem>
-            <GridItem colSpan={1} display={{ base: 'none', md: 'table-cell' }}>
+            <GridItem colSpan={2} display={{ base: 'none', md: 'table-cell' }}>
               <Text variant="gray">State</Text>
             </GridItem>
             <GridItem colSpan={2}>
@@ -64,7 +64,7 @@ export const Validators: React.FC<ValidatorsProps> = ({ appchainId, anchor, ftMe
             <GridItem colSpan={1} display={{ base: 'none', md: 'table-cell' }}>
               <Text variant="gray">Delegators</Text>
             </GridItem>
-            <GridItem colSpan={2} textAlign="right">
+            <GridItem colSpan={1} textAlign="right">
               <Text variant="gray">Operation</Text>
             </GridItem>
           </Grid>

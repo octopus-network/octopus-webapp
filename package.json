@@ -29,8 +29,8 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "start:mainnet": "REACT_APP_API_HOST=https://api-worker.octopus-network.workers.dev react-scripts start",
-    "start:testnet": "REACT_APP_API_HOST=https://api-worker-testnet.octopus-network.workers.dev react-scripts start",
+    "start:mainnet": "REACT_APP_API_HOST=https://api-worker.octopus-network.workers.dev REACT_APP_OCT_REGISTRY_CONTRACT=octopus-registry.near react-scripts start",
+    "start:testnet": "REACT_APP_API_HOST=https://api-worker-testnet.octopus-network.workers.dev REACT_APP_OCT_REGISTRY_CONTRACT=registry.test_oct.testnet react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
