@@ -236,7 +236,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({ appchain, appchainAp
           <Skeleton isLoaded={!!totalIssuance}>
             <Heading fontSize="xl">
               {
-                totalIssuance ?
+                totalIssuance && appchain?.appchain_metadata ?
                 DecimalUtil.beautify(
                   DecimalUtil.fromString(
                     totalIssuance, appchain?.appchain_metadata?.fungible_token_metadata.decimals
@@ -263,7 +263,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({ appchain, appchainAp
           <Text variant="gray" fontSize="sm" >Era Reward</Text>
           <Heading fontSize="xl">
             {
-              appchainSettings?.era_reward ?
+              appchainSettings?.era_reward && appchain?.appchain_metadata ?
               DecimalUtil.beautify(
                 DecimalUtil.fromString(
                   appchainSettings?.era_reward,
