@@ -22,7 +22,7 @@ import {
   OCT_TOKEN_DECIMALS,
   COMPLEX_CALL_GAS,
   FAILED_TO_REDIRECT_MESSAGE
-} from 'config';
+} from 'primitives';
 
 import { useGlobalStore } from 'stores';
 
@@ -101,6 +101,7 @@ export const ValidatorRow: React.FC<ValidatorProps> = ({ validator, ftMetadata, 
           <Text whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden" w="100%">
             {validator.validator_id}
           </Text>
+
           <Text fontSize="xs" variant="gray" whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden" w="100%">
             Rewards: {DecimalUtil.beautify(totalRewards)} {ftMetadata.symbol}
             {

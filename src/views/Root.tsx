@@ -23,21 +23,17 @@ import {
 } from 'near-api-js';
 
 import { 
-  near as nearConfig, 
-  REGISTRY_CONTRACT_ID,
-  OCT_TOKEN_CONTRACT_ID,
-  API_HOST
-} from 'config';
-
-import { 
   RegistryContract, 
-  TokenContract 
+  TokenContract,
+  NetworkConfig
 } from 'types';
 
 import { Outlet } from 'react-router-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useMatchMutate } from 'hooks';
 import { useGlobalStore } from 'stores';
+
+import { API_HOST } from 'config';
 
 const LoadingSpinner = () => {
   return (
@@ -70,48 +66,53 @@ export const Root: React.FC = () => {
 
   const matchMutate = useMatchMutate();
 
-  // init global
+  // initialize
   useEffect(() => {
-    const near = new Near({
-      keyStore: new keyStores.BrowserLocalStorageKeyStore(),
-      ...nearConfig,
+
+    axios.get(`${API_HOST}/network-config`).then(res => res.data).then((network: NetworkConfig) => {
+      const near = new Near({
+        keyStore: new keyStores.BrowserLocalStorageKeyStore(),
+        ...network.near,
+      });
+  
+      const wallet = new WalletConnection(near, network.octopus.registryContractId);
+  
+      const registry = new RegistryContract(
+        wallet.account(),
+        network.octopus.registryContractId,
+        {
+          viewMethods: [
+            'get_owner',
+            'get_upvote_deposit_for',
+            'get_downvote_deposit_for'
+          ],
+          changeMethods: [
+            'withdraw_upvote_deposit_of',
+            'withdraw_downvote_deposit_of'
+          ]
+        }
+      );
+  
+      const octToken = new TokenContract(
+        wallet.account(),
+        network.octopus.octTokenContractId,
+        {
+          viewMethods: ['ft_balance_of'],
+          changeMethods: ['ft_transfer_call']
+        }
+      );
+  
+      updateGlobal({
+        accountId: wallet.getAccountId(),
+        wallet,
+        registry,
+        octToken,
+        network 
+      });
+  
     });
 
-    const wallet = new WalletConnection(near, REGISTRY_CONTRACT_ID);
-
-    const registry = new RegistryContract(
-      wallet.account(),
-      REGISTRY_CONTRACT_ID,
-      {
-        viewMethods: [
-          'get_owner',
-          'get_upvote_deposit_for',
-          'get_downvote_deposit_for'
-        ],
-        changeMethods: [
-          'withdraw_upvote_deposit_of',
-          'withdraw_downvote_deposit_of'
-        ]
-      }
-    );
-
-    const octToken = new TokenContract(
-      wallet.account(),
-      OCT_TOKEN_CONTRACT_ID,
-      {
-        viewMethods: ['ft_balance_of'],
-        changeMethods: ['ft_transfer_call']
-      }
-    );
-
-    updateGlobal({
-      accountId: wallet.getAccountId(),
-      near,
-      wallet,
-      registry,
-      octToken
-    });
-
+    
   }, []);
 
   // change body bg in different page
@@ -163,7 +164,7 @@ export const Root: React.FC = () => {
       return;
     }
 
-    const provider = new providers.JsonRpcProvider(nearConfig.archivalUrl);
+    const provider = new providers.JsonRpcProvider(global.network?.near.archivalUrl);
     
     provider
       .txStatus(transactionHashes, global.accountId)

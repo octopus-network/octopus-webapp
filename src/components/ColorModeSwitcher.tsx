@@ -3,7 +3,6 @@ import React from 'react';
 import {
   useColorMode,
   useColorModeValue,
-  Button,
   HStack,
   Box
 } from '@chakra-ui/react';

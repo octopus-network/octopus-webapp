@@ -29,15 +29,14 @@ import { DecimalUtil, ZERO_DECIMAL } from 'utils';
 import { AmountInput } from 'components';
 import { IoMdThumbsUp, IoMdThumbsDown } from 'react-icons/io';
 import { AppchainInfo } from 'types';
+import { API_HOST } from 'config';
 
 import { 
   OCT_TOKEN_DECIMALS, 
-  REGISTRY_CONTRACT_ID, 
   SIMPLE_CALL_GAS,
   COMPLEX_CALL_GAS,
   FAILED_TO_REDIRECT_MESSAGE,
-  API_HOST
-} from 'config';
+} from 'primitives';
 
 import { ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons';
 
@@ -134,7 +133,7 @@ const VotePopover: React.FC<VotePopoverProps> = ({ isOpen, appchainId, voteType,
     setIsDepositing.on();
     global.octToken?.ft_transfer_call(
       {
-        receiver_id: REGISTRY_CONTRACT_ID,
+        receiver_id: global.network?.octopus.registryContractId || '',
         amount: DecimalUtil.toU64(DecimalUtil.fromString(amount), OCT_TOKEN_DECIMALS).toString(),
         msg: JSON.stringify({
           [`${voteType.replace(/^([a-z])|\s+([a-z])/g, $1 => $1.toUpperCase())}Appchain`]: {

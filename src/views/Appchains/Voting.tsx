@@ -34,7 +34,7 @@ import rank3Icon from 'assets/icons/rank3.png';
 
 import { useNavigate } from 'react-router-dom';
 import { DecimalUtil, ZERO_DECIMAL } from 'utils';
-import { OCT_TOKEN_DECIMALS } from 'config';
+import { OCT_TOKEN_DECIMALS } from 'primitives';
 
 type VotingItemProps = {
   rank: number;
@@ -118,7 +118,7 @@ const VotingItem: React.FC<VotingItemProps> = ({ rank, data, highestVotes }) => 
               transform="translateX(100%) scale(.8)">
               <Heading color={pendingScore.lt(ZERO_DECIMAL) ? red : green} fontSize="xs" 
                 whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" maxW="120px">
-                {pendingScore.lt(ZERO_DECIMAL) ? '-' : '+'} {DecimalUtil.beautify(pendingScore, 2)}
+                {pendingScore.lt(ZERO_DECIMAL) ? '-' : '+'} {DecimalUtil.beautify(pendingScore.abs(), 2)}
               </Heading>
             </Box>
           </Box>

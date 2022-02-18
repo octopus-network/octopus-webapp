@@ -32,7 +32,7 @@ import {
   COMPLEX_CALL_GAS,
   OCT_TOKEN_DECIMALS,
   FAILED_TO_REDIRECT_MESSAGE
-} from 'config';
+} from 'primitives';
 
 import { BsThreeDots } from 'react-icons/bs';
 import { AddIcon, MinusIcon } from '@chakra-ui/icons';

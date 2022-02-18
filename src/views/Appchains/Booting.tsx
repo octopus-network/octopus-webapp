@@ -23,7 +23,7 @@ import {
 import { DecimalUtil } from 'utils';
 import { AppchainInfo } from 'types';
 import { useNavigate } from 'react-router-dom';
-import { OCT_TOKEN_DECIMALS } from 'config';
+import { OCT_TOKEN_DECIMALS } from 'primitives';
 
 type BootingItemProps = {
   data: AppchainInfo;

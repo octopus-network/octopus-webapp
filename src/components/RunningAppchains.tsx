@@ -24,7 +24,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { HiOutlineArrowNarrowRight } from 'react-icons/hi';
 import { DecimalUtil, ZERO_DECIMAL } from 'utils';
 
-import { OCT_TOKEN_DECIMALS } from 'config';
+import { OCT_TOKEN_DECIMALS } from 'primitives';
 
 import {
   AppchainInfo

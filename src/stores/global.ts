@@ -1,12 +1,16 @@
 import create from 'zustand';
-import type { Near, WalletConnection } from 'near-api-js';
+import type { WalletConnection } from 'near-api-js';
 
-import { RegistryContract, TokenContract } from 'types';
+import { 
+  RegistryContract, 
+  TokenContract, 
+  NetworkConfig 
+} from 'types';
 
 type Global = {
-  near: Near | null;
   wallet: WalletConnection | null;
   registry: RegistryContract | null;
+  network: NetworkConfig | null;
   octToken: TokenContract | null;
   accountId: string;
 }
@@ -19,9 +23,9 @@ type GlobalStore = {
 export const useGlobalStore = create((set: any): GlobalStore => ({
   global: {
     accountId: '',
-    near: null,
     wallet: null,
     registry: null,
+    network: null,
     octToken: null
   },
   updateGlobal: (global: Global) => {

@@ -9,8 +9,6 @@ import {
 import { AiOutlineUser } from 'react-icons/ai';
 import { useGlobalStore } from 'stores';
 
-import { REGISTRY_CONTRACT_ID } from 'config';
-
 export const LoginButton: React.FC = () => {
 
   const { global } = useGlobalStore();
@@ -18,7 +16,7 @@ export const LoginButton: React.FC = () => {
 
   const onLogin = (e: any) => {
     setIsLoging.on();
-    global.wallet?.requestSignIn(REGISTRY_CONTRACT_ID, 'Octopus Webapp');
+    global.wallet?.requestSignIn(global.network?.octopus.registryContractId, 'Octopus Webapp');
   }
 
   return (

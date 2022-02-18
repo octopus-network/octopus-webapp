@@ -1,6 +1,4 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import dayjs from 'dayjs';
-import axios from 'axios';
 import { DecimalUtil } from 'utils';
 
 import {
@@ -15,7 +13,6 @@ import {
 import {
   Box,
   Button,
-  ButtonGroup,
   Flex,
   Heading,
   HStack,
@@ -28,7 +25,7 @@ import {
   TriangleDownIcon
 } from '@chakra-ui/icons';
 
-import { OCT_TOKEN_DECIMALS } from 'config';
+import { OCT_TOKEN_DECIMALS } from 'primitives';
 import Decimal from 'decimal.js';
 
 type ChartProps = {
@@ -63,8 +60,6 @@ export const Chart: React.FC<ChartProps> = ({ data }) => {
   const [lastValue, setLastValue] = useState(0);
 
   const [changedPercent, setChangedPercent] = useState(0);
-
-  const [prices, setPrices] = useState([]);
 
   const klineData = useMemo(() => {
     if (!data) return [];
@@ -103,7 +98,6 @@ export const Chart: React.FC<ChartProps> = ({ data }) => {
   }, [currentValue, lastValue]);
 
   const changeDays = (v: any) => {
-    setPrices([]);
     setTimeout(() => {
       setDays(v);
     }, 100);

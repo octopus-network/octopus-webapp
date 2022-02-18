@@ -22,7 +22,7 @@ import {
   OCT_TOKEN_DECIMALS, 
   COMPLEX_CALL_GAS, 
   FAILED_TO_REDIRECT_MESSAGE 
-} from 'config';
+} from 'primitives';
 
 import { decodeAddress } from '@polkadot/util-crypto';
 import { u8aToHex, isHex } from '@polkadot/util';

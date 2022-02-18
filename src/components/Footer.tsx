@@ -7,8 +7,7 @@ import {
   HStack,
   Link,
   Text,
-  Icon,
-  Box
+  Icon
 } from '@chakra-ui/react';
 
 import { 
