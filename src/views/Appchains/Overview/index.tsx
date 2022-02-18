@@ -86,7 +86,8 @@ export const Overview: React.FC<OverviewProps> = ({ appchainId, onDrawerClose })
           {
             isAdmin ?
             <AdminPanel data={appchain} /> :
-            <UserPanel data={appchain} />
+            global.accountId ?
+            <UserPanel data={appchain} /> : null
           }
           
         </Box>
