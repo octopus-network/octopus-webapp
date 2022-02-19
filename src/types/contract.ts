@@ -105,10 +105,6 @@ export class AnchorContract extends Contract {
     return this.get_validator_profile(args);
   }
 
-  get_delegators_of_validator_in_era(args: { validator_id: string, era_number: string }): Promise<Delegator[]> {
-    return this.get_delegators_of_validator_in_era(args);
-  }
-
   unbond_stake(args: {}, gas: string): Promise<void> {
     return this.unbond_stake(args, gas);
   }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import useSWR from 'swr';
 
 import {
   DrawerHeader,
@@ -69,7 +70,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
 
   const bg = useColorModeValue('#f6f7fa', '#15172c');
   const [validatorProfile, setValidatorProfile] = useState<ValidatorPrifleType>();
-  const [delegators, setDelegators] = useState<Delegator[]>();
+
   const [isTogglingDelegation, setIsTogglingDelegation] = useBoolean();
 
   const [unbondAlertOpen, setUnbondAlertOpen] = useBoolean();
@@ -78,17 +79,17 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
   const { global } = useGlobalStore();
   const toast = useToast();
 
+  const { data: delegators } = useSWR<Delegator[]>(
+    appchainId && validatorId && lastEra ? `${validatorId}/${appchainId}/delegators/${lastEra}` : null
+  );
+
   useEffect(() => {
     if (!validator || !lastEra || !anchor) {
       return;
     }
 
-    Promise.all([
-      anchor.get_validator_profile({ validator_id: validator.validator_id }),
-      anchor.get_delegators_of_validator_in_era({ validator_id: validator.validator_id, era_number: lastEra })
-    ]).then(([profile, delegators]) => {
+    anchor.get_validator_profile({ validator_id: validator.validator_id }).then((profile) => {
       setValidatorProfile(profile);
-      setDelegators(delegators);
     });
     
   }, [validator, lastEra]);

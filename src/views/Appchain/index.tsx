@@ -74,7 +74,6 @@ export const Appchain: React.FC = () => {
           'get_wrapped_appchain_token',
           'get_delegator_deposit_of',
           'get_validator_profile',
-          'get_delegators_of_validator_in_era',
           'get_unbonded_stakes_of'
         ],
         changeMethods: [

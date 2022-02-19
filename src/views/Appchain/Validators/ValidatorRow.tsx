@@ -1,6 +1,5 @@
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import useSWR from 'swr';
-import Decimal from 'decimal.js';
 import Identicon from '@polkadot/react-identicon';
 import { BounceLoader } from 'react-spinners';
 import { DecimalUtil, ZERO_DECIMAL } from 'utils';

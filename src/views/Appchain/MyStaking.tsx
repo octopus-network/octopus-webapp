@@ -246,6 +246,9 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
                       </MenuButton>
                       <MenuList>
                         <MenuItem>
+                          <Icon as={AiOutlineMenu} mr={2} boxSize={4} /> Withdraw Stakes
+                        </MenuItem>
+                        <MenuItem>
                           <Icon as={AiOutlineMenu} mr={2} boxSize={4} /> Staking History
                         </MenuItem>
                       </MenuList>
