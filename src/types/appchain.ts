@@ -77,6 +77,7 @@ export type Validator = {
   validator_id_in_appchain: string;
   deposit_amount: string;
   total_stake: string;
+  is_unbonding: boolean;
   delegators_count: string;
   can_be_delegated_to: boolean;
 }
@@ -102,4 +103,23 @@ export type ValidatorSessionKey = {
   grandpa: string;
   imOnline: string;
   octopus: string;
+}
+
+export type ValidatorProfile = {
+  profile: {
+    email: string;
+    socialMediaHandle: string;
+  },
+  validator_id_in_appchain: string;
+}
+
+export type Delegator = {
+  delegator_id: string;
+  delegation_amount: string;
+}
+
+export type UnbondedHistory = {
+  era_number: string;
+  amount: string;
+  unlock_time: string;
 }

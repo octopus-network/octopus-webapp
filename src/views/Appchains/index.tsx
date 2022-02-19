@@ -19,16 +19,13 @@ import { Voting } from './Voting';
 import { Established } from './Established';
 
 import { Overview } from './Overview';
-
 import { useParams, useNavigate } from 'react-router-dom';
 
 export const Appchains: React.FC = () => {
   const { appchainId } = useParams();
   const navigate = useNavigate();
 
-  const [isLoadingList, setIsLoadingList] = useState();
-
-  const drawerIOpen = useMemo(() => !isLoadingList && !!appchainId, [isLoadingList, appchainId]);
+  const drawerIOpen = useMemo(() => !!appchainId, [appchainId]);
 
   useEffect(() => {
     if (drawerIOpen) {

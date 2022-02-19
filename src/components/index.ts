@@ -9,3 +9,4 @@ export * from './AmountInput';
 export * from './Breadcrumb';
 export * from './BaseModal';
 export * from './Empty';
+export * from './Alert';

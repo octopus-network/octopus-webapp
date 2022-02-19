@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import useSWR from 'swr';
 import { encodeAddress } from '@polkadot/util-crypto';
 
 import {
@@ -20,7 +19,6 @@ import {
   VStack
 } from '@chakra-ui/react';
 
-import type { ApiPromise } from '@polkadot/api';
 import { TriangleUpIcon, TriangleDownIcon } from '@chakra-ui/icons';
 
 import {
@@ -99,16 +97,18 @@ export const Validators: React.FC<ValidatorsProps> = ({
       return validators;
     } else if (showType === 'validating') {
       return validators.filter(
-        v => appchainValidators.some(s => s === encodeAddress(v.validator_id_in_appchain)) && validatorSessionKeys[v.validator_id]
+        v => !v.is_unbonding && appchainValidators.some(s => s === encodeAddress(v.validator_id_in_appchain)) && validatorSessionKeys[v.validator_id]
       );
     } else if (showType === 'needKeys') {
       return validators.filter(
-        v => appchainValidators.some(s => s === encodeAddress(v.validator_id_in_appchain)) && !validatorSessionKeys[v.validator_id]
+        v => !v.is_unbonding && appchainValidators.some(s => s === encodeAddress(v.validator_id_in_appchain)) && !validatorSessionKeys[v.validator_id]
       );
     } else if (showType === 'registered') {
       return validators.filter(
-        v => !appchainValidators.some(s => s === encodeAddress(v.validator_id_in_appchain)) && !validatorSessionKeys[v.validator_id]
+        v => !v.is_unbonding && !appchainValidators.some(s => s === encodeAddress(v.validator_id_in_appchain)) && !validatorSessionKeys[v.validator_id]
       );
+    } else if (showType === 'unbonding') {
+      return validators.filter(v => v.is_unbonding);
     }
 
   }, [validators, showType, appchainValidators, validatorSessionKeys]);
@@ -178,6 +178,8 @@ export const Validators: React.FC<ValidatorsProps> = ({
               size="sm" onClick={() => setShowType('needKeys')}>Need Keys</Button>
             <Button variant={showType === 'validating' ? 'octo-blue' : 'octo-white'}
               size="sm" onClick={() => setShowType('validating')}>Validating</Button>
+            <Button variant={showType === 'unbonding' ? 'octo-blue' : 'octo-white'}
+              size="sm" onClick={() => setShowType('unbonding')}>Unbonding</Button>
             <Button variant={showType === 'all' ? 'octo-blue' : 'octo-white'}
               size="sm" onClick={() => setShowType('all')}>All</Button>
           </HStack>

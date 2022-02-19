@@ -7,7 +7,10 @@ import {
   Container,
   Box,
   Grid,
-  GridItem
+  GridItem,
+  Drawer,
+  DrawerOverlay,
+  DrawerContent
 } from '@chakra-ui/react';
 
 import { 
@@ -19,17 +22,18 @@ import {
   Validator
 } from 'types';
 
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Breadcrumb } from 'components';
 
 import { Descriptions } from './Descriptions';
 import { MyStaking } from './MyStaking';
+import { ValidatorProfile } from './ValidatorProfile';
 import { MyNode } from './MyNode';
 import { Validators } from './Validators';
 import { useGlobalStore } from 'stores';
 
 export const Appchain: React.FC = () => {
-  const { id } = useParams();
+  const { id = '', validatorId = '' } = useParams();
 
   const { global } = useGlobalStore();
   const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(id ? `appchain/${id}` : null);
@@ -40,9 +44,20 @@ export const Appchain: React.FC = () => {
   const [validatorSessionKeys, setValidatorSessionKeys] = useState<Record<string, ValidatorSessionKey>>();
 
   const [appchainApi, setAppchainApi] = useState<ApiPromise>();
+  const navigate = useNavigate();
 
   const [anchor, setAnchor] = useState<AnchorContract>();
   const [wrappedAppchainToken, setWrappedAppchainToken] = useState<TokenContract>();
+
+  const drawerIOpen = useMemo(() => !!id && !!validatorId, [validatorId]);
+
+  useEffect(() => {
+    if (drawerIOpen) {
+      (document.getElementById('root') as any).style = 'transition: all .3s ease-in-out; transform: translateX(-5%)';
+    } else {
+      (document.getElementById('root') as any).style = 'transition: all .15s ease-in-out; transform: translateX(0)';
+    }
+  }, [drawerIOpen]);
 
   useEffect(() => {
     if (!appchain || !global.accountId) {
@@ -57,13 +72,17 @@ export const Appchain: React.FC = () => {
           'get_protocol_settings',
           'get_validator_deposit_of',
           'get_wrapped_appchain_token',
-          'get_delegator_deposit_of'
+          'get_delegator_deposit_of',
+          'get_validator_profile',
+          'get_delegators_of_validator_in_era',
+          'get_unbonded_stakes_of'
         ],
         changeMethods: [
           'enable_delegation',
           'disable_delegation',
           'decrease_stake',
-          'withdraw_validator_rewards'
+          'withdraw_validator_rewards',
+          'unbond_stake'
         ]
       }
     );
@@ -116,7 +135,8 @@ export const Appchain: React.FC = () => {
     
   }, [appchainApi, validators]);
 
-  const isValidator = useMemo(() => validators?.some(v => v.validator_id === global.accountId) || false, [validators, global]);
+  const isValidator = useMemo(() => validators?.some(v => v.validator_id === global.accountId && !v.is_unbonding) || false, [validators, global]);
+  const isUnbonding = useMemo(() => validators?.some(v => v.validator_id === global.accountId && v.is_unbonding) || false, [validators, global]);
   
   const needKeys = useMemo(() => {
     if (!validatorSessionKeys || !global.accountId) {
@@ -124,6 +144,10 @@ export const Appchain: React.FC = () => {
     }
     return isValidator && !validatorSessionKeys[global.accountId];
   }, [isValidator, global, validatorSessionKeys]);
+
+  const onDrawerClose = () => {
+    navigate(`/appchains/${id}`);
+  }
 
   return (
     <>
@@ -145,6 +169,7 @@ export const Appchain: React.FC = () => {
             <MyStaking 
               appchain={appchain}
               anchor={anchor}
+              isUnbonding={isUnbonding}
               isValidator={isValidator}
               wrappedAppchainToken={wrappedAppchainToken} />
 
@@ -164,6 +189,24 @@ export const Appchain: React.FC = () => {
             anchor={anchor} />
         </Box>
       </Container>
+      <Drawer 
+        placement="right" 
+        isOpen={drawerIOpen} 
+        onClose={onDrawerClose} 
+        size="lg">
+        <DrawerOverlay />
+        <DrawerContent>
+          <ValidatorProfile 
+            appchainId={id}
+            anchor={anchor}
+            validatorId={validatorId}
+            appchainValidators={appchainValidators}
+            validators={validators}
+            validatorSessionKeys={validatorSessionKeys}
+            lastEra={appchain?.anchor_status?.index_range_of_validator_set_history?.end_index}
+            onDrawerClose={onDrawerClose} />
+        </DrawerContent>
+      </Drawer>
     </>
   );
 }

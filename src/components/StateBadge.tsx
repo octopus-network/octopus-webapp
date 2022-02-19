@@ -8,6 +8,7 @@ import {
 } from '@chakra-ui/react';
 
 const state2color: Record<string, string> = {
+  'Unknown': 'gray',
   'Registered': 'gray',
   'Dead': 'gray',
   'Auditing': 'green',
@@ -16,10 +17,12 @@ const state2color: Record<string, string> = {
   'Booting': 'orange',
   'Active': 'octo-blue.500',
   'Need Keys': 'teal',
-  'Validating': 'octo-blue.500'
+  'Validating': 'octo-blue.500',
+  'Unbonding': 'red'
 }
 
 const state2label: Record<string, string> = {
+  'Unknown': 'unknown',
   'Registered': 'Registered',
   'Dead': 'Registered',
   'Auditing': 'Auditing',
@@ -28,7 +31,8 @@ const state2label: Record<string, string> = {
   'Booting': 'Booting',
   'Active': 'Running',
   'Need Keys': 'Need Keys',
-  'Validating': 'Validating'
+  'Validating': 'Validating',
+  'Unbonding': 'Unbonding'
 }
 
 type StateBadgeProps = {

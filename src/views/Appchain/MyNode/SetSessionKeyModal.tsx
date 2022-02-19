@@ -7,7 +7,6 @@ import {
   Heading,
   Link,
   FormControl,
-  FormLabel,
   FormHelperText,
   useColorModeValue,
   HStack,
@@ -24,13 +23,11 @@ import type { ApiPromise } from '@polkadot/api';
 import { isHex } from '@polkadot/util';
 import { ChevronRightIcon } from '@chakra-ui/icons';
 import type { InjectedAccountWithMeta } from '@polkadot/extension-inject/types';
-import { isWeb3Injected, web3FromSource, web3Enable, web3Accounts } from '@polkadot/extension-dapp';
+import { web3FromSource, web3Enable, web3Accounts } from '@polkadot/extension-dapp';
 import Identicon from '@polkadot/react-identicon';
 import { Empty } from 'components';
 
-import { 
-  BaseModal
-} from 'components';
+import { BaseModal } from 'components';
 
 type SetSessionKeyModalProps = {
   isOpen: boolean;

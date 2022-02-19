@@ -25,6 +25,7 @@ export const App = () => (
           <Route path="appchains" element={<Appchains />} />
           <Route path="appchains/overview/:appchainId" element={<Appchains />} />
           <Route path="appchains/:id" element={<Appchain />} />
+          <Route path="appchains/:id/validator/:validatorId" element={<Appchain />} />
         </Route>
       </Routes>
     </Router>

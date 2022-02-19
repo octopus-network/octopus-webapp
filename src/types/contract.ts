@@ -2,7 +2,10 @@ import { Contract } from 'near-api-js';
 
 import { 
   StorageDeposit, 
-  WrappedAppchainToken 
+  WrappedAppchainToken,
+  ValidatorProfile,
+  Delegator,
+  UnbondedHistory
 } from 'types';
 
 type FtBalanceOfArgs = {
@@ -65,7 +68,6 @@ export class RegistryContract extends Contract {
 
 }
 
-
 export class AnchorContract extends Contract {
   enable_delegation(args: {}, gas: string): Promise<void> {
     return this.enable_delegation(args, gas);
@@ -97,5 +99,21 @@ export class AnchorContract extends Contract {
 
   get_wrapped_appchain_token(): Promise<WrappedAppchainToken> {
     return this.get_wrapped_appchain_token();
+  }
+
+  get_validator_profile(args: { validator_id: string }): Promise<ValidatorProfile> {
+    return this.get_validator_profile(args);
+  }
+
+  get_delegators_of_validator_in_era(args: { validator_id: string, era_number: string }): Promise<Delegator[]> {
+    return this.get_delegators_of_validator_in_era(args);
+  }
+
+  unbond_stake(args: {}, gas: string): Promise<void> {
+    return this.unbond_stake(args, gas);
+  }
+
+  get_unbonded_stakes_of(args: { account_id: string }): Promise<UnbondedHistory[]> {
+    return this.get_unbonded_stakes_of(args);
   }
 }

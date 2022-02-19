@@ -30,7 +30,8 @@ import {
   AnchorContract,
   RewardHistory,
   AppchainInfoWithAnchorStatus,
-  TokenContract
+  TokenContract,
+  UnbondedHistory
 } from 'types';
 
 import {
@@ -39,7 +40,7 @@ import {
   FAILED_TO_REDIRECT_MESSAGE
 } from 'primitives';
 
-import { AiOutlineClose, AiOutlineMenu } from 'react-icons/ai';
+import { AiOutlineMenu } from 'react-icons/ai';
 import { BsThreeDots } from 'react-icons/bs';
 import { AddIcon, MinusIcon } from '@chakra-ui/icons';
 
@@ -57,6 +58,7 @@ type MyStakingProps = {
   appchain: AppchainInfoWithAnchorStatus | undefined;
   anchor: AnchorContract | undefined;
   isValidator: boolean;
+  isUnbonding: boolean;
   wrappedAppchainToken: TokenContract | undefined;
 }
 
@@ -170,7 +172,7 @@ const StakingPopover: React.FC<StakingPopoverProps> = ({ trigger, type, helper, 
   );
 }
 
-export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedAppchainToken, isValidator }) => {
+export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedAppchainToken, isValidator, isUnbonding }) => {
 
   const bg = useColorModeValue(
     'linear-gradient(137deg,#1486ff 4%, #0c4df5)',
@@ -184,6 +186,8 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
 
   const { global } = useGlobalStore();
   const [deposit, setDeposit] = useState(ZERO_DECIMAL);
+
+  const [unbonedStakes, setUnbondedStakes] = useState<UnbondedHistory[]>();
 
   const { data: rewards } = useSWR<RewardHistory[]>(
     appchain?.anchor_status && global.accountId ?
@@ -206,13 +210,17 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
       return;
     }
 
-    anchor?.get_validator_deposit_of({
-      validator_id: global.accountId
-    }).then(deposit => {
+    Promise.all([
+      anchor.get_validator_deposit_of({ validator_id: global.accountId }),
+      anchor?.get_unbonded_stakes_of({ account_id: global.accountId })
+    ]).then(([deposit, stakes]) => {
       setDeposit(DecimalUtil.fromString(deposit, OCT_TOKEN_DECIMALS));
+      setUnbondedStakes(stakes);
     });
-
+   
   }, [global, anchor]);
+
+  console.log(unbonedStakes);
 
   return (
     <>
@@ -240,12 +248,9 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
                         <MenuItem>
                           <Icon as={AiOutlineMenu} mr={2} boxSize={4} /> Staking History
                         </MenuItem>
-                        <MenuItem color="red">
-                          <Icon as={AiOutlineClose} mr={2} boxSize={4} /> Unbond Validator
-                        </MenuItem>
                       </MenuList>
                     </Menu>
-  
+
                   </HStack>
                 </Flex>
                 <VStack p={6} spacing={1}>
@@ -283,12 +288,14 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
               <Button
                 onClick={setRegisterValidatorModalOpen.on}
                 colorScheme="octo-blue"
-                isDisabled={!global.accountId}
+                isDisabled={!global.accountId || isUnbonding}
                 isFullWidth>
                 {
                   !global.accountId ?
                     'Please Login' :
-                    'Register Validator'
+                    isUnbonding ?
+                      'Unbonding' :
+                      'Register Validator'
                 }
               </Button>
             </Box>
