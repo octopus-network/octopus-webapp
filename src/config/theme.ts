@@ -178,6 +178,12 @@ const themeConfig = {
             textDecoration: 'underline'
           }
         }),
+        'blue-underline': {
+          color: '#2468f2',
+          _hover: {
+            textDecoration: 'underline'
+          }
+        },
         'gray-hover-blue': (props: GlobalStyleProps) => ({
           color: mode('#929AA6', '#A6A0BB')(props)
         }),

@@ -15,7 +15,7 @@ const state2color: Record<string, string> = {
   'Staging': 'blue',
   'Booting': 'orange',
   'Active': 'octo-blue.500',
-  'Staker': 'orange',
+  'Need Keys': 'teal',
   'Validating': 'octo-blue.500'
 }
 
@@ -27,7 +27,7 @@ const state2label: Record<string, string> = {
   'Staging': 'Staking',
   'Booting': 'Booting',
   'Active': 'Running',
-  'Staker': 'Staker',
+  'Need Keys': 'Need Keys',
   'Validating': 'Validating'
 }
 

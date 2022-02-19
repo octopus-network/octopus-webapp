@@ -95,3 +95,11 @@ export type WrappedAppchainToken = {
   changed_balance: string;
   price_in_usd: string;
 }
+
+export type ValidatorSessionKey = {
+  babe: string;
+  beefy: string;
+  grandpa: string;
+  imOnline: string;
+  octopus: string;
+}

@@ -27,7 +27,6 @@ import {
 } from '@chakra-ui/react';
 
 import {
-  Validator,
   AnchorContract,
   RewardHistory,
   AppchainInfoWithAnchorStatus,
@@ -57,6 +56,7 @@ import { DecimalUtil, ZERO_DECIMAL } from 'utils';
 type MyStakingProps = {
   appchain: AppchainInfoWithAnchorStatus | undefined;
   anchor: AnchorContract | undefined;
+  isValidator: boolean;
   wrappedAppchainToken: TokenContract | undefined;
 }
 
@@ -170,7 +170,7 @@ const StakingPopover: React.FC<StakingPopoverProps> = ({ trigger, type, helper, 
   );
 }
 
-export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedAppchainToken }) => {
+export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedAppchainToken, isValidator }) => {
 
   const bg = useColorModeValue(
     'linear-gradient(137deg,#1486ff 4%, #0c4df5)',
@@ -184,8 +184,6 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
 
   const { global } = useGlobalStore();
   const [deposit, setDeposit] = useState(ZERO_DECIMAL);
-
-  const { data: validators, error } = useSWR<Validator[]>(appchain ? `validators/${appchain?.appchain_id}` : null);
 
   const { data: rewards } = useSWR<RewardHistory[]>(
     appchain?.anchor_status && global.accountId ?
@@ -203,8 +201,6 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
 
   }, [rewards]);
 
-  const isInValidatorList = useMemo(() => validators?.some(v => v.validator_id === global.accountId) || false, [validators, global]);
-
   useEffect(() => {
     if (!anchor || !global.accountId) {
       return;
@@ -220,9 +216,9 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
 
   return (
     <>
-      <Box bg={isInValidatorList ? bg : whiteBg} position="relative" p={6} pt={4} pb={6} borderRadius="lg">
+      <Box bg={isValidator ? bg : whiteBg} position="relative" p={6} pt={4} pb={6} borderRadius="lg">
         {
-          isInValidatorList ?
+          isValidator ?
             <>
               <Image position="absolute" bottom="0" right="0" h="110%" src={myStakingBg} zIndex={0} />
               <Box position="relative" zIndex={1}>
@@ -287,8 +283,7 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
               <Button
                 onClick={setRegisterValidatorModalOpen.on}
                 colorScheme="octo-blue"
-                isLoading={!validators && !error}
-                isDisabled={(!validators && !error) || !global.accountId}
+                isDisabled={!global.accountId}
                 isFullWidth>
                 {
                   !global.accountId ?

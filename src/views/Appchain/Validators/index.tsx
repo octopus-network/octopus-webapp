@@ -26,7 +26,8 @@ import { TriangleUpIcon, TriangleDownIcon } from '@chakra-ui/icons';
 import {
   Validator,
   AnchorContract,
-  AppchainInfoWithAnchorStatus
+  AppchainInfoWithAnchorStatus,
+  ValidatorSessionKey
 } from 'types';
 
 import { ValidatorRow } from './ValidatorRow';
@@ -38,7 +39,10 @@ import { Empty } from 'components';
 
 type ValidatorsProps = {
   appchain: AppchainInfoWithAnchorStatus | undefined;
-  appchainApi: ApiPromise | undefined;
+  isLoadingValidators: boolean;
+  validators: Validator[] | undefined;
+  appchainValidators: string[] | undefined;
+  validatorSessionKeys: Record<string, ValidatorSessionKey> | undefined;
   anchor: AnchorContract | undefined;
 }
 
@@ -72,32 +76,49 @@ const SortButton: React.FC<SortButtonProps> = ({ sortIdx, indexArr, onChange, la
   );
 }
 
-export const Validators: React.FC<ValidatorsProps> = ({ appchain, anchor, appchainApi }) => {
+export const Validators: React.FC<ValidatorsProps> = ({ 
+  appchain, 
+  anchor, 
+  isLoadingValidators, 
+  validators, 
+  appchainValidators,
+  validatorSessionKeys
+}) => {
   const bg = useColorModeValue('white', '#15172c');
 
   const [showType, setShowType] = useState('all');
   const [sortIdx, setSortIdx] = useState(2);
 
-  const [appchainValidators, setAppchainValidators] = useState<string[]>();
   const [delegateModalOpen, setDelegateModalOpen] = useBoolean();
 
   const [toDelegateValidatorId, setToDelegateValidatorId] = useState('');
 
-  useEffect(() => {
-    appchainApi?.query?.session?.validators()
-      .then(vs => {
-        setAppchainValidators(vs.map(v => v.toString()));
-      });
-  }, [appchainApi]);
+  const filteredValidators = useMemo(() => {
 
-  const { data: validators, error } = useSWR<Validator[]>(appchain ? `validators/${appchain.appchain_id}` : null);
-
-  const sortedValidators = useMemo(() => {
-    if (!sortIdx || !validators?.length) {
+    if (showType === 'all' || !validators || !appchainValidators || !validatorSessionKeys) {
       return validators;
+    } else if (showType === 'validating') {
+      return validators.filter(
+        v => appchainValidators.some(s => s === encodeAddress(v.validator_id_in_appchain)) && validatorSessionKeys[v.validator_id]
+      );
+    } else if (showType === 'needKeys') {
+      return validators.filter(
+        v => appchainValidators.some(s => s === encodeAddress(v.validator_id_in_appchain)) && !validatorSessionKeys[v.validator_id]
+      );
+    } else if (showType === 'registered') {
+      return validators.filter(
+        v => !appchainValidators.some(s => s === encodeAddress(v.validator_id_in_appchain)) && !validatorSessionKeys[v.validator_id]
+      );
     }
 
-    let tmpArr: Validator[] = [...validators];
+  }, [validators, showType, appchainValidators, validatorSessionKeys]);
+
+  const sortedValidators = useMemo(() => {
+    if (!sortIdx || !filteredValidators?.length) {
+      return filteredValidators;
+    }
+
+    let tmpArr: Validator[] = [...filteredValidators];
 
     if (sortIdx === 1) {
       tmpArr.sort((a, b) => 
@@ -138,26 +159,7 @@ export const Validators: React.FC<ValidatorsProps> = ({ appchain, anchor, appcha
     }
 
     return tmpArr;
-  }, [validators, sortIdx]);
-
-  const computedValidatorCount = useMemo(() => {
-    if (!validators?.length) {
-      return 0;
-    }
-    if (!appchainValidators?.length) {
-      return validators.length;
-    } 
-    try {
-      if (showType === 'staker') {
-        return validators.reduce((t, v) => t + (!appchainValidators.some(s => s === encodeAddress(v.validator_id_in_appchain)) ? 1 : 0), 0);
-      } else if (showType === 'validating') {
-        return validators.reduce((t, v) => t + (appchainValidators.some(s => s === encodeAddress(v.validator_id_in_appchain)) ? 1 : 0), 0)
-      }
-    } catch(err) {}
-
-    return validators.length;
-    
-  }, [validators, appchainValidators, showType]);
+  }, [filteredValidators, sortIdx]);
 
   const onDelegate = (validatorId: string) => {
     setToDelegateValidatorId(validatorId);
@@ -168,16 +170,20 @@ export const Validators: React.FC<ValidatorsProps> = ({ appchain, anchor, appcha
     <>
       <Flex justifyContent="space-between" alignItems="center">
         <Heading fontSize="xl">Validators</Heading>
-        <HStack>
-          <Button variant={showType === 'staker' ? 'octo-blue' : 'octo-white'}
-            size="sm" onClick={() => setShowType('staker')}>Staker</Button>
-          <Button variant={showType === 'validating' ? 'octo-blue' : 'octo-white'}
-            size="sm" onClick={() => setShowType('validating')}>Validating</Button>
-          <Button variant={showType === 'all' ? 'octo-blue' : 'octo-white'}
-            size="sm" onClick={() => setShowType('all')}>All</Button>
-        </HStack>
+        <Box display={{ base: 'none', md: 'block' }}>
+          <HStack>
+            <Button variant={showType === 'registered' ? 'octo-blue' : 'octo-white'}
+              size="sm" onClick={() => setShowType('registered')}>Registered</Button>
+            <Button variant={showType === 'needKeys' ? 'octo-blue' : 'octo-white'}
+              size="sm" onClick={() => setShowType('needKeys')}>Need Keys</Button>
+            <Button variant={showType === 'validating' ? 'octo-blue' : 'octo-white'}
+              size="sm" onClick={() => setShowType('validating')}>Validating</Button>
+            <Button variant={showType === 'all' ? 'octo-blue' : 'octo-white'}
+              size="sm" onClick={() => setShowType('all')}>All</Button>
+          </HStack>
+        </Box>
       </Flex>
-      <Box p={2} bg={bg} mt={4} borderRadius="lg" pb={6}>
+      <Box p={2} bg={bg} mt={4} borderRadius="lg" pb={6} minH="320px">
         <Box p={6}>
           <Grid templateColumns={{ base: 'repeat(5, 1fr)', md: 'repeat(8, 1fr)', lg: 'repeat(10, 1fr)' }} gap={2}>
             <GridItem colSpan={2}>
@@ -201,25 +207,39 @@ export const Validators: React.FC<ValidatorsProps> = ({ appchain, anchor, appcha
           </Grid>
         </Box>
         {
-          !validators && !error ?
+          isLoadingValidators ?
             <Center minH="260px">
               <Spinner size="lg" thickness="5px" speed="1s" color="octo-blue.500" />
             </Center> :
-            computedValidatorCount ?
+            filteredValidators?.length ?
             <List spacing={3} mt={2}>
               {
-                sortedValidators?.map((v, idx) => (
-                  <ValidatorRow
-                    validator={v}
-                    key={`validator-${idx}`}
-                    anchor={anchor}
-                    appchainId={appchain?.appchain_id}
-                    appchainValidators={appchainValidators}
-                    ftMetadata={appchain?.appchain_metadata.fungible_token_metadata}
-                    validatorSetHistoryEndIndex={appchain?.anchor_status?.index_range_of_validator_set_history?.end_index}
-                    showType={showType} 
-                    onDelegate={onDelegate} />
-                ))
+                sortedValidators?.map((v, idx) => {
+                  let ss58Address: string;
+                  try {
+                    ss58Address = encodeAddress(v.validator_id_in_appchain);
+                  } catch (err) {
+                    ss58Address = '';
+                  }
+
+                  const isInAppchain = !!(appchainValidators?.some(s => s === ss58Address));
+                  const haveSessionKey = !!(validatorSessionKeys?.[v.validator_id]);
+
+                  return (
+                    <ValidatorRow
+                      validator={v}
+                      key={`validator-${idx}`}
+                      anchor={anchor}
+                      appchainId={appchain?.appchain_id}
+                      isLoading={!appchainValidators?.length || !validatorSessionKeys}
+                      isInAppchain={isInAppchain}
+                      haveSessionKey={haveSessionKey}
+                      ftMetadata={appchain?.appchain_metadata.fungible_token_metadata}
+                      validatorSetHistoryEndIndex={appchain?.anchor_status?.index_range_of_validator_set_history?.end_index}
+                      showType={showType} 
+                      onDelegate={onDelegate} />
+                  )
+                })
               }
             </List> :
             <Empty />

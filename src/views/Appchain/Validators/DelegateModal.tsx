@@ -44,7 +44,6 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({ isOpen, onClose, v
   const inputRef = React.useRef<any>();
 
   const { data: balances } = useSWR(global.accountId ? `balances/${global.accountId}` : null);
- 
 
   const amountInDecimal = useMemo(() => DecimalUtil.fromString(amount), [amount]);
   const octBalance = useMemo(() => DecimalUtil.fromString(balances?.['OCT']), [balances]);

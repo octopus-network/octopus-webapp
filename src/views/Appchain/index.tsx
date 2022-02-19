@@ -14,7 +14,9 @@ import {
   AppchainInfoWithAnchorStatus, 
   AnchorContract, 
   AppchainSettings, 
-  TokenContract
+  ValidatorSessionKey,
+  TokenContract,
+  Validator
 } from 'types';
 
 import { useParams } from 'react-router-dom';
@@ -32,6 +34,10 @@ export const Appchain: React.FC = () => {
   const { global } = useGlobalStore();
   const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(id ? `appchain/${id}` : null);
   const { data: appchainSettings } = useSWR<AppchainSettings>(id ? `appchain-settings/${id}` : null);
+  const { data: validators, error: validatorsError } = useSWR<Validator[]>(appchain ? `validators/${appchain.appchain_id}` : null);
+
+  const [appchainValidators, setAppchainValidators] = useState<string[]>();
+  const [validatorSessionKeys, setValidatorSessionKeys] = useState<Record<string, ValidatorSessionKey>>();
 
   const [appchainApi, setAppchainApi] = useState<ApiPromise>();
 
@@ -89,6 +95,36 @@ export const Appchain: React.FC = () => {
 
   }, [appchainSettings]);
 
+  useEffect(() => {
+    appchainApi?.query?.session?.validators()
+      .then(vs => {
+        setAppchainValidators(vs.map(v => v.toString()));
+      });
+
+    if (validators) {
+      appchainApi?.query?.session?.nextKeys.multi(
+        validators.map(v => v.validator_id_in_appchain)
+      ).then(keys => {
+        let tmpObj: Record<string, ValidatorSessionKey> = {};
+        keys.forEach(
+          (key, idx) => tmpObj[validators[idx].validator_id] = key.toJSON() as ValidatorSessionKey
+        );
+
+        setValidatorSessionKeys(tmpObj);
+      });
+    }
+    
+  }, [appchainApi, validators]);
+
+  const isValidator = useMemo(() => validators?.some(v => v.validator_id === global.accountId) || false, [validators, global]);
+  
+  const needKeys = useMemo(() => {
+    if (!validatorSessionKeys || !global.accountId) {
+      return false;
+    }
+    return isValidator && !validatorSessionKeys[global.accountId];
+  }, [isValidator, global, validatorSessionKeys]);
+
   return (
     <>
       <Container>
@@ -97,19 +133,34 @@ export const Appchain: React.FC = () => {
         </Box>
         <Grid templateColumns={{ base: 'repeat(3, 1fr)', lg: 'repeat(5, 1fr)' }} gap={5} mt={5}>
           <GridItem colSpan={3}>
-            <Descriptions appchain={appchain} appchainApi={appchainApi} appchainSettings={appchainSettings} />
+
+            <Descriptions 
+              appchain={appchain} 
+              appchainApi={appchainApi} 
+              appchainSettings={appchainSettings} />
+              
           </GridItem>
           <GridItem colSpan={{ base: 3, lg: 2 }}>
-            <MyStaking appchain={appchain} anchor={anchor} wrappedAppchainToken={wrappedAppchainToken} />
+
+            <MyStaking 
+              appchain={appchain}
+              anchor={anchor}
+              isValidator={isValidator}
+              wrappedAppchainToken={wrappedAppchainToken} />
+
             <Box mt={5}>
-              <MyNode appchainId={id} />
+              <MyNode appchainId={id} needKeys={needKeys} appchainApi={appchainApi} />
             </Box>
+
           </GridItem>
         </Grid>
         <Box mt={8}>
           <Validators 
-            appchain={appchain} 
-            appchainApi={appchainApi}
+            appchain={appchain}
+            isLoadingValidators={!validators && !validatorsError}
+            validators={validators}
+            appchainValidators={appchainValidators}
+            validatorSessionKeys={validatorSessionKeys}
             anchor={anchor} />
         </Box>
       </Container>
