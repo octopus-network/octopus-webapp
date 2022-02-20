@@ -56,7 +56,7 @@ const statesRecord: any = {
   '0': { label: 'Init', color: 'blue', state: 0 },
   '10': { label: 'Applying', color: 'teal', state: 10 },
   '11': { label: 'Apply Failed', color: 'red', state: 11 },
-  '12': { label: 'Running', color: 'green', state: 12 },
+  '12': { label: 'Running', color: 'octo-blue', state: 12 },
   '20': { label: 'Destroying', color: 'teal', state: 20 },
   '21': { label: 'Destroy Failed', color: 'orange', state: 21 },
   '22': { label: 'Destroyed', color: 'gray', state: 22 }
@@ -198,14 +198,16 @@ export const MyNode: React.FC<MyNodeProps> = ({ appchainId, needKeys, appchainAp
             <MenuButton as={Button} size="sm" colorScheme="octo-blue" variant="ghost" position="relative">
               <Icon as={BsThreeDots} boxSize={5} />
               {
-                needKeys && <Box position="absolute" top="0px" right="0px" boxSize={2} bg="red" borderRadius="full" />
+                needKeys ?
+                  <Box position="absolute" top="0px" right="0px" boxSize={2} bg="red" borderRadius="full" /> : null
               }
             </MenuButton>
             <MenuList>
               <MenuItem position="relative" onClick={setSetSessionKeyModalOpen.on} isDisabled={!appchainApi}>
                 <Icon as={TiKey} mr={2} boxSize={4} /> Set Session Key
                 {
-                  needKeys && <Box position="absolute" top="10px" right="10px" boxSize={2} bg="red" borderRadius="full" />
+                  needKeys ?
+                    <Box position="absolute" top="10px" right="10px" boxSize={2} bg="red" borderRadius="full" /> : null
                 }
               </MenuItem>
               <MenuItem isDisabled={!accessKeyInLocalStorage} onClick={onClearCache}>

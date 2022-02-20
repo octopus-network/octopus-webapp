@@ -10,3 +10,4 @@ export * from './Breadcrumb';
 export * from './BaseModal';
 export * from './Empty';
 export * from './Alert';
+export * from './RippleDot';

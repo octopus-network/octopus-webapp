@@ -81,7 +81,8 @@ export const Appchain: React.FC = () => {
           'disable_delegation',
           'decrease_stake',
           'withdraw_validator_rewards',
-          'unbond_stake'
+          'unbond_stake',
+          'withdraw_stake'
         ]
       }
     );

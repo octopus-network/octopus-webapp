@@ -25,9 +25,8 @@ import {
   Delegator
 } from 'types';
 
-import {
-  OCT_TOKEN_DECIMALS,
-} from 'primitives';
+import { OCT_TOKEN_DECIMALS } from 'primitives';
+import { RippleDot } from 'components';
 
 import { useGlobalStore } from 'stores';
 import { ChevronRightIcon } from '@chakra-ui/icons';
@@ -147,7 +146,7 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
         <Flex justifyContent="center">
           {
             isLoading ?
-              <BounceLoader size={14} color="#2468f2" /> :
+              <RippleDot size={24} color="#2468f2" /> :
               <StateBadge state={
                 validator?.is_unbonding ? 'Unbonding' :
                 isInAppchain && haveSessionKey ? 'Validating' : isInAppchain ? 'Need Keys' : 'Registered'

@@ -112,4 +112,8 @@ export class AnchorContract extends Contract {
   get_unbonded_stakes_of(args: { account_id: string }): Promise<UnbondedHistory[]> {
     return this.get_unbonded_stakes_of(args);
   }
+
+  withdraw_stake(args: { account_id: string }, gas: string): Promise<void> {
+    return this.withdraw_stake(args, gas);
+  }
 }

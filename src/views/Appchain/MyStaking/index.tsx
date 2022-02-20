@@ -15,11 +15,6 @@ import {
   Icon,
   Flex,
   useBoolean,
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  PopoverBody,
-  useToast,
   Menu,
   MenuButton,
   MenuList,
@@ -34,14 +29,10 @@ import {
   UnbondedHistory
 } from 'types';
 
-import {
-  COMPLEX_CALL_GAS,
-  OCT_TOKEN_DECIMALS,
-  FAILED_TO_REDIRECT_MESSAGE
-} from 'primitives';
+import { OCT_TOKEN_DECIMALS } from 'primitives';
 
 import { AiOutlineMenu } from 'react-icons/ai';
-import { BsThreeDots } from 'react-icons/bs';
+import { BsThreeDots, BsCheckCircle } from 'react-icons/bs';
 import { AddIcon, MinusIcon } from '@chakra-ui/icons';
 
 import myStakingBg from 'assets/my-staking-bg.png';
@@ -50,8 +41,9 @@ import empty from 'assets/empty.png';
 import { useGlobalStore } from 'stores';
 import { RegisterValidatorModal } from './RegisterValidatorModal';
 import { RewardsModal } from './RewardsModal';
+import { StakesModal } from './StakesModal';
+import { StakingPopover } from './StakingPopover';
 
-import { AmountInput } from 'components';
 import { DecimalUtil, ZERO_DECIMAL } from 'utils';
 
 type MyStakingProps = {
@@ -60,116 +52,6 @@ type MyStakingProps = {
   isValidator: boolean;
   isUnbonding: boolean;
   wrappedAppchainToken: TokenContract | undefined;
-}
-
-type StakingPopoverProps = {
-  type: 'increase' | 'decrease';
-  anchor: AnchorContract | undefined;
-  helper?: string;
-  trigger: any;
-}
-
-const StakingPopover: React.FC<StakingPopoverProps> = ({ trigger, type, helper, anchor }) => {
-  const initialFocusRef = React.useRef<any>();
-
-  const inputRef = React.useRef<any>();
-  const [amount, setAmount] = useState('');
-
-  const [isSubmiting, setIsSubmiting] = useBoolean(false);
-
-  const { global } = useGlobalStore();
-  const toast = useToast();
-
-  const { data: balances } = useSWR(global.accountId ? `balances/${global.accountId}` : null);
-  const octBalance = useMemo(() => DecimalUtil.fromString(balances?.['OCT']), [balances]);
-
-  const amountInDecimal = useMemo(() => DecimalUtil.fromString(amount), [amount]);
-
-  const onOpen = () => {
-    setTimeout(() => {
-      inputRef.current?.focus();
-    }, 300);
-  }
-
-  const onSubmit = async () => {
-    setIsSubmiting.on();
-
-    const amountStr = DecimalUtil.toU64(amountInDecimal, OCT_TOKEN_DECIMALS).toString();
-
-    try {
-      if (type === 'increase') {
-        await global.octToken?.ft_transfer_call(
-          {
-            receiver_id: anchor?.contractId || '',
-            amount: amountStr,
-            msg: '"IncreaseStake"'
-          },
-          COMPLEX_CALL_GAS,
-          1,
-        );
-      } else {
-        await anchor?.decrease_stake(
-          { amount: DecimalUtil.toU64(amountInDecimal, OCT_TOKEN_DECIMALS).toString() },
-          COMPLEX_CALL_GAS
-        );
-      }
-
-    } catch (err: any) {
-
-      if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
-        return;
-      }
-
-      toast({
-        position: 'top-right',
-        title: 'Error',
-        description: err.toString(),
-        status: 'error'
-      });
-
-    }
-
-    setIsSubmiting.off();
-  }
-
-  return (
-    <Popover placement="bottom" initialFocusRef={initialFocusRef} onOpen={onOpen}>
-      <PopoverTrigger>
-        {trigger}
-      </PopoverTrigger>
-      <PopoverContent w="360px">
-        <PopoverBody p={4}>
-          <Heading fontSize="md">{type === 'increase' ? 'Increase Stake' : 'Decrease Stake'}</Heading>
-          {
-            helper ? <Text variant="gray" mt={3}>{helper}</Text> : null
-          }
-          <Box mt={3}>
-            <AmountInput placeholder="Amount of OCT" refObj={inputRef} onChange={v => setAmount(v)} value={amount} />
-          </Box>
-          <Box mt={3}>
-            <Button
-              colorScheme="octo-blue"
-              isDisabled={
-                isSubmiting ||
-                amountInDecimal.lte(ZERO_DECIMAL) ||
-                amountInDecimal.gt(octBalance)
-              }
-              onClick={onSubmit}
-              isLoading={isSubmiting}
-              isFullWidth>
-              {
-                amountInDecimal.lte(ZERO_DECIMAL) ?
-                  'Input Amount' :
-                  amountInDecimal.gt(octBalance) ?
-                    'Insufficient Balance' :
-                    type === 'increase' ? 'Increase' : 'Decrease'
-              }
-            </Button>
-          </Box>
-        </PopoverBody>
-      </PopoverContent>
-    </Popover>
-  );
 }
 
 export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedAppchainToken, isValidator, isUnbonding }) => {
@@ -183,6 +65,7 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
 
   const [registerValidatorModalOpen, setRegisterValidatorModalOpen] = useBoolean(false);
   const [rewardsModalOpen, setRewardsModalOpen] = useBoolean(false);
+  const [stakesModalOpen, setStakesModalOpen] = useBoolean(false);
 
   const { global } = useGlobalStore();
   const [deposit, setDeposit] = useState(ZERO_DECIMAL);
@@ -220,8 +103,6 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
    
   }, [global, anchor]);
 
-  console.log(unbonedStakes);
-
   return (
     <>
       <Box bg={isValidator ? bg : whiteBg} position="relative" p={6} pt={4} pb={6} borderRadius="lg">
@@ -241,12 +122,20 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
                       }
                     </Box>
                     <Menu>
-                      <MenuButton as={Button} size="sm" variant="whiteAlphaGhost">
+                      <MenuButton as={Button} size="sm" variant="whiteAlphaGhost" position="relative">
                         <Icon as={BsThreeDots} boxSize={5} />
+                        {
+                          unbonedStakes?.length ?
+                            <Box position="absolute" top="0px" right="0px" boxSize={2} bg="red" borderRadius="full" /> : null
+                        }
                       </MenuButton>
                       <MenuList>
-                        <MenuItem>
-                          <Icon as={AiOutlineMenu} mr={2} boxSize={4} /> Withdraw Stakes
+                        <MenuItem position="relative" onClick={setStakesModalOpen.on}>
+                          <Icon as={BsCheckCircle} mr={2} boxSize={4} /> Withdraw Stakes
+                          {
+                            unbonedStakes?.length ?
+                              <Box position="absolute" top="10px" right="10px" boxSize={2} bg="red" borderRadius="full" /> : null
+                          }
                         </MenuItem>
                         <MenuItem>
                           <Icon as={AiOutlineMenu} mr={2} boxSize={4} /> Staking History
@@ -317,6 +206,12 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
         anchor={anchor}
         wrappedAppchainToken={wrappedAppchainToken}
         rewards={rewards} />
+
+      <StakesModal
+        isOpen={stakesModalOpen}
+        onClose={setStakesModalOpen.off}
+        anchor={anchor}
+        stakes={unbonedStakes} />
     </>
   );
 }
