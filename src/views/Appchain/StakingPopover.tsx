@@ -30,11 +30,12 @@ import { DecimalUtil, ZERO_DECIMAL } from 'utils';
 type StakingPopoverProps = {
   type: 'increase' | 'decrease';
   anchor: AnchorContract | undefined;
+  validatorId?: string;
   helper?: string;
   trigger: any;
 }
 
-export const StakingPopover: React.FC<StakingPopoverProps> = ({ trigger, type, helper, anchor }) => {
+export const StakingPopover: React.FC<StakingPopoverProps> = ({ trigger, type, helper, anchor, validatorId }) => {
   const initialFocusRef = React.useRef<any>();
 
   const inputRef = React.useRef<any>();
@@ -57,6 +58,11 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({ trigger, type, h
   }
 
   const onSubmit = async () => {
+
+    if (!anchor) {
+      return;
+    }
+
     setIsSubmiting.on();
 
     const amountStr = DecimalUtil.toU64(amountInDecimal, OCT_TOKEN_DECIMALS).toString();
@@ -67,16 +73,21 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({ trigger, type, h
           {
             receiver_id: anchor?.contractId || '',
             amount: amountStr,
-            msg: '"IncreaseStake"'
+            msg: !validatorId ? '"IncreaseStake"' : JSON.stringify({
+              IncreaseDelegation: {
+                validator_id: validatorId || ''
+              }
+            })
           },
           COMPLEX_CALL_GAS,
           1,
         );
       } else {
-        await anchor?.decrease_stake(
-          { amount: DecimalUtil.toU64(amountInDecimal, OCT_TOKEN_DECIMALS).toString() },
-          COMPLEX_CALL_GAS
-        );
+
+        const method = validatorId ? anchor.decrease_delegation : anchor.decrease_stake;
+        const params = validatorId ? { amount: amountStr, validator_id: validatorId || '' } : { amount: amountStr };
+
+        await method(params, COMPLEX_CALL_GAS );
       }
 
     } catch (err: any) {
@@ -104,7 +115,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({ trigger, type, h
       </PopoverTrigger>
       <PopoverContent w="360px">
         <PopoverBody p={4}>
-          <Heading fontSize="md">{type === 'increase' ? 'Increase Stake' : 'Decrease Stake'}</Heading>
+          <Heading fontSize="md">{(type === 'increase' ? 'Increase' : 'Decrease') + (validatorId ? ' Delegation' : ' Stake')}</Heading>
           {
             helper ? <Text variant="gray" mt={3}>{helper}</Text> : null
           }

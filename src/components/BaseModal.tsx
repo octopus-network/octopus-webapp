@@ -26,7 +26,7 @@ export const BaseModal: React.FC<BaseModalProps> = (props) => {
       motionPreset="slideInBottom" onClose={onClose}>
       <ModalOverlay className="backdrop-blur transition" />
       <ModalContent ml={3} mr={3} maxW={maxW} borderRadius="lg">
-        <ModalHeader>{title}</ModalHeader>
+        <ModalHeader maxW="calc(100% - 60px)" whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden">{title}</ModalHeader>
         <ModalCloseButton />
         <ModalBody pb={6}>
           { children }

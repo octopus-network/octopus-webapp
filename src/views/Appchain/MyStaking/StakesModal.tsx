@@ -141,7 +141,8 @@ export const StakesModal: React.FC<RewardsModalProps> = ({ isOpen, onClose, stak
                 }
               </Tbody>
             </Table>
-          </Box> : <Empty message="No Unbonded Stakes" />
+          </Box> : 
+          <Empty message="No Unbonded Stakes" helper="If you just unbonded your stakes, it will be displayed in next era." />
       }
     </BaseModal>
   );

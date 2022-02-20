@@ -163,7 +163,7 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({ 
         </FormControl>
 
         <HStack>
-          <Text>Can be delegated to?</Text>
+          <Text>Accept delegation</Text>
           <Switch onChange={e => setCanBeDelegatedTo(e.target.checked)} size="lg" defaultChecked={canBeDelegatedTo} />
         </HStack>
       </List>

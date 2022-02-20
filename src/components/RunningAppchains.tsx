@@ -27,7 +27,10 @@ import { DecimalUtil, ZERO_DECIMAL } from 'utils';
 import { OCT_TOKEN_DECIMALS } from 'primitives';
 
 import {
-  AppchainInfo
+  AppchainInfo,
+  AppchainSettings,
+  Delegator,
+  Validator
 } from 'types';
 
 type RunningAppchainsProps = {
@@ -59,7 +62,14 @@ const RunningItem: React.FC<RunnintItemProps> = ({ whiteBg = false, data }) => {
   const icon = useMemo(() => data.appchain_metadata?.fungible_token_metadata?.icon || '', [data]);
 
   const { data: prices } = useSWR(`prices/OCT,${data.appchain_metadata?.fungible_token_metadata?.symbol}`);
-  const { data: appchainSettings } = useSWR(`appchain-settings/${data.appchain_id}`);
+  const { data: appchainSettings } = useSWR<AppchainSettings>(`appchain-settings/${data.appchain_id}`);
+  const { data: validators } = useSWR<Validator[]>(`validators/${data.appchain_id}`);
+
+  const { data: delegatorsArr } = useSWR<Delegator[][]>(
+    validators?.length ? `${validators.map(v => v.validator_id).join(',')}/${data.appchain_id}/delegators` : null
+  );
+
+  const delegatorsCount = useMemo(() => delegatorsArr?.length ? delegatorsArr.flat(Infinity).length : 0, [delegatorsArr]);
 
   const apy = useMemo(() => {
     if (!appchainSettings || !prices) return ZERO_DECIMAL;
@@ -90,25 +100,26 @@ const RunningItem: React.FC<RunnintItemProps> = ({ whiteBg = false, data }) => {
       </Flex>
       <Flex mt={6} justifyContent="space-between">
         <VStack alignItems="flex-start">
-          <Text variant="gray">Validators</Text>
-          <Heading fontSize="xl">{data.validator_count}</Heading>
+          <Text variant="gray" fontSize="sm">Validators</Text>
+          <Heading fontSize="lg">{data.validator_count}</Heading>
         </VStack>
         <VStack alignItems="flex-start">
-          <Text variant="gray">Staked</Text>
-          <Flex>
-            <Heading fontSize="xl">
-              {
-                DecimalUtil.beautify(
-                  DecimalUtil.fromString(data.total_stake, OCT_TOKEN_DECIMALS)
-                )
-              }
-            </Heading>
-            <Heading fontSize="sm" mt="6px" ml={2}>OCT</Heading>
-          </Flex>
+          <Text variant="gray" fontSize="sm">Delegators</Text>
+          <Heading fontSize="lg">{delegatorsCount}</Heading>
         </VStack>
         <VStack alignItems="flex-start">
-          <Text variant="gray">APY</Text>
-          <Heading fontSize="xl">
+          <Text variant="gray" fontSize="sm">Staked OCT</Text>
+          <Heading fontSize="lg">
+            {
+              DecimalUtil.beautify(
+                DecimalUtil.fromString(data.total_stake, OCT_TOKEN_DECIMALS)
+              )
+            }
+          </Heading>
+        </VStack>
+        <VStack alignItems="flex-start">
+          <Text variant="gray" fontSize="sm">APY</Text>
+          <Heading fontSize="lg">
             { apy.gt(ZERO_DECIMAL) ? `${DecimalUtil.beautify(apy, 2)}%` : '-' }
           </Heading>
         </VStack>
@@ -132,28 +143,20 @@ const BlankItem: React.FC<Omit<RunnintItemProps, 'data'>> = ({ whiteBg }) => {
       </Flex>
       <Flex mt={6} justifyContent="space-between">
         <VStack alignItems="flex-start">
-          <Skeleton>
-            <Text variant="gray">loading</Text>
-          </Skeleton>
-          <Skeleton>
-            <Heading fontSize="xl">loading</Heading>
-          </Skeleton>
+          <Skeleton><Text variant="gray" fontSize="sm">loading</Text></Skeleton>
+          <Skeleton><Heading fontSize="lg">loading</Heading></Skeleton>
         </VStack>
         <VStack alignItems="flex-start">
-          <Skeleton>
-            <Text variant="gray">loading</Text>
-          </Skeleton>
-          <Skeleton>
-            <Heading fontSize="xl">loading</Heading>
-          </Skeleton>
+          <Skeleton><Text variant="gray" fontSize="sm">loading</Text></Skeleton>
+          <Skeleton><Heading fontSize="lg">loading</Heading></Skeleton>
         </VStack>
         <VStack alignItems="flex-start">
-          <Skeleton>
-            <Text variant="gray">loading</Text>
-          </Skeleton>
-          <Skeleton>
-            <Heading fontSize="xl">loading</Heading>
-          </Skeleton>
+          <Skeleton><Text variant="gray" fontSize="sm">loading</Text></Skeleton>
+          <Skeleton><Heading fontSize="lg">loading</Heading></Skeleton>
+        </VStack>
+        <VStack alignItems="flex-start">
+          <Skeleton><Text variant="gray" fontSize="sm">loading</Text></Skeleton>
+          <Skeleton><Heading fontSize="lg">loading</Heading></Skeleton>
         </VStack>
       </Flex>
     </Box>

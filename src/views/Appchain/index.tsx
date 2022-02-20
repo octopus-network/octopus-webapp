@@ -74,7 +74,8 @@ export const Appchain: React.FC = () => {
           'get_wrapped_appchain_token',
           'get_delegator_deposit_of',
           'get_validator_profile',
-          'get_unbonded_stakes_of'
+          'get_unbonded_stakes_of',
+          'get_delegator_rewards_of'
         ],
         changeMethods: [
           'enable_delegation',
@@ -82,7 +83,10 @@ export const Appchain: React.FC = () => {
           'decrease_stake',
           'withdraw_validator_rewards',
           'unbond_stake',
-          'withdraw_stake'
+          'withdraw_stake',
+          'unbond_delegation',
+          'withdraw_delegator_rewards',
+          'decrease_delegation'
         ]
       }
     );
@@ -197,13 +201,13 @@ export const Appchain: React.FC = () => {
         <DrawerOverlay />
         <DrawerContent>
           <ValidatorProfile 
-            appchainId={id}
+            appchain={appchain}
+            wrappedAppchainToken={wrappedAppchainToken}
             anchor={anchor}
             validatorId={validatorId}
             appchainValidators={appchainValidators}
             validators={validators}
             validatorSessionKeys={validatorSessionKeys}
-            lastEra={appchain?.anchor_status?.index_range_of_validator_set_history?.end_index}
             onDrawerClose={onDrawerClose} />
         </DrawerContent>
       </Drawer>

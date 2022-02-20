@@ -4,7 +4,7 @@ import {
   StorageDeposit, 
   WrappedAppchainToken,
   ValidatorProfile,
-  Delegator,
+  RewardHistory,
   UnbondedHistory
 } from 'types';
 
@@ -28,6 +28,13 @@ type GetDepositForArgs = {
 type WithdrawDepositOfArgs = {
   appchain_id: string;
   amount: string;
+}
+
+type GetDelegatorRewardsOfArgs = {
+  start_era: string;
+  end_era: string;
+  delegator_id: string;
+  validator_id: string;
 }
 
 export class TokenContract extends Contract {
@@ -97,6 +104,10 @@ export class AnchorContract extends Contract {
     return this.withdraw_validator_rewards(args, gas);
   }
 
+  withdraw_delegator_rewards(args: { validator_id: string, delegator_id: string }, gas: string): Promise<void> {
+    return this.withdraw_delegator_rewards(args, gas);
+  }
+
   get_wrapped_appchain_token(): Promise<WrappedAppchainToken> {
     return this.get_wrapped_appchain_token();
   }
@@ -109,11 +120,23 @@ export class AnchorContract extends Contract {
     return this.unbond_stake(args, gas);
   }
 
+  unbond_delegation(args: { validator_id: string }, gas: string): Promise<void> {
+    return this.unbond_delegation(args, gas);
+  }
+
   get_unbonded_stakes_of(args: { account_id: string }): Promise<UnbondedHistory[]> {
     return this.get_unbonded_stakes_of(args);
   }
 
   withdraw_stake(args: { account_id: string }, gas: string): Promise<void> {
     return this.withdraw_stake(args, gas);
+  }
+
+  get_delegator_rewards_of(args: GetDelegatorRewardsOfArgs): Promise<RewardHistory[]> {
+    return this.get_delegator_rewards_of(args);
+  }
+
+  decrease_delegation(args: { validator_id: string, amount: string }, gas: string): Promise<void> {
+    return this.decrease_delegation(args, gas);
   }
 }

@@ -20,20 +20,21 @@ import {
   useToast
 } from '@chakra-ui/react';
 
-import { 
-  AppchainInfoWithAnchorStatus, 
-  RewardHistory, AnchorContract, 
-  TokenContract 
+import {
+  AppchainInfoWithAnchorStatus,
+  RewardHistory,
+  AnchorContract,
+  TokenContract
 } from 'types';
 
 import { BaseModal, Empty } from 'components';
 import { DecimalUtil, ZERO_DECIMAL } from 'utils';
 import { useGlobalStore } from 'stores';
 
-import { 
-  SIMPLE_CALL_GAS, 
-  FAILED_TO_REDIRECT_MESSAGE, 
-  COMPLEX_CALL_GAS 
+import {
+  SIMPLE_CALL_GAS,
+  FAILED_TO_REDIRECT_MESSAGE,
+  COMPLEX_CALL_GAS
 } from 'primitives';
 
 type RewardsModalProps = {
@@ -41,11 +42,20 @@ type RewardsModalProps = {
   appchain: AppchainInfoWithAnchorStatus | undefined;
   anchor: AnchorContract | undefined;
   wrappedAppchainToken: TokenContract | undefined;
+  validatorId?: string;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const RewardsModal: React.FC<RewardsModalProps> = ({ isOpen, onClose, rewards, appchain, anchor, wrappedAppchainToken }) => {
+export const RewardsModal: React.FC<RewardsModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  rewards, 
+  appchain, 
+  anchor, 
+  wrappedAppchainToken, 
+  validatorId 
+}) => {
 
   const bg = useColorModeValue('#f6f7fa', '#15172c');
 
@@ -74,7 +84,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({ isOpen, onClose, rew
       );
     });
   }, [wrappedAppchainToken, global]);
-  
+
   const unwithdraedRewards = useMemo(() => {
     if (!rewards?.length) {
       return ZERO_DECIMAL;
@@ -96,13 +106,25 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({ isOpen, onClose, rew
   );
 
   const onCliamRewards = () => {
+    if (!anchor) {
+      return;
+    }
+
     if (wrappedAppchainTokenStorageBalance.lte(ZERO_DECIMAL)) {
       setNeedDepositStorage.on();
       return;
     }
     setIsClaiming.on();
-    anchor?.withdraw_validator_rewards(
-      { validator_id: global.accountId },
+
+    const method = validatorId ? anchor.withdraw_delegator_rewards : anchor.withdraw_validator_rewards;
+
+    const params = validatorId ? {
+      validator_id: validatorId,
+      delegator_id: global.accountId || ''
+    } : { validator_id: global.accountId };
+
+    method(
+      params,
       COMPLEX_CALL_GAS
     ).catch(err => {
       if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
@@ -141,31 +163,31 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({ isOpen, onClose, rew
   }
 
   return (
-    <BaseModal 
-      isOpen={isOpen} 
+    <BaseModal
+      isOpen={isOpen}
       onClose={onClose}
       maxW="520px"
       title={needDepositStorage ? 'Tips' : 'Rewards'}>
-        {
-          needDepositStorage ?
+      {
+        needDepositStorage ?
           <Box p={4} borderRadius="lg">
             <Heading fontSize="lg" lineHeight="35px">
               It seems that you haven't setup your account on wrapped {appchain?.appchain_metadata?.fungible_token_metadata.symbol} token yet.
             </Heading>
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mt={6}>
               <Button onClick={setNeedDepositStorage.off}>Maybe Later</Button>
-              <Button colorScheme="octo-blue" onClick={onDepositStorage} 
+              <Button colorScheme="octo-blue" onClick={onDepositStorage}
                 isDisabled={isDepositingStorage} isLoading={isDepositingStorage}>Setup Right Now!</Button>
             </SimpleGrid>
           </Box> :
           <>
             <Box p={4} bg={bg} borderRadius="lg">
-              <Flex justifyContent="space-between">
-                <Text variant="gray">Total rewards: </Text>
+              <Flex justifyContent="space-between" alignItems="center">
+                <Text variant="gray">Total Rewards</Text>
                 <Heading fontSize="md">{DecimalUtil.beautify(totalRewards)} {appchain?.appchain_metadata?.fungible_token_metadata.symbol}</Heading>
               </Flex>
-              <Flex justifyContent="space-between" mt={3}>
-                <Text variant="gray">Unclaimed rewards: </Text>
+              <Flex justifyContent="space-between" alignItems="center" mt={3}>
+                <Text variant="gray">Unclaimed Rewards</Text>
                 <HStack>
                   <Heading fontSize="md">{DecimalUtil.beautify(unwithdraedRewards)} {appchain?.appchain_metadata?.fungible_token_metadata.symbol}</Heading>
                   <Button colorScheme="octo-blue" size="sm" onClick={onCliamRewards} isLoading={isClaiming}
@@ -175,37 +197,37 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({ isOpen, onClose, rew
             </Box>
             {
               rewards?.length ?
-              <Box maxH="40vh" overflow="scroll" mt={3}>
-                <Table>
-                  <Thead>
-                    <Tr>
-                      <Th>Era</Th>
-                      <Th isNumeric>Reward</Th>
-                      <Th isNumeric>Unclaimed</Th>
-                    </Tr>
-                  </Thead>
-                  <Tbody>
-                    {
-                      rewards?.map((r, idx) => (
-                        <Tr key={`tr-${idx}`}>
-                          <Td>{r.era_number}</Td>
-                          <Td isNumeric>
-                            { DecimalUtil.beautify(DecimalUtil.fromString(r.total_reward, appchain?.appchain_metadata?.fungible_token_metadata.decimals)) }
-                          </Td>
-                          <Td isNumeric>
-                            { DecimalUtil.beautify(DecimalUtil.fromString(r.unwithdrawn_reward, appchain?.appchain_metadata?.fungible_token_metadata.decimals)) }
-                          </Td>
-                        </Tr>
-                      ))
-                    }
-                  </Tbody>
-                </Table>
-              </Box> : <Empty message="No Rewards" />
+                <Box maxH="40vh" overflow="scroll" mt={3}>
+                  <Table>
+                    <Thead>
+                      <Tr>
+                        <Th>Era</Th>
+                        <Th isNumeric>Reward</Th>
+                        <Th isNumeric>Unclaimed</Th>
+                      </Tr>
+                    </Thead>
+                    <Tbody>
+                      {
+                        rewards?.map((r, idx) => (
+                          <Tr key={`tr-${idx}`}>
+                            <Td>{r.era_number}</Td>
+                            <Td isNumeric>
+                              {DecimalUtil.beautify(DecimalUtil.fromString(r.total_reward, appchain?.appchain_metadata?.fungible_token_metadata.decimals))}
+                            </Td>
+                            <Td isNumeric>
+                              {DecimalUtil.beautify(DecimalUtil.fromString(r.unwithdrawn_reward, appchain?.appchain_metadata?.fungible_token_metadata.decimals))}
+                            </Td>
+                          </Tr>
+                        ))
+                      }
+                    </Tbody>
+                  </Table>
+                </Box> : <Empty message="No Rewards" />
             }
-            
+
           </>
-        }
-      
+      }
+
     </BaseModal>
   );
 }

@@ -33,8 +33,10 @@ export const DelegatorsTable: React.FC<DelegatorsTableProps> = ({ delegators }) 
       {
         delegators.map(delegator => (
           <Tr key={`tr-${delegator.delegator_id}`}>
-            <Td>
-              <Text>{delegator.delegator_id}</Text>
+            <Td maxW="180px">
+              <Text whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden" w="100%">
+                {delegator.delegator_id}
+              </Text>
             </Td>
             <Td isNumeric>
               {

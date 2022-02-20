@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import useSWR from 'swr';
+import dayjs from 'dayjs';
 
 import {
   Box,
@@ -40,9 +41,9 @@ import empty from 'assets/empty.png';
 
 import { useGlobalStore } from 'stores';
 import { RegisterValidatorModal } from './RegisterValidatorModal';
-import { RewardsModal } from './RewardsModal';
+import { RewardsModal } from '../RewardsModal';
 import { StakesModal } from './StakesModal';
-import { StakingPopover } from './StakingPopover';
+import { StakingPopover } from '../StakingPopover';
 
 import { DecimalUtil, ZERO_DECIMAL } from 'utils';
 
@@ -74,7 +75,7 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
 
   const { data: rewards } = useSWR<RewardHistory[]>(
     appchain?.anchor_status && global.accountId ?
-      `rewards/${global.accountId}/${appchain.appchain_id}/${appchain?.anchor_status?.index_range_of_validator_set_history?.end_index}` : null
+      `rewards/${global.accountId}/${appchain.appchain_id}/${appchain?.anchor_status?.index_range_of_validator_set_history}` : null
   );
 
   const unwithdraedRewards = useMemo(() => {
@@ -87,6 +88,18 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
     ), ZERO_DECIMAL);
 
   }, [rewards]);
+
+  const withdrawableStakes = useMemo(() => {
+    if (!unbonedStakes?.length) {
+      return ZERO_DECIMAL;
+    }
+
+    return unbonedStakes.reduce((total, next) => total.plus(
+      dayjs(Math.floor(next.unlock_time as any / 1e6)).diff() > 0 ? 0 :
+      DecimalUtil.fromString(next.amount, OCT_TOKEN_DECIMALS)
+    ), ZERO_DECIMAL);
+
+  }, [unbonedStakes]);
 
   useEffect(() => {
     if (!anchor || !global.accountId) {
@@ -125,7 +138,7 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
                       <MenuButton as={Button} size="sm" variant="whiteAlphaGhost" position="relative">
                         <Icon as={BsThreeDots} boxSize={5} />
                         {
-                          unbonedStakes?.length ?
+                          withdrawableStakes?.gt(ZERO_DECIMAL) ?
                             <Box position="absolute" top="0px" right="0px" boxSize={2} bg="red" borderRadius="full" /> : null
                         }
                       </MenuButton>
@@ -133,7 +146,7 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
                         <MenuItem position="relative" onClick={setStakesModalOpen.on}>
                           <Icon as={BsCheckCircle} mr={2} boxSize={4} /> Withdraw Stakes
                           {
-                            unbonedStakes?.length ?
+                            withdrawableStakes?.gt(ZERO_DECIMAL) ?
                               <Box position="absolute" top="10px" right="10px" boxSize={2} bg="red" borderRadius="full" /> : null
                           }
                         </MenuItem>
@@ -171,6 +184,12 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
             <Box>
               <Flex justifyContent="space-between" alignItems="center">
                 <Heading fontSize="lg">My Staking</Heading>
+                {
+                  isUnbonding || unbonedStakes?.length ?
+                  <Button size="sm" colorScheme="octo-blue" variant="ghost" onClick={setStakesModalOpen.on}>
+                    Withdraw Stakes
+                  </Button> : null
+                }
               </Flex>
               <Center minH="125px">
                 <Box boxSize={20}>

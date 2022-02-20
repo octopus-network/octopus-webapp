@@ -1,11 +1,11 @@
 import React, { useMemo } from 'react';
 import useSWR from 'swr';
 import Identicon from '@polkadot/react-identicon';
-import { BounceLoader } from 'react-spinners';
 import { DecimalUtil, ZERO_DECIMAL } from 'utils';
 import { encodeAddress } from '@polkadot/util-crypto';
 
 import {
+  Box,
   Grid,
   GridItem,
   Heading,
@@ -43,18 +43,15 @@ type ValidatorRowProps = {
   haveSessionKey: boolean;
   validatorSetHistoryEndIndex: string | undefined;
   showType: string;
-  onDelegate: (v: string) => void;
 }
 
 export const ValidatorRow: React.FC<ValidatorRowProps> = ({
   validator,
   ftMetadata,
-  anchor,
   isLoading,
   isInAppchain,
   haveSessionKey,
   appchainId,
-  onDelegate,
   validatorSetHistoryEndIndex
 }) => {
 
@@ -72,10 +69,26 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
 
   const { data: delegators } = useSWR<Delegator[]>(
     appchainId && validatorSetHistoryEndIndex ?
-      `${validator.validator_id}/${appchainId}/delegators/${validatorSetHistoryEndIndex}` : null
+      `${validator.validator_id}/${appchainId}/delegators` : null
   );
   
-  const isDelegated = useMemo(() => !!delegators?.find(d => d.delegator_id === global.accountId), [delegators, global]);
+  const isDelegated = useMemo(() => global.accountId && !!delegators?.find(d => d.delegator_id === global.accountId), [delegators, global]);
+
+  const { data: delegatorRewards } = useSWR<RewardHistory[]>(
+    isDelegated && appchainId && validatorSetHistoryEndIndex ?
+      `rewards/${validator.validator_id}/${appchainId}/${global?.accountId}/${validatorSetHistoryEndIndex}` : null
+  );
+
+  const unwithdraedDelegatorRewards = useMemo(() => {
+    if (!delegatorRewards?.length || !ftMetadata) {
+      return ZERO_DECIMAL;
+    }
+
+    return delegatorRewards.reduce((total, next) => total.plus(
+      DecimalUtil.fromString(next.unwithdrawn_reward, ftMetadata?.decimals)
+    ), ZERO_DECIMAL);
+
+  }, [delegatorRewards, ftMetadata]);
 
   const ss58Address = useMemo(() => {
 
@@ -99,17 +112,6 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
       ) : ZERO_DECIMAL,
     [rewards]
   );
-
-  // useEffect(() => {
-  //   anchor?.get_delegator_deposit_of({
-  //     delegator_id: global.accountId,
-  //     validator_id: validator.validator_id
-  //   }).then(amount => {
-  //     setDelegatedDeposits(
-  //       DecimalUtil.fromString(amount, OCT_TOKEN_DECIMALS)
-  //     );
-  //   });
-  // }, [anchor, global]);
 
   return (
     <Grid
@@ -176,7 +178,7 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
         <Heading fontSize="md">{validator.delegators_count}</Heading>
       </GridItem>
       <GridItem colSpan={1}>
-        <HStack justifyContent="flex-end" alignItems="center">
+        <HStack justifyContent="flex-end" alignItems="center" position="relative">
           {
             isMyself && !validator?.is_unbonding ? 
             <Text variant="gray" fontSize="sm">Manage</Text> :
@@ -184,6 +186,10 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
             <Text variant="gray" fontSize="sm">Delegated</Text> : null
           }
           <Icon as={ChevronRightIcon} boxSize={5} className="octo-gray" />
+          {
+            unwithdraedDelegatorRewards.gt(ZERO_DECIMAL) ?
+            <Box position="absolute" top="-3px" right="15px" boxSize={2} bg="red" borderRadius="full" /> : null  
+          }
         </HStack>
       </GridItem>
     </Grid>

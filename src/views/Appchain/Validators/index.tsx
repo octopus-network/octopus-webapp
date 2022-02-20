@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { encodeAddress } from '@polkadot/util-crypto';
 
 import {
@@ -15,7 +15,6 @@ import {
   GridItem,
   List,
   Icon,
-  useBoolean,
   VStack
 } from '@chakra-ui/react';
 
@@ -29,7 +28,6 @@ import {
 } from 'types';
 
 import { ValidatorRow } from './ValidatorRow';
-import { DelegateModal } from './DelegateModal';
 
 import { DecimalUtil } from 'utils';
 import { OCT_TOKEN_DECIMALS } from 'primitives';
@@ -86,10 +84,6 @@ export const Validators: React.FC<ValidatorsProps> = ({
 
   const [showType, setShowType] = useState('all');
   const [sortIdx, setSortIdx] = useState(2);
-
-  const [delegateModalOpen, setDelegateModalOpen] = useBoolean();
-
-  const [toDelegateValidatorId, setToDelegateValidatorId] = useState('');
 
   const filteredValidators = useMemo(() => {
 
@@ -160,11 +154,6 @@ export const Validators: React.FC<ValidatorsProps> = ({
 
     return tmpArr;
   }, [filteredValidators, sortIdx]);
-
-  const onDelegate = (validatorId: string) => {
-    setToDelegateValidatorId(validatorId);
-    setDelegateModalOpen.on();
-  }
 
   return (
     <>
@@ -238,8 +227,7 @@ export const Validators: React.FC<ValidatorsProps> = ({
                       haveSessionKey={haveSessionKey}
                       ftMetadata={appchain?.appchain_metadata.fungible_token_metadata}
                       validatorSetHistoryEndIndex={appchain?.anchor_status?.index_range_of_validator_set_history?.end_index}
-                      showType={showType} 
-                      onDelegate={onDelegate} />
+                      showType={showType} />
                   )
                 })
               }
@@ -247,11 +235,6 @@ export const Validators: React.FC<ValidatorsProps> = ({
             <Empty />
         }
       </Box>
-      <DelegateModal 
-        isOpen={delegateModalOpen} 
-        anchor={anchor}
-        onClose={setDelegateModalOpen.off} 
-        validatorId={toDelegateValidatorId} />
     </>
   );
 }
