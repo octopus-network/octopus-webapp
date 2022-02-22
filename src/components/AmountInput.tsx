@@ -12,18 +12,18 @@ import { isNumber, beautify } from 'utils';
 type AmountInputPropos = Omit<InputProps, 'onChange' | 'value' | 'ref'> & {
   onChange?: (value: string) => void;
   value?: string;
+  unstyled?: boolean;
   refObj?: React.MutableRefObject<any>;
 }
 
-export const AmountInput: React.FC<AmountInputPropos> = ({ onChange, refObj, value, ...props }) => {
+export const AmountInput: React.FC<AmountInputPropos> = ({ onChange, refObj, value, unstyled, ...props }) => {
   const gray = useColorModeValue('#929AA6', '#A6A0BB');
   const bg = useColorModeValue('#f5f7fa', 'whiteAlpha.100');
 
   const _onChange = (e: React.BaseSyntheticEvent) => {
     const targetValue = e.target.value.replaceAll(',', '');
     if (
-      (targetValue !== '' && !isNumber(targetValue)) ||
-      targetValue * 1 > 1_000_000_000_000
+      (targetValue !== '' && !isNumber(targetValue))
     ) {
       e.target.value = value;
       return;
@@ -35,10 +35,9 @@ export const AmountInput: React.FC<AmountInputPropos> = ({ onChange, refObj, val
   const beautifyValue = useMemo(() => beautify(value), [value]);
 
   return (
-    <Box p="10px 15px" bg={bg} borderRadius="lg">
+    <Box p={ unstyled ? '' : '10px 15px' } bg={ unstyled ? '' : bg } borderRadius="lg" w="100%">
       <Input
         {...props}
-        fontWeight={600}
         type="text"
         variant="unstyled"
         value={beautifyValue}

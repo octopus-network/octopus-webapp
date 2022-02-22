@@ -12,7 +12,8 @@ import {
   Root,
   Home,
   Appchains,
-  Appchain
+  Appchain,
+  Bridge
 } from 'views';
 
 export const App = () => (
@@ -26,6 +27,9 @@ export const App = () => (
           <Route path="appchains/overview/:appchainId" element={<Appchains />} />
           <Route path="appchains/:id" element={<Appchain />} />
           <Route path="appchains/:id/validator/:validatorId" element={<Appchain />} />
+          <Route path="bridge" element={<Bridge />} />
+          <Route path="bridge/:appchainId/near" element={<Bridge />} />
+          <Route path="bridge/near/:appchainId" element={<Bridge />} />
         </Route>
       </Routes>
     </Router>

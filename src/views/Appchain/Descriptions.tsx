@@ -34,6 +34,7 @@ import { StateBadge } from 'components';
 import { AppchainInfoWithAnchorStatus, AppchainSettings } from 'types';
 import type { ApiPromise } from '@polkadot/api';
 import { CheckIcon, CopyIcon } from '@chakra-ui/icons';
+import { Link as RouterLink } from 'react-router-dom';
 
 import websiteIcon from 'assets/icons/website.png';
 import explorerIcon from 'assets/icons/explorer.png';
@@ -147,13 +148,15 @@ export const Descriptions: React.FC<DescriptionsProps> = ({ appchain, appchainAp
         </VStack>
       </Flex>
       <SimpleGrid columns={{ base: 3, md: 5 }} spacing={4} mt={8} bg={linksBg} borderRadius="lg">
-        <Link href={toValidUrl(appchain?.appchain_metadata?.website_url)} isExternal>
-          <LinkBox icon={websiteIcon} label="Website" />
-        </Link>
+        <RouterLink to={`/bridge/${appchain?.appchain_id}`}>
+          <LinkBox icon={bridgeIcon} label="Bridge" />
+        </RouterLink>
         <Link href={`${global?.network?.octopus.explorerUrl}/${appchain?.appchain_id}`} isExternal>
           <LinkBox icon={explorerIcon} label="Explorer" />
         </Link>
-        <LinkBox icon={bridgeIcon} label="Bridge" />
+        <Link href={toValidUrl(appchain?.appchain_metadata?.website_url)} isExternal>
+          <LinkBox icon={websiteIcon} label="Website" />
+        </Link>
         <Link href={toValidUrl(appchain?.appchain_metadata?.function_spec_url)} isExternal>
           <LinkBox icon={functionSpecIcon} label="Function Spec" />
         </Link>

@@ -333,7 +333,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                       type="decrease"
                       anchor={anchor}
                       validatorId={validatorId}
-                      helper="Your decreased stakes will be claimable after 28 days" />
+                      helper="Your decreased stakes will be claimable in next era" />
 
                     <Heading fontSize="md">{DecimalUtil.beautify(delegatedDeposits)} OCT</Heading>
 

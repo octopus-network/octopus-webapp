@@ -123,3 +123,9 @@ export type UnbondedHistory = {
   amount: string;
   unlock_time: string;
 }
+
+export type TokenAssset = {
+  contractId: string;
+  assetId?: number;
+  metadata: FungibleTokenMetadata;
+}

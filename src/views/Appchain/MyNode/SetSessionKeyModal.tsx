@@ -53,14 +53,16 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({ isOpen, 
   }, [isOpen]);
 
   useEffect(() => {
-    web3Enable('Octopus Network').then(res => {
-      web3Accounts().then(accounts => {
-        setAccounts(accounts);
-        if (accounts.length) {
-          setCurrentAccount(accounts[0]);
-        }
+    if (isOpen) {
+      web3Enable('Octopus Network').then(res => {
+        web3Accounts().then(accounts => {
+          setAccounts(accounts);
+          if (accounts.length) {
+            setCurrentAccount(accounts[0]);
+          }
+        });
       });
-    });
+    }
   }, [isOpen]);
 
   const onChooseAccount = (account: InjectedAccountWithMeta) => {
@@ -126,7 +128,7 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({ isOpen, 
         <Box>
           {
             !accounts?.length ?
-            <Empty message="No accounts" /> :
+            <Empty message="No accounts. Please install wallet extension." /> :
             <List>
               {
                 accounts.map(account => (

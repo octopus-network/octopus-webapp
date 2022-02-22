@@ -118,7 +118,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
 
     const method = validatorId ? anchor.withdraw_delegator_rewards : anchor.withdraw_validator_rewards;
 
-    const params = validatorId ? {
+    const params: any = validatorId ? {
       validator_id: validatorId,
       delegator_id: global.accountId || ''
     } : { validator_id: global.accountId };

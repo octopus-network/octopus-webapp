@@ -101,7 +101,7 @@ export const Root: React.FC = () => {
           changeMethods: ['ft_transfer_call']
         }
       );
-  
+
       updateGlobal({
         accountId: wallet.getAccountId(),
         wallet,
@@ -134,6 +134,24 @@ export const Root: React.FC = () => {
       });
     }
   }, [location.pathname, navigate, matchMutate]);
+
+  const onAppchainTokenBurnt = ({
+    hash,
+    appchainId,
+    nearAccount,
+    appchainAccount,
+    amount,
+    notificationIndex
+  }: {
+    hash: string;
+    appchainId: string;
+    nearAccount: string;
+    appchainAccount: string;
+    amount: string;
+    notificationIndex: string;
+  }) => {
+    console.log(hash, appchainId, nearAccount, appchainAccount, amount, notificationIndex);
+  }
 
   // check tx status
   useEffect(() => {
@@ -175,6 +193,29 @@ export const Root: React.FC = () => {
           if ((outcome.status as any).Failure) {
             message = JSON.stringify((outcome.status as any).Failure);
             break;
+          }
+
+          if (outcome.logs?.length) {
+            const log = outcome.logs[0];
+          
+            const res = /Wrapped appchain token burnt by '(.+)' for '(.+)' of appchain. Amount: '(.+)', Crosschain notification index: '(.+)'/.exec(log);
+            if (res?.length) {
+              const nearAccount = res[1],
+                appchainAccount = res[2],
+                amount = res[3],
+                notificationIndex = res[4];
+
+              const appchainId = status.transaction.receiver_id.split('.')?.[0];
+              
+              onAppchainTokenBurnt({
+                hash: status.transaction.hash, 
+                appchainId, 
+                nearAccount, 
+                appchainAccount, 
+                amount, 
+                notificationIndex
+              });
+            }
           }
         }
         if (message) {

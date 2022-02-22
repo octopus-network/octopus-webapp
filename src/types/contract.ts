@@ -50,6 +50,10 @@ export class TokenContract extends Contract {
   ft_transfer_call(args: FtTransferCallArgs, gas: string, deposit: number): Promise<void> {
     return this.ft_transfer_call(args, gas, deposit);
   };
+
+  ft_metadata(): Promise<any> {
+    return this.ft_metadata();
+  }
 }
 
 export class RegistryContract extends Contract {
@@ -138,5 +142,9 @@ export class AnchorContract extends Contract {
 
   decrease_delegation(args: { validator_id: string, amount: string }, gas: string): Promise<void> {
     return this.decrease_delegation(args, gas);
+  }
+
+  burn_wrapped_appchain_token(args: { receiver_id: string, amount: string }, gas: string): Promise<void> {
+    return this.burn_wrapped_appchain_token(args, gas);
   }
 }

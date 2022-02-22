@@ -69,7 +69,7 @@ const RunningItem: React.FC<RunnintItemProps> = ({ whiteBg = false, data }) => {
     validators?.length ? `${validators.map(v => v.validator_id).join(',')}/${data.appchain_id}/delegators` : null
   );
 
-  const delegatorsCount = useMemo(() => delegatorsArr?.length ? delegatorsArr.flat(Infinity).length : 0, [delegatorsArr]);
+  const delegatorsCount = useMemo(() => delegatorsArr?.flat(Infinity).length, [delegatorsArr]);
 
   const apy = useMemo(() => {
     if (!appchainSettings || !prices) return ZERO_DECIMAL;
@@ -105,7 +105,9 @@ const RunningItem: React.FC<RunnintItemProps> = ({ whiteBg = false, data }) => {
         </VStack>
         <VStack alignItems="flex-start">
           <Text variant="gray" fontSize="sm">Delegators</Text>
-          <Heading fontSize="lg">{delegatorsCount}</Heading>
+          <Skeleton isLoaded={delegatorsCount !== undefined}>
+            <Heading fontSize="lg">{delegatorsCount === undefined ? 'loading' : delegatorsCount}</Heading>
+          </Skeleton>
         </VStack>
         <VStack alignItems="flex-start">
           <Text variant="gray" fontSize="sm">Staked OCT</Text>

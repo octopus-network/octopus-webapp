@@ -85,7 +85,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({ trigger, type, h
       } else {
 
         const method = validatorId ? anchor.decrease_delegation : anchor.decrease_stake;
-        const params = validatorId ? { amount: amountStr, validator_id: validatorId || '' } : { amount: amountStr };
+        const params: any = validatorId ? { amount: amountStr, validator_id: validatorId || '' } : { amount: amountStr };
 
         await method(params, COMPLEX_CALL_GAS );
       }
