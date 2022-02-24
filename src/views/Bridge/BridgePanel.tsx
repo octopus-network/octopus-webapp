@@ -193,6 +193,7 @@ export const BridgePanel: React.FC = () => {
     pendingTxns.map(txn => {
       if (txn.isAppchainSide) {
         anchorContract?.get_appchain_message_processing_result_of({ nonce: txn.sequenceId }).then(result => {
+      
           if (result?.['Ok']) {
             updateTxn(txn.appchainId, {...txn, status: BridgeHistoryStatus.Succeed});
           } else if (result?.['Error']) {
@@ -400,8 +401,11 @@ export const BridgePanel: React.FC = () => {
     await tx.signAndSend(fromAccount, ({ events = [], status }: any) => {
         
         events.forEach(({ phase, event: { data, method, section } }: any) => {
-          if (section === 'octopusAppchain' && method === 'Locked') {
-            
+       
+          if (section === 'octopusAppchain' && (
+            method === 'Locked' || method === 'AssetBurned'
+          )) {
+            console.log(data, method, section);
             updateTxn(appchainId || '', {
               isAppchainSide: true,
               appchainId: appchainId || '',
@@ -443,7 +447,7 @@ export const BridgePanel: React.FC = () => {
               <HStack>
                 {
                   pendingTxns.length ?
-                  <CircularProgress value={40} color="octo-blue.400" isIndeterminate size="18px">
+                  <CircularProgress color="octo-blue.400" isIndeterminate size="18px">
                     <CircularProgressLabel fontSize="10px">{pendingTxns.length}</CircularProgressLabel>
                   </CircularProgress> : null
                 }

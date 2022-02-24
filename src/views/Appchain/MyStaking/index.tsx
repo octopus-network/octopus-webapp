@@ -27,7 +27,8 @@ import {
   RewardHistory,
   AppchainInfoWithAnchorStatus,
   TokenContract,
-  UnbondedHistory
+  UnbondedHistory,
+  StakingHistory
 } from 'types';
 
 import { OCT_TOKEN_DECIMALS } from 'primitives';
@@ -41,6 +42,7 @@ import empty from 'assets/empty.png';
 
 import { useGlobalStore } from 'stores';
 import { RegisterValidatorModal } from './RegisterValidatorModal';
+import { StakingHistoryModal } from './StakingHistoryModal';
 import { RewardsModal } from '../RewardsModal';
 import { StakesModal } from './StakesModal';
 import { StakingPopover } from '../StakingPopover';
@@ -67,11 +69,13 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
   const [registerValidatorModalOpen, setRegisterValidatorModalOpen] = useBoolean(false);
   const [rewardsModalOpen, setRewardsModalOpen] = useBoolean(false);
   const [stakesModalOpen, setStakesModalOpen] = useBoolean(false);
+  const [stakingHistoryModalOpen, setStakingHistoryModalOpen] = useBoolean(false);
 
   const { global } = useGlobalStore();
   const [deposit, setDeposit] = useState(ZERO_DECIMAL);
 
   const [unbonedStakes, setUnbondedStakes] = useState<UnbondedHistory[]>();
+  const [stakingHistories, setStakingHistories] = useState<StakingHistory[]>();
 
   const { data: rewards } = useSWR<RewardHistory[]>(
     appchain?.anchor_status && global.accountId ?
@@ -108,10 +112,13 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
 
     Promise.all([
       anchor.get_validator_deposit_of({ validator_id: global.accountId }),
-      anchor?.get_unbonded_stakes_of({ account_id: global.accountId })
-    ]).then(([deposit, stakes]) => {
+      anchor.get_unbonded_stakes_of({ account_id: global.accountId }),
+      anchor.get_user_staking_histories_of({ account_id: global.accountId })
+    ]).then(([deposit, stakes, histories]) => {
       setDeposit(DecimalUtil.fromString(deposit, OCT_TOKEN_DECIMALS));
       setUnbondedStakes(stakes);
+      console.log(stakes);
+      setStakingHistories(histories);
     });
    
   }, [global, anchor]);
@@ -150,7 +157,7 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
                               <Box position="absolute" top="10px" right="10px" boxSize={2} bg="red" borderRadius="full" /> : null
                           }
                         </MenuItem>
-                        <MenuItem>
+                        <MenuItem  onClick={setStakingHistoryModalOpen.on}>
                           <Icon as={AiOutlineMenu} mr={2} boxSize={4} /> Staking History
                         </MenuItem>
                       </MenuList>
@@ -185,10 +192,28 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
               <Flex justifyContent="space-between" alignItems="center">
                 <Heading fontSize="lg">My Staking</Heading>
                 {
-                  isUnbonding || unbonedStakes?.length ?
-                  <Button size="sm" colorScheme="octo-blue" variant="ghost" onClick={setStakesModalOpen.on}>
-                    Withdraw Stakes
-                  </Button> : null
+                  isUnbonding || unbonedStakes?.length || stakingHistories?.length ?
+                  <Menu>
+                    <MenuButton as={Button} size="sm" colorScheme="octo-blue" variant="ghost" position="relative">
+                      <Icon as={BsThreeDots} boxSize={5} />
+                      {
+                        withdrawableStakes?.gt(ZERO_DECIMAL) ?
+                          <Box position="absolute" top="0px" right="0px" boxSize={2} bg="red" borderRadius="full" /> : null
+                      }
+                    </MenuButton>
+                    <MenuList>
+                      <MenuItem position="relative" onClick={setStakesModalOpen.on}>
+                        <Icon as={BsCheckCircle} mr={2} boxSize={4} /> Withdraw Stakes
+                        {
+                          withdrawableStakes?.gt(ZERO_DECIMAL) ?
+                            <Box position="absolute" top="10px" right="10px" boxSize={2} bg="red" borderRadius="full" /> : null
+                        }
+                      </MenuItem>
+                      <MenuItem  onClick={setStakingHistoryModalOpen.on}>
+                        <Icon as={AiOutlineMenu} mr={2} boxSize={4} /> Staking History
+                      </MenuItem>
+                    </MenuList>
+                  </Menu> : null
                 }
               </Flex>
               <Center minH="125px">
@@ -231,6 +256,11 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
         onClose={setStakesModalOpen.off}
         anchor={anchor}
         stakes={unbonedStakes} />
+
+      <StakingHistoryModal
+        isOpen={stakingHistoryModalOpen}
+        onClose={setStakingHistoryModalOpen.off}
+        histories={stakingHistories} />
     </>
   );
 }

@@ -5,7 +5,8 @@ import {
   WrappedAppchainToken,
   ValidatorProfile,
   RewardHistory,
-  UnbondedHistory
+  UnbondedHistory,
+  StakingHistory
 } from 'types';
 
 type FtBalanceOfArgs = {
@@ -150,5 +151,9 @@ export class AnchorContract extends Contract {
 
   get_appchain_message_processing_result_of(args: { nonce: number }): Promise<any> {
     return this.get_appchain_message_processing_result_of(args);
+  }
+
+  get_user_staking_histories_of(args: { account_id: string }): Promise<StakingHistory[]> {
+    return this.get_user_staking_histories_of(args);
   }
 }

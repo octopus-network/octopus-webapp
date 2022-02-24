@@ -147,3 +147,46 @@ export type BridgeHistory = {
   status: BridgeHistoryStatus;
   timestamp: number;
 }
+
+export type StakingFact = {
+  'StakeIncreased'?: {
+    amount: string;
+    validator_id: string;
+  },
+  'StakeDecreased'?: {
+    amount: string;
+    validator_id: string;
+  },
+  'DelegationIncreased'?: {
+    amount: string;
+    delegator_id: string;
+    validator_id: string;
+  },
+  'DelegationDecreased'?: {
+    amount: string;
+    delegator_id: string;
+    validator_id: string;
+  },
+  'DelegatorRegistered'?: {
+    amount: string;
+    delegator_id: string;
+    validator_id: string;
+  },
+  'ValidatorRegistered'?: {
+    amount: string;
+    can_be_delegated_to: boolean;
+    validator_id: string;
+    validator_id_in_appchain: string;
+  },
+  'ValidatorDelegationEnabled'?: {
+    validator_id: string;
+    amount: string;
+  }
+}
+
+export type StakingHistory = {
+  block_height: number;
+  has_taken_effect: boolean;
+  staking_fact: StakingFact;
+  timestamp: number;
+}

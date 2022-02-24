@@ -75,7 +75,8 @@ export const Appchain: React.FC = () => {
           'get_delegator_deposit_of',
           'get_validator_profile',
           'get_unbonded_stakes_of',
-          'get_delegator_rewards_of'
+          'get_delegator_rewards_of',
+          'get_user_staking_histories_of'
         ],
         changeMethods: [
           'enable_delegation',

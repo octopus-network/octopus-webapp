@@ -204,6 +204,7 @@ export const Root: React.FC = () => {
     provider
       .txStatus(transactionHashes, global.accountId)
       .then(status => {
+        console.log(status);
         const { receipts_outcome } = status;
         let message = '';
         for (let i = 0; i < receipts_outcome.length; i++) {
@@ -216,8 +217,9 @@ export const Root: React.FC = () => {
           if (outcome.logs?.length) {
             
             const log = outcome.logs[0];
-            console.log(log, outcome.logs);
+
             const res = /Wrapped appchain token burnt by '(.+)' for '(.+)' of appchain. Amount: '(.+)', Crosschain notification index: '(.+)'/.exec(log);
+            
             if (res?.length) {
               const nearAccount = res[1],
                 appchainAccount = res[2],
