@@ -148,7 +148,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({ appchain, appchainAp
         </VStack>
       </Flex>
       <SimpleGrid columns={{ base: 3, md: 5 }} spacing={4} mt={8} bg={linksBg} borderRadius="lg">
-        <RouterLink to={`/bridge/${appchain?.appchain_id}`}>
+        <RouterLink to={`/bridge/near/${appchain?.appchain_id}`}>
           <LinkBox icon={bridgeIcon} label="Bridge" />
         </RouterLink>
         <Link href={`${global?.network?.octopus.explorerUrl}/${appchain?.appchain_id}`} isExternal>
@@ -204,35 +204,8 @@ export const Descriptions: React.FC<DescriptionsProps> = ({ appchain, appchainAp
           </Skeleton>
         </VStack>
         <VStack alignItems="flex-start">
-          <Text variant="gray" fontSize="sm" >RPC Endpoint</Text>
-          {
-            appchainSettings?.rpc_endpoint ?
-            <HStack w="100%">
-              <Heading fontSize="md" textOverflow="ellipsis" overflow="hidden" whiteSpace="nowrap" w="calc(100% - 30px)">
-                { appchainSettings?.rpc_endpoint || '-' }
-              </Heading>
-              <IconButton aria-label="copy" onClick={onCopyRpcEndpoint} size="xs">
-                { hasRpcEndpointCopied ? <CheckIcon /> : <CopyIcon /> }
-              </IconButton>
-            </HStack> :
-            <Heading fontSize="xl">-</Heading>
-          }
-        </VStack>
-        <VStack alignItems="flex-start">
           <Text variant="gray" fontSize="sm" >Token</Text>
           <Heading fontSize="xl">{appchain?.appchain_metadata?.fungible_token_metadata?.symbol || '-'}</Heading>
-        </VStack>
-        <VStack alignItems="flex-start">
-          <Text variant="gray" fontSize="sm" >IDO Amount</Text>
-          <Heading fontSize="xl">
-            {
-              appchain?.appchain_metadata?.ido_amount_of_wrapped_appchain_token ?
-              DecimalUtil.beautify(
-                DecimalUtil.fromString(appchain?.appchain_metadata?.ido_amount_of_wrapped_appchain_token),
-                0
-              ) : '-'
-            }
-          </Heading>
         </VStack>
         <VStack alignItems="flex-start">
           <Text variant="gray" fontSize="sm" >Total Issuance</Text>
@@ -250,6 +223,34 @@ export const Descriptions: React.FC<DescriptionsProps> = ({ appchain, appchainAp
             </Heading>
           </Skeleton>
         </VStack>
+        <VStack alignItems="flex-start">
+          <Text variant="gray" fontSize="sm" >RPC Endpoint</Text>
+          {
+            appchainSettings?.rpc_endpoint ?
+            <HStack w="100%">
+              <Heading fontSize="md" textOverflow="ellipsis" overflow="hidden" whiteSpace="nowrap" w="calc(100% - 30px)">
+                { appchainSettings?.rpc_endpoint || '-' }
+              </Heading>
+              <IconButton aria-label="copy" onClick={onCopyRpcEndpoint} size="xs">
+                { hasRpcEndpointCopied ? <CheckIcon /> : <CopyIcon /> }
+              </IconButton>
+            </HStack> :
+            <Heading fontSize="xl">-</Heading>
+          }
+        </VStack>
+        <VStack alignItems="flex-start">
+          <Text variant="gray" fontSize="sm" >IDO Amount</Text>
+          <Heading fontSize="xl">
+            {
+              appchain?.appchain_metadata?.ido_amount_of_wrapped_appchain_token ?
+              DecimalUtil.beautify(
+                DecimalUtil.fromString(appchain?.appchain_metadata?.ido_amount_of_wrapped_appchain_token),
+                0
+              ) : '-'
+            }
+          </Heading>
+        </VStack>
+        
         <VStack alignItems="flex-start">
           <Text variant="gray" fontSize="sm" >Premined Amount</Text>
           <Heading fontSize="xl">

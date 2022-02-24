@@ -372,7 +372,13 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                 global.accountId && validator && !isDelegated ?
                   <Button colorScheme="octo-blue" size="sm" onClick={setDelegateModalOpen.on}
                     isDisabled={!validator?.can_be_delegated_to || validatorState !== 'Validating'}>
-                    <Icon as={AddIcon} mr={2} boxSize={3} /> Join
+                    { 
+                      validator && !validator.can_be_delegated_to ? 'Delegation Closed' :
+                      <>
+                        <Icon as={AddIcon} mr={2} boxSize={3} /> 
+                        <Text>Join</Text>
+                      </>
+                    }
                   </Button> : null
               }
             </Flex>

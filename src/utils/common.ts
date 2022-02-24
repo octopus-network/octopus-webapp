@@ -16,7 +16,7 @@ export function isNumber(value: any) {
 export function beautify(str = ''): string {
   const reg = str.indexOf('.') > -1 ? /(\d)(?=(\d{3})+\.)/g : /(\d)(?=(?:\d{3})+$)/g;
   str = str.replace(reg, '$1,');
-  return str.replace(/(\.[0-9]+[1-9]+)(0)*/, '$1');
+  return str.replace(/(\.[0-9]*[1-9]+)(0)*/, '$1');
 }
 
 export function sleep(ts = 1000) {

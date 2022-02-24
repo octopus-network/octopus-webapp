@@ -147,4 +147,8 @@ export class AnchorContract extends Contract {
   burn_wrapped_appchain_token(args: { receiver_id: string, amount: string }, gas: string): Promise<void> {
     return this.burn_wrapped_appchain_token(args, gas);
   }
+
+  get_appchain_message_processing_result_of(args: { nonce: number }): Promise<any> {
+    return this.get_appchain_message_processing_result_of(args);
+  }
 }

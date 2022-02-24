@@ -129,3 +129,21 @@ export type TokenAssset = {
   assetId?: number;
   metadata: FungibleTokenMetadata;
 }
+
+export enum BridgeHistoryStatus {
+  Pending,
+  Succeed,
+  Failed
+}
+
+export type BridgeHistory = {
+  isAppchainSide: boolean;
+  appchainId: string;
+  hash: string;
+  sequenceId: number;
+  fromAccount: string;
+  toAccount: string;
+  amount: string;
+  status: BridgeHistoryStatus;
+  timestamp: number;
+}

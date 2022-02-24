@@ -19,9 +19,14 @@ import {
   IconButton,
   Avatar,
   Spinner,
+  CircularProgress,
+  CircularProgressLabel,
   Button,
   useBoolean,
-  useToast
+  useToast,
+  Drawer,
+  DrawerOverlay,
+  DrawerContent
 } from '@chakra-ui/react';
 
 import {
@@ -29,13 +34,14 @@ import {
   TokenAssset,
   AppchainSettings,
   TokenContract,
-  AnchorContract
+  AnchorContract,
+  BridgeHistoryStatus
 } from 'types';
 
 import { decodeAddress } from '@polkadot/util-crypto';
 import { u8aToHex, stringToHex, isHex } from '@polkadot/util';
 import type { InjectedAccountWithMeta } from '@polkadot/extension-inject/types';
-import { web3FromSource, web3Enable, web3Accounts as extensionWeb3Accounts } from '@polkadot/extension-dapp';
+import { web3FromSource, web3Enable, web3Accounts as extensionWeb3Accounts, isWeb3Injected } from '@polkadot/extension-dapp';
 
 import { Empty } from 'components';
 import nearLogo from 'assets/near.svg';
@@ -45,10 +51,12 @@ import { useGlobalStore } from 'stores';
 import { AiFillCloseCircle } from 'react-icons/ai';
 import { SelectWeb3AccountModal } from './SelectWeb3AccountModal';
 import { SelectTokenModal } from './SelectTokenModal';
+import { History } from './History';
 import { AmountInput } from 'components';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Decimal from 'decimal.js';
 import { ZERO_DECIMAL, DecimalUtil } from 'utils';
+import { useTxnsStore } from 'stores';
 
 import { COMPLEX_CALL_GAS, FAILED_TO_REDIRECT_MESSAGE } from 'primitives';
 
@@ -79,9 +87,11 @@ export const BridgePanel: React.FC = () => {
   const [selectAccountModalOpen, setSelectAccountModalOpen] = useBoolean();
   const [selectTokenModalOpen, setSelectTokenModalOpen] = useBoolean();
   const [isTransfering, setIsTransfering] = useBoolean();
+  const [isHistoryDrawerOpen, setIsHistoryDrawerOpen] = useBoolean();
 
   const { global } = useGlobalStore();
-  const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(appchainId ? `appchain/${appchainId}` : null);
+  const { txns, updateTxn, clearTxnsOfAppchain } = useTxnsStore();
+  const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(appchainId ? `appchain/${appchainId}` : null, { refreshInterval: 10 * 1000 });
   const { data: appchainSettings } = useSWR<AppchainSettings>(appchainId ? `appchain-settings/${appchainId}` : null);
 
   const { data: tokens } = useSWR<TokenAssset[]>(appchainId ? `tokens/${appchainId}` : null);
@@ -102,6 +112,10 @@ export const BridgePanel: React.FC = () => {
 
   const [balance, setBalance] = useState<Decimal>();
 
+  const appchainTxns = useMemo(() => Object.values(appchainId ? txns?.[appchainId] || {} : {}).sort((a, b) => b.timestamp - a.timestamp), [appchainId, txns]);
+
+  const pendingTxns = useMemo(() => appchainTxns.filter(txn => txn.status === BridgeHistoryStatus.Pending), [appchainTxns]);
+
   useEffect(() => {
     web3Enable('Octopus Network').then(res => {
       extensionWeb3Accounts().then(accounts => {
@@ -111,7 +125,15 @@ export const BridgePanel: React.FC = () => {
         }
       });
     });
-  }, []);
+  }, [isWeb3Injected]);
+
+  useEffect(() => {
+    if (isHistoryDrawerOpen) {
+      (document.getElementById('root') as any).style = 'transition: all .3s ease-in-out; transform: translateX(-5%)';
+    } else {
+      (document.getElementById('root') as any).style = 'transition: all .15s ease-in-out; transform: translateX(0)';
+    }
+  }, [isHistoryDrawerOpen]);
 
   useEffect(() => {
 
@@ -161,10 +183,34 @@ export const BridgePanel: React.FC = () => {
     global.wallet.account(),
     appchain.appchain_anchor,
     {
-      viewMethods: [],
+      viewMethods: ['get_appchain_message_processing_result_of'],
       changeMethods: ['burn_wrapped_appchain_token']
     }
   ) : undefined, [appchain, global]);
+
+
+  useEffect(() => {
+    pendingTxns.map(txn => {
+      if (txn.isAppchainSide) {
+        anchorContract?.get_appchain_message_processing_result_of({ nonce: txn.sequenceId }).then(result => {
+          if (result?.['Ok']) {
+            updateTxn(txn.appchainId, {...txn, status: BridgeHistoryStatus.Succeed});
+          } else if (result?.['Error']) {
+            updateTxn(txn.appchainId, {...txn, status: BridgeHistoryStatus.Failed});
+          }
+        });
+      } else {
+        appchainApi?.query.octopusAppchain.notificationHistory(txn.sequenceId).then(res => {
+          if (res?.toJSON() === 'Success') {
+            updateTxn(txn.appchainId, {...txn, status: BridgeHistoryStatus.Succeed});
+          } else if (res?.toJSON() !== 'None') {
+            updateTxn(txn.appchainId, {...txn, status: BridgeHistoryStatus.Failed});
+          }
+        });
+      }
+    });
+  }, [pendingTxns, appchainApi, anchorContract, updateTxn]);
+
 
   // fetch balance via near contract
   useEffect(() => {
@@ -178,10 +224,37 @@ export const BridgePanel: React.FC = () => {
     tokenContract.ft_balance_of({ account_id: global.accountId }).then(res => {
       setBalance(DecimalUtil.fromString(res, tokenAsset?.metadata.decimals));
       setIsLodingBalance.off();
-      console.log('off');
     });
 
   }, [isReverse, global, fromAccount, tokenAsset, tokenContract]);
+
+  const checkBalanceViaRPC = React.useRef<any>();
+  checkBalanceViaRPC.current = async () => {
+    if (!tokenAsset) {
+      return;
+    }
+
+    let balance = ZERO_DECIMAL;
+    if (tokenAsset.assetId === undefined) {
+
+      const res = await appchainApi?.query.system.account(fromAccount);
+      const resJSON: any = res?.toJSON();
+      balance = DecimalUtil.fromString(resJSON?.data?.free, tokenAsset?.metadata.decimals);
+  
+    } else {
+      const res = await appchainApi?.query.octopusAssets?.account(
+        tokenAsset.assetId,
+        fromAccount
+      );
+
+      const resJSON: any = res?.toJSON();
+
+      balance = DecimalUtil.fromString(resJSON?.balance, tokenAsset?.metadata.decimals);
+    }
+
+    setBalance(balance);
+    setIsLodingBalance.off();
+  }
 
   // fetch balance from appchain rpc
   useEffect(() => {
@@ -190,28 +263,7 @@ export const BridgePanel: React.FC = () => {
       return;
     }
 
-    setIsLodingBalance.on();
-
-    if (tokenAsset.assetId === undefined) {
-
-      appchainApi?.query.system.account(fromAccount).then(res => {
-        const resJSON: any = res.toJSON();
-        const freeBalance = DecimalUtil.fromString(resJSON?.data?.free, tokenAsset?.metadata.decimals);
-        setBalance(freeBalance);
-        setIsLodingBalance.off();
-      });
-    } else {
-      appchainApi?.query.octopusAssets?.account(
-        tokenAsset.assetId,
-        fromAccount
-      ).then(res => {
-        const resJSON: any = res.toJSON();
-        console.log('asset', resJSON);
-        setBalance(DecimalUtil.fromString(resJSON?.balance, tokenAsset?.metadata.decimals));
-        setIsLodingBalance.off();
-      });
-    }
-
+    checkBalanceViaRPC?.current();
   }, [isReverse, appchainApi, global, fromAccount, tokenAsset]);
 
   useEffect(() => {
@@ -346,11 +398,26 @@ export const BridgePanel: React.FC = () => {
       appchainApi?.tx.octopusAppchain.burnAsset(tokenAsset?.assetId, targetAccountInHex, amountInU64.toString());
 
     await tx.signAndSend(fromAccount, ({ events = [], status }: any) => {
-      
-      if (status.isFinalized) {
-        setIsTransfering.off();
-        window.location.reload();
-      }
+        
+        events.forEach(({ phase, event: { data, method, section } }: any) => {
+          if (section === 'octopusAppchain' && method === 'Locked') {
+            
+            updateTxn(appchainId || '', {
+              isAppchainSide: true,
+              appchainId: appchainId || '',
+              hash: tx.hash.toString(),
+              sequenceId: data[3].toNumber(),
+              amount: amountInU64.toString(),
+              status: BridgeHistoryStatus.Pending,
+              timestamp: new Date().getTime(),
+              fromAccount: fromAccount || '',
+              toAccount: targetAccount || ''
+            });
+            setIsTransfering.off();
+            checkBalanceViaRPC?.current();
+          }
+        });
+
     }).catch((err: any) => {
       toast({
         position: 'top-right',
@@ -361,14 +428,29 @@ export const BridgePanel: React.FC = () => {
     });
   }
 
+  const onClearHistory = () => {
+    clearTxnsOfAppchain(appchainId || '');
+  }
+
   return (
     <>
       <Box bg={bg} p={6} borderRadius="lg" minH="520px">
-        <Flex justifyContent="space-between" alignItems="center">
+        <Flex justifyContent="space-between" alignItems="center" minH="32px">
           <Heading fontSize="xl">Bridge</Heading>
-          <Button colorScheme="octo-blue" variant="ghost" size="sm">
-            History
-          </Button>
+          {
+            appchainTxns.length ?
+            <Button colorScheme="octo-blue" variant="ghost" size="sm" onClick={setIsHistoryDrawerOpen.on}>
+              <HStack>
+                {
+                  pendingTxns.length ?
+                  <CircularProgress value={40} color="octo-blue.400" isIndeterminate size="18px">
+                    <CircularProgressLabel fontSize="10px">{pendingTxns.length}</CircularProgressLabel>
+                  </CircularProgress> : null
+                }
+                <Text>History</Text>
+              </HStack>
+            </Button> : null
+          }
         </Flex>
         {
           !appchainId ?
@@ -445,7 +527,10 @@ export const BridgePanel: React.FC = () => {
                     <Heading fontSize="md" className="octo-gray">Bridge Asset</Heading>
                     {
                       fromAccount ?
-                        <Skeleton isLoaded={!isLoadingBalance && !!appchainApi}>
+                        <Skeleton isLoaded={!isLoadingBalance && (
+                          (!isReverse && !!appchainApi) ||
+                          (isReverse && !!anchorContract)
+                        )}>
                           <HStack>
                             <Text fontSize="sm" variant="gray">Balance: {balance ? DecimalUtil.beautify(balance) : '-'}</Text>
                             {
@@ -518,6 +603,17 @@ export const BridgePanel: React.FC = () => {
         tokens={tokens}
         onSelectToken={onSelectToken}
         selectedToken={tokenAsset?.metadata?.symbol} />
+
+      <Drawer 
+        placement="right" 
+        isOpen={isHistoryDrawerOpen} 
+        onClose={setIsHistoryDrawerOpen.off} 
+        size="lg">
+        <DrawerOverlay />
+        <DrawerContent>
+          <History appchain={appchain} histories={appchainTxns} onDrawerClose={setIsHistoryDrawerOpen.off} onClearHistory={onClearHistory} />
+        </DrawerContent>
+      </Drawer>
     </>
   );
 }

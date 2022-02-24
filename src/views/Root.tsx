@@ -25,13 +25,15 @@ import {
 import { 
   RegistryContract, 
   TokenContract,
-  NetworkConfig
+  NetworkConfig,
+  BridgeHistory,
+  BridgeHistoryStatus
 } from 'types';
 
 import { Outlet } from 'react-router-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useMatchMutate } from 'hooks';
-import { useGlobalStore } from 'stores';
+import { useGlobalStore, useTxnsStore } from 'stores';
 
 import { API_HOST } from 'config';
 
@@ -63,6 +65,7 @@ export const Root: React.FC = () => {
   const urlParams = useMemo(() => new URLSearchParams(window.location.search), []);
 
   const { updateGlobal, global } = useGlobalStore();
+  const { txns, updateTxn } = useTxnsStore();
 
   const matchMutate = useMatchMutate();
 
@@ -150,7 +153,20 @@ export const Root: React.FC = () => {
     amount: string;
     notificationIndex: string;
   }) => {
-    console.log(hash, appchainId, nearAccount, appchainAccount, amount, notificationIndex);
+    
+    const tmpHistory: BridgeHistory = {
+      isAppchainSide: false,
+      appchainId,
+      hash,
+      sequenceId: notificationIndex as any * 1,
+      fromAccount: nearAccount,
+      toAccount: appchainAccount,
+      amount,
+      status: BridgeHistoryStatus.Pending,
+      timestamp: new Date().getTime()
+    }
+
+    updateTxn(appchainId, tmpHistory);
   }
 
   // check tx status
@@ -171,12 +187,14 @@ export const Root: React.FC = () => {
       clearMessageAndHashes();
       return;
     } else if (transactionHashes) {
-      toastIdRef.current = toast({
-        position: 'top-right',
-        render: () => <LoadingSpinner />,
-        status: 'info',
-        duration: null
-      });
+      if (!/bridge/.test(location.pathname)) {
+        toastIdRef.current = toast({
+          position: 'top-right',
+          render: () => <LoadingSpinner />,
+          status: 'info',
+          duration: null
+        });
+      }
     } else {
       return;
     }
@@ -196,8 +214,9 @@ export const Root: React.FC = () => {
           }
 
           if (outcome.logs?.length) {
+            
             const log = outcome.logs[0];
-          
+            console.log(log, outcome.logs);
             const res = /Wrapped appchain token burnt by '(.+)' for '(.+)' of appchain. Amount: '(.+)', Crosschain notification index: '(.+)'/.exec(log);
             if (res?.length) {
               const nearAccount = res[1],
@@ -220,17 +239,19 @@ export const Root: React.FC = () => {
         }
         if (message) {
           throw new Error(message);
-        } else {
+        }
 
+        if (toastIdRef.current) {
           toast.update(toastIdRef.current, {
             description: 'Success',
             duration: 2500,
             variant: 'left-accent',
             status: 'success'
           });
-
-          checkRedirect();
         }
+
+        checkRedirect();
+  
       }).catch(err => {
         toast.update(toastIdRef.current, {
           description: err?.kind?.ExecutionError || err.toString(),

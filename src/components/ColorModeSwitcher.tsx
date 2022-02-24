@@ -12,7 +12,7 @@ import { FaMoon, FaSun } from 'react-icons/fa'
 export const ColorModeSwitcher: React.FC = () => {
 
   const { setColorMode, colorMode } = useColorMode();
-  const bg = useColorModeValue('gray.200', 'whiteAlpha.200');
+  const bg = useColorModeValue('gray.100', 'whiteAlpha.100');
 
   return (
     <Box bg={bg} p="4px" borderRadius="lg">
