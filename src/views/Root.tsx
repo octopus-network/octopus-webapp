@@ -144,7 +144,8 @@ export const Root: React.FC = () => {
     nearAccount,
     appchainAccount,
     amount,
-    notificationIndex
+    notificationIndex,
+    contractId
   }: {
     hash: string;
     appchainId: string;
@@ -152,6 +153,7 @@ export const Root: React.FC = () => {
     appchainAccount: string;
     amount: string;
     notificationIndex: string;
+    contractId: string;
   }) => {
     
     const tmpHistory: BridgeHistory = {
@@ -163,7 +165,8 @@ export const Root: React.FC = () => {
       toAccount: appchainAccount,
       amount,
       status: BridgeHistoryStatus.Pending,
-      timestamp: new Date().getTime()
+      timestamp: new Date().getTime(),
+      tokenContractId: contractId
     }
 
     updateTxn(appchainId, tmpHistory);
@@ -187,14 +190,12 @@ export const Root: React.FC = () => {
       clearMessageAndHashes();
       return;
     } else if (transactionHashes) {
-      if (!/bridge/.test(location.pathname)) {
-        toastIdRef.current = toast({
-          position: 'top-right',
-          render: () => <LoadingSpinner />,
-          status: 'info',
-          duration: null
-        });
-      }
+      toastIdRef.current = toast({
+        position: 'top-right',
+        render: () => <LoadingSpinner />,
+        status: 'info',
+        duration: null
+      });
     } else {
       return;
     }
@@ -214,42 +215,62 @@ export const Root: React.FC = () => {
             break;
           }
 
+          let res;
+
           if (outcome.logs?.length) {
-            
-            const log = outcome.logs[0];
 
-            const res = /Wrapped appchain token burnt by '(.+)' for '(.+)' of appchain. Amount: '(.+)', Crosschain notification index: '(.+)'/.exec(log);
-            
-            if (res?.length) {
-              const nearAccount = res[1],
-                appchainAccount = res[2],
-                amount = res[3],
-                notificationIndex = res[4];
+            for (let j = 0; j < outcome.logs.length; j++) {
+              const log = outcome.logs[j];
 
-              const appchainId = status.transaction.receiver_id.split('.')?.[0];
-              
-              onAppchainTokenBurnt({
-                hash: status.transaction.hash, 
-                appchainId, 
-                nearAccount, 
-                appchainAccount, 
-                amount, 
-                notificationIndex
-              });
+              const reg1 = /Wrapped appchain token burnt in contract '(.+)' by '(.+)' for '(.+)' of appchain. Amount: '(.+)', Crosschain notification index: '(.+)'/,
+                reg2 = /Received fungible token in contract '(.+)' from '(.+)'. Start transfer to '(.+)' of appchain. Amount: '(.+)', Crosschain notification index: '(.+)'/;
+
+              res = reg1.exec(log) ?? reg2.exec(log);
+
+              if (res?.length) {
+
+                const appchainId = (outcome as any).executor_id.split('.')?.[0];
+
+                const contractId = res[1],
+                  nearAccount = res[2],
+                  appchainAccount = res[3],
+                  amount = res[4],
+                  notificationIndex = res[5];
+
+                onAppchainTokenBurnt({
+                  hash: status.transaction.hash, 
+                  appchainId, 
+                  nearAccount, 
+                  appchainAccount, 
+                  amount, 
+                  notificationIndex,
+                  contractId
+                });
+                break;
+              }
             }
+            
           }
+
+          if (res) break;
+
         }
         if (message) {
           throw new Error(message);
         }
-
-        if (toastIdRef.current) {
-          toast.update(toastIdRef.current, {
-            description: 'Success',
-            duration: 2500,
-            variant: 'left-accent',
-            status: 'success'
-          });
+        if (/bridge/.test(location.pathname)) {
+          toast.close(toastIdRef.current);
+        } else if (toastIdRef.current) {
+          if (/bridge/.test(location.pathname)) {
+            toast.close(toastIdRef.current);
+          } else {
+            toast.update(toastIdRef.current, {
+              description: 'Success',
+              duration: 2500,
+              variant: 'left-accent',
+              status: 'success'
+            });
+          }
         }
 
         checkRedirect();

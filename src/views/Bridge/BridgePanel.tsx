@@ -26,7 +26,8 @@ import {
   useToast,
   Drawer,
   DrawerOverlay,
-  DrawerContent
+  DrawerContent,
+  useInterval
 } from '@chakra-ui/react';
 
 import {
@@ -89,6 +90,8 @@ export const BridgePanel: React.FC = () => {
   const [isTransfering, setIsTransfering] = useBoolean();
   const [isHistoryDrawerOpen, setIsHistoryDrawerOpen] = useBoolean();
 
+  const [lastTokenContractId, setLastTokenContractId] = useState('');
+
   const { global } = useGlobalStore();
   const { txns, updateTxn, clearTxnsOfAppchain } = useTxnsStore();
   const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(appchainId ? `appchain/${appchainId}` : null, { refreshInterval: 10 * 1000 });
@@ -146,12 +149,15 @@ export const BridgePanel: React.FC = () => {
 
     api.isReady.then(api => setAppchainApi(api));
 
-  }, [appchainSettings]);
+  }, [appchainSettings, appchain]);
 
   useEffect(() => {
     if (!appchainId) {
       return;
     }
+
+    setLastTokenContractId(window.localStorage.getItem('OCTOPUS_BRIDGE_TOKEN_CONTRACT_ID') || '');
+    
     setTokenAsset(undefined);
     setAppchainApi(undefined);
     setIsLodingBalance.on();
@@ -163,9 +169,11 @@ export const BridgePanel: React.FC = () => {
 
   useEffect(() => {
     if (tokens?.length) {
-      setTokenAsset(tokens[0]);
+      setTokenAsset(
+        lastTokenContractId ? tokens.find(t => t.contractId === lastTokenContractId) || tokens[0] :  tokens[0]
+      );
     }
-  }, [tokens]);
+  }, [tokens, lastTokenContractId]);
 
   const fromAccount = useMemo(() => isReverse ? global.accountId : appchainAccount?.address, [isReverse, global, appchainAccount, appchainId]);
   const initialTargetAccount = useMemo(() => !isReverse ? global.accountId : appchainAccount?.address, [isReverse, global, appchainAccount]);
@@ -188,30 +196,55 @@ export const BridgePanel: React.FC = () => {
     }
   ) : undefined, [appchain, global]);
 
+  const pendingTxnsChecker = React.useRef<any>();
+  const isCheckingTxns = React.useRef(false);
+  pendingTxnsChecker.current = async () => {
 
-  useEffect(() => {
-    pendingTxns.map(txn => {
+    if (isCheckingTxns.current) {
+      return;
+    }
+
+    isCheckingTxns.current = true;
+
+    const promises = pendingTxns.map(txn => {
       if (txn.isAppchainSide) {
-        anchorContract?.get_appchain_message_processing_result_of({ nonce: txn.sequenceId }).then(result => {
-      
+        return anchorContract?.get_appchain_message_processing_result_of({ nonce: txn.sequenceId }).then(result => {
           if (result?.['Ok']) {
             updateTxn(txn.appchainId, {...txn, status: BridgeHistoryStatus.Succeed});
+            // toast({
+            //   status: 'success',
+            //   title: 'Transaction Confirmed',
+            //   position: 'top-right'
+            // });
           } else if (result?.['Error']) {
             updateTxn(txn.appchainId, {...txn, status: BridgeHistoryStatus.Failed});
           }
         });
       } else {
-        appchainApi?.query.octopusAppchain.notificationHistory(txn.sequenceId).then(res => {
+        return appchainApi?.query.octopusAppchain.notificationHistory(txn.sequenceId).then(res => {
           if (res?.toJSON() === 'Success') {
             updateTxn(txn.appchainId, {...txn, status: BridgeHistoryStatus.Succeed});
-          } else if (res?.toJSON() !== 'None') {
+            // toast({
+            //   status: 'success',
+            //   title: 'Transaction Confirmed',
+            //   position: 'top-right'
+            // });
+          } else if (res?.toJSON() !== null) {
             updateTxn(txn.appchainId, {...txn, status: BridgeHistoryStatus.Failed});
           }
         });
       }
     });
-  }, [pendingTxns, appchainApi, anchorContract, updateTxn]);
+    try {
+      await Promise.all(promises);
+    } catch(err) {}
+    
+    isCheckingTxns.current = false;
+  }
 
+  useInterval(() => {
+    pendingTxnsChecker.current();
+  }, 5 * 1000);
 
   // fetch balance via near contract
   useEffect(() => {
@@ -326,6 +359,7 @@ export const BridgePanel: React.FC = () => {
     setTimeout(() => {
       amountInputRef.current?.focus();
     }, 300);
+    window.localStorage.setItem('OCTOPUS_BRIDGE_TOKEN_CONTRACT_ID', token.contractId);
   }
 
   const onSetMax = () => {
@@ -401,21 +435,21 @@ export const BridgePanel: React.FC = () => {
     await tx.signAndSend(fromAccount, ({ events = [], status }: any) => {
         
         events.forEach(({ phase, event: { data, method, section } }: any) => {
-       
+          
           if (section === 'octopusAppchain' && (
             method === 'Locked' || method === 'AssetBurned'
           )) {
-            console.log(data, method, section);
             updateTxn(appchainId || '', {
               isAppchainSide: true,
               appchainId: appchainId || '',
               hash: tx.hash.toString(),
-              sequenceId: data[3].toNumber(),
+              sequenceId: data[method === 'Locked' ? 3 : 4].toNumber(),
               amount: amountInU64.toString(),
               status: BridgeHistoryStatus.Pending,
               timestamp: new Date().getTime(),
               fromAccount: fromAccount || '',
-              toAccount: targetAccount || ''
+              toAccount: targetAccount || '',
+              tokenContractId: tokenAsset?.contractId || ''
             });
             setIsTransfering.off();
             checkBalanceViaRPC?.current();
@@ -615,7 +649,12 @@ export const BridgePanel: React.FC = () => {
         size="lg">
         <DrawerOverlay />
         <DrawerContent>
-          <History appchain={appchain} histories={appchainTxns} onDrawerClose={setIsHistoryDrawerOpen.off} onClearHistory={onClearHistory} />
+          <History 
+            appchain={appchain} 
+            histories={appchainTxns} 
+            onDrawerClose={setIsHistoryDrawerOpen.off} 
+            onClearHistory={onClearHistory} 
+            tokenAssets={tokens} />
         </DrawerContent>
       </Drawer>
     </>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import dayjs from 'dayjs';
 
 import {
@@ -21,7 +21,8 @@ import {
 import {
   AppchainInfoWithAnchorStatus,
   BridgeHistory,
-  BridgeHistoryStatus
+  BridgeHistoryStatus,
+  TokenAssset
 } from 'types';
 
 import { DecimalUtil } from 'utils';
@@ -32,6 +33,7 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 type HistoryProps = {
   appchain: AppchainInfoWithAnchorStatus | undefined;
   histories: BridgeHistory[];
+  tokenAssets: TokenAssset[] | undefined;
   onDrawerClose: VoidFunction;
   onClearHistory: VoidFunction;
 }
@@ -39,12 +41,15 @@ type HistoryProps = {
 type HistoryItemProps = {
   appchain: AppchainInfoWithAnchorStatus | undefined;
   history: BridgeHistory;
+  tokenAssets: TokenAssset[] | undefined;
 }
 
 dayjs.extend(relativeTime);
 
-const HistoryItem: React.FC<HistoryItemProps> = ({ appchain, history }) => {
+const HistoryItem: React.FC<HistoryItemProps> = ({ appchain, history, tokenAssets }) => {
   const bg = useColorModeValue('#f6f7fa', '#15172c');
+
+  const tokenAsset = useMemo(() => tokenAssets?.find(t => t.contractId === history.tokenContractId), [tokenAssets, history]);
 
   return (
     <Box p={3} bg={bg} borderRadius="lg">
@@ -56,10 +61,10 @@ const HistoryItem: React.FC<HistoryItemProps> = ({ appchain, history }) => {
         </HStack>
         <HStack alignItems="flex-end" justifyContent="center">
           <Heading fontSize="lg">
-            {DecimalUtil.beautify(DecimalUtil.fromString(history.amount, appchain?.appchain_metadata?.fungible_token_metadata.decimals))}
+            {DecimalUtil.beautify(DecimalUtil.fromString(history.amount, tokenAsset?.metadata?.decimals))}
           </Heading>
           <Heading fontSize="lg">
-            {appchain?.appchain_metadata?.fungible_token_metadata.symbol}
+            {tokenAsset?.metadata?.symbol}
           </Heading>
           {
             history.status === BridgeHistoryStatus.Pending ?
@@ -82,7 +87,7 @@ const HistoryItem: React.FC<HistoryItemProps> = ({ appchain, history }) => {
   );
 }
 
-export const History: React.FC<HistoryProps> = ({ appchain, histories, onDrawerClose, onClearHistory }) => {
+export const History: React.FC<HistoryProps> = ({ appchain, histories, onDrawerClose, onClearHistory, tokenAssets }) => {
   
   return (
     <>
@@ -101,7 +106,7 @@ export const History: React.FC<HistoryProps> = ({ appchain, histories, onDrawerC
             <List spacing={6}>
               {
                 histories.map(h => (
-                  <HistoryItem appchain={appchain} history={h} key={h.hash} />
+                  <HistoryItem appchain={appchain} history={h} key={h.hash} tokenAssets={tokenAssets} />
                 ))
               }
             </List> :

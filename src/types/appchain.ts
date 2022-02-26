@@ -146,6 +146,7 @@ export type BridgeHistory = {
   amount: string;
   status: BridgeHistoryStatus;
   timestamp: number;
+  tokenContractId: string;
 }
 
 export type StakingFact = {
