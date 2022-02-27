@@ -338,7 +338,7 @@ export const VoteActions: React.FC<VoteActionsProps> = ({ data }) => {
     <>
       {
         userUpvotes.gt(ZERO_DECIMAL) || userDownvotes.gt(ZERO_DECIMAL) ?
-        <Flex p={4} borderRadius="lg" bg={bg} mb={4} alignItems="center">
+        <Flex p={4} borderRadius="lg" bg={bg} mb={4} alignItems="center" position="relative" zIndex={upvotePopoverOpen || downvotePopoverOpen ? 0 : 2}>
           <Text variant="gray">Your votes:</Text>
           <Stack direction={{ base: 'column', md: 'row' }} ml={3}>
             {
