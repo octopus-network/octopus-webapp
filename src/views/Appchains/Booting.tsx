@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import useSWR from 'swr';
 
 import {
@@ -8,6 +8,7 @@ import {
   Tooltip,
   useColorModeValue,
   Icon,
+  Text,
   Avatar,
   Grid,
   List,
@@ -20,10 +21,11 @@ import {
   ChevronRightIcon 
 } from '@chakra-ui/icons';
 
-import { DecimalUtil } from 'utils';
+import { DecimalUtil, ZERO_DECIMAL } from 'utils';
 import { AppchainInfo } from 'types';
 import { useNavigate } from 'react-router-dom';
 import { OCT_TOKEN_DECIMALS } from 'primitives';
+import { useGlobalStore } from 'stores';
 
 import { Empty } from 'components';
 
@@ -34,6 +36,13 @@ type BootingItemProps = {
 const BootingItem: React.FC<BootingItemProps> = ({ data }) => {
   const hoverBg = useColorModeValue('gray.100', 'whiteAlpha.100');
   const navigate = useNavigate();
+
+  const { global } = useGlobalStore();
+
+  const { data: userVotes } = useSWR(global.accountId ? `votes/${global.accountId}/${data.appchain_id}` : null);
+
+  const userDownvotes = useMemo(() => DecimalUtil.fromString(userVotes?.downvotes, OCT_TOKEN_DECIMALS), [userVotes]);
+  const userUpvotes = useMemo(() => DecimalUtil.fromString(userVotes?.upvotes, OCT_TOKEN_DECIMALS), [userVotes]);
   
   return (
     <Box 
@@ -60,8 +69,18 @@ const BootingItem: React.FC<BootingItemProps> = ({ data }) => {
         <GridItem colSpan={3}>
           <Heading fontSize="md">{DecimalUtil.beautify(DecimalUtil.fromString(data.total_stake, OCT_TOKEN_DECIMALS))} OCT</Heading>
         </GridItem>
-        <GridItem colSpan={1} textAlign="right">
-          <Icon as={ChevronRightIcon} boxSize={6} className="octo-gray" opacity=".8" />
+        <GridItem colSpan={1}>
+          <HStack position="relative" justifyContent="flex-end">
+            {
+              userUpvotes.gt(ZERO_DECIMAL) || userDownvotes.gt(ZERO_DECIMAL) ?
+              <Text fontSize="sm" variant="gray">Voted</Text> : null
+            }
+            <Icon as={ChevronRightIcon} boxSize={6} className="octo-gray" opacity=".8" />
+            {
+              userDownvotes.gt(ZERO_DECIMAL) || userUpvotes.gt(ZERO_DECIMAL) ?
+              <Box position="absolute" top="-3px" right="18px" boxSize={2} bg="red" borderRadius="full" /> : null
+            }
+          </HStack>
         </GridItem>
       </Grid>
     </Box>

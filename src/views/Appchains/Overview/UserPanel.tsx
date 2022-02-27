@@ -12,7 +12,9 @@ export const UserPanel: React.FC<UserPanelProps> = ({ data }) => {
   return (
     <>
     {
-      data?.appchain_state === 'InQueue' ?
+      data?.appchain_state === 'InQueue' ||
+      data?.appchain_state === 'Staging' ||
+      data?.appchain_state === 'Booting' ?
       <VoteActions data={data} /> : null
     }
     </>

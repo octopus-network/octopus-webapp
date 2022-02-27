@@ -114,7 +114,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
 
   const { data: delegatorRewards } = useSWR<RewardHistory[]>(
     isDelegated && appchain?.anchor_status ?
-      `rewards/${validator?.validator_id}/${appchain?.appchain_id}/${global?.accountId}/${appchain?.anchor_status?.index_range_of_validator_set_history.end_index}` : null
+      `rewards/${validator?.validator_id}/${appchain?.appchain_id}/${global?.accountId}/${appchain?.anchor_status?.index_range_of_validator_set_history?.end_index}` : null
   );
 
   const { data: balances } = useSWR(global.accountId ? `balances/${global.accountId}` : null);

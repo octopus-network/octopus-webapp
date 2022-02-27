@@ -36,6 +36,7 @@ import { useNavigate } from 'react-router-dom';
 import { DecimalUtil, ZERO_DECIMAL } from 'utils';
 import { OCT_TOKEN_DECIMALS } from 'primitives';
 import { Empty } from 'components';
+import { useGlobalStore } from 'stores';
 
 type VotingItemProps = {
   rank: number;
@@ -51,6 +52,7 @@ const VotingItem: React.FC<VotingItemProps> = ({ rank, data, highestVotes }) => 
 
   const red = useColorModeValue('#ff5959', '#ff5959');
   const green = useColorModeValue('#12cd76', '#12cd76');
+  const { global } = useGlobalStore();
 
   const navigate = useNavigate();
 
@@ -60,6 +62,11 @@ const VotingItem: React.FC<VotingItemProps> = ({ rank, data, highestVotes }) => 
   const votingScore = useMemo(() => DecimalUtil.fromString(data.voting_score, OCT_TOKEN_DECIMALS), [data]);
 
   const pendingScore = useMemo(() => upvotes.sub(downvotes), [downvotes, upvotes]);
+
+  const { data: userVotes } = useSWR(global.accountId ? `votes/${global.accountId}/${data.appchain_id}` : null);
+
+  const userDownvotes = useMemo(() => DecimalUtil.fromString(userVotes?.downvotes, OCT_TOKEN_DECIMALS), [userVotes]);
+  const userUpvotes = useMemo(() => DecimalUtil.fromString(userVotes?.upvotes, OCT_TOKEN_DECIMALS), [userVotes]);
   
   return (
     <Box 
@@ -124,8 +131,14 @@ const VotingItem: React.FC<VotingItemProps> = ({ rank, data, highestVotes }) => 
             </Box>
           </Box>
         </GridItem>
-        <GridItem colSpan={1} textAlign="right">
-          <Icon as={ChevronRightIcon} boxSize={6} className="octo-gray" opacity=".8" />
+        <GridItem colSpan={1}>
+          <HStack justifyContent="flex-end">
+            {
+              userUpvotes.gt(ZERO_DECIMAL) || userDownvotes.gt(ZERO_DECIMAL) ?
+              <Text fontSize="sm" variant="gray">Voted</Text> : null
+            }
+            <Icon as={ChevronRightIcon} boxSize={6} className="octo-gray" opacity=".8" />
+          </HStack>
         </GridItem>
       </Grid>
     </Box>

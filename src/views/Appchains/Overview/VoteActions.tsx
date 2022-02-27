@@ -15,6 +15,7 @@ import {
   CloseButton,
   Heading,
   Flex,
+  Stack,
   useBoolean,
   useToast
 } from '@chakra-ui/react';
@@ -28,7 +29,7 @@ import { useGlobalStore } from 'stores';
 import { DecimalUtil, ZERO_DECIMAL } from 'utils';
 import { AmountInput } from 'components';
 import { IoMdThumbsUp, IoMdThumbsDown } from 'react-icons/io';
-import { AppchainInfo } from 'types';
+import { AppchainInfo, UserVotes } from 'types';
 import { API_HOST } from 'config';
 
 import { 
@@ -174,6 +175,9 @@ const VotePopover: React.FC<VotePopoverProps> = ({ isOpen, appchainId, voteType,
     ).then(() => {
       axios.post(`${API_HOST}/update-appchains`).then(() => window.location.reload());
     }).catch(err => {
+      if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
+        return;
+      }
       toast({
         position: 'top-right',
         title: 'Error',
@@ -282,79 +286,150 @@ const VotePopover: React.FC<VotePopoverProps> = ({ isOpen, appchainId, voteType,
 
 export const VoteActions: React.FC<VoteActionsProps> = ({ data }) => {
   const { global } = useGlobalStore();
+  const bg = useColorModeValue('#f6f7fa', '#15172c');
 
   const [upvotePopoverOpen, setUpvotePopoverOpen] = useBoolean(false);
   const [downvotePopoverOpen, setDownvotePopoverOpen] = useBoolean(false);
+  const toast = useToast();
 
   const downvotes = useMemo(() => DecimalUtil.fromString(data?.downvote_deposit, OCT_TOKEN_DECIMALS), [data]);
   const upvotes = useMemo(() => DecimalUtil.fromString(data?.upvote_deposit, OCT_TOKEN_DECIMALS), [data]);
 
-  const [userUpvotes, setUserUpvotes] = useState(ZERO_DECIMAL);
-  const [userDownvotes, setUserDownvotes] = useState(ZERO_DECIMAL);
+  const { data: userVotes } = useSWR<UserVotes>(global.accountId ? `votes/${global.accountId}/${data.appchain_id}` : null);
 
-  useEffect(() => {
-    if (!data || !global.registry) {
-      return;
-    }
-    Promise.all([
-      global.registry?.get_upvote_deposit_for({
-        account_id: global.accountId,
-        appchain_id: data?.appchain_id
-      }),
-      global.registry?.get_downvote_deposit_for({
-        account_id: global.accountId,
-        appchain_id: data?.appchain_id
-      }),
-    ]).then(([upvotes, downvotes]) => {
-      setUserUpvotes(DecimalUtil.fromString(upvotes, OCT_TOKEN_DECIMALS));
-      setUserDownvotes(DecimalUtil.fromString(downvotes, OCT_TOKEN_DECIMALS));
+  const userDownvotes = useMemo(() => DecimalUtil.fromString(userVotes?.downvotes, OCT_TOKEN_DECIMALS), [userVotes]);
+  const userUpvotes = useMemo(() => DecimalUtil.fromString(userVotes?.upvotes, OCT_TOKEN_DECIMALS), [userVotes]);
+
+  const [isWithdrawingUpvotes, setIsWithdrawingUpvotes] = useBoolean();
+  const [isWithdrawingDownvotes, setIsWithdrawingDownvotes] = useBoolean();
+
+  const onWithdrawVotes = (voteType: 'upvote' | 'downvote') => {
+    const method = 
+      voteType === 'upvote' ? 
+      global.registry?.withdraw_upvote_deposit_of :
+      global.registry?.withdraw_downvote_deposit_of;
+
+    (voteType === 'upvote' ? setIsWithdrawingUpvotes : setIsWithdrawingDownvotes).on();
+
+    method?.(
+      {
+        appchain_id: data.appchain_id,
+        amount: (voteType === 'upvote' ? userVotes?.upvotes : userVotes?.downvotes) || '0'
+      },
+      COMPLEX_CALL_GAS
+    ).then(() => {
+      axios.post(`${API_HOST}/update-appchains`).then(() => window.location.reload());
+    }).catch(err => {
+      if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
+        return;
+      }
+      toast({
+        position: 'top-right',
+        title: 'Error',
+        description: err.toString(),
+        status: 'error'
+      });
     });
-  }, [global]);
+    
+  }
+  
 
   return (
-    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-      <Box position="relative">
-        <Button 
-          position="relative"
-          colorScheme="octo-blue"
-          onClick={setUpvotePopoverOpen.on} 
-          zIndex={upvotePopoverOpen || downvotePopoverOpen ? 0 : 2}
-          transition="all .5s ease"
-          style={{
-            opacity: upvotePopoverOpen ? 0 : 1,
-            transform: upvotePopoverOpen ? 'scale(.9) translateY(-10px)' : 'scale(1) translateY(0px)'
-          }}
-          isFullWidth>
-          <Icon as={IoMdThumbsUp} mr={1} /> Upvote
-          {
-            upvotes.gt(ZERO_DECIMAL) ?
-            `(${DecimalUtil.beautify(upvotes)})` : ''
-          }
-        </Button>
-        <VotePopover voteType="upvote" onClose={setUpvotePopoverOpen.off} isOpen={upvotePopoverOpen} 
-          voted={userUpvotes} appchainId={data?.appchain_id} />
-      </Box>
-      <Box position="relative">
-        <Button 
-          position="relative"
-          colorScheme="teal"
-          onClick={setDownvotePopoverOpen.on} 
-          zIndex={downvotePopoverOpen || upvotePopoverOpen ? 0 : 2}
-          transition="all .5s ease"
-          style={{
-            opacity: downvotePopoverOpen ? 0 : 1,
-            transform: downvotePopoverOpen ? 'scale(.9) translateY(-10px)' : 'scale(1) translateY(0px)'
-          }}
-          isFullWidth>
-          <Icon as={IoMdThumbsDown} mr={1} /> Downvote
-          {
-            downvotes.gt(ZERO_DECIMAL) ?
-            `(${DecimalUtil.beautify(downvotes)})` : ''
-          }
-        </Button>
-        <VotePopover voteType="downvote" onClose={setDownvotePopoverOpen.off} isOpen={downvotePopoverOpen} 
-          voted={userDownvotes} appchainId={data?.appchain_id} />
-      </Box>
-    </SimpleGrid>
+    <>
+      {
+        userUpvotes.gt(ZERO_DECIMAL) || userDownvotes.gt(ZERO_DECIMAL) ?
+        <Flex p={4} borderRadius="lg" bg={bg} mb={4} alignItems="center">
+          <Text variant="gray">Your votes:</Text>
+          <Stack direction={{ base: 'column', md: 'row' }} ml={3}>
+            {
+              userUpvotes.gt(ZERO_DECIMAL) ?
+              <HStack>
+                <Icon as={IoMdThumbsUp} />
+                <Heading fontSize="md">{DecimalUtil.beautify(userUpvotes)}</Heading>
+                <Button 
+                  size="xs" 
+                  colorScheme="octo-blue" 
+                  variant="ghost" 
+                  isDisabled={isWithdrawingUpvotes} 
+                  isLoading={isWithdrawingUpvotes} 
+                  onClick={() => onWithdrawVotes('upvote')}
+                  >
+                  Withdraw
+                </Button>
+                {
+                  userDownvotes.gt(ZERO_DECIMAL) ?
+                  <Text variant="gray">|</Text> : null
+                }
+              </HStack> : null
+            }
+            {
+              userDownvotes.gt(ZERO_DECIMAL) ?
+              <HStack>
+                <Icon as={IoMdThumbsDown} />
+                <Heading fontSize="md">{DecimalUtil.beautify(userDownvotes)}</Heading>
+                <Button 
+                  size="xs" 
+                  colorScheme="octo-blue" 
+                  variant="ghost" 
+                  onClick={() => onWithdrawVotes('downvote')}
+                  isDisabled={isWithdrawingDownvotes} 
+                  isLoading={isWithdrawingDownvotes} 
+                  >
+                  Withdraw
+                </Button>
+              </HStack> : null
+            }
+          </Stack>
+        </Flex> : null
+      }
+      {
+        data?.appchain_state === 'InQueue' ?
+        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+          <Box position="relative">
+            <Button 
+              position="relative"
+              colorScheme="octo-blue"
+              onClick={setUpvotePopoverOpen.on} 
+              zIndex={upvotePopoverOpen || downvotePopoverOpen ? 0 : 2}
+              transition="all .5s ease"
+              style={{
+                opacity: upvotePopoverOpen ? 0 : 1,
+                transform: upvotePopoverOpen ? 'scale(.9) translateY(-10px)' : 'scale(1) translateY(0px)'
+              }}
+              isFullWidth>
+              <Icon as={IoMdThumbsUp} mr={1} /> Upvote
+              {
+                upvotes.gt(ZERO_DECIMAL) ?
+                `(${DecimalUtil.beautify(upvotes)})` : ''
+              }
+            </Button>
+            <VotePopover voteType="upvote" onClose={setUpvotePopoverOpen.off} isOpen={upvotePopoverOpen} 
+              voted={userUpvotes} appchainId={data?.appchain_id} />
+          </Box>
+          <Box position="relative">
+            <Button 
+              position="relative"
+              colorScheme="teal"
+              onClick={setDownvotePopoverOpen.on} 
+              zIndex={downvotePopoverOpen || upvotePopoverOpen ? 0 : 2}
+              transition="all .5s ease"
+              style={{
+                opacity: downvotePopoverOpen ? 0 : 1,
+                transform: downvotePopoverOpen ? 'scale(.9) translateY(-10px)' : 'scale(1) translateY(0px)'
+              }}
+              isFullWidth>
+              <Icon as={IoMdThumbsDown} mr={1} /> Downvote
+              {
+                downvotes.gt(ZERO_DECIMAL) ?
+                `(${DecimalUtil.beautify(downvotes)})` : ''
+              }
+            </Button>
+            <VotePopover voteType="downvote" onClose={setDownvotePopoverOpen.off} isOpen={downvotePopoverOpen} 
+              voted={userDownvotes} appchainId={data?.appchain_id} />
+          </Box>
+        </SimpleGrid> : null
+      }
+      
+    </>
   );
 }

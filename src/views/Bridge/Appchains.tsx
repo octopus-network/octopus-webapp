@@ -91,14 +91,14 @@ export const Appchains: React.FC = () => {
   const isReverse = useMemo(() => !appchainId || new RegExp(`^/bridge/near/`).test(pathname), [pathname]);
 
   return (
-    <Box bg={bg} p={6} borderRadius="lg" minH="520px">
+    <Box bg={bg} p={6} borderRadius="lg">
       <Heading fontSize="xl">Appchains</Heading>
       {
         appchains === undefined ?
           <Center minH="240px">
             <Spinner size="md" thickness="4px" speed="1s" color="octo-blue.500" />
           </Center> :
-          <List mt={6} spacing={4}>
+          <List mt={6} spacing={4} h="425px" overflowY="scroll">
             {
               appchains?.map((appchain, idx) => (
                 <AppchainItem appchain={appchain} key={`appchain-${idx}`} isSelected={appchainId === appchain.appchain_id} isReverse={isReverse} />

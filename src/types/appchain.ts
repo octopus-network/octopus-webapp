@@ -191,3 +191,8 @@ export type StakingHistory = {
   staking_fact: StakingFact;
   timestamp: number;
 }
+
+export type UserVotes = {
+  downvotes: string;
+  upvotes: string;
+}

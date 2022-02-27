@@ -79,7 +79,7 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
 
   const { data: rewards } = useSWR<RewardHistory[]>(
     appchain?.anchor_status && global.accountId ?
-      `rewards/${global.accountId}/${appchain.appchain_id}/${appchain?.anchor_status?.index_range_of_validator_set_history.end_index}` : null
+      `rewards/${global.accountId}/${appchain.appchain_id}/${appchain?.anchor_status?.index_range_of_validator_set_history?.end_index}` : null
   );
 
   const unwithdraedRewards = useMemo(() => {
