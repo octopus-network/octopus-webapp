@@ -216,7 +216,7 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
                   </Menu> : null
                 }
               </Flex>
-              <Center minH="125px">
+              <Center minH="115px">
                 <Box boxSize={20}>
                   <Image src={empty} w="100%" />
                 </Box>

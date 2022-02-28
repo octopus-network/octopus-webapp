@@ -78,6 +78,10 @@ export class RegistryContract extends Contract {
     return this.withdraw_downvote_deposit_of(args, gas);
   }
 
+  get_registry_settings(): Promise<any> {
+    return this.get_registry_settings();
+  }
+
 }
 
 export class AnchorContract extends Contract {

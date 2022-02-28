@@ -13,7 +13,8 @@ import {
   Home,
   Appchains,
   Appchain,
-  Bridge
+  Bridge,
+  Register
 } from 'views';
 
 export const App = () => (
@@ -30,6 +31,7 @@ export const App = () => (
           <Route path="bridge" element={<Bridge />} />
           <Route path="bridge/:appchainId/near" element={<Bridge />} />
           <Route path="bridge/near/:appchainId" element={<Bridge />} />
+          <Route path="register" element={<Register />} />
         </Route>
       </Routes>
     </Router>

@@ -19,6 +19,7 @@ import {
   config
 } from 'react-spring';
 
+import { useNavigate } from 'react-router-dom';
 import { HiOutlineArrowNarrowRight } from 'react-icons/hi';
 import joinBannerIcon from 'assets/icons/join-banner.png';
 import joinBannerBg from 'assets/join-banner-bg.png';
@@ -67,6 +68,8 @@ export const JoinBanner: React.FC = () => {
     transform: 'translateX(0)'
   });
 
+  const navigate = useNavigate();
+
   return (
     <Box 
       borderRadius="lg" 
@@ -88,12 +91,12 @@ export const JoinBanner: React.FC = () => {
               <Heading fontSize="3xl" color="white">Where Web3.0 Happens</Heading>
             </animated.div>
             <animated.div style={descriptionProps}>
-              <Text fontSize="sm" color="white">A cryptonetwork for launching and running Web3.0 Appchains</Text>
+              <Text fontSize="md" color="white" opacity={.7}>A cryptonetwork for launching and running Web3.0 Appchains</Text>
             </animated.div>
           </VStack>
         </HStack>
         <animated.div style={buttonProps}>
-          <JoinButton>
+          <JoinButton onClick={() => navigate(`/register`)}>
             <Text>Join Octopus</Text>
             <Icon as={HiOutlineArrowNarrowRight} ml={2} />
           </JoinButton>

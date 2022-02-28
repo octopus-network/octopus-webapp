@@ -87,7 +87,8 @@ export const Root: React.FC = () => {
           viewMethods: [
             'get_owner',
             'get_upvote_deposit_for',
-            'get_downvote_deposit_for'
+            'get_downvote_deposit_for',
+            'get_registry_settings'
           ],
           changeMethods: [
             'withdraw_upvote_deposit_of',

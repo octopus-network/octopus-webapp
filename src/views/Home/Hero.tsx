@@ -20,6 +20,7 @@ import {
 } from 'react-spring';
 
 import { HiOutlineArrowNarrowRight } from 'react-icons/hi';
+import { useNavigate } from 'react-router-dom';
 
 import heroBg from 'assets/hero-bg.png';
 import heroBgDark from 'assets/hero-bg-dark.png';
@@ -42,6 +43,8 @@ const JoinButton = styled(Button)`
 `;
 
 export const Hero: React.FC = () => {
+
+  const navigate = useNavigate();
 
   const titleProps = useSpring({
     from: { opacity: 0, transform: 'translateY(-20px)' },
@@ -127,7 +130,7 @@ export const Hero: React.FC = () => {
             </Box>
             <Box mt={{ base: 10, md: 16 }}>
               <animated.div style={buttonProps}>
-                <JoinButton size="lg" className="octo-linear-button">
+                <JoinButton size="lg" className="octo-linear-button" onClick={() => navigate('/register')}>
                   <Text>Join Octopus</Text>
                   <Icon as={HiOutlineArrowNarrowRight} ml={2} />
                 </JoinButton>

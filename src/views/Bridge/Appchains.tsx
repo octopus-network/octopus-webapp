@@ -95,7 +95,7 @@ export const Appchains: React.FC = () => {
       <Heading fontSize="xl">Appchains</Heading>
       {
         appchains === undefined ?
-          <Center minH="240px">
+          <Center h="425px">
             <Spinner size="md" thickness="4px" speed="1s" color="octo-blue.500" />
           </Center> :
           <List mt={6} spacing={4} h="425px" overflowY="scroll">

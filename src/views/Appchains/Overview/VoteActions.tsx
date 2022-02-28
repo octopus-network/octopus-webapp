@@ -349,12 +349,16 @@ export const VoteActions: React.FC<VoteActionsProps> = ({ data }) => {
                 <Button 
                   size="xs" 
                   colorScheme="octo-blue" 
-                  variant="ghost" 
+                  variant="ghost"
+                  position="relative"
                   isDisabled={isWithdrawingUpvotes} 
                   isLoading={isWithdrawingUpvotes} 
-                  onClick={() => onWithdrawVotes('upvote')}
-                  >
+                  onClick={() => onWithdrawVotes('upvote')}>
                   Withdraw
+                  {
+                    data?.appchain_state !== 'InQueue' ?
+                    <Box position="absolute" top="0px" right="0px" boxSize={2} bg="red" borderRadius="full" /> : null
+                  }
                 </Button>
                 {
                   userDownvotes.gt(ZERO_DECIMAL) ?
@@ -372,10 +376,14 @@ export const VoteActions: React.FC<VoteActionsProps> = ({ data }) => {
                   colorScheme="octo-blue" 
                   variant="ghost" 
                   onClick={() => onWithdrawVotes('downvote')}
+                  position="relative"
                   isDisabled={isWithdrawingDownvotes} 
-                  isLoading={isWithdrawingDownvotes} 
-                  >
+                  isLoading={isWithdrawingDownvotes} >
                   Withdraw
+                  {
+                    data?.appchain_state !== 'InQueue' ?
+                    <Box position="absolute" top="0px" right="0px" boxSize={2} bg="red" borderRadius="full" /> : null
+                  }
                 </Button>
               </HStack> : null
             }
