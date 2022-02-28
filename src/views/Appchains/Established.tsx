@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import useSWR from 'swr';
 
 import {
   Flex,
   Tooltip,
-  Text,
+  Button,
   HStack,
   Heading,
   Icon,
@@ -22,17 +22,18 @@ import {
 } from '@chakra-ui/icons';
 
 import {
-  StateBadge
+  StateBadge,
+  Empty
 } from 'components';
 
 import { AppchainInfo } from 'types';
 import { useNavigate } from 'react-router-dom';
 
-type BootingItemProps = {
+type AppchainItemProps = {
   data: AppchainInfo;
 }
 
-const BootingItem: React.FC<BootingItemProps> = ({ data }) => {
+const AppchainItem: React.FC<AppchainItemProps> = ({ data }) => {
   const hoverBg = useColorModeValue('gray.100', 'whiteAlpha.100');
   const navigate = useNavigate();
   
@@ -74,7 +75,8 @@ const BootingItem: React.FC<BootingItemProps> = ({ data }) => {
 export const Established: React.FC = () => {
   const bg = useColorModeValue('white', '#25263c');
 
-  const { data: preAuditAppchains } = useSWR('appchains/pre-audit');
+  const [showType, setShowType] = useState('pre-audit');
+  const { data: appchains } = useSWR(`appchains/${showType}`);
 
   return (
     <>
@@ -85,25 +87,37 @@ export const Established: React.FC = () => {
             <Icon as={QuestionOutlineIcon} boxSize={4} className="octo-gray" />
           </HStack>
         </Tooltip>
-        
+        <HStack>
+          <Button variant={showType === 'registered' ? 'octo-blue' : 'octo-white'}
+            size="sm" onClick={() => setShowType('registered')}>Registered</Button>
+          <Button variant={showType === 'auditing' ? 'octo-blue' : 'octo-white'}
+            size="sm" onClick={() => setShowType('auditing')}>Auditing</Button>
+          <Button variant={showType === 'pre-audit' ? 'octo-blue' : 'octo-white'}
+            size="sm" onClick={() => setShowType('pre-audit')}>All</Button>
+        </HStack>
       </Flex>
       <Box mt={8} bg={bg} p={6} borderRadius="lg">
-        <Box p={4}>
-          <Grid templateColumns={{ base: 'repeat(7, 1fr)', md: 'repeat(10, 1fr)' }} className="octo-gray" gap={6}>
-            <GridItem colSpan={3}>ID</GridItem>
-            <GridItem colSpan={3} display={{ base: 'none', md: 'table-cell' }}>Founder</GridItem>
-            <GridItem colSpan={3}>State</GridItem>
-            <GridItem colSpan={1}/>
-          </Grid>
-        </Box>
-        <List>
-          {
-            preAuditAppchains?.length ?
-            preAuditAppchains.map((appchain: AppchainInfo, idx: number) => (
-              <BootingItem data={appchain} key={`established-item-${idx}`} />
-            )) : null
-          }
-        </List>
+        {
+          appchains?.length ?
+          <>
+            <Box p={4}>
+              <Grid templateColumns={{ base: 'repeat(7, 1fr)', md: 'repeat(10, 1fr)' }} className="octo-gray" gap={6}>
+                <GridItem colSpan={3}>ID</GridItem>
+                <GridItem colSpan={3} display={{ base: 'none', md: 'table-cell' }}>Founder</GridItem>
+                <GridItem colSpan={3}>State</GridItem>
+                <GridItem colSpan={1}/>
+              </Grid>
+            </Box>
+            <List>
+              {
+                appchains.map((appchain: AppchainInfo, idx: number) => (
+                  <AppchainItem data={appchain} key={`established-item-${idx}`} />
+                ))
+              }
+            </List>
+          </> :
+          <Empty />
+        }
       </Box>
     </>
   );
