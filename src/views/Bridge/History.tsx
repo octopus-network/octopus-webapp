@@ -25,6 +25,8 @@ import {
   TokenAssset
 } from 'types';
 
+import { encodeAddress } from '@polkadot/util-crypto';
+import { isHex } from '@polkadot/util';
 import { DecimalUtil } from 'utils';
 import { Empty } from 'components';
 import nearLogo from 'assets/near.svg';
@@ -68,10 +70,10 @@ const HistoryItem: React.FC<HistoryItemProps> = ({ appchain, history, tokenAsset
           </Heading>
           {
             history.status === BridgeHistoryStatus.Pending ?
-            <CircularProgress color="octo-blue.400" isIndeterminate size="16px" thickness="16px" /> :
-            <Tag colorScheme={history.status === BridgeHistoryStatus.Succeed ? 'octo-blue' : 'red'} size="sm">
-              {history.status === BridgeHistoryStatus.Succeed ? 'Succeed' : 'Failed'}
-            </Tag>
+              <CircularProgress color="octo-blue.400" isIndeterminate size="16px" thickness="16px" /> :
+              <Tag colorScheme={history.status === BridgeHistoryStatus.Succeed ? 'octo-blue' : 'red'} size="sm">
+                {history.status === BridgeHistoryStatus.Succeed ? 'Succeed' : 'Failed'}
+              </Tag>
           }
         </HStack>
       </Flex>
@@ -79,7 +81,9 @@ const HistoryItem: React.FC<HistoryItemProps> = ({ appchain, history, tokenAsset
         <HStack maxW="50%">
           <Text fontSize="md" variant="gray">to</Text>
           <Avatar boxSize={4} name={history.toAccount} src={!history.isAppchainSide ? appchain?.appchain_metadata?.fungible_token_metadata?.icon as any : nearLogo} />
-          <Text fontSize="md" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">{history.toAccount}</Text>
+          <Text fontSize="md" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+            {!history.isAppchainSide && isHex(history.toAccount) ? encodeAddress(history.toAccount) : history.toAccount}
+          </Text>
         </HStack>
         <Text variant="gray">{dayjs(Math.floor(history.timestamp)).fromNow()}</Text>
       </Flex>
@@ -88,7 +92,7 @@ const HistoryItem: React.FC<HistoryItemProps> = ({ appchain, history, tokenAsset
 }
 
 export const History: React.FC<HistoryProps> = ({ appchain, histories, onDrawerClose, onClearHistory, tokenAssets }) => {
-  
+
   return (
     <>
       <DrawerHeader borderBottomWidth="0">
