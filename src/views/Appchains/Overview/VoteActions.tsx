@@ -346,20 +346,20 @@ export const VoteActions: React.FC<VoteActionsProps> = ({ data }) => {
               <HStack>
                 <Icon as={IoMdThumbsUp} />
                 <Heading fontSize="md">{DecimalUtil.beautify(userUpvotes)}</Heading>
-                <Button 
-                  size="xs" 
-                  colorScheme="octo-blue" 
-                  variant="ghost"
-                  position="relative"
-                  isDisabled={isWithdrawingUpvotes} 
-                  isLoading={isWithdrawingUpvotes} 
-                  onClick={() => onWithdrawVotes('upvote')}>
-                  Withdraw
-                  {
-                    data?.appchain_state !== 'InQueue' ?
-                    <Box position="absolute" top="0px" right="0px" boxSize={2} bg="red" borderRadius="full" /> : null
-                  }
-                </Button>
+                {
+                  data?.appchain_state !== 'InQueue' ?
+                  <Button 
+                    size="xs" 
+                    colorScheme="octo-blue" 
+                    variant="ghost"
+                    position="relative"
+                    isDisabled={isWithdrawingUpvotes} 
+                    isLoading={isWithdrawingUpvotes} 
+                    onClick={() => onWithdrawVotes('upvote')}>
+                    Withdraw
+                    <Box position="absolute" top="0px" right="0px" boxSize={2} bg="red" borderRadius="full" />
+                  </Button> : null
+                }
                 {
                   userDownvotes.gt(ZERO_DECIMAL) ?
                   <Text variant="gray">|</Text> : null
@@ -371,20 +371,21 @@ export const VoteActions: React.FC<VoteActionsProps> = ({ data }) => {
               <HStack>
                 <Icon as={IoMdThumbsDown} />
                 <Heading fontSize="md">{DecimalUtil.beautify(userDownvotes)}</Heading>
-                <Button 
-                  size="xs" 
-                  colorScheme="octo-blue" 
-                  variant="ghost" 
-                  onClick={() => onWithdrawVotes('downvote')}
-                  position="relative"
-                  isDisabled={isWithdrawingDownvotes} 
-                  isLoading={isWithdrawingDownvotes} >
-                  Withdraw
-                  {
-                    data?.appchain_state !== 'InQueue' ?
-                    <Box position="absolute" top="0px" right="0px" boxSize={2} bg="red" borderRadius="full" /> : null
-                  }
-                </Button>
+                {
+                  data?.appchain_state !== 'InQueue' ?
+                  <Button 
+                    size="xs" 
+                    colorScheme="octo-blue" 
+                    variant="ghost" 
+                    onClick={() => onWithdrawVotes('downvote')}
+                    position="relative"
+                    isDisabled={isWithdrawingDownvotes} 
+                    isLoading={isWithdrawingDownvotes} >
+                    Withdraw
+                    <Box position="absolute" top="0px" right="0px" boxSize={2} bg="red" borderRadius="full" />
+                  </Button> : null
+                }
+                
               </HStack> : null
             }
           </Stack>
