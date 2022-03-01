@@ -90,7 +90,7 @@ export const RegisterForm: React.FC = () => {
 
   const onSubmit = (values: any, actions: any) => {
     const {
-      appchainId, website, functionSpec, email, githubAddress, 
+      appchainId, website, functionSpec, email, githubAddress,
       githubRelease, preminedAmount, preminedBeneficiary, idoAmount, eraReward
     } = values;
 
@@ -205,9 +205,9 @@ export const RegisterForm: React.FC = () => {
               </FocusLock>
             </PopoverContent>
           </Popover>
-          
+
         </HStack>
-        
+
       </Box>
       <Formik
         initialValues={{
@@ -308,7 +308,7 @@ export const RegisterForm: React.FC = () => {
                   </FormControl>
                 )}
               </Field>
-              <VStack spacing={1} alignItems="flex-start">
+              <VStack spacing={1} alignItems="flex-start" justifyContent="center">
                 <HStack>
                   <Heading fontSize="md">Auditing Fee:</Heading>
                   <Skeleton isLoaded={auditingFee !== undefined}>
@@ -318,15 +318,18 @@ export const RegisterForm: React.FC = () => {
                   </Skeleton>
                   <Heading fontSize="md">OCT</Heading>
                 </HStack>
-                <Skeleton isLoaded={!!balances}>
-                  <Text variant="gray">Balance: {
-                    !!balances ? 
-                    DecimalUtil.beautify(octBalance) : 'loading'
-                  } OCT</Text>
-                </Skeleton>
+                {
+                  global.accountId ?
+                    <Skeleton isLoaded={!!balances}>
+                      <Text variant="gray" fontSize="sm">Balance: {
+                        !!balances ?
+                          DecimalUtil.beautify(octBalance) : 'loading'
+                      } OCT</Text>
+                    </Skeleton> : null
+                }
               </VStack>
               <Box>
-                <Button 
+                <Button
                   colorScheme="octo-blue"
                   isLoading={props.isSubmitting}
                   type="submit"
@@ -336,10 +339,10 @@ export const RegisterForm: React.FC = () => {
                   }>
                   {
                     !global.accountId ?
-                    'Please Login' :
-                    (auditingFee && balances && octBalance.lt(auditingFee)) ?
-                    'Insufficient Balance' : 
-                    'Register'
+                      'Please Login' :
+                      (auditingFee && balances && octBalance.lt(auditingFee)) ?
+                        'Insufficient Balance' :
+                        'Register'
                   }
                 </Button>
               </Box>

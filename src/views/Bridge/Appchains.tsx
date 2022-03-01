@@ -91,20 +91,24 @@ export const Appchains: React.FC = () => {
   const isReverse = useMemo(() => !appchainId || new RegExp(`^/bridge/near/`).test(pathname), [pathname]);
 
   return (
-    <Box bg={bg} p={6} borderRadius="lg">
-      <Heading fontSize="xl">Appchains</Heading>
+    <Box bg={bg} pt={6} pb={6} borderRadius="lg">
+      <Box pl={6} pr={6}>
+        <Heading fontSize="xl">Appchains</Heading>
+      </Box>
       {
         appchains === undefined ?
-          <Center h="425px">
+          <Center h="450px">
             <Spinner size="md" thickness="4px" speed="1s" color="octo-blue.500" />
           </Center> :
-          <List mt={6} spacing={4} h="425px" overflowY="scroll">
-            {
-              appchains?.map((appchain, idx) => (
-                <AppchainItem appchain={appchain} key={`appchain-${idx}`} isSelected={appchainId === appchain.appchain_id} isReverse={isReverse} />
-              ))
-            }
-          </List>
+          <Box pl={6} pr={6} pb={6} mt={6} overflowY="scroll" h="425px">
+            <List spacing={4}>
+              {
+                appchains?.map((appchain, idx) => (
+                  <AppchainItem appchain={appchain} key={`appchain-${idx}`} isSelected={appchainId === appchain.appchain_id} isReverse={isReverse} />
+                ))
+              }
+            </List>
+          </Box>
       }
 
     </Box>
