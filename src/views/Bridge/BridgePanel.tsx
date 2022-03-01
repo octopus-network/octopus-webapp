@@ -41,7 +41,7 @@ import {
   BridgeHistoryStatus
 } from 'types';
 
-import { decodeAddress } from '@polkadot/util-crypto';
+import { decodeAddress, isAddress } from '@polkadot/util-crypto';
 import { u8aToHex, stringToHex, isHex } from '@polkadot/util';
 import type { InjectedAccountWithMeta } from '@polkadot/extension-inject/types';
 
@@ -215,7 +215,7 @@ export const BridgePanel: React.FC = () => {
   ) : undefined, [tokenAsset, global]);
 
   const checkNearAccount = useCallback(() => {
-    if (!global.network || isReverse || !debouncedTargetAccount || !tokenContract) {
+    if (!global.network || !debouncedTargetAccount || !tokenContract) {
       setIsInvalidTargetAccount.off();
       setTargetAccountNeedDepositStorage.off();
       return;
@@ -225,7 +225,7 @@ export const BridgePanel: React.FC = () => {
       keyStore: new keyStores.BrowserLocalStorageKeyStore(),
       ...global.network.near,
     });
-    
+
     // check is valid near account or not
     const tmpAccount = new Account(near.connection, debouncedTargetAccount);
     tmpAccount.state().then(_ => {
@@ -242,11 +242,34 @@ export const BridgePanel: React.FC = () => {
       setIsInvalidTargetAccount.on();
     });
 
-  }, [isReverse, global, debouncedTargetAccount, tokenContract]);
+  }, [global, debouncedTargetAccount, tokenContract]);
+
+  const checkAppchainAccount = useCallback(() => {
+    if (!appchainApi || !debouncedTargetAccount || tokenAsset?.assetId === undefined) {
+      setIsInvalidTargetAccount.off();
+      return;
+    }
+    if (isHex(debouncedTargetAccount) || !isAddress(debouncedTargetAccount)) {
+      setIsInvalidTargetAccount.on();
+      return;
+    }
+    appchainApi?.query.system.account(debouncedTargetAccount).then(res => {
+      console.log(res.toJSON());
+    });
+  }, [debouncedTargetAccount, appchainApi, tokenAsset]);
+
+  const checkTargetAccount = React.useRef<any>();
+  checkTargetAccount.current = () => {
+    if (isReverse) {
+      checkAppchainAccount();
+    } else {
+      checkNearAccount();
+    }
+  }
 
   useEffect(() => {
-    checkNearAccount();
-  }, [debouncedTargetAccount]);
+    checkTargetAccount.current();
+  }, [debouncedTargetAccount, tokenAsset]);
 
   const anchorContract = useMemo(() => appchain && global.wallet ? new AnchorContract(
     global.wallet.account(),
@@ -287,15 +310,16 @@ export const BridgePanel: React.FC = () => {
         });
       } else {
         return appchainApi?.query.octopusAppchain.notificationHistory(txn.sequenceId).then(res => {
-          if (res?.toJSON() === 'Success') {
+          const jsonRes: string | null = res?.toJSON() as any;
+          if (jsonRes === 'Success') {
             updateTxn(txn.appchainId, { ...txn, status: BridgeHistoryStatus.Succeed });
             // toast({
             //   status: 'success',
             //   title: 'Transaction Confirmed',
             //   position: 'top-right'
             // });
-          } else if (res?.toJSON() !== null) {
-            updateTxn(txn.appchainId, { ...txn, status: BridgeHistoryStatus.Failed });
+          } else if (jsonRes !== null) {
+            updateTxn(txn.appchainId, { ...txn, status: BridgeHistoryStatus.Failed, message: jsonRes });
           }
         });
       }
