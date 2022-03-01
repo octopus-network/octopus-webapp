@@ -8,6 +8,7 @@ import {
   CloseButton,
   DrawerBody,
   List,
+  Tooltip,
   Text,
   Box,
   Button,
@@ -71,9 +72,15 @@ const HistoryItem: React.FC<HistoryItemProps> = ({ appchain, history, tokenAsset
           {
             history.status === BridgeHistoryStatus.Pending ?
               <CircularProgress color="octo-blue.400" isIndeterminate size="16px" thickness="16px" /> :
-              <Tag colorScheme={history.status === BridgeHistoryStatus.Succeed ? 'octo-blue' : 'red'} size="sm">
-                {history.status === BridgeHistoryStatus.Succeed ? 'Succeed' : 'Failed'}
-              </Tag>
+              history.message ?
+                <Tooltip label={history.message}>
+                  <Tag colorScheme={history.status === BridgeHistoryStatus.Succeed ? 'octo-blue' : 'red'} size="sm">
+                    {history.status === BridgeHistoryStatus.Succeed ? 'Succeed' : 'Failed'}
+                  </Tag>
+                </Tooltip> :
+                <Tag colorScheme={history.status === BridgeHistoryStatus.Succeed ? 'octo-blue' : 'red'} size="sm">
+                  {history.status === BridgeHistoryStatus.Succeed ? 'Succeed' : 'Failed'}
+                </Tag>
           }
         </HStack>
       </Flex>

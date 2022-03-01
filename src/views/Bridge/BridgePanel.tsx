@@ -1,7 +1,9 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import useSWR from 'swr';
+import BN from 'bn.js';
 import { ApiPromise, WsProvider } from '@polkadot/api';
 import { PulseLoader } from 'react-spinners';
+import { Account, keyStores, Near } from 'near-api-js';
 
 import {
   Box,
@@ -42,11 +44,17 @@ import {
 import { decodeAddress } from '@polkadot/util-crypto';
 import { u8aToHex, stringToHex, isHex } from '@polkadot/util';
 import type { InjectedAccountWithMeta } from '@polkadot/extension-inject/types';
-import { web3FromSource, web3Enable, web3Accounts as extensionWeb3Accounts, isWeb3Injected } from '@polkadot/extension-dapp';
+
+import {
+  web3FromSource,
+  web3Enable,
+  web3Accounts as extensionWeb3Accounts,
+  isWeb3Injected
+} from '@polkadot/extension-dapp';
 
 import { Empty } from 'components';
 import nearLogo from 'assets/near.svg';
-import { ChevronDownIcon } from '@chakra-ui/icons';
+import { ChevronDownIcon, WarningIcon } from '@chakra-ui/icons';
 import { MdSwapVert } from 'react-icons/md';
 import { useGlobalStore } from 'stores';
 import { AiFillCloseCircle } from 'react-icons/ai';
@@ -58,8 +66,13 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Decimal from 'decimal.js';
 import { ZERO_DECIMAL, DecimalUtil } from 'utils';
 import { useTxnsStore } from 'stores';
+import { useDebounce } from 'use-debounce';
 
-import { COMPLEX_CALL_GAS, FAILED_TO_REDIRECT_MESSAGE } from 'primitives';
+import { 
+  COMPLEX_CALL_GAS, 
+  FAILED_TO_REDIRECT_MESSAGE, 
+  SIMPLE_CALL_GAS 
+} from 'primitives';
 
 function toHexAddress(ss58Address: string) {
   if (isHex(ss58Address)) {
@@ -68,10 +81,10 @@ function toHexAddress(ss58Address: string) {
   try {
     const u8a = decodeAddress(ss58Address);
     return u8aToHex(u8a);
-  } catch(err) {
+  } catch (err) {
     return '';
   }
-  
+
 }
 
 export const BridgePanel: React.FC = () => {
@@ -89,6 +102,7 @@ export const BridgePanel: React.FC = () => {
   const [selectTokenModalOpen, setSelectTokenModalOpen] = useBoolean();
   const [isTransfering, setIsTransfering] = useBoolean();
   const [isHistoryDrawerOpen, setIsHistoryDrawerOpen] = useBoolean();
+  const [isDepositingStorage, setIsDepositingStorage] = useBoolean();
 
   const [lastTokenContractId, setLastTokenContractId] = useState('');
 
@@ -113,11 +127,12 @@ export const BridgePanel: React.FC = () => {
   const [tokenAsset, setTokenAsset] = useState<TokenAssset>();
   const [appchainApi, setAppchainApi] = useState<ApiPromise>();
 
+  const [isInvalidTargetAccount, setIsInvalidTargetAccount] = useBoolean();
+  const [targetAccountNeedDepositStorage, setTargetAccountNeedDepositStorage] = useBoolean();
+
   const [balance, setBalance] = useState<Decimal>();
 
-  const appchainTxns = useMemo(() => Object.values(appchainId ? txns?.[appchainId] || {} : {}).sort((a, b) => b.timestamp - a.timestamp), [appchainId, txns]);
-
-  const pendingTxns = useMemo(() => appchainTxns.filter(txn => txn.status === BridgeHistoryStatus.Pending), [appchainTxns]);
+  const [debouncedTargetAccount] = useDebounce(targetAccount, 600);
 
   useEffect(() => {
     web3Enable('Octopus Network').then(res => {
@@ -157,7 +172,7 @@ export const BridgePanel: React.FC = () => {
     }
 
     setLastTokenContractId(window.localStorage.getItem('OCTOPUS_BRIDGE_TOKEN_CONTRACT_ID') || '');
-    
+
     setTokenAsset(undefined);
     setAppchainApi(undefined);
     setIsLodingBalance.on();
@@ -170,7 +185,7 @@ export const BridgePanel: React.FC = () => {
   useEffect(() => {
     if (tokens?.length) {
       setTokenAsset(
-        lastTokenContractId ? tokens.find(t => t.contractId === lastTokenContractId) || tokens[0] :  tokens[0]
+        lastTokenContractId ? tokens.find(t => t.contractId === lastTokenContractId) || tokens[0] : tokens[0]
       );
     }
   }, [tokens, lastTokenContractId]);
@@ -178,14 +193,60 @@ export const BridgePanel: React.FC = () => {
   const fromAccount = useMemo(() => isReverse ? global.accountId : appchainAccount?.address, [isReverse, global, appchainAccount, appchainId]);
   const initialTargetAccount = useMemo(() => !isReverse ? global.accountId : appchainAccount?.address, [isReverse, global, appchainAccount]);
 
+  const appchainTxns = useMemo(() =>
+    Object
+      .values(appchainId ? txns?.[appchainId] || {} : {})
+      .filter(t => 
+        (t.fromAccount === fromAccount || t.toAccount === fromAccount) || 
+        (t.fromAccount === global.accountId || t.toAccount === global.accountId)
+      ).sort((a, b) => b.timestamp - a.timestamp)
+    , [appchainId, txns, global, fromAccount]);
+
+  const pendingTxns = useMemo(() => appchainTxns.filter(txn => txn.status === BridgeHistoryStatus.Pending), [appchainTxns]);
+
+
   const tokenContract = useMemo(() => tokenAsset && global.wallet ? new TokenContract(
     global.wallet.account(),
     tokenAsset.contractId,
     {
-      viewMethods: ['ft_balance_of'],
+      viewMethods: ['ft_balance_of', 'storage_balance_of'],
       changeMethods: ['ft_transfer_call']
     }
   ) : undefined, [tokenAsset, global]);
+
+  const checkNearAccount = useCallback(() => {
+    if (!global.network || isReverse || !debouncedTargetAccount || !tokenContract) {
+      setIsInvalidTargetAccount.off();
+      setTargetAccountNeedDepositStorage.off();
+      return;
+    }
+
+    const near = new Near({
+      keyStore: new keyStores.BrowserLocalStorageKeyStore(),
+      ...global.network.near,
+    });
+    
+    // check is valid near account or not
+    const tmpAccount = new Account(near.connection, debouncedTargetAccount);
+    tmpAccount.state().then(_ => {
+      setIsInvalidTargetAccount.off();
+      // check if target account need deposit storage
+      tokenContract?.storage_balance_of({ account_id: debouncedTargetAccount }).then(storage => {
+        if (storage === null) {
+          setTargetAccountNeedDepositStorage.on();
+        } else {
+          setTargetAccountNeedDepositStorage.off();
+        }
+      });
+    }).catch(_ => {
+      setIsInvalidTargetAccount.on();
+    });
+
+  }, [isReverse, global, debouncedTargetAccount, tokenContract]);
+
+  useEffect(() => {
+    checkNearAccount();
+  }, [debouncedTargetAccount]);
 
   const anchorContract = useMemo(() => appchain && global.wallet ? new AnchorContract(
     global.wallet.account(),
@@ -210,35 +271,39 @@ export const BridgePanel: React.FC = () => {
       if (txn.isAppchainSide) {
         return anchorContract?.get_appchain_message_processing_result_of({ nonce: txn.sequenceId }).then(result => {
           if (result?.['Ok']) {
-            updateTxn(txn.appchainId, {...txn, status: BridgeHistoryStatus.Succeed});
+            updateTxn(txn.appchainId, { ...txn, status: BridgeHistoryStatus.Succeed });
             // toast({
             //   status: 'success',
             //   title: 'Transaction Confirmed',
             //   position: 'top-right'
             // });
           } else if (result?.['Error']) {
-            updateTxn(txn.appchainId, {...txn, status: BridgeHistoryStatus.Failed});
+            updateTxn(txn.appchainId, {
+              ...txn,
+              status: BridgeHistoryStatus.Failed,
+              message: result['Error'].message || 'Unknown error'
+            });
           }
         });
       } else {
         return appchainApi?.query.octopusAppchain.notificationHistory(txn.sequenceId).then(res => {
           if (res?.toJSON() === 'Success') {
-            updateTxn(txn.appchainId, {...txn, status: BridgeHistoryStatus.Succeed});
+            updateTxn(txn.appchainId, { ...txn, status: BridgeHistoryStatus.Succeed });
             // toast({
             //   status: 'success',
             //   title: 'Transaction Confirmed',
             //   position: 'top-right'
             // });
           } else if (res?.toJSON() !== null) {
-            updateTxn(txn.appchainId, {...txn, status: BridgeHistoryStatus.Failed});
+            updateTxn(txn.appchainId, { ...txn, status: BridgeHistoryStatus.Failed });
           }
         });
       }
     });
     try {
       await Promise.all(promises);
-    } catch(err) {}
-    
+    } catch (err) { }
+
     isCheckingTxns.current = false;
   }
 
@@ -274,7 +339,7 @@ export const BridgePanel: React.FC = () => {
       const res = await appchainApi?.query.system.account(fromAccount);
       const resJSON: any = res?.toJSON();
       balance = DecimalUtil.fromString(resJSON?.data?.free, tokenAsset?.metadata.decimals);
-  
+
     } else {
       const res = await appchainApi?.query.octopusAssets?.account(
         tokenAsset.assetId,
@@ -375,9 +440,9 @@ export const BridgePanel: React.FC = () => {
 
     const amountInU64 = DecimalUtil.toU64(DecimalUtil.fromString(amount), tokenAsset?.metadata.decimals);
     try {
-       
+
       let targetAccountInHex = toHexAddress(targetAccount || '');
-      
+
       if (!targetAccountInHex) {
         throw new Error('Invliad target account');
       }
@@ -404,7 +469,7 @@ export const BridgePanel: React.FC = () => {
         1
       );
 
-    } catch(err: any) {
+    } catch (err: any) {
       if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
         return;
       }
@@ -418,13 +483,13 @@ export const BridgePanel: React.FC = () => {
   }
 
   const onRedeem = async () => {
-    
+
     await web3Enable('Octopus Network');
     const injected = await web3FromSource(appchainAccount?.meta.source || '');
     appchainApi?.setSigner(injected.signer);
 
     setIsTransfering.on();
-    
+
     const targetAccountInHex = stringToHex(targetAccount);
     const amountInU64 = DecimalUtil.toU64(DecimalUtil.fromString(amount), tokenAsset?.metadata.decimals);
 
@@ -433,28 +498,28 @@ export const BridgePanel: React.FC = () => {
       appchainApi?.tx.octopusAppchain.burnAsset(tokenAsset?.assetId, targetAccountInHex, amountInU64.toString());
 
     await tx.signAndSend(fromAccount, ({ events = [], status }: any) => {
-        
-        events.forEach(({ phase, event: { data, method, section } }: any) => {
-          
-          if (section === 'octopusAppchain' && (
-            method === 'Locked' || method === 'AssetBurned'
-          )) {
-            updateTxn(appchainId || '', {
-              isAppchainSide: true,
-              appchainId: appchainId || '',
-              hash: tx.hash.toString(),
-              sequenceId: data[method === 'Locked' ? 3 : 4].toNumber(),
-              amount: amountInU64.toString(),
-              status: BridgeHistoryStatus.Pending,
-              timestamp: new Date().getTime(),
-              fromAccount: fromAccount || '',
-              toAccount: targetAccount || '',
-              tokenContractId: tokenAsset?.contractId || ''
-            });
-            setIsTransfering.off();
-            checkBalanceViaRPC?.current();
-          }
-        });
+
+      events.forEach(({ phase, event: { data, method, section } }: any) => {
+
+        if (section === 'octopusAppchain' && (
+          method === 'Locked' || method === 'AssetBurned'
+        )) {
+          updateTxn(appchainId || '', {
+            isAppchainSide: true,
+            appchainId: appchainId || '',
+            hash: tx.hash.toString(),
+            sequenceId: data[method === 'Locked' ? 3 : 4].toNumber(),
+            amount: amountInU64.toString(),
+            status: BridgeHistoryStatus.Pending,
+            timestamp: new Date().getTime(),
+            fromAccount: fromAccount || '',
+            toAccount: targetAccount || '',
+            tokenContractId: tokenAsset?.contractId || ''
+          });
+          setIsTransfering.off();
+          checkBalanceViaRPC?.current();
+        }
+      });
 
     }).catch((err: any) => {
       toast({
@@ -470,6 +535,27 @@ export const BridgePanel: React.FC = () => {
     clearTxnsOfAppchain(appchainId || '');
   }
 
+  const onDepositStorage = () => {
+    setIsDepositingStorage.on()
+    global.wallet?.account().functionCall({
+      contractId: tokenContract?.contractId || '',
+      methodName: 'storage_deposit',
+      args: { account_id: targetAccount },
+      gas: new BN(SIMPLE_CALL_GAS),
+      attachedDeposit: new BN('1250000000000000000000')
+    }).catch(err => {
+      if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
+        return;
+      }
+      toast({
+        position: 'top-right',
+        title: 'Error',
+        description: err.toString(),
+        status: 'error'
+      });
+    });
+  }
+
   return (
     <>
       <Box bg={bg} p={6} borderRadius="lg" minH="520px">
@@ -477,17 +563,17 @@ export const BridgePanel: React.FC = () => {
           <Heading fontSize="xl">Bridge</Heading>
           {
             appchainTxns.length ?
-            <Button colorScheme="octo-blue" variant="ghost" size="sm" onClick={setIsHistoryDrawerOpen.on}>
-              <HStack>
-                {
-                  pendingTxns.length ?
-                  <CircularProgress color="octo-blue.400" isIndeterminate size="18px">
-                    <CircularProgressLabel fontSize="10px">{pendingTxns.length}</CircularProgressLabel>
-                  </CircularProgress> : null
-                }
-                <Text>History</Text>
-              </HStack>
-            </Button> : null
+              <Button colorScheme="octo-blue" variant="ghost" size="sm" onClick={setIsHistoryDrawerOpen.on}>
+                <HStack>
+                  {
+                    pendingTxns.length ?
+                      <CircularProgress color="octo-blue.400" isIndeterminate size="18px">
+                        <CircularProgressLabel fontSize="10px">{pendingTxns.length}</CircularProgressLabel>
+                      </CircularProgress> : null
+                  }
+                  <Text>History</Text>
+                </HStack>
+              </Button> : null
           }
         </Flex>
         {
@@ -529,7 +615,32 @@ export const BridgePanel: React.FC = () => {
                   </IconButton>
                 </Flex>
                 <Box bg={isAccountInputFocused ? bg : grayBg} p={4} borderRadius="lg" pt={2} borderColor={isAccountInputFocused ? '#2468f2' : grayBg} borderWidth={1}>
-                  <Heading fontSize="md" className="octo-gray">Target</Heading>
+                  <Flex alignItems="center" justifyContent="space-between" minH="25px">
+                    <Heading fontSize="md" className="octo-gray">Target</Heading>
+                    {
+                      isInvalidTargetAccount ?
+                      <HStack color="red">
+                        <WarningIcon boxSize={3} />
+                        <Text fontSize="xs">Invalid account</Text>
+                      </HStack> :
+                      targetAccountNeedDepositStorage ?
+                      <HStack>
+                        <WarningIcon color="red" boxSize={3} />
+                        <Text fontSize="xs" color="red">This account isn't setup yet</Text>
+                        <Button 
+                          colorScheme="octo-blue" 
+                          variant="ghost" 
+                          size="xs" 
+                          isDisabled={isDepositingStorage || !global.accountId} 
+                          isLoading={isDepositingStorage} 
+                          onClick={onDepositStorage}>
+                          {
+                            global.accountId ? 'Setup' : 'Please Login'
+                          }
+                        </Button>
+                      </HStack> : null
+                    }
+                  </Flex>
                   <HStack spacing={3} mt={3}>
                     <Avatar
                       boxSize={8}
@@ -607,7 +718,7 @@ export const BridgePanel: React.FC = () => {
                     isFullWidth
                     isDisabled={
                       !fromAccount || isLoadingBalance || !targetAccount || !amount ||
-                      balance?.lt(amount) || isTransfering
+                      balance?.lt(amount) || isTransfering || isInvalidTargetAccount || targetAccountNeedDepositStorage
                     }
                     isLoading={isTransfering}
                     spinner={<PulseLoader color="rgba(255, 255, 255, .9)" size={12} />}
@@ -617,11 +728,13 @@ export const BridgePanel: React.FC = () => {
                         'Connect Wallet' :
                         !targetAccount ?
                           'Input Target Account' :
-                          !amount ?
-                            'Input Amount' :
-                            balance?.lt(amount) ?
-                              'Insufficient Balance' :
-                              'Transfer'
+                          (isInvalidTargetAccount || targetAccountNeedDepositStorage) ?
+                            'Invalid Target Account' :
+                            !amount ?
+                              'Input Amount' :
+                              balance?.lt(amount) ?
+                                'Insufficient Balance' :
+                                'Transfer'
                     }
                   </Button>
                 </Box>
@@ -642,18 +755,18 @@ export const BridgePanel: React.FC = () => {
         onSelectToken={onSelectToken}
         selectedToken={tokenAsset?.metadata?.symbol} />
 
-      <Drawer 
-        placement="right" 
-        isOpen={isHistoryDrawerOpen} 
-        onClose={setIsHistoryDrawerOpen.off} 
+      <Drawer
+        placement="right"
+        isOpen={isHistoryDrawerOpen}
+        onClose={setIsHistoryDrawerOpen.off}
         size="lg">
         <DrawerOverlay />
         <DrawerContent>
-          <History 
-            appchain={appchain} 
-            histories={appchainTxns} 
-            onDrawerClose={setIsHistoryDrawerOpen.off} 
-            onClearHistory={onClearHistory} 
+          <History
+            appchain={appchain}
+            histories={appchainTxns}
+            onDrawerClose={setIsHistoryDrawerOpen.off}
+            onClearHistory={onClearHistory}
             tokenAssets={tokens} />
         </DrawerContent>
       </Drawer>
