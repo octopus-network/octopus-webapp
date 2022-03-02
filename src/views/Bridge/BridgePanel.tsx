@@ -216,8 +216,6 @@ export const BridgePanel: React.FC = () => {
 
   const checkNearAccount = useCallback(() => {
     if (!global.network || !debouncedTargetAccount || !tokenContract) {
-      setIsInvalidTargetAccount.off();
-      setTargetAccountNeedDepositStorage.off();
       return;
     }
 
@@ -246,7 +244,6 @@ export const BridgePanel: React.FC = () => {
 
   const checkAppchainAccount = useCallback(() => {
     if (!appchainApi || !debouncedTargetAccount || tokenAsset?.assetId === undefined) {
-      setIsInvalidTargetAccount.off();
       return;
     }
     if (isHex(debouncedTargetAccount) || !isAddress(debouncedTargetAccount)) {
@@ -254,12 +251,16 @@ export const BridgePanel: React.FC = () => {
       return;
     }
     appchainApi?.query.system.account(debouncedTargetAccount).then(res => {
-      console.log(res.toJSON());
+      if (res.providers.toNumber() === 0) {
+        setTargetAccountNeedDepositStorage.on();
+      }
     });
   }, [debouncedTargetAccount, appchainApi, tokenAsset]);
 
   const checkTargetAccount = React.useRef<any>();
   checkTargetAccount.current = () => {
+    setIsInvalidTargetAccount.off();
+    setTargetAccountNeedDepositStorage.off();
     if (isReverse) {
       checkAppchainAccount();
     } else {
@@ -559,7 +560,28 @@ export const BridgePanel: React.FC = () => {
     clearTxnsOfAppchain(appchainId || '');
   }
 
-  const onDepositStorage = () => {
+  const onDepositStorage = async () => {
+   
+    if (isReverse) {
+      if (!appchainApi || !appchainAccount) {
+        return;
+      }
+      await web3Enable('Octopus Network');
+      const injected = await web3FromSource(appchainAccount.meta.source || '');
+      appchainApi.setSigner(injected.signer);
+
+      setIsDepositingStorage.on();
+      const tx = appchainApi.tx.balances.transfer(targetAccount, DecimalUtil.toU64(new Decimal(0.01), appchain?.appchain_metadata?.fungible_token_metadata?.decimals).toString());
+      tx.signAndSend(appchainAccount.address, res => {
+        if (res.isInBlock) {
+          setIsDepositingStorage.off();
+          setTargetAccountNeedDepositStorage.off();
+        }
+      });
+
+      return;
+    }
+
     setIsDepositingStorage.on()
     global.wallet?.account().functionCall({
       contractId: tokenContract?.contractId || '',
