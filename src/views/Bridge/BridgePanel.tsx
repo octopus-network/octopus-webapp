@@ -243,11 +243,14 @@ export const BridgePanel: React.FC = () => {
   }, [global, debouncedTargetAccount, tokenContract]);
 
   const checkAppchainAccount = useCallback(() => {
-    if (!appchainApi || !debouncedTargetAccount || tokenAsset?.assetId === undefined) {
+    if (!appchainApi || !debouncedTargetAccount) {
       return;
     }
     if (isHex(debouncedTargetAccount) || !isAddress(debouncedTargetAccount)) {
       setIsInvalidTargetAccount.on();
+      return;
+    }
+    if (tokenAsset?.assetId === undefined) {
       return;
     }
     appchainApi?.query.system.account(debouncedTargetAccount).then(res => {
