@@ -186,7 +186,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
       return 'Validating';
     } else if (appchainValidators.some(s => s === ss58Address) && !sessionKey) {
       return 'Need Keys';
-    } else if (!appchainValidators.some(s => s === ss58Address) && !sessionKey) {
+    } else if (!appchainValidators.some(s => s === ss58Address)) {
       return 'Registered';
     }
 

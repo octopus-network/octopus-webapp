@@ -50,7 +50,7 @@ type MyNodeProps = {
 }
 
 const cloudVendorInLocalStorage = window.localStorage.getItem('OCTOPUS_DEPLOYER_CLOUD_VENDOR') || '';
-const accessKeyInLocalStorage = window.localStorage.getItem('OCTOPUS_DEPLOYER_ACCESS_KEY') || '';
+const accessKeyInLocalStorage = window.localStorage.getItem('OCTOPUS_DEPLOYER_ACCESS_KEY') || window.localStorage.getItem('accessKey') || '';
 
 const statesRecord: any = {
   '0': { label: 'Init', color: 'blue', state: 0 },

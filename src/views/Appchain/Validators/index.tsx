@@ -99,7 +99,7 @@ export const Validators: React.FC<ValidatorsProps> = ({
       );
     } else if (showType === 'registered') {
       return validators.filter(
-        v => !v.is_unbonding && !appchainValidators.some(s => s === encodeAddress(v.validator_id_in_appchain)) && !validatorSessionKeys[v.validator_id]
+        v => !v.is_unbonding && !appchainValidators.some(s => s === encodeAddress(v.validator_id_in_appchain))
       );
     } else if (showType === 'unbonding') {
       return validators.filter(v => v.is_unbonding);

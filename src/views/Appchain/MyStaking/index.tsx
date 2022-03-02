@@ -117,7 +117,6 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
     ]).then(([deposit, stakes, histories]) => {
       setDeposit(DecimalUtil.fromString(deposit, OCT_TOKEN_DECIMALS));
       setUnbondedStakes(stakes);
-      console.log(stakes);
       setStakingHistories(histories);
     });
    
