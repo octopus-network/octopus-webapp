@@ -376,7 +376,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                       validator && !validator.can_be_delegated_to ? 'Delegation Closed' :
                       <>
                         <Icon as={AddIcon} mr={2} boxSize={3} /> 
-                        <Text>Join</Text>
+                        <Text>Delegate</Text>
                       </>
                     }
                   </Button> : null

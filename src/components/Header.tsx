@@ -88,7 +88,7 @@ export const Header: React.FC = () => {
               </MenuButton>
               <MenuList onMouseEnter={onMenuOpen} onMouseLeave={onMenuClose} mt={-1}>
                 <MenuGroup title={global.accountId}>
-                  <RouterLink to="/user/dashboard">
+                  <RouterLink to="/dashboard">
                     <MenuItem icon={<AiOutlineDashboard />}>Dashboard</MenuItem>
                   </RouterLink>
                 </MenuGroup>

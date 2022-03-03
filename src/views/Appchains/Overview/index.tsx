@@ -12,6 +12,7 @@ import {
   Box,
   CloseButton,
   Flex,
+  Icon,
   HStack,
   DrawerFooter,
   VStack,
@@ -20,6 +21,7 @@ import {
 
 import { AppchainInfo } from 'types';
 import { StateBadge, LoginButton } from 'components';
+import { FaUser } from 'react-icons/fa';
 
 import { Links } from './Links';
 import { Descriptions } from './Descriptions';
@@ -66,12 +68,15 @@ export const Overview: React.FC<OverviewProps> = ({ appchainId, onDrawerClose })
               name={appchainId} boxSize={10} />
             <VStack alignItems="flex-start" spacing={0}>
               <Heading fontSize="xl">{appchainId}</Heading>
-              <Text variant="gray">{appchain?.appchain_owner}</Text>
+              <HStack className="octo-gray" fontSize="sm">
+                <Icon as={FaUser} boxSize={3} />
+                <Text>{appchain?.appchain_owner}</Text>
+              </HStack>
             </VStack>
           </HStack>
           <VStack alignItems="flex-end" spacing={0}>
             <StateBadge state={appchain?.appchain_state || ''} />
-            <Text variant="gray">
+            <Text variant="gray" fontSize="sm">
               {appchain ? dayjs(Math.floor(appchain.registered_time as any/1e6)).format('YYYY-MM-DD') : '-'}
             </Text>
           </VStack>

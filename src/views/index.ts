@@ -4,3 +4,4 @@ export * from './Appchains';
 export * from './Appchain'
 export * from './Bridge';
 export * from './Register';
+export * from './Dashboard';

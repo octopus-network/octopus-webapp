@@ -20,6 +20,7 @@ import {
   useColorModeValue,
   CircularProgress,
   Skeleton,
+  Icon,
   useBoolean,
   useClipboard,
   IconButton
@@ -46,6 +47,7 @@ import { DecimalUtil, toValidUrl } from 'utils';
 import Decimal from 'decimal.js';
 import { EPOCH_DURATION_MS } from 'primitives';
 import { useGlobalStore } from 'stores';
+import { FaUser } from 'react-icons/fa';
 
 dayjs.extend(duration);
 dayjs.extend(relativeTime);
@@ -108,18 +110,18 @@ export const Descriptions: React.FC<DescriptionsProps> = ({ appchain, appchainAp
       .subscribeNewHeads((lastHeader) => setBestBlock(lastHeader.number.toNumber()))
       .then(unsub => unsubNewHeads = unsub);
 
-      Promise.all([
-        appchainApi.query.octopusLpos.activeEra(),
-        appchainApi.query.balances?.totalIssuance()
-      ]).then(([era, issuance]) => {
-        const eraJSON: any = era.toJSON();
-        setCurrentEra(eraJSON?.index);
+    Promise.all([
+      appchainApi.query.octopusLpos.activeEra(),
+      appchainApi.query.balances?.totalIssuance()
+    ]).then(([era, issuance]) => {
+      const eraJSON: any = era.toJSON();
+      setCurrentEra(eraJSON?.index);
 
-        setNextEraTime(eraJSON ? EPOCH_DURATION_MS + eraJSON.start : 0);
-        setNextEraTimeLeft(eraJSON ? (eraJSON.start + EPOCH_DURATION_MS) - new Date().getTime() : 0);
-        setTotalIssuance(issuance.toString());
+      setNextEraTime(eraJSON ? EPOCH_DURATION_MS + eraJSON.start : 0);
+      setNextEraTimeLeft(eraJSON ? (eraJSON.start + EPOCH_DURATION_MS) - new Date().getTime() : 0);
+      setTotalIssuance(issuance.toString());
 
-      });
+    });
 
     return () => unsubNewHeads && unsubNewHeads();
 
@@ -130,21 +132,26 @@ export const Descriptions: React.FC<DescriptionsProps> = ({ appchain, appchainAp
       <Flex alignItems="center" justifyContent="space-between" minH="68px">
         <HStack spacing={4}>
           <SkeletonCircle size="12" isLoaded={!!appchain}>
-            <Avatar src={appchain?.appchain_metadata?.fungible_token_metadata.icon as any} 
+            <Avatar src={appchain?.appchain_metadata?.fungible_token_metadata.icon as any}
               name={appchain?.appchain_id} boxSize={12} />
           </SkeletonCircle>
           <VStack alignItems="flex-start" spacing={0}>
             <Skeleton isLoaded={!!appchain}>
               <Heading fontSize="2xl">{appchain?.appchain_id || 'loading'}</Heading>
             </Skeleton>
-            <Text variant="gray">{appchain?.appchain_owner}</Text>
+            <HStack className="octo-gray" fontSize="sm">
+              <Icon as={FaUser} boxSize={3} />
+              <Text>{appchain?.appchain_owner}</Text>
+            </HStack>
           </VStack>
         </HStack>
         <VStack alignItems="flex-end" spacing={0}>
           <StateBadge state={appchain?.appchain_state || ''} />
-          <Text variant="gray">
-            {appchain ? dayjs(Math.floor(appchain.registered_time as any/1e6)).format('YYYY-MM-DD') : '-'}
-          </Text>
+          <HStack className="octo-gray" fontSize="sm">
+            <Text variant="gray">
+              {appchain ? dayjs(Math.floor(appchain.registered_time as any / 1e6)).format('YYYY-MM-DD') : '-'}
+            </Text>
+          </HStack>
         </VStack>
       </Flex>
       <SimpleGrid columns={{ base: 3, md: 5 }} spacing={4} mt={8} bg={linksBg} borderRadius="lg">
@@ -166,14 +173,14 @@ export const Descriptions: React.FC<DescriptionsProps> = ({ appchain, appchainAp
       </SimpleGrid>
       <SimpleGrid mt={8} columns={{ base: 2, md: 3 }} spacing={8} display={{ base: 'none', md: 'grid' }}>
         <VStack alignItems="flex-start">
-          <Text variant="gray"fontSize="sm" >Block Height</Text>
+          <Text variant="gray" fontSize="sm" >Block Height</Text>
           <Skeleton isLoaded={!!nextEraTime}>
-          <Heading fontSize="xl">
-            { 
-              bestBlock !== undefined ? 
-              DecimalUtil.beautify(new Decimal(bestBlock), 0) : 'loading' 
-            }
-          </Heading>
+            <Heading fontSize="xl">
+              {
+                bestBlock !== undefined ?
+                  DecimalUtil.beautify(new Decimal(bestBlock), 0) : 'loading'
+              }
+            </Heading>
           </Skeleton>
         </VStack>
         <VStack alignItems="flex-start">
@@ -187,19 +194,19 @@ export const Descriptions: React.FC<DescriptionsProps> = ({ appchain, appchainAp
             <Text variant="gray" fontSize="sm" >Next Era</Text>
             {
               nextEraTime ?
-              <CircularProgress value={(EPOCH_DURATION_MS - nextEraTimeLeft) / (EPOCH_DURATION_MS/100)} 
-                size={4} thickness={16} color="octo-blue.500" /> : null
+                <CircularProgress value={(EPOCH_DURATION_MS - nextEraTimeLeft) / (EPOCH_DURATION_MS / 100)}
+                  size={4} thickness={16} color="octo-blue.500" /> : null
             }
           </HStack>
           <Skeleton isLoaded={!!nextEraTime}>
             {
               nextEraTime ?
-              <Tooltip label={dayjs(nextEraTime).format('YYYY-MM-DD HH:mm:ss')}>
-                <Heading fontSize="xl">
-                  {dayjs.duration(Math.floor(nextEraTimeLeft / 1000), 'seconds').humanize(true)}
-                </Heading>
-              </Tooltip> :
-              <Heading fontSize="xl">loading</Heading>
+                <Tooltip label={dayjs(nextEraTime).format('YYYY-MM-DD HH:mm:ss')}>
+                  <Heading fontSize="xl">
+                    {dayjs.duration(Math.floor(nextEraTimeLeft / 1000), 'seconds').humanize(true)}
+                  </Heading>
+                </Tooltip> :
+                <Heading fontSize="xl">loading</Heading>
             }
           </Skeleton>
         </VStack>
@@ -213,12 +220,12 @@ export const Descriptions: React.FC<DescriptionsProps> = ({ appchain, appchainAp
             <Heading fontSize="xl">
               {
                 totalIssuance && appchain?.appchain_metadata ?
-                DecimalUtil.beautify(
-                  DecimalUtil.fromString(
-                    totalIssuance, appchain?.appchain_metadata?.fungible_token_metadata.decimals
-                  ),
-                  0
-                ) : 'loading'
+                  DecimalUtil.beautify(
+                    DecimalUtil.fromString(
+                      totalIssuance, appchain?.appchain_metadata?.fungible_token_metadata.decimals
+                    ),
+                    0
+                  ) : 'loading'
               }
             </Heading>
           </Skeleton>
@@ -227,15 +234,15 @@ export const Descriptions: React.FC<DescriptionsProps> = ({ appchain, appchainAp
           <Text variant="gray" fontSize="sm" >RPC Endpoint</Text>
           {
             appchainSettings?.rpc_endpoint ?
-            <HStack w="100%">
-              <Heading fontSize="md" textOverflow="ellipsis" overflow="hidden" whiteSpace="nowrap" w="calc(100% - 30px)">
-                { appchainSettings?.rpc_endpoint || '-' }
-              </Heading>
-              <IconButton aria-label="copy" onClick={onCopyRpcEndpoint} size="xs">
-                { hasRpcEndpointCopied ? <CheckIcon /> : <CopyIcon /> }
-              </IconButton>
-            </HStack> :
-            <Heading fontSize="xl">-</Heading>
+              <HStack w="100%">
+                <Heading fontSize="md" textOverflow="ellipsis" overflow="hidden" whiteSpace="nowrap" w="calc(100% - 30px)">
+                  {appchainSettings?.rpc_endpoint || '-'}
+                </Heading>
+                <IconButton aria-label="copy" onClick={onCopyRpcEndpoint} size="xs">
+                  {hasRpcEndpointCopied ? <CheckIcon /> : <CopyIcon />}
+                </IconButton>
+              </HStack> :
+              <Heading fontSize="xl">-</Heading>
           }
         </VStack>
         <VStack alignItems="flex-start">
@@ -243,23 +250,23 @@ export const Descriptions: React.FC<DescriptionsProps> = ({ appchain, appchainAp
           <Heading fontSize="xl">
             {
               appchain?.appchain_metadata?.ido_amount_of_wrapped_appchain_token ?
-              DecimalUtil.beautify(
-                DecimalUtil.fromString(appchain?.appchain_metadata?.ido_amount_of_wrapped_appchain_token),
-                0
-              ) : '-'
+                DecimalUtil.beautify(
+                  DecimalUtil.fromString(appchain?.appchain_metadata?.ido_amount_of_wrapped_appchain_token),
+                  0
+                ) : '-'
             }
           </Heading>
         </VStack>
-        
+
         <VStack alignItems="flex-start">
           <Text variant="gray" fontSize="sm" >Premined Amount</Text>
           <Heading fontSize="xl">
             {
               appchain?.appchain_metadata?.premined_wrapped_appchain_token ?
-              DecimalUtil.beautify(
-                DecimalUtil.fromString(appchain?.appchain_metadata?.premined_wrapped_appchain_token),
-                0
-              ) : '-'
+                DecimalUtil.beautify(
+                  DecimalUtil.fromString(appchain?.appchain_metadata?.premined_wrapped_appchain_token),
+                  0
+                ) : '-'
             }
           </Heading>
         </VStack>
@@ -268,13 +275,13 @@ export const Descriptions: React.FC<DescriptionsProps> = ({ appchain, appchainAp
           <Heading fontSize="xl">
             {
               appchainSettings?.era_reward && appchain?.appchain_metadata ?
-              DecimalUtil.beautify(
-                DecimalUtil.fromString(
-                  appchainSettings?.era_reward,
-                  appchain?.appchain_metadata?.fungible_token_metadata.decimals
-                ),
-                0
-              ) : '-'
+                DecimalUtil.beautify(
+                  DecimalUtil.fromString(
+                    appchainSettings?.era_reward,
+                    appchain?.appchain_metadata?.fungible_token_metadata.decimals
+                  ),
+                  0
+                ) : '-'
             }
           </Heading>
         </VStack>
