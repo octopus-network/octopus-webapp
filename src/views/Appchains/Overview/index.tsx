@@ -68,10 +68,13 @@ export const Overview: React.FC<OverviewProps> = ({ appchainId, onDrawerClose })
               name={appchainId} boxSize={10} />
             <VStack alignItems="flex-start" spacing={0}>
               <Heading fontSize="xl">{appchainId}</Heading>
-              <HStack className="octo-gray" fontSize="sm">
-                <Icon as={FaUser} boxSize={3} />
-                <Text>{appchain?.appchain_owner}</Text>
-              </HStack>
+              {
+                appchain ?
+                <HStack className="octo-gray" fontSize="sm">
+                  <Icon as={FaUser} boxSize={3} />
+                  <Text>{appchain?.appchain_owner}</Text>
+                </HStack> : null
+              }
             </VStack>
           </HStack>
           <VStack alignItems="flex-end" spacing={0}>

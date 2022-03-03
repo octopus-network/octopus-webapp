@@ -139,10 +139,13 @@ export const Descriptions: React.FC<DescriptionsProps> = ({ appchain, appchainAp
             <Skeleton isLoaded={!!appchain}>
               <Heading fontSize="2xl">{appchain?.appchain_id || 'loading'}</Heading>
             </Skeleton>
-            <HStack className="octo-gray" fontSize="sm">
-              <Icon as={FaUser} boxSize={3} />
-              <Text>{appchain?.appchain_owner}</Text>
-            </HStack>
+            {
+              appchain ?
+              <HStack className="octo-gray" fontSize="sm">
+                <Icon as={FaUser} boxSize={3} />
+                <Text>{appchain?.appchain_owner}</Text>
+              </HStack> : null
+            }
           </VStack>
         </HStack>
         <VStack alignItems="flex-end" spacing={0}>
