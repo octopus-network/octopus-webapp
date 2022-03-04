@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { DecimalUtil } from 'utils';
+import useSWR from 'swr';
 
 import {
   AreaChart,
@@ -28,10 +29,6 @@ import {
 import { OCT_TOKEN_DECIMALS } from 'primitives';
 import Decimal from 'decimal.js';
 
-type ChartProps = {
-  data: any;
-}
-
 const CustomTooltip = ({
   label,
   active,
@@ -52,9 +49,11 @@ const CustomTooltip = ({
   return null;
 }
 
-export const Chart: React.FC<ChartProps> = ({ data }) => {
+export const TotalStakedChart: React.FC = () => {
 
-  const [days, setDays] = useState(7);
+  const [days, setDays] = useState(1);
+  
+  const { data } = useSWR(`total-staked/${days}`);
 
   const [currentValue, setCurrentValue] = useState(0);
   const [lastValue, setLastValue] = useState(0);
@@ -64,6 +63,7 @@ export const Chart: React.FC<ChartProps> = ({ data }) => {
   const klineData = useMemo(() => {
     if (!data) return [];
     
+    console.log(data);
     return data.map(({ date, amount, octPrice }: any) => ({
       date,
       amount,
@@ -96,12 +96,6 @@ export const Chart: React.FC<ChartProps> = ({ data }) => {
       );
     }
   }, [currentValue, lastValue]);
-
-  const changeDays = (v: any) => {
-    setTimeout(() => {
-      setDays(v);
-    }, 100);
-  }
 
   const onAreaMouseMove = useCallback(({ isTooltipActive, activePayload }) => {
     if (isTooltipActive) {
@@ -136,8 +130,8 @@ export const Chart: React.FC<ChartProps> = ({ data }) => {
           </HStack>
         </Box>
         <HStack>
-          <Button className="octo-linear-button" size="xs">Day</Button>
-          <Button size="xs">Week</Button>
+          <Button colorScheme={days === 1 ? 'octo-blue' : 'gray'} size="xs" onClick={() => setDays(1)}>Day</Button>
+          <Button colorScheme={days === 7 ? 'octo-blue' : 'gray'} size="xs" onClick={() => setDays(7)}>Week</Button>
         </HStack>
       </Flex>
       <Skeleton isLoaded={klineData.length}>

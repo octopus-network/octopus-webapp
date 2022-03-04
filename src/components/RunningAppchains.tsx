@@ -19,6 +19,7 @@ import {
   SkeletonCircle
 } from '@chakra-ui/react';
 
+import { useNavigate } from 'react-router-dom';
 import { ChevronRightIcon } from '@chakra-ui/icons';
 import { Link as RouterLink } from 'react-router-dom';
 import { HiOutlineArrowNarrowRight } from 'react-icons/hi';
@@ -59,6 +60,8 @@ const RunningItem: React.FC<RunnintItemProps> = ({ whiteBg = false, data }) => {
   const bg = useColorModeValue(whiteBg ? 'white' : '#f6f7fa', '#15172c');
   const iconBg = useColorModeValue('white', 'whiteAlpha.100');
 
+  const navigate = useNavigate();
+
   const icon = useMemo(() => data.appchain_metadata?.fungible_token_metadata?.icon || '', [data]);
 
   const { data: prices } = useSWR(`prices/OCT,${data.appchain_metadata?.fungible_token_metadata?.symbol}`);
@@ -76,20 +79,26 @@ const RunningItem: React.FC<RunnintItemProps> = ({ whiteBg = false, data }) => {
     const { fungible_token_metadata } = data.appchain_metadata || {};
     const rewardsPerYear = DecimalUtil
       .fromString(
-        appchainSettings.era_reward, 
+        appchainSettings.era_reward,
         fungible_token_metadata.decimals
       ).mul(365).mul(prices[fungible_token_metadata.symbol]);
-    
+
     return rewardsPerYear.mul(100).div(
       DecimalUtil.fromString(data.total_stake, OCT_TOKEN_DECIMALS).mul(prices['OCT'])
     );
   }, [prices, data, appchainSettings]);
 
   return (
-    <Box bg={bg} borderRadius="lg" p={6}>
+    <Box bg={bg} borderRadius="lg" p={6} cursor="pointer"
+      transition="all .3s ease"
+      _hover={{
+        boxShadow: '0 10px 10px -5px rgba(0,0,12,.06)',
+        transform: 'translateY(-3px) scale(1.01)'
+      }}
+      onClick={() => navigate(`/appchains/${data?.appchain_id}`)}>
       <Flex justifyContent="space-between">
         <HStack>
-          <Avatar src={icon as any} style={icon ? { backgroundColor: iconBg } : {}} name={data.appchain_id} boxSize={10} />
+          <Avatar src={icon as any} style={icon ? { backgroundColor: iconBg } : {}} name={data.appchain_id} boxSize={9} />
           <Heading fontSize="lg">{data.appchain_id}</Heading>
         </HStack>
         <RouterLink to={`/appchains/${data?.appchain_id}`}>
@@ -122,7 +131,7 @@ const RunningItem: React.FC<RunnintItemProps> = ({ whiteBg = false, data }) => {
         <VStack alignItems="flex-start">
           <Text variant="gray" fontSize="sm">APY</Text>
           <Heading fontSize="lg">
-            { apy.gt(ZERO_DECIMAL) ? `${DecimalUtil.beautify(apy, 2)}%` : '-' }
+            {apy.gt(ZERO_DECIMAL) ? `${DecimalUtil.beautify(apy, 2)}%` : '-'}
           </Heading>
         </VStack>
       </Flex>
@@ -167,31 +176,31 @@ const BlankItem: React.FC<Omit<RunnintItemProps, 'data'>> = ({ whiteBg }) => {
 
 export const RunningAppchains: React.FC<RunningAppchainsProps> = ({ showMore = true }) => {
   const { data } = useSWR('appchains/running');
-  
+
   return (
     <>
       <Flex alignItems="center" justifyContent="space-between">
         <Heading fontSize="xl">Running Appchains</Heading>
         {
           showMore ?
-          <Link as={RouterLink} to="/appchains" variant="gray-underline">
-            <HStack spacing={0}>
-              <Text>More</Text>
-              <ChevronRightIcon />
-            </HStack>
-          </Link> : null
+            <Link as={RouterLink} to="/appchains" variant="gray-underline">
+              <HStack spacing={0}>
+                <Text>More</Text>
+                <ChevronRightIcon />
+              </HStack>
+            </Link> : null
         }
       </Flex>
       <SimpleGrid gap={8} mt={8} columns={{ base: 1, md: 2 }}>
         {
           !data?.length ?
-          <>
-            <BlankItem whiteBg={!showMore} />
-            <BlankItem whiteBg={!showMore} />
-          </> :
-          data.map((item: any, idx: number) => (
-            <RunningItem key={`item-${idx}`} whiteBg={!showMore} data={item} />
-          ))
+            <>
+              <BlankItem whiteBg={!showMore} />
+              <BlankItem whiteBg={!showMore} />
+            </> :
+            data.map((item: any, idx: number) => (
+              <RunningItem key={`item-${idx}`} whiteBg={!showMore} data={item} />
+            ))
         }
       </SimpleGrid>
     </>

@@ -30,7 +30,7 @@ import squareIcon2 from 'assets/icons/square2.png';
 
 import { HiOutlineArrowNarrowRight } from 'react-icons/hi';
 
-import { Chart } from './Chart';
+import { TotalStakedChart } from './TotalStakedChart';
 import { DecimalUtil } from 'utils';
 import { useNavigate } from 'react-router-dom';
 
@@ -173,7 +173,7 @@ export const Overview: React.FC = () => {
         </GridItem>
         <GridItem colSpan={{ base: 3, md: 6 }}>
           <Card>
-            <Chart data={data?.totalStaked} />
+            <TotalStakedChart />
           </Card>
         </GridItem>
       </Grid>

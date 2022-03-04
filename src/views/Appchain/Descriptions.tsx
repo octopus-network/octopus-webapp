@@ -119,7 +119,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({ appchain, appchainAp
 
       setNextEraTime(eraJSON ? EPOCH_DURATION_MS + eraJSON.start : 0);
       setNextEraTimeLeft(eraJSON ? (eraJSON.start + EPOCH_DURATION_MS) - new Date().getTime() : 0);
-      setTotalIssuance(issuance.toString());
+      setTotalIssuance(issuance?.toString() || '0');
 
     });
 

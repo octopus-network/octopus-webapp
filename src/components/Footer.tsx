@@ -30,16 +30,16 @@ export const Footer: React.FC = () => {
         direction={{ base: 'column', md: 'row' }}>
         <HStack spacing={[2, 3]} w="100%" flex={1} justifyContent={{ base: 'center', md: 'flex-start' }}>
           <Link variant="gray-underline" whiteSpace="nowrap" 
-            overflow="hidden" textOverflow="ellipsis">Term of service</Link>
+            overflow="hidden" textOverflow="ellipsis">Term of Service</Link>
           <Text variant="gray" opacity=".5">|</Text>
           <Link variant="gray-underline" whiteSpace="nowrap" 
-            overflow="hidden" textOverflow="ellipsis">Privacy policy</Link>
+            overflow="hidden" textOverflow="ellipsis">Privacy Policy</Link>
           <Text variant="gray" opacity=".5">|</Text>
           <Link variant="gray-underline" whiteSpace="nowrap" 
-            overflow="hidden" textOverflow="ellipsis">Registry contract</Link>
+            overflow="hidden" textOverflow="ellipsis">Registry Contract</Link>
           <Text variant="gray" opacity=".5">|</Text>
           <Link variant="gray-underline" whiteSpace="nowrap" 
-            overflow="hidden" textOverflow="ellipsis">Token contract</Link>
+            overflow="hidden" textOverflow="ellipsis">Token Contract</Link>
         </HStack>
         <HStack spacing={3}>
           <Text variant="gray">&copy; 2022 Octopus Network</Text>

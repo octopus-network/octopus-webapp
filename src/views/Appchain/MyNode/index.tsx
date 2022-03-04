@@ -344,7 +344,7 @@ export const MyNode: React.FC<MyNodeProps> = ({ appchainId, needKeys, appchainAp
             </Flex>
             <Button colorScheme="octo-blue" isFullWidth isDisabled={!cloudVendor || !inputAccessKey || isLoadingNode} 
               onClick={onNextStep} isLoading={isLoadingNode}>
-              Auto Deoply Node
+              Deploy A Node
             </Button>
           </>
         }

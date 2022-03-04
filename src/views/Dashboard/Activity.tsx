@@ -59,8 +59,8 @@ class ActivityTranslator {
 
   getActionTarget() {
     const { receiver_id, args, action_kind } = this.data;
-    
-    switch(action_kind) {
+
+    switch (action_kind) {
       case 'TRANSFER':
       case 'CREATE_ACCOUNT':
         return receiver_id;
@@ -89,9 +89,11 @@ const ActivityItem: React.FC<{
         <VStack alignItems="flex-start" spacing={0}>
           <HStack>
             <Heading fontSize="md">{activityTranslator.getActionKind()}</Heading>
-            <Text variant="gray">{activityTranslator.getActionConnect()}</Text>
+            <Text variant="gray" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" maxW="160px">
+              {activityTranslator.getActionConnect()}
+            </Text>
             <Link isExternal href={`${global.network?.near.explorerUrl}/accounts/${activityTranslator.getActionTarget()}`}>
-              <Text whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" w="160px">
+              <Text whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" maxW="160px">
                 {activityTranslator.getActionTarget()}
               </Text>
             </Link>
@@ -115,18 +117,18 @@ export const Activity: React.FC = () => {
       <Heading fontSize="2xl">Recent Activity</Heading>
       {
         !activity && !activityError ?
-        <Center minH="160px">
-          <Spinner size="md" thickness="4px" speed="1s" color="octo-blue.500" />
-        </Center> :
-        activity?.length ?
-        <List spacing={4} mt={6}>
-          {
-            activity.map((a, idx) => (
-              <ActivityItem activity={a} key={`activity-${idx}`} />
-            ))
-          }
-        </List> :
-        <Empty />
+          <Center minH="160px">
+            <Spinner size="md" thickness="4px" speed="1s" color="octo-blue.500" />
+          </Center> :
+          activity?.length ?
+            <List spacing={4} mt={6}>
+              {
+                activity.map((a, idx) => (
+                  <ActivityItem activity={a} key={`activity-${idx}`} />
+                ))
+              }
+            </List> :
+            <Empty />
       }
     </Box>
   );
