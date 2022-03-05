@@ -30,7 +30,7 @@ export const Footer: React.FC = () => {
         direction={{ base: 'column', md: 'row' }}>
         <HStack spacing={[2, 3]} w="100%" flex={1} justifyContent={{ base: 'center', md: 'flex-start' }}>
           <Link variant="gray-underline" whiteSpace="nowrap" 
-            overflow="hidden" textOverflow="ellipsis">Term of Service</Link>
+            overflow="hidden" textOverflow="ellipsis">Terms of Service</Link>
           <Text variant="gray" opacity=".5">|</Text>
           <Link variant="gray-underline" whiteSpace="nowrap" 
             overflow="hidden" textOverflow="ellipsis">Privacy Policy</Link>
