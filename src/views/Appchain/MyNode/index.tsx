@@ -143,6 +143,7 @@ export const MyNode: React.FC<MyNodeProps> = ({ appchainId, needKeys, appchainAp
   const onClearCache = () => {
     window.localStorage.removeItem('OCTOPUS_DEPLOYER_CLOUD_VENDOR');
     window.localStorage.removeItem('OCTOPUS_DEPLOYER_ACCESS_KEY');
+    window.localStorage.removeItem('accessKey');
     window.location.reload();
   }
 
