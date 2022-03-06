@@ -124,7 +124,7 @@ export type UnbondedHistory = {
   unlock_time: string;
 }
 
-export type TokenAssset = {
+export type TokenAsset = {
   contractId: string;
   assetId?: number;
   metadata: FungibleTokenMetadata;

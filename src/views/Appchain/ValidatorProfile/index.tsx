@@ -32,7 +32,7 @@ import {
 import {
   ValidatorSessionKey,
   Validator,
-  ValidatorProfile as ValidatorPrifleType,
+  ValidatorProfile as ValidatorProfileType,
   AnchorContract,
   Delegator,
   RewardHistory,
@@ -91,7 +91,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
   const bg = useColorModeValue('#f6f7fa', '#15172c');
   const footerBg = useColorModeValue('#f6f7fa', '#15172c');
 
-  const [validatorProfile, setValidatorProfile] = useState<ValidatorPrifleType>();
+  const [validatorProfile, setValidatorProfile] = useState<ValidatorProfileType>();
   const [delegatedDeposits, setDelegatedDeposits] = useState(ZERO_DECIMAL);
 
   const [isTogglingDelegation, setIsTogglingDelegation] = useBoolean();
@@ -133,7 +133,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
     });
   }, [anchor, global, validator, appchain]);
 
-  const unwithdraedDelegatorRewards = useMemo(() => {
+  const unwithdrawnDelegatorRewards = useMemo(() => {
     if (!delegatorRewards?.length) {
       return ZERO_DECIMAL;
     }
@@ -326,7 +326,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                   <HStack spacing={4}>
                     <StakingPopover
                       trigger={
-                        <IconButton aria-label="Decrease Deleagtion" size="sm">
+                        <IconButton aria-label="Decrease Delegation" size="sm">
                           <Icon as={MinusIcon} boxSize={3} />
                         </IconButton>
                       }
@@ -339,7 +339,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
 
                     <StakingPopover
                       trigger={
-                        <IconButton aria-label="Increase Deleagtion" size="sm" colorScheme="octo-blue">
+                        <IconButton aria-label="Increase Delegation" size="sm" colorScheme="octo-blue">
                           <Icon as={AddIcon} boxSize={3} />
                         </IconButton>
                       }
@@ -357,7 +357,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                   <Button colorScheme="octo-blue" onClick={setDelegatorRewardsModalOpen.on} position="relative">
                     Rewards
                     {
-                      unwithdraedDelegatorRewards.gt(ZERO_DECIMAL) ?
+                      unwithdrawnDelegatorRewards.gt(ZERO_DECIMAL) ?
                         <Box position="absolute" top="-5px" right="-5px" boxSize={2} bg="red" borderRadius="full" /> : null
                     }
                   </Button>
@@ -445,7 +445,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
         title="Unbond Delegation"
         confirmButtonText="Unbond"
         isConfirming={isUnbondingDelegation}
-        message="Are you confirm to unbond delegation? (Your unbonded stakes will be withrawable in next era)"
+        message="Are you confirm to unbond delegation? (Your unbonded stakes will be withdrawable in next era)"
         onConfirm={onUnbondDelegation}
         confirmButtonColor="red" />
 

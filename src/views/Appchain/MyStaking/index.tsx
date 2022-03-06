@@ -82,7 +82,7 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
       `rewards/${global.accountId}/${appchain.appchain_id}/${appchain?.anchor_status?.index_range_of_validator_set_history?.end_index}` : null
   );
 
-  const unwithdraedRewards = useMemo(() => {
+  const unwithdrawnRewards = useMemo(() => {
     if (!rewards?.length) {
       return ZERO_DECIMAL;
     }
@@ -136,7 +136,7 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
                     <Box position="relative">
                       <Button size="sm" variant="whiteAlphaGhost" onClick={setRewardsModalOpen.on}>Rewards</Button>
                       {
-                        unwithdraedRewards.gt(ZERO_DECIMAL) ?
+                        unwithdrawnRewards.gt(ZERO_DECIMAL) ?
                           <Box boxSize={2} borderRadius="full" bg="red" position="absolute" right="2px" top="2px" /> : null
                       }
                     </Box>

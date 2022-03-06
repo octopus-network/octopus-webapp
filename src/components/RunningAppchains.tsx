@@ -38,7 +38,7 @@ type RunningAppchainsProps = {
   showMore?: boolean;
 }
 
-type RunnintItemProps = {
+type RunningItemProps = {
   whiteBg?: boolean;
   data: AppchainInfo;
 }
@@ -55,7 +55,7 @@ const EnterButton = styled(Button)`
   }
 `;
 
-const RunningItem: React.FC<RunnintItemProps> = ({ whiteBg = false, data }) => {
+const RunningItem: React.FC<RunningItemProps> = ({ whiteBg = false, data }) => {
 
   const bg = useColorModeValue(whiteBg ? 'white' : '#f6f7fa', '#15172c');
   const iconBg = useColorModeValue('white', 'whiteAlpha.100');
@@ -139,7 +139,7 @@ const RunningItem: React.FC<RunnintItemProps> = ({ whiteBg = false, data }) => {
   );
 }
 
-const BlankItem: React.FC<Omit<RunnintItemProps, 'data'>> = ({ whiteBg }) => {
+const BlankItem: React.FC<Omit<RunningItemProps, 'data'>> = ({ whiteBg }) => {
   const bg = useColorModeValue(whiteBg ? 'white' : '#f6f7fa', '#15172c');
 
   return (

@@ -127,7 +127,7 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({ 
       <List spacing={4}>
         <FormControl isRequired>
           <Flex alignItems="center" justifyContent="space-between">
-            <FormLabel htmlFor="appchainAccount">Apchain Account</FormLabel>
+            <FormLabel htmlFor="appchainAccount">Appchain Account</FormLabel>
             <Link
               isExternal 
               variant="gray-hover-blue" 

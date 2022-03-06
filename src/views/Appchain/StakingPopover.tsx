@@ -41,7 +41,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({ trigger, type, h
   const inputRef = React.useRef<any>();
   const [amount, setAmount] = useState('');
 
-  const [isSubmiting, setIsSubmiting] = useBoolean(false);
+  const [isSubmitting, setIsSubmitting] = useBoolean(false);
 
   const { global } = useGlobalStore();
   const toast = useToast();
@@ -63,7 +63,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({ trigger, type, h
       return;
     }
 
-    setIsSubmiting.on();
+    setIsSubmitting.on();
 
     const amountStr = DecimalUtil.toU64(amountInDecimal, OCT_TOKEN_DECIMALS).toString();
 
@@ -105,7 +105,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({ trigger, type, h
 
     }
 
-    setIsSubmiting.off();
+    setIsSubmitting.off();
   }
 
   return (
@@ -126,12 +126,12 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({ trigger, type, h
             <Button
               colorScheme="octo-blue"
               isDisabled={
-                isSubmiting ||
+                isSubmitting ||
                 amountInDecimal.lte(ZERO_DECIMAL) ||
                 amountInDecimal.gt(octBalance)
               }
               onClick={onSubmit}
-              isLoading={isSubmiting}
+              isLoading={isSubmitting}
               isFullWidth>
               {
                 amountInDecimal.lte(ZERO_DECIMAL) ?

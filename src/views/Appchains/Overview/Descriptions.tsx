@@ -53,7 +53,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({ data }) => {
             0
           )
         } />
-        <DescriptionItem name="Era Rward" value={
+        <DescriptionItem name="Era Reward" value={
           DecimalUtil.beautify(
             DecimalUtil.fromString(
               data?.appchain_metadata?.initial_era_reward

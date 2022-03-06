@@ -85,7 +85,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
     });
   }, [wrappedAppchainToken, global]);
 
-  const unwithdraedRewards = useMemo(() => {
+  const unwithdrawnRewards = useMemo(() => {
     if (!rewards?.length) {
       return ZERO_DECIMAL;
     }
@@ -105,7 +105,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
     [rewards]
   );
 
-  const onCliamRewards = () => {
+  const onClaimRewards = () => {
     if (!anchor) {
       return;
     }
@@ -189,9 +189,9 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
               <Flex justifyContent="space-between" alignItems="center" mt={3}>
                 <Text variant="gray">Unclaimed Rewards</Text>
                 <HStack>
-                  <Heading fontSize="md">{DecimalUtil.beautify(unwithdraedRewards)} {appchain?.appchain_metadata?.fungible_token_metadata.symbol}</Heading>
-                  <Button colorScheme="octo-blue" size="sm" onClick={onCliamRewards} isLoading={isClaiming}
-                    isDisabled={unwithdraedRewards.lte(ZERO_DECIMAL) || isClaiming}>Claim</Button>
+                  <Heading fontSize="md">{DecimalUtil.beautify(unwithdrawnRewards)} {appchain?.appchain_metadata?.fungible_token_metadata.symbol}</Heading>
+                  <Button colorScheme="octo-blue" size="sm" onClick={onClaimRewards} isLoading={isClaiming}
+                    isDisabled={unwithdrawnRewards.lte(ZERO_DECIMAL) || isClaiming}>Claim</Button>
                 </HStack>
               </Flex>
             </Box>

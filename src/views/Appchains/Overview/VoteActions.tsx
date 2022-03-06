@@ -65,7 +65,7 @@ const VotePopover: React.FC<VotePopoverProps> = ({ isOpen, appchainId, voteType,
   const inputRef2 = useRef<any>();
 
   const [isDepositing, setIsDepositing] = useBoolean(false);
-  const [isWidthdrawing, setIsWidthdrawing] = useBoolean(false);
+  const [isWithdrawing, setIsWithdrawing] = useBoolean(false);
 
   const [withdrawPanel, setWithdrawPanel] = useBoolean(false);
 
@@ -81,7 +81,7 @@ const VotePopover: React.FC<VotePopoverProps> = ({ isOpen, appchainId, voteType,
     transform: 'translateX(0px)'
   }));
 
-  const [withdrawPanelProps, withrawPanelApi] = useSpring(() => ({
+  const [withdrawPanelProps, withdrawPanelApi] = useSpring(() => ({
     opacity: 0,
     transform: 'translateX(100%)'
   }));
@@ -113,13 +113,13 @@ const VotePopover: React.FC<VotePopoverProps> = ({ isOpen, appchainId, voteType,
   useEffect(() => {
     if (withdrawPanel) {
       depositPanelApi.start({ opacity: 0, transform: 'translateX(-100%)' });
-      withrawPanelApi.start({ opacity: 1, transform: 'translateX(0px)' });
+      withdrawPanelApi.start({ opacity: 1, transform: 'translateX(0px)' });
       setTimeout(() => {
         inputRef2?.current.focus();
       }, 300);
     } else {
       depositPanelApi.start({ opacity: 1, transform: 'translateX(0px)' });
-      withrawPanelApi.start({ opacity: 0, transform: 'translateX(100%)' });
+      withdrawPanelApi.start({ opacity: 0, transform: 'translateX(100%)' });
       setTimeout(() => {
         inputRef?.current.focus();
       }, 300);
@@ -164,7 +164,7 @@ const VotePopover: React.FC<VotePopoverProps> = ({ isOpen, appchainId, voteType,
       global.registry?.withdraw_upvote_deposit_of :
       global.registry?.withdraw_downvote_deposit_of;
 
-    setIsWidthdrawing.on();
+    setIsWithdrawing.on();
 
     method?.(
       {
@@ -226,10 +226,10 @@ const VotePopover: React.FC<VotePopoverProps> = ({ isOpen, appchainId, voteType,
           <Box mt={4}>
             <Button colorScheme={voteType === 'downvote' ? 'teal' : 'octo-blue'} 
               disabled={
-                !amount || isWidthdrawing ||
+                !amount || isWithdrawing ||
                 DecimalUtil.fromString(amount).gt(voted)
               }
-              isLoading={isWidthdrawing}
+              isLoading={isWithdrawing}
               onClick={onWithdrawVotes}
               isFullWidth>
               { 

@@ -10,7 +10,7 @@ import {
   Text
 } from '@chakra-ui/react';
 
-import { TokenAssset } from 'types';
+import { TokenAsset } from 'types';
 
 import { Empty, BaseModal } from 'components';
 
@@ -18,8 +18,8 @@ type SelectTokenModalProps = {
   isOpen: boolean;
   onClose: VoidFunction;
   selectedToken?: string;
-  tokens: TokenAssset[] | undefined;
-  onSelectToken: (account: TokenAssset) => void;
+  tokens: TokenAsset[] | undefined;
+  onSelectToken: (account: TokenAsset) => void;
 }
 
 export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({ tokens, isOpen, onClose, onSelectToken, selectedToken }) => {

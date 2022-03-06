@@ -42,7 +42,7 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({ isOpen, 
   const [currentAccount, setCurrentAccount] = useState<InjectedAccountWithMeta>();
   const [accounts, setAccounts] = useState<InjectedAccountWithMeta[]>();
   const [key, setKey] = useState('');
-  const [isSubmiting, setIsSubmiting] = useBoolean(false);
+  const [isSubmitting, setIsSubmitting] = useBoolean(false);
 
   const [isInAccountsPage, setIsInAccountsPage] = useBoolean();
 
@@ -79,13 +79,13 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({ isOpen, 
   }
 
   const onSubmit = async () => {
-    setIsSubmiting.on();
+    setIsSubmitting.on();
     const injected = await web3FromSource(currentAccount?.meta.source || '');
     appchainApi?.setSigner(injected.signer);
 
     const tx = appchainApi?.tx.session.setKeys(key, '0x00');
     if (!tx) {
-      setIsSubmiting.off();
+      setIsSubmitting.off();
       return;
     }
 
@@ -103,11 +103,11 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({ isOpen, 
           }, 500);
         }
       }).catch(err => {
-        setIsSubmiting.off();
+        setIsSubmitting.off();
         throw new Error(err.toString());
       });
     } catch(err: any) {
-      setIsSubmiting.off();
+      setIsSubmitting.off();
       toast({
         title: err.toString(),
         status: 'error',
@@ -178,7 +178,7 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({ isOpen, 
         </List>
         <Box mt={8}>
           <Button colorScheme="octo-blue" onClick={onSubmit} isFullWidth isDisabled={!key || !currentAccount} 
-            isLoading={isSubmiting}>Set</Button>
+            isLoading={isSubmitting}>Set</Button>
         </Box>
         </>
       }

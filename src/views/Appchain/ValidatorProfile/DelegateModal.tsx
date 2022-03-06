@@ -111,7 +111,7 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({ isOpen, onClose, v
             amountInDecimal.lt(minimumDeposit) ?
             'Minimum Limit' :
             amountInDecimal.gt(octBalance) ?
-            'Insuffcient Balance' :
+            'Insufficient Balance' :
             'Deposit'
           }
         </Button>

@@ -75,7 +75,7 @@ export const MyNode: React.FC<MyNodeProps> = ({ appchainId, needKeys, appchainAp
   const [isDeleting, setIsDeleting] = useBoolean();
   const [isApplying, setIsApplying] = useBoolean();
   const [isRefreshing, setIsRefreshing] = useBoolean();
-  const [isDestorying, setIsDestorying] = useBoolean();
+  const [isDestroying, setIsDestroying] = useBoolean();
   const[setSessionKeyModalOpen, setSetSessionKeyModalOpen] = useBoolean();
 
   const [deployRegion, setDeployRegion] = useState<string>('');
@@ -171,7 +171,7 @@ export const MyNode: React.FC<MyNodeProps> = ({ appchainId, needKeys, appchainAp
       return;
     }
 
-    setIsDestorying.on();
+    setIsDestroying.on();
     axios.put(`${deployConfig.deployApiHost}/tasks/${node?.uuid}`, {
       action: 'destroy', secret_key: secretKey
     }, {
@@ -282,7 +282,7 @@ export const MyNode: React.FC<MyNodeProps> = ({ appchainId, needKeys, appchainAp
                 node?.state === '11' ||
                 node?.state === '21' ?
                 <SimpleGrid columns={1}>
-                  <Button colorScheme="red" onClick={onDestroyNode} isDisabled={isDestorying} isLoading={isDestorying}>
+                  <Button colorScheme="red" onClick={onDestroyNode} isDisabled={isDestroying} isLoading={isDestroying}>
                     <Icon as={DeleteIcon} mr={2} boxSize={3} /> Destroy
                   </Button>
                 </SimpleGrid> :
@@ -292,7 +292,7 @@ export const MyNode: React.FC<MyNodeProps> = ({ appchainId, needKeys, appchainAp
                   <Button as={Link} isExternal href={node.instance.ssh_key}>
                     <Icon as={DownloadIcon} mr={2} boxSize={3} /> RSA
                   </Button>
-                  <Button colorScheme="red" onClick={onDestroyNode} isDisabled={isDestorying} isLoading={isDestorying}>
+                  <Button colorScheme="red" onClick={onDestroyNode} isDisabled={isDestroying} isLoading={isDestroying}>
                     <Icon as={DeleteIcon} mr={2} boxSize={3} /> Destroy
                   </Button>
                 </SimpleGrid> :

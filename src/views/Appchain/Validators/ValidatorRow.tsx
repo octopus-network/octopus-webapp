@@ -79,7 +79,7 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
       `rewards/${validator.validator_id}/${appchainId}/${global?.accountId}/${validatorSetHistoryEndIndex}` : null
   );
 
-  const unwithdraedDelegatorRewards = useMemo(() => {
+  const unwithdrawnDelegatorRewards = useMemo(() => {
     if (!delegatorRewards?.length || !ftMetadata) {
       return ZERO_DECIMAL;
     }
@@ -187,7 +187,7 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
           }
           <Icon as={ChevronRightIcon} boxSize={5} className="octo-gray" />
           {
-            unwithdraedDelegatorRewards.gt(ZERO_DECIMAL) ?
+            unwithdrawnDelegatorRewards.gt(ZERO_DECIMAL) ?
             <Box position="absolute" top="-3px" right="15px" boxSize={2} bg="red" borderRadius="full" /> : null  
           }
         </HStack>

@@ -23,7 +23,7 @@ import {
   AppchainInfoWithAnchorStatus,
   BridgeHistory,
   BridgeHistoryStatus,
-  TokenAssset
+  TokenAsset
 } from 'types';
 
 import { encodeAddress } from '@polkadot/util-crypto';
@@ -36,7 +36,7 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 type HistoryProps = {
   appchain: AppchainInfoWithAnchorStatus | undefined;
   histories: BridgeHistory[];
-  tokenAssets: TokenAssset[] | undefined;
+  tokenAssets: TokenAsset[] | undefined;
   onDrawerClose: VoidFunction;
   onClearHistory: VoidFunction;
 }
@@ -44,7 +44,7 @@ type HistoryProps = {
 type HistoryItemProps = {
   appchain: AppchainInfoWithAnchorStatus | undefined;
   history: BridgeHistory;
-  tokenAssets: TokenAssset[] | undefined;
+  tokenAssets: TokenAsset[] | undefined;
 }
 
 dayjs.extend(relativeTime);

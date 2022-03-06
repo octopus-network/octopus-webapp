@@ -34,7 +34,7 @@ import {
 
 import {
   AppchainInfoWithAnchorStatus,
-  TokenAssset,
+  TokenAsset,
   AppchainSettings,
   TokenContract,
   AnchorContract,
@@ -94,13 +94,13 @@ export const BridgePanel: React.FC = () => {
   const toast = useToast();
 
   const grayBg = useColorModeValue('#f2f4f7', '#1e1f34');
-  const [isLoging, setIsLoging] = useBoolean();
-  const [isLoadingBalance, setIsLodingBalance] = useBoolean();
+  const [isLogging, setIsLogging] = useBoolean();
+  const [isLoadingBalance, setIsLoadingBalance] = useBoolean();
   const [isAmountInputFocused, setIsAmountInputFocused] = useBoolean();
   const [isAccountInputFocused, setIsAccountInputFocused] = useBoolean();
   const [selectAccountModalOpen, setSelectAccountModalOpen] = useBoolean();
   const [selectTokenModalOpen, setSelectTokenModalOpen] = useBoolean();
-  const [isTransfering, setIsTransfering] = useBoolean();
+  const [isTransferring, setIsTransferring] = useBoolean();
   const [isHistoryDrawerOpen, setIsHistoryDrawerOpen] = useBoolean();
   const [isDepositingStorage, setIsDepositingStorage] = useBoolean();
 
@@ -111,7 +111,7 @@ export const BridgePanel: React.FC = () => {
   const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(appchainId ? `appchain/${appchainId}` : null, { refreshInterval: 10 * 1000 });
   const { data: appchainSettings } = useSWR<AppchainSettings>(appchainId ? `appchain-settings/${appchainId}` : null);
 
-  const { data: tokens } = useSWR<TokenAssset[]>(appchainId ? `tokens/${appchainId}` : null);
+  const { data: tokens } = useSWR<TokenAsset[]>(appchainId ? `tokens/${appchainId}` : null);
 
   const { pathname } = useLocation();
   const [amount, setAmount] = useState('');
@@ -124,7 +124,7 @@ export const BridgePanel: React.FC = () => {
   const [web3Accounts, setWeb3Accounts] = useState<InjectedAccountWithMeta[]>();
 
   const [targetAccount, setTargetAccount] = useState('');
-  const [tokenAsset, setTokenAsset] = useState<TokenAssset>();
+  const [tokenAsset, setTokenAsset] = useState<TokenAsset>();
   const [appchainApi, setAppchainApi] = useState<ApiPromise>();
 
   const [isInvalidTargetAccount, setIsInvalidTargetAccount] = useBoolean();
@@ -175,7 +175,7 @@ export const BridgePanel: React.FC = () => {
 
     setTokenAsset(undefined);
     setAppchainApi(undefined);
-    setIsLodingBalance.on();
+    setIsLoadingBalance.on();
     setAmount('');
     setTimeout(() => {
       amountInputRef.current?.focus();
@@ -346,11 +346,11 @@ export const BridgePanel: React.FC = () => {
       return;
     }
 
-    setIsLodingBalance.on();
+    setIsLoadingBalance.on();
 
     tokenContract.ft_balance_of({ account_id: global.accountId }).then(res => {
       setBalance(DecimalUtil.fromString(res, tokenAsset?.metadata.decimals));
-      setIsLodingBalance.off();
+      setIsLoadingBalance.off();
     });
 
   }, [isReverse, global, fromAccount, tokenAsset, tokenContract]);
@@ -380,7 +380,7 @@ export const BridgePanel: React.FC = () => {
     }
 
     setBalance(balance);
-    setIsLodingBalance.off();
+    setIsLoadingBalance.off();
   }
 
   // fetch balance from appchain rpc
@@ -397,7 +397,7 @@ export const BridgePanel: React.FC = () => {
     if (!fromAccount) {
       setBalance(ZERO_DECIMAL);
       if (isLoadingBalance) {
-        setIsLodingBalance.off();
+        setIsLoadingBalance.off();
       }
     }
   }, [fromAccount, isLoadingBalance]);
@@ -431,7 +431,7 @@ export const BridgePanel: React.FC = () => {
   }
 
   const onLogin = (e: any) => {
-    setIsLoging.on();
+    setIsLogging.on();
     global.wallet?.requestSignIn(global.network?.octopus.registryContractId, 'Octopus Webapp');
   }
 
@@ -445,7 +445,7 @@ export const BridgePanel: React.FC = () => {
     setSelectAccountModalOpen.off();
   }
 
-  const onSelectToken = (token: TokenAssset) => {
+  const onSelectToken = (token: TokenAsset) => {
     setTokenAsset(token)
     setAmount('');
     setSelectTokenModalOpen.off();
@@ -464,7 +464,7 @@ export const BridgePanel: React.FC = () => {
   }
 
   const onBurn = () => {
-    setIsTransfering.on();
+    setIsTransferring.on();
 
     const amountInU64 = DecimalUtil.toU64(DecimalUtil.fromString(amount), tokenAsset?.metadata.decimals);
     try {
@@ -472,7 +472,7 @@ export const BridgePanel: React.FC = () => {
       let targetAccountInHex = toHexAddress(targetAccount || '');
 
       if (!targetAccountInHex) {
-        throw new Error('Invliad target account');
+        throw new Error('Invalid target account');
       }
 
       if (tokenAsset?.assetId === undefined) {
@@ -506,7 +506,7 @@ export const BridgePanel: React.FC = () => {
         description: err.toString(),
         status: 'error'
       });
-      setIsTransfering.off();
+      setIsTransferring.off();
     }
   }
 
@@ -516,7 +516,7 @@ export const BridgePanel: React.FC = () => {
     const injected = await web3FromSource(appchainAccount?.meta.source || '');
     appchainApi?.setSigner(injected.signer);
 
-    setIsTransfering.on();
+    setIsTransferring.on();
 
     const targetAccountInHex = stringToHex(targetAccount);
     const amountInU64 = DecimalUtil.toU64(DecimalUtil.fromString(amount), tokenAsset?.metadata.decimals);
@@ -544,7 +544,7 @@ export const BridgePanel: React.FC = () => {
             toAccount: targetAccount || '',
             tokenContractId: tokenAsset?.contractId || ''
           });
-          setIsTransfering.off();
+          setIsTransferring.off();
           checkBalanceViaRPC?.current();
         }
       });
@@ -555,7 +555,7 @@ export const BridgePanel: React.FC = () => {
         description: err.toString(),
         status: 'error'
       });
-      setIsTransfering.off();
+      setIsTransferring.off();
     });
   }
 
@@ -649,7 +649,7 @@ export const BridgePanel: React.FC = () => {
                       !fromAccount ?
                         (
                           isReverse ?
-                            <Button colorScheme="octo-blue" isLoading={isLoging} isDisabled={isLoging} onClick={onLogin} size="sm">Connect</Button> :
+                            <Button colorScheme="octo-blue" isLoading={isLogging} isDisabled={isLogging} onClick={onLogin} size="sm">Connect</Button> :
                             <Button colorScheme="octo-blue" onClick={setSelectAccountModalOpen.on} size="sm">Connect</Button>
                         ) :
                         isReverse ?
@@ -767,9 +767,9 @@ export const BridgePanel: React.FC = () => {
                     isFullWidth
                     isDisabled={
                       !fromAccount || isLoadingBalance || !targetAccount || !amount ||
-                      balance?.lt(amount) || isTransfering || isInvalidTargetAccount || targetAccountNeedDepositStorage
+                      balance?.lt(amount) || isTransferring || isInvalidTargetAccount || targetAccountNeedDepositStorage
                     }
-                    isLoading={isTransfering}
+                    isLoading={isTransferring}
                     spinner={<PulseLoader color="rgba(255, 255, 255, .9)" size={12} />}
                     onClick={isReverse ? onBurn : onRedeem}>
                     {
