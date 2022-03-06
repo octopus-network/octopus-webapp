@@ -138,7 +138,7 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({ 
           <Input 
             autoFocus
             id="appchainAccount" 
-            placeholder="appchain SS58 address, eg: 5CaLqqE3..." 
+            placeholder="Appchain SS58 format address, eg: 5CaLqqE3..."
             onChange={e => setAppchainAccount(e.target.value)} />
         </FormControl>
 
@@ -157,8 +157,8 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({ 
         </FormControl>
 
         <FormControl>
-          <FormLabel htmlFor="socialLink">Twitter Id</FormLabel>
-          <Input id="socialMediaHandle" placeholder="Your twitter id" 
+          <FormLabel htmlFor="socialLink">Twitter ID</FormLabel>
+          <Input id="socialMediaHandle" placeholder="Your twitter ID"
             onChange={(e) => setSocialMediaHandle(e.target.value)} type="text" />
         </FormControl>
 

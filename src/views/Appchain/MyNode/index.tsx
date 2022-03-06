@@ -233,7 +233,7 @@ export const MyNode: React.FC<MyNodeProps> = ({ appchainId, needKeys, appchainAp
                 </Skeleton>
               </Flex>
               <Flex justifyContent="space-between">
-                <Text variant="gray" fontSize="sm">Node Id</Text>
+                <Text variant="gray" fontSize="sm">Node ID</Text>
                 <HStack>
                   <Text fontSize="sm" whiteSpace="nowrap" w="calc(160px - 30px)"
                     overflow="hidden" textOverflow="ellipsis">

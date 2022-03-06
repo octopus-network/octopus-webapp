@@ -181,7 +181,7 @@ export const Validators: React.FC<ValidatorsProps> = ({
               <Text variant="gray">Validator ID</Text>
             </GridItem>
             <GridItem colSpan={2} display={{ base: 'none', md: 'table-cell' }} textAlign="center">
-              <Text variant="gray">State</Text>
+              <Text variant="gray">Status</Text>
             </GridItem>
             <GridItem colSpan={2}>
               <SortButton label="Total Staked" sortIdx={sortIdx} indexArr={[1, 2]} onChange={v => setSortIdx(v)} />

@@ -104,7 +104,7 @@ export const Established: React.FC = () => {
               <Grid templateColumns={{ base: 'repeat(7, 1fr)', md: 'repeat(10, 1fr)' }} className="octo-gray" gap={6}>
                 <GridItem colSpan={3}>ID</GridItem>
                 <GridItem colSpan={3} display={{ base: 'none', md: 'table-cell' }}>Founder</GridItem>
-                <GridItem colSpan={3}>State</GridItem>
+                <GridItem colSpan={3}>Status</GridItem>
                 <GridItem colSpan={1}/>
               </Grid>
             </Box>

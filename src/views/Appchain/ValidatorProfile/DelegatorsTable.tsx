@@ -25,7 +25,7 @@ export const DelegatorsTable: React.FC<DelegatorsTableProps> = ({ delegators }) 
     <Table>
       <Thead bg={bg}>
         <Tr>
-          <Th>Delegator Id</Th>
+          <Th>Delegator ID</Th>
           <Th isNumeric>Delegated</Th>
         </Tr>
       </Thead>
