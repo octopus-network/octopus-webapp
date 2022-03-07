@@ -326,7 +326,7 @@ export const MyNode: React.FC<MyNodeProps> = ({ appchainId, needKeys, appchainAp
               </Flex>
             </Flex>
             <Button colorScheme="octo-blue" isFullWidth onClick={onDeploy} isLoading={isDeploying} isDisabled={isDeploying}>
-              Deoply
+              Deploy
             </Button>
           </> :
           <>
