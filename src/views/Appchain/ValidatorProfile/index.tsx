@@ -310,7 +310,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                   <Button colorScheme={validator?.can_be_delegated_to ? 'gray' : 'octo-blue'} onClick={toggleDelegation}
                     isLoading={isTogglingDelegation} isDisabled={isTogglingDelegation}>
                     <Icon as={validator?.can_be_delegated_to ? AiOutlineCloseCircle : BiDoorOpen} mr={2} />
-                    {validator?.can_be_delegated_to ? 'Close Delegation' : 'Open Delegation'}
+                    {validator?.can_be_delegated_to ? 'Disable Delegation' : 'Enable Delegation'}
                   </Button>
                   <Button colorScheme="red" onClick={setUnbondAlertOpen.on}>
                     <Icon as={BiLogOut} mr={2} /> Unbond Validator
@@ -373,7 +373,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                   <Button colorScheme="octo-blue" size="sm" onClick={setDelegateModalOpen.on}
                     isDisabled={!validator?.can_be_delegated_to || validatorState !== 'Validating'}>
                     { 
-                      validator && !validator.can_be_delegated_to ? 'Delegation Closed' :
+                      validator && !validator.can_be_delegated_to ? 'Delegation Disabled' :
                       <>
                         <Icon as={AddIcon} mr={2} boxSize={3} /> 
                         <Text>Delegate</Text>
