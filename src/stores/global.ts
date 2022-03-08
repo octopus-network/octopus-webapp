@@ -32,3 +32,7 @@ export const useGlobalStore = create((set: any): GlobalStore => ({
     set({ global });
   }
 }));
+
+export class GlobalVars {
+  public static global_wallet: WalletConnection;
+}

@@ -36,6 +36,7 @@ import {
   FAILED_TO_REDIRECT_MESSAGE,
   COMPLEX_CALL_GAS
 } from 'primitives';
+import { NearTransaction, NearTransactionFactory } from 'near/transactions';
 
 type RewardsModalProps = {
   rewards: RewardHistory[] | undefined;
@@ -47,14 +48,14 @@ type RewardsModalProps = {
   onClose: () => void;
 }
 
-export const RewardsModal: React.FC<RewardsModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  rewards, 
-  appchain, 
-  anchor, 
-  wrappedAppchainToken, 
-  validatorId 
+export const RewardsModal: React.FC<RewardsModalProps> = ({
+  isOpen,
+  onClose,
+  rewards,
+  appchain,
+  anchor,
+  wrappedAppchainToken,
+  validatorId
 }) => {
 
   const bg = useColorModeValue('#f6f7fa', '#15172c');
@@ -110,34 +111,53 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
       return;
     }
 
-    if (wrappedAppchainTokenStorageBalance.lte(ZERO_DECIMAL)) {
-      setNeedDepositStorage.on();
-      return;
-    }
-    setIsClaiming.on();
+    // if (wrappedAppchainTokenStorageBalance.lte(ZERO_DECIMAL)) {
+    //   setNeedDepositStorage.on();
+    //   return;
+    // }
+    // setIsClaiming.on();
 
-    const method = validatorId ? anchor.withdraw_delegator_rewards : anchor.withdraw_validator_rewards;
+    // const method = validatorId ? anchor.withdraw_delegator_rewards : anchor.withdraw_validator_rewards;
 
-    const params: any = validatorId ? {
-      validator_id: validatorId,
-      delegator_id: global.accountId || ''
-    } : { validator_id: global.accountId };
+    // const params: any = validatorId ? {
+    //   validator_id: validatorId,
+    //   delegator_id: global.accountId || ''
+    // } : { validator_id: global.accountId };
 
-    method(
-      params,
-      COMPLEX_CALL_GAS
-    ).catch(err => {
-      if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
-        return;
-      }
+    // method(
+    //   params,
+    //   COMPLEX_CALL_GAS
+    // ).catch(err => {
+    //   if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
+    //     return;
+    //   }
 
-      toast({
-        position: 'top-right',
-        title: 'Error',
-        description: err.toString(),
-        status: 'error'
-      });
-    })
+    //   toast({
+    //     position: 'top-right',
+    //     title: 'Error',
+    //     description: err.toString(),
+    //     status: 'error'
+    //   });
+    // })
+    NearTransactionFactory
+      .appchain_reward_claim_transactions(
+        wrappedAppchainToken!.contractId,
+        anchor.contractId,
+        validatorId ? validatorId : global.accountId,
+        validatorId ? global.accountId : null,
+      ).then(e => new NearTransaction().add_transaction(e).execute())
+      .catch(err => {
+        if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
+          return;
+        }
+
+        toast({
+          position: 'top-right',
+          title: 'Error',
+          description: err.toString(),
+          status: 'error'
+        });
+      })
   }
 
   const onDepositStorage = () => {

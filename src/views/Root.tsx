@@ -33,7 +33,7 @@ import {
 import { Outlet } from 'react-router-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useMatchMutate } from 'hooks';
-import { useGlobalStore, useTxnsStore } from 'stores';
+import { GlobalVars, useGlobalStore, useTxnsStore } from 'stores';
 
 import { API_HOST } from 'config';
 
@@ -79,6 +79,7 @@ export const Root: React.FC = () => {
       });
   
       const wallet = new WalletConnection(near, network.octopus.registryContractId);
+      GlobalVars.global_wallet = wallet;
   
       const registry = new RegistryContract(
         wallet.account(),
