@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 
 import relativeTime from 'dayjs/plugin/relativeTime';
 import duration from 'dayjs/plugin/duration';
 import dayjs from 'dayjs';
+import useSWR from 'swr';
 
 import {
   Box,
@@ -32,7 +33,13 @@ import {
 } from 'react-spring';
 
 import { StateBadge } from 'components';
-import { AppchainInfoWithAnchorStatus, AppchainSettings } from 'types';
+
+import { 
+  UserVotes, 
+  AppchainInfoWithAnchorStatus, 
+  AppchainSettings 
+} from 'types';
+
 import type { ApiPromise } from '@polkadot/api';
 import { CheckIcon, CopyIcon } from '@chakra-ui/icons';
 import { Link as RouterLink } from 'react-router-dom';
@@ -43,9 +50,9 @@ import bridgeIcon from 'assets/icons/bridge.png';
 import functionSpecIcon from 'assets/icons/function-spec.png';
 import githubIcon from 'assets/icons/github.png';
 
-import { DecimalUtil, toValidUrl } from 'utils';
+import { DecimalUtil, toValidUrl, ZERO_DECIMAL } from 'utils';
 import Decimal from 'decimal.js';
-import { EPOCH_DURATION_MS } from 'primitives';
+import { EPOCH_DURATION_MS, OCT_TOKEN_DECIMALS } from 'primitives';
 import { useGlobalStore } from 'stores';
 import { FaUser } from 'react-icons/fa';
 
@@ -157,6 +164,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({ appchain, appchainAp
           </HStack>
         </VStack>
       </Flex>
+      
       <SimpleGrid columns={{ base: 3, md: 5 }} spacing={4} mt={8} bg={linksBg} borderRadius="lg">
         <RouterLink to={`/bridge/near/${appchain?.appchain_id}`}>
           <LinkBox icon={bridgeIcon} label="Bridge" />

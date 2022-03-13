@@ -332,7 +332,6 @@ export const VoteActions: React.FC<VoteActionsProps> = ({ data }) => {
     });
     
   }
-  
 
   return (
     <>

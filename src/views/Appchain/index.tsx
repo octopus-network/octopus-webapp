@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { ApiPromise, WsProvider } from '@polkadot/api';
-
+import axios from 'axios';
 import useSWR from 'swr';
 
 import {
@@ -9,8 +9,16 @@ import {
   Grid,
   GridItem,
   Drawer,
+  Alert,
+  AlertIcon,
+  Button,
+  HStack,
+  Text,
+  Heading,
   DrawerOverlay,
-  DrawerContent
+  DrawerContent,
+  useBoolean,
+  useToast
 } from '@chakra-ui/react';
 
 import { 
@@ -19,29 +27,46 @@ import {
   AppchainSettings, 
   ValidatorSessionKey,
   TokenContract,
-  Validator
+  Validator,
+  UserVotes
 } from 'types';
 
+import { 
+  OCT_TOKEN_DECIMALS,
+  COMPLEX_CALL_GAS,
+  FAILED_TO_REDIRECT_MESSAGE
+} from 'primitives';
+
+import { API_HOST } from 'config';
+import { DecimalUtil, ZERO_DECIMAL } from 'utils';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Breadcrumb } from 'components';
-
 import { Descriptions } from './Descriptions';
 import { MyStaking } from './MyStaking';
 import { ValidatorProfile } from './ValidatorProfile';
 import { MyNode } from './MyNode';
+
 import { Validators } from './Validators';
 import { useGlobalStore } from 'stores';
 
 export const Appchain: React.FC = () => {
   const { id = '', validatorId = '' } = useParams();
 
+  const toast = useToast();
   const { global } = useGlobalStore();
   const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(id ? `appchain/${id}` : null);
   const { data: appchainSettings } = useSWR<AppchainSettings>(id ? `appchain-settings/${id}` : null);
   const { data: validators, error: validatorsError } = useSWR<Validator[]>(appchain ? `validators/${appchain.appchain_id}` : null);
 
+  const { data: userVotes } = useSWR<UserVotes>(global.accountId ? `votes/${global.accountId}/${id}` : null);
+  const userDownvotes = useMemo(() => DecimalUtil.fromString(userVotes?.downvotes, OCT_TOKEN_DECIMALS), [userVotes]);
+  const userUpvotes = useMemo(() => DecimalUtil.fromString(userVotes?.upvotes, OCT_TOKEN_DECIMALS), [userVotes]);
+
   const [appchainValidators, setAppchainValidators] = useState<string[]>();
   const [validatorSessionKeys, setValidatorSessionKeys] = useState<Record<string, ValidatorSessionKey>>();
+
+  const [isWithdrawingUpvotes, setIsWithdrawingUpvotes] = useBoolean();
+  const [isWithdrawingDownvotes, setIsWithdrawingDownvotes] = useBoolean();
 
   const [appchainApi, setAppchainApi] = useState<ApiPromise>();
   const navigate = useNavigate();
@@ -154,11 +179,84 @@ export const Appchain: React.FC = () => {
     navigate(`/appchains/${id}`);
   }
 
+  const onWithdrawVotes = (voteType: 'upvote' | 'downvote') => {
+    const method = 
+      voteType === 'upvote' ? 
+      global.registry?.withdraw_upvote_deposit_of :
+      global.registry?.withdraw_downvote_deposit_of;
+
+    (voteType === 'upvote' ? setIsWithdrawingUpvotes : setIsWithdrawingDownvotes).on();
+
+    method?.(
+      {
+        appchain_id: id,
+        amount: (voteType === 'upvote' ? userVotes?.upvotes : userVotes?.downvotes) || '0'
+      },
+      COMPLEX_CALL_GAS
+    ).then(() => {
+      axios.post(`${API_HOST}/update-appchains`).then(() => window.location.reload());
+    }).catch(err => {
+      if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
+        return;
+      }
+      toast({
+        position: 'top-right',
+        title: 'Error',
+        description: err.toString(),
+        status: 'error'
+      });
+    });
+    
+  }
+
   return (
     <>
       <Container>
         <Box mt={5}>
           <Breadcrumb links={[{ to: '/home', label: 'Home' }, { to: '/appchains', label: 'Appchains' }, { label: id }]} />
+        </Box>
+        <Box>
+        {
+          userUpvotes.gt(ZERO_DECIMAL) || userDownvotes.gt(ZERO_DECIMAL) ?
+          <Alert mt={5} borderRadius="lg" status="warning">
+            <AlertIcon />
+            <HStack>
+              <Text>You have</Text>
+              {
+                userUpvotes.gt(ZERO_DECIMAL) ?
+                <HStack>
+                  <Heading fontSize="md">{DecimalUtil.beautify(userUpvotes)}</Heading>
+                  <Text>upvotes</Text>
+                  <Button 
+                    size="xs" 
+                    colorScheme="octo-blue" 
+                    variant="ghost"
+                    onClick={() => onWithdrawVotes('upvote')}
+                    isDisabled={isWithdrawingUpvotes}
+                    isLoading={isWithdrawingUpvotes}>
+                    Withdraw
+                    </Button>
+                </HStack> : null
+              }
+              {
+                userDownvotes.gt(ZERO_DECIMAL) ?
+                <HStack>
+                  <Heading fontSize="md">{DecimalUtil.beautify(userDownvotes)}</Heading>
+                  <Text>{DecimalUtil.beautify(userDownvotes)} downvotes</Text>
+                  <Button 
+                    size="xs" 
+                    colorScheme="octo-blue" 
+                    variant="ghost"
+                    onClick={() => onWithdrawVotes('downvote')}
+                    isDisabled={isWithdrawingDownvotes}
+                    isLoading={isWithdrawingDownvotes}>
+                    Withdraw
+                  </Button>
+                </HStack> : null
+              }
+            </HStack>
+          </Alert> : null
+        }
         </Box>
         <Grid templateColumns={{ base: 'repeat(3, 1fr)', lg: 'repeat(5, 1fr)' }} gap={5} mt={5}>
           <GridItem colSpan={3}>

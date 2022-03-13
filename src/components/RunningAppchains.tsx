@@ -1,6 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import useSWR from 'swr';
 import styled from 'styled-components';
+import dayjs from 'dayjs';
+import { ApiPromise, WsProvider } from '@polkadot/api';
 
 import {
   Flex,
@@ -13,7 +15,9 @@ import {
   SimpleGrid,
   Button,
   VStack,
-  Icon,
+  CircularProgress,
+  CircularProgressLabel,
+  Tooltip,
   useColorModeValue,
   Skeleton,
   SkeletonCircle
@@ -22,10 +26,9 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { ChevronRightIcon } from '@chakra-ui/icons';
 import { Link as RouterLink } from 'react-router-dom';
-import { HiOutlineArrowNarrowRight } from 'react-icons/hi';
 import { DecimalUtil, ZERO_DECIMAL } from 'utils';
 
-import { OCT_TOKEN_DECIMALS } from 'primitives';
+import { OCT_TOKEN_DECIMALS, EPOCH_DURATION_MS } from 'primitives';
 
 import {
   AppchainInfo,
@@ -64,6 +67,10 @@ const RunningItem: React.FC<RunningItemProps> = ({ whiteBg = false, data }) => {
 
   const icon = useMemo(() => data.appchain_metadata?.fungible_token_metadata?.icon || '', [data]);
 
+  const [currentEra, setCurrentEra] = useState<number>();
+  const [nextEraTime, setNextEraTime] = useState(0);
+  const [nextEraTimeLeft, setNextEraTimeLeft] = useState(0);
+
   const { data: prices } = useSWR(`prices/OCT,${data.appchain_metadata?.fungible_token_metadata?.symbol}`);
   const { data: appchainSettings } = useSWR<AppchainSettings>(`appchain-settings/${data.appchain_id}`);
   const { data: validators } = useSWR<Validator[]>(`validators/${data.appchain_id}`);
@@ -88,6 +95,24 @@ const RunningItem: React.FC<RunningItemProps> = ({ whiteBg = false, data }) => {
     );
   }, [prices, data, appchainSettings]);
 
+  useEffect(() => {
+   
+    if (appchainSettings?.rpc_endpoint) {
+      new ApiPromise({ 
+        provider: new WsProvider(appchainSettings.rpc_endpoint) 
+      }).isReady.then(api => {
+        api.query.octopusLpos.activeEra().then(era => {
+          const eraJSON: any = era.toJSON();
+          setCurrentEra(eraJSON?.index);
+
+          setNextEraTime(eraJSON ? EPOCH_DURATION_MS + eraJSON.start : 0);
+          setNextEraTimeLeft(eraJSON ? (eraJSON.start + EPOCH_DURATION_MS) - new Date().getTime() : 0);
+        });
+      });
+    }
+
+  }, [appchainSettings]);
+
   return (
     <Box bg={bg} borderRadius="lg" p={6} cursor="pointer"
       transition="all .3s ease"
@@ -96,16 +121,19 @@ const RunningItem: React.FC<RunningItemProps> = ({ whiteBg = false, data }) => {
         transform: 'translateY(-3px) scale(1.01)'
       }}
       onClick={() => navigate(`/appchains/${data?.appchain_id}`)}>
-      <Flex justifyContent="space-between">
+      <Flex justifyContent="space-between" alignItems="center">
         <HStack>
           <Avatar src={icon as any} style={icon ? { backgroundColor: iconBg } : {}} name={data.appchain_id} boxSize={9} />
           <Heading fontSize="lg">{data.appchain_id}</Heading>
         </HStack>
-        <RouterLink to={`/appchains/${data?.appchain_id}`}>
-          <EnterButton variant="ghost" colorScheme="octo-blue" size="sm">
-            Enter <Icon as={HiOutlineArrowNarrowRight} ml={1} />
-          </EnterButton>
-        </RouterLink>
+        <Tooltip label={`Next Era: ${ currentEra !== undefined ? dayjs(nextEraTime).format('YYYY-MM-DD HH:mm:ss') : '-' }`}>
+        <Box>
+          <CircularProgress value={
+              currentEra !== undefined ? 
+              (EPOCH_DURATION_MS - nextEraTimeLeft) / (EPOCH_DURATION_MS / 100) : 0
+            } size={5} thickness={16} color="octo-blue.500" />
+        </Box>
+        </Tooltip>
       </Flex>
       <Flex mt={6} justifyContent="space-between">
         <VStack alignItems="flex-start">

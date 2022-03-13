@@ -65,7 +65,7 @@ export const Root: React.FC = () => {
   const urlParams = useMemo(() => new URLSearchParams(window.location.search), []);
 
   const { updateGlobal, global } = useGlobalStore();
-  const { txns, updateTxn } = useTxnsStore();
+  const { updateTxn } = useTxnsStore();
 
   const matchMutate = useMatchMutate();
 
@@ -206,7 +206,7 @@ export const Root: React.FC = () => {
     provider
       .txStatus(transactionHashes, global.accountId)
       .then(status => {
-        console.log(status);
+
         const { receipts_outcome } = status;
         let message = '';
         for (let i = 0; i < receipts_outcome.length; i++) {

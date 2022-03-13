@@ -15,9 +15,13 @@ import {
   AiFillGithub 
 } from 'react-icons/ai';
 
+import { useGlobalStore } from 'stores';
 import { FaDiscord } from 'react-icons/fa';
 
 export const Footer: React.FC = () => {
+
+  const { global } = useGlobalStore();
+
   return (
     <Container pt={4} pb={4}>
       <Divider />
@@ -29,17 +33,25 @@ export const Footer: React.FC = () => {
         justifyContent="space-between" 
         direction={{ base: 'column', md: 'row' }}>
         <HStack spacing={[2, 3]} w="100%" flex={1} justifyContent={{ base: 'center', md: 'flex-start' }}>
-          <Link variant="gray-underline" whiteSpace="nowrap" 
-            overflow="hidden" textOverflow="ellipsis">Terms of Service</Link>
+          <Link 
+            variant="gray-underline" 
+            whiteSpace="nowrap" 
+            href={`${global.network?.near.explorerUrl}/accounts/${global.network?.octopus.registryContractId}`}
+            overflow="hidden" 
+            textOverflow="ellipsis"
+            isExternal>
+            Registry Contract
+          </Link>
           <Text variant="gray" opacity=".5">|</Text>
-          <Link variant="gray-underline" whiteSpace="nowrap" 
-            overflow="hidden" textOverflow="ellipsis">Privacy Policy</Link>
-          <Text variant="gray" opacity=".5">|</Text>
-          <Link variant="gray-underline" whiteSpace="nowrap" 
-            overflow="hidden" textOverflow="ellipsis">Registry Contract</Link>
-          <Text variant="gray" opacity=".5">|</Text>
-          <Link variant="gray-underline" whiteSpace="nowrap" 
-            overflow="hidden" textOverflow="ellipsis">Token Contract</Link>
+          <Link 
+            variant="gray-underline" 
+            whiteSpace="nowrap" 
+            href={`${global.network?.near.explorerUrl}/accounts/${global.network?.octopus.octTokenContractId}`}
+            overflow="hidden" 
+            textOverflow="ellipsis"
+            isExternal>
+            Token Contract
+          </Link>
         </HStack>
         <HStack spacing={3}>
           <Text variant="gray">&copy; 2022 Octopus Network</Text>

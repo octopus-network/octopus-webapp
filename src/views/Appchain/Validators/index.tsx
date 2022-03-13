@@ -83,7 +83,7 @@ export const Validators: React.FC<ValidatorsProps> = ({
   const bg = useColorModeValue('white', '#15172c');
 
   const [showType, setShowType] = useState('all');
-  const [sortIdx, setSortIdx] = useState(2);
+  const [sortIdx, setSortIdx] = useState(1);
 
   const filteredValidators = useMemo(() => {
 
