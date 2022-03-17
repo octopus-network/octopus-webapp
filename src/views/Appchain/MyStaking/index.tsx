@@ -54,10 +54,10 @@ type MyStakingProps = {
   anchor: AnchorContract | undefined;
   isValidator: boolean;
   isUnbonding: boolean;
-  wrappedAppchainToken: TokenContract | undefined;
+  wrappedAppchainTokenContract: TokenContract | undefined;
 }
 
-export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedAppchainToken, isValidator, isUnbonding }) => {
+export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedAppchainTokenContract, isValidator, isUnbonding }) => {
 
   const bg = useColorModeValue(
     'linear-gradient(137deg,#1486ff 4%, #0c4df5)',
@@ -247,7 +247,7 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
         onClose={setRewardsModalOpen.off}
         appchain={appchain}
         anchor={anchor}
-        wrappedAppchainToken={wrappedAppchainToken}
+        wrappedAppchainTokenContract={wrappedAppchainTokenContract}
         rewards={rewards} />
 
       <StakesModal

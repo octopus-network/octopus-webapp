@@ -65,7 +65,7 @@ import { DecimalUtil, ZERO_DECIMAL } from 'utils';
 import octoAvatar from 'assets/icons/avatar.png';
 
 type ValidatorProfileProps = {
-  wrappedAppchainToken: TokenContract | undefined;
+  wrappedAppchainTokenContract: TokenContract | undefined;
   appchain: AppchainInfoWithAnchorStatus | undefined;
   anchor: AnchorContract | undefined;
   validatorId: string;
@@ -77,7 +77,7 @@ type ValidatorProfileProps = {
 
 export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
   appchain,
-  wrappedAppchainToken,
+  wrappedAppchainTokenContract,
   validatorId,
   anchor,
   validators,
@@ -461,7 +461,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
         appchain={appchain}
         anchor={anchor}
         validatorId={validatorId}
-        wrappedAppchainToken={wrappedAppchainToken}
+        wrappedAppchainTokenContract={wrappedAppchainTokenContract}
         rewards={delegatorRewards} />
     </>
   )

@@ -28,7 +28,8 @@ import {
   ValidatorSessionKey,
   TokenContract,
   Validator,
-  UserVotes
+  UserVotes,
+  WrappedAppchainToken
 } from 'types';
 
 import { 
@@ -72,7 +73,8 @@ export const Appchain: React.FC = () => {
   const navigate = useNavigate();
 
   const [anchor, setAnchor] = useState<AnchorContract>();
-  const [wrappedAppchainToken, setWrappedAppchainToken] = useState<TokenContract>();
+  const [wrappedAppchainToken, setWrappedAppchainToken] = useState<WrappedAppchainToken>();
+  const [wrappedAppchainTokenContract, setWrappedAppchainTokenContract] = useState<TokenContract>();
 
   const drawerIOpen = useMemo(() => !!id && !!validatorId, [validatorId]);
 
@@ -118,7 +120,8 @@ export const Appchain: React.FC = () => {
     );
 
     anchorContract.get_wrapped_appchain_token().then(wrappedToken => {
-      setWrappedAppchainToken(new TokenContract(
+      setWrappedAppchainToken(wrappedToken);
+      setWrappedAppchainTokenContract(new TokenContract(
         global.wallet?.account() as any,
         wrappedToken.contract_account,
         {
@@ -264,7 +267,8 @@ export const Appchain: React.FC = () => {
             <Descriptions 
               appchain={appchain} 
               appchainApi={appchainApi} 
-              appchainSettings={appchainSettings} />
+              appchainSettings={appchainSettings}
+              wrappedAppchainToken={wrappedAppchainToken} />
               
           </GridItem>
           <GridItem colSpan={{ base: 3, lg: 2 }}>
@@ -274,7 +278,7 @@ export const Appchain: React.FC = () => {
               anchor={anchor}
               isUnbonding={isUnbonding}
               isValidator={isValidator}
-              wrappedAppchainToken={wrappedAppchainToken} />
+              wrappedAppchainTokenContract={wrappedAppchainTokenContract} />
 
             <Box mt={5}>
               <MyNode appchainId={id} needKeys={needKeys} appchainApi={appchainApi} />
@@ -301,7 +305,7 @@ export const Appchain: React.FC = () => {
         <DrawerContent>
           <ValidatorProfile 
             appchain={appchain}
-            wrappedAppchainToken={wrappedAppchainToken}
+            wrappedAppchainTokenContract={wrappedAppchainTokenContract}
             anchor={anchor}
             validatorId={validatorId}
             appchainValidators={appchainValidators}

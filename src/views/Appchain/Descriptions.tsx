@@ -3,7 +3,6 @@ import React, { useEffect, useState, useMemo } from 'react';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import duration from 'dayjs/plugin/duration';
 import dayjs from 'dayjs';
-import useSWR from 'swr';
 
 import {
   Box,
@@ -35,9 +34,9 @@ import {
 import { StateBadge } from 'components';
 
 import { 
-  UserVotes, 
   AppchainInfoWithAnchorStatus, 
-  AppchainSettings 
+  AppchainSettings,
+  WrappedAppchainToken
 } from 'types';
 
 import type { ApiPromise } from '@polkadot/api';
@@ -50,9 +49,9 @@ import bridgeIcon from 'assets/icons/bridge.png';
 import functionSpecIcon from 'assets/icons/function-spec.png';
 import githubIcon from 'assets/icons/github.png';
 
-import { DecimalUtil, toValidUrl, ZERO_DECIMAL } from 'utils';
+import { DecimalUtil, toValidUrl } from 'utils';
 import Decimal from 'decimal.js';
-import { EPOCH_DURATION_MS, OCT_TOKEN_DECIMALS } from 'primitives';
+import { EPOCH_DURATION_MS } from 'primitives';
 import { useGlobalStore } from 'stores';
 import { FaUser } from 'react-icons/fa';
 
@@ -62,6 +61,7 @@ dayjs.extend(relativeTime);
 type DescriptionsProps = {
   appchain: AppchainInfoWithAnchorStatus | undefined;
   appchainSettings: AppchainSettings | undefined;
+  wrappedAppchainToken: WrappedAppchainToken | undefined;
   appchainApi: ApiPromise | undefined;
 }
 
@@ -91,7 +91,12 @@ const LinkBox: React.FC<LinkBoxProps> = ({ label, icon }) => {
   );
 }
 
-export const Descriptions: React.FC<DescriptionsProps> = ({ appchain, appchainApi, appchainSettings }) => {
+export const Descriptions: React.FC<DescriptionsProps> = ({ 
+  appchain, 
+  appchainApi, 
+  appchainSettings,
+  wrappedAppchainToken
+}) => {
   const bg = useColorModeValue('white', '#15172c');
   const linksBg = useColorModeValue('#f5f7fa', '#1e1f34');
 
@@ -169,7 +174,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({ appchain, appchainAp
         <RouterLink to={`/bridge/near/${appchain?.appchain_id}`}>
           <LinkBox icon={bridgeIcon} label="Bridge" />
         </RouterLink>
-        <Link href={`${global?.network?.octopus.explorerUrl}/${appchain?.appchain_id}`} isExternal>
+        <Link href={`${global?.network?.octopus.explorerUrl}/?appchain=${appchain?.appchain_id}`} isExternal>
           <LinkBox icon={explorerIcon} label="Explorer" />
         </Link>
         <Link href={toValidUrl(appchain?.appchain_metadata?.website_url)} isExternal>
@@ -270,12 +275,15 @@ export const Descriptions: React.FC<DescriptionsProps> = ({ appchain, appchainAp
         </VStack>
 
         <VStack alignItems="flex-start">
-          <Text variant="gray" fontSize="sm" >Premined Amount</Text>
+          <Text variant="gray" fontSize="sm" >Total Supply</Text>
           <Heading fontSize="xl">
             {
-              appchain?.appchain_metadata?.premined_wrapped_appchain_token ?
+              wrappedAppchainToken ?
                 DecimalUtil.beautify(
-                  DecimalUtil.fromString(appchain?.appchain_metadata?.premined_wrapped_appchain_token),
+                  DecimalUtil.fromString(
+                    wrappedAppchainToken.total_supply, 
+                    wrappedAppchainToken.metadata.decimals
+                  ),
                   0
                 ) : '-'
             }
@@ -285,11 +293,11 @@ export const Descriptions: React.FC<DescriptionsProps> = ({ appchain, appchainAp
           <Text variant="gray" fontSize="sm" >Era Reward</Text>
           <Heading fontSize="xl">
             {
-              appchainSettings?.era_reward && appchain?.appchain_metadata ?
+              appchainSettings?.era_reward && wrappedAppchainToken ?
                 DecimalUtil.beautify(
                   DecimalUtil.fromString(
                     appchainSettings?.era_reward,
-                    appchain?.appchain_metadata?.fungible_token_metadata.decimals
+                    wrappedAppchainToken.metadata.decimals
                   ),
                   0
                 ) : '-'
