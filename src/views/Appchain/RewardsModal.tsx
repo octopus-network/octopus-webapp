@@ -41,7 +41,7 @@ type RewardsModalProps = {
   rewards: RewardHistory[] | undefined;
   appchain: AppchainInfoWithAnchorStatus | undefined;
   anchor: AnchorContract | undefined;
-  wrappedAppchainToken: TokenContract | undefined;
+  wrappedAppchainTokenContract: TokenContract | undefined;
   validatorId?: string;
   isOpen: boolean;
   onClose: () => void;
@@ -53,7 +53,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
   rewards, 
   appchain, 
   anchor, 
-  wrappedAppchainToken, 
+  wrappedAppchainTokenContract, 
   validatorId 
 }) => {
 
@@ -66,7 +66,10 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
   const [isDepositingStorage, setIsDepositingStorage] = useBoolean(false);
   const [needDepositStorage, setNeedDepositStorage] = useBoolean(false);
 
-  const [wrappedAppchainTokenStorageBalance, setWrappedAppchainTokenStorageBalance] = useState(ZERO_DECIMAL);
+  const [
+    wrappedAppchainTokenStorageBalance, 
+    setWrappedAppchainTokenStorageBalance
+  ] = useState(ZERO_DECIMAL);
 
   useEffect(() => {
     if (!isOpen) {
@@ -75,15 +78,15 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
   }, [isOpen]);
 
   useEffect(() => {
-    if (!wrappedAppchainToken) {
+    if (!wrappedAppchainTokenContract) {
       return;
     }
-    wrappedAppchainToken.storage_balance_of({ account_id: global.accountId }).then(storage => {
+    wrappedAppchainTokenContract.storage_balance_of({ account_id: global.accountId }).then(storage => {
       setWrappedAppchainTokenStorageBalance(
         storage?.total ? DecimalUtil.fromString(storage.total, 24) : ZERO_DECIMAL
       );
     });
-  }, [wrappedAppchainToken, global]);
+  }, [wrappedAppchainTokenContract, global]);
 
   const unwithdrawnRewards = useMemo(() => {
     if (!rewards?.length) {
@@ -143,7 +146,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
   const onDepositStorage = () => {
     setIsDepositingStorage.on()
     global.wallet?.account().functionCall({
-      contractId: wrappedAppchainToken?.contractId || '',
+      contractId: wrappedAppchainTokenContract?.contractId || '',
       methodName: 'storage_deposit',
       args: { account_id: global.accountId },
       gas: new BN(SIMPLE_CALL_GAS),

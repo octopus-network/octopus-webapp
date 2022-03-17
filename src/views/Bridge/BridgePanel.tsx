@@ -38,7 +38,8 @@ import {
   AppchainSettings,
   TokenContract,
   AnchorContract,
-  BridgeHistoryStatus
+  BridgeHistoryStatus,
+  BridgeConfig
 } from 'types';
 
 import { decodeAddress, isAddress } from '@polkadot/util-crypto';
@@ -112,6 +113,7 @@ export const BridgePanel: React.FC = () => {
   const { data: appchainSettings } = useSWR<AppchainSettings>(appchainId ? `appchain-settings/${appchainId}` : null);
 
   const { data: tokens } = useSWR<TokenAsset[]>(appchainId ? `tokens/${appchainId}` : null);
+  const { data: bridgeConfig } = useSWR<BridgeConfig>(appchainId ? `bridge-config/${appchainId}` : null);
 
   const { pathname } = useLocation();
   const [amount, setAmount] = useState('');
@@ -295,6 +297,7 @@ export const BridgePanel: React.FC = () => {
     isCheckingTxns.current = true;
 
     const promises = pendingTxns.map(txn => {
+    
       if (txn.isAppchainSide) {
         return anchorContract?.get_appchain_message_processing_result_of({ nonce: txn.sequenceId }).then(result => {
           if (result?.['Ok']) {
@@ -349,7 +352,14 @@ export const BridgePanel: React.FC = () => {
     setIsLoadingBalance.on();
 
     tokenContract.ft_balance_of({ account_id: global.accountId }).then(res => {
-      setBalance(DecimalUtil.fromString(res, tokenAsset?.metadata.decimals));
+      setBalance(
+        DecimalUtil.fromString(
+          res, 
+          Array.isArray(tokenAsset?.metadata.decimals) ?
+          tokenAsset?.metadata.decimals[0] :
+          tokenAsset?.metadata.decimals
+        )
+      );
       setIsLoadingBalance.off();
     });
 
@@ -357,7 +367,7 @@ export const BridgePanel: React.FC = () => {
 
   const checkBalanceViaRPC = React.useRef<any>();
   checkBalanceViaRPC.current = async () => {
-    if (!tokenAsset) {
+    if (!tokenAsset || !bridgeConfig) {
       return;
     }
 
@@ -366,17 +376,34 @@ export const BridgePanel: React.FC = () => {
 
       const res = await appchainApi?.query.system.account(fromAccount);
       const resJSON: any = res?.toJSON();
-      balance = DecimalUtil.fromString(resJSON?.data?.free, tokenAsset?.metadata.decimals);
+      balance = DecimalUtil.fromString(
+        resJSON?.data?.free, 
+        Array.isArray(tokenAsset?.metadata.decimals) ?
+        tokenAsset?.metadata.decimals[1] :
+        tokenAsset?.metadata.decimals
+      );
 
     } else {
-      const res = await appchainApi?.query.octopusAssets?.account(
-        tokenAsset.assetId,
-        fromAccount
+      
+      const query = appchainApi?.query[bridgeConfig.tokenPallet.section]?.[bridgeConfig.tokenPallet.method];
+     
+      if (!query) {
+        return;
+      }
+
+      const res = await (
+        bridgeConfig.tokenPallet.paramsType === 'Tuple' ? query([tokenAsset.assetId, fromAccount]) : 
+        query(tokenAsset.assetId, fromAccount)
       );
 
       const resJSON: any = res?.toJSON();
 
-      balance = DecimalUtil.fromString(resJSON?.balance, tokenAsset?.metadata.decimals);
+      balance = DecimalUtil.fromString(
+        resJSON?.[bridgeConfig.tokenPallet.valueKey], 
+        Array.isArray(tokenAsset?.metadata.decimals) ?
+        tokenAsset?.metadata.decimals[1] :
+        tokenAsset?.metadata.decimals
+      );
     }
 
     setBalance(balance);
@@ -386,7 +413,7 @@ export const BridgePanel: React.FC = () => {
   // fetch balance from appchain rpc
   useEffect(() => {
 
-    if (isReverse || !tokenAsset || !global.wallet || !appchainApi || !fromAccount) {
+    if (isReverse || !tokenAsset || !global.wallet || !appchainApi || !fromAccount || !bridgeConfig) {
       return;
     }
 
@@ -466,7 +493,13 @@ export const BridgePanel: React.FC = () => {
   const onBurn = () => {
     setIsTransferring.on();
 
-    const amountInU64 = DecimalUtil.toU64(DecimalUtil.fromString(amount), tokenAsset?.metadata.decimals);
+    const amountInU64 = DecimalUtil.toU64(
+      DecimalUtil.fromString(amount), 
+      Array.isArray(tokenAsset?.metadata.decimals) ? 
+      tokenAsset?.metadata.decimals[0] :
+      tokenAsset?.metadata.decimals
+    );
+
     try {
 
       let targetAccountInHex = toHexAddress(targetAccount || '');
@@ -519,16 +552,21 @@ export const BridgePanel: React.FC = () => {
     setIsTransferring.on();
 
     const targetAccountInHex = stringToHex(targetAccount);
-    const amountInU64 = DecimalUtil.toU64(DecimalUtil.fromString(amount), tokenAsset?.metadata.decimals);
+    const amountInU64 = DecimalUtil.toU64(
+      DecimalUtil.fromString(amount), 
+      Array.isArray(tokenAsset?.metadata.decimals) ?
+      tokenAsset?.metadata.decimals[1] :
+      tokenAsset?.metadata.decimals
+    );
 
     const tx: any = tokenAsset?.assetId === undefined ?
       appchainApi?.tx.octopusAppchain.lock(targetAccountInHex, amountInU64.toString()) :
       appchainApi?.tx.octopusAppchain.burnAsset(tokenAsset?.assetId, targetAccountInHex, amountInU64.toString());
 
-    await tx.signAndSend(fromAccount, ({ events = [], status }: any) => {
+    await tx.signAndSend(fromAccount, ({ events = [] }: any) => {
 
-      events.forEach(({ phase, event: { data, method, section } }: any) => {
-
+      events.forEach(({ event: { data, method, section } }: any) => {
+  
         if (section === 'octopusAppchain' && (
           method === 'Locked' || method === 'AssetBurned'
         )) {
@@ -574,7 +612,15 @@ export const BridgePanel: React.FC = () => {
       appchainApi.setSigner(injected.signer);
 
       setIsDepositingStorage.on();
-      const tx = appchainApi.tx.balances.transfer(targetAccount, DecimalUtil.toU64(new Decimal(0.01), appchain?.appchain_metadata?.fungible_token_metadata?.decimals).toString());
+
+      const tx = appchainApi.tx.balances.transfer(
+        targetAccount, 
+        DecimalUtil.toU64(
+          new Decimal(0.01), 
+          appchain?.appchain_metadata?.fungible_token_metadata?.decimals
+        ).toString()
+      );
+
       tx.signAndSend(appchainAccount.address, res => {
         if (res.isInBlock) {
           setIsDepositingStorage.off();

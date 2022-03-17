@@ -95,6 +95,7 @@ export type WrappedAppchainToken = {
   premined_balance: string;
   changed_balance: string;
   price_in_usd: string;
+  total_supply: string;
 }
 
 export type ValidatorSessionKey = {
@@ -127,7 +128,9 @@ export type UnbondedHistory = {
 export type TokenAsset = {
   contractId: string;
   assetId?: number;
-  metadata: FungibleTokenMetadata;
+  metadata: Omit<FungibleTokenMetadata, 'decimals'> & {
+    decimals: number | [number, number]
+  };
 }
 
 export enum BridgeHistoryStatus {

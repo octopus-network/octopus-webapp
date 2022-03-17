@@ -82,6 +82,12 @@ export const RegisterForm: React.FC = () => {
     }
   }
 
+  const validateInitialSupply = (value: string) => {
+    if (Number.isNaN(value) || Number(value) <= 0 || !Number.isSafeInteger(value)) {
+      return 'Invalid number';
+    }
+  }
+
   const onTokenInfoChange = (key: string, val: string) => {
     setTokenInfo(Object.assign({}, tokenInfo, {
       [key]: val
@@ -90,8 +96,17 @@ export const RegisterForm: React.FC = () => {
 
   const onSubmit = (values: any, actions: any) => {
     const {
-      appchainId, website, functionSpec, email, githubAddress,
-      githubRelease, preminedAmount, preminedBeneficiary, idoAmount, eraReward
+      appchainId, 
+      website, 
+      functionSpec, 
+      email, 
+      githubAddress,
+      initialSupply,
+      githubRelease, 
+      preminedAmount, 
+      preminedBeneficiary, 
+      idoAmount, 
+      eraReward
     } = values;
 
     if (!tokenInfo.tokenName || !tokenInfo.tokenSymbol) {
@@ -133,8 +148,15 @@ export const RegisterForm: React.FC = () => {
             "contact_email": email,
             "function_spec_url": functionSpec,
             "premined_wrapped_appchain_token_beneficiary": preminedBeneficiary,
-            "premined_wrapped_appchain_token": preminedAmount.toString(),
-            "ido_amount_of_wrapped_appchain_token": idoAmount.toString(),
+            "premined_wrapped_appchain_token": DecimalUtil.toU64(
+              DecimalUtil.fromString(preminedAmount), tokenInfo.decimals
+            ).toString(),
+            "initial_supply_of_wrapped_appchain_token": DecimalUtil.toU64(
+              DecimalUtil.fromString(initialSupply), tokenInfo.decimals
+            ).toString(),
+            "ido_amount_of_wrapped_appchain_token": DecimalUtil.toU64(
+              DecimalUtil.fromString(idoAmount), tokenInfo.decimals
+            ).toString(),
             "initial_era_reward": eraReward.toString(),
             "fungible_token_metadata": {
               "spec": "ft-1.0.0",
@@ -152,7 +174,6 @@ export const RegisterForm: React.FC = () => {
       COMPLEX_CALL_GAS,
       1,
     ).catch((err) => {
-      console.log(err);
       if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
         return;
       }
@@ -272,15 +293,26 @@ export const RegisterForm: React.FC = () => {
                   </FormControl>
                 )}
               </Field>
-              <Field name="preminedAmount">
-                {({ field, form }: any) => (
-                  <FormControl isInvalid={form.errors.preminedAmount && form.touched.preminedAmount}>
-                    <FormLabel htmlFor="preminedAmount">Premined Amount</FormLabel>
-                    <Input {...field} type="number" id="preminedAmount" placeholder="0" defaultValue={0} />
-                    <FormErrorMessage>{form.errors.preminedAmount}</FormErrorMessage>
-                  </FormControl>
-                )}
-              </Field>
+              <SimpleGrid columns={2} gap={4}>
+                <Field name="initialSupply" validate={validateInitialSupply}>
+                  {({ field, form }: any) => (
+                    <FormControl isInvalid={form.errors.initialSupply && form.touched.initialSupply} isRequired>
+                      <FormLabel htmlFor="initialSupply">Initial Supply</FormLabel>
+                      <Input {...field} type="number" id="initialSupply" placeholder="Initial supply" />
+                      <FormErrorMessage>{form.errors.initialSupply}</FormErrorMessage>
+                    </FormControl>
+                  )}
+                </Field>
+                <Field name="preminedAmount">
+                  {({ field, form }: any) => (
+                    <FormControl isInvalid={form.errors.preminedAmount && form.touched.preminedAmount}>
+                      <FormLabel htmlFor="preminedAmount">Premined</FormLabel>
+                      <Input {...field} type="number" id="preminedAmount" placeholder="0" defaultValue={0} />
+                      <FormErrorMessage>{form.errors.preminedAmount}</FormErrorMessage>
+                    </FormControl>
+                  )}
+                </Field>
+              </SimpleGrid>
               <Field name="preminedBeneficiary">
                 {({ field, form }: any) => (
                   <FormControl isInvalid={form.errors.preminedBeneficiary && form.touched.preminedBeneficiary}>

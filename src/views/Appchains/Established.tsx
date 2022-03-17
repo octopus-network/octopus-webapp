@@ -81,9 +81,9 @@ export const Established: React.FC = () => {
   return (
     <>
       <Flex alignItems="center" justifyContent="space-between">
-        <Tooltip label="Established Appchains, includes 'Registered' and 'Auditing' Appchains.">
+        <Tooltip label="Pre-Voting Appchains, includes 'Registered' and 'Auditing' Appchains.">
           <HStack>
-            <Heading fontSize="xl">Established</Heading>
+            <Heading fontSize="xl">Pre-Voting</Heading>
             <Icon as={QuestionOutlineIcon} boxSize={4} className="octo-gray" />
           </HStack>
         </Tooltip>

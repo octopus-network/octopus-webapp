@@ -13,3 +13,12 @@ export type NetworkConfig = {
     registryContractId: string;
   }
 }
+
+export type BridgeConfig = {
+  tokenPallet: {
+    section: string;
+    method: string;
+    paramsType: 'Tuple' | 'Array';
+    valueKey: string;
+  };
+}
