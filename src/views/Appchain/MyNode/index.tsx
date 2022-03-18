@@ -37,9 +37,11 @@ import {
   RepeatIcon
 } from '@chakra-ui/icons';
 
+import { HiUpload } from 'react-icons/hi';
 import { TiKey } from 'react-icons/ti';
 import { BsThreeDots } from 'react-icons/bs';
 import { API_HOST } from 'config';
+import { Alert } from 'components';
 import { SetSessionKeyModal } from './SetSessionKeyModal';
 import type { ApiPromise } from '@polkadot/api';
 
@@ -59,7 +61,8 @@ const statesRecord: any = {
   '12': { label: 'Running', color: 'octo-blue', state: 12 },
   '20': { label: 'Destroying', color: 'teal', state: 20 },
   '21': { label: 'Destroy Failed', color: 'orange', state: 21 },
-  '22': { label: 'Destroyed', color: 'gray', state: 22 }
+  '22': { label: 'Destroyed', color: 'gray', state: 22 },
+  '30': { label: 'Upgrading', color: 'green', state: 30 }
 }
 
 export const MyNode: React.FC<MyNodeProps> = ({ appchainId, needKeys, appchainApi }) => {
@@ -76,8 +79,12 @@ export const MyNode: React.FC<MyNodeProps> = ({ appchainId, needKeys, appchainAp
   const [isApplying, setIsApplying] = useBoolean();
   const [isRefreshing, setIsRefreshing] = useBoolean();
   const [isDestroying, setIsDestroying] = useBoolean();
-  const[setSessionKeyModalOpen, setSetSessionKeyModalOpen] = useBoolean();
+  const [isUpgrading, setIsUpgrading] = useBoolean();
 
+  const [upgradeAlertOpen, setUpgradeAlertOpen] = useBoolean();
+  const [setSessionKeyModalOpen, setSetSessionKeyModalOpen] = useBoolean();
+
+  const [isImageNeedUpgrade, setIsImageNeedUpgrade] = useBoolean();
   const [deployRegion, setDeployRegion] = useState<string>('');
 
   const [inputAccessKey, setInputAccessKey] = useState('');
@@ -104,6 +111,22 @@ export const MyNode: React.FC<MyNodeProps> = ({ appchainId, needKeys, appchainAp
       setIsInitializing.off();
     });
   }, [appchainId]);
+
+  useEffect(() => {
+    if (!node || !deployConfig || !appchainId) {
+      return;
+    }
+
+    if (
+      deployConfig.baseImages[appchainId].image && (
+        node.task?.base_image !== deployConfig.baseImages[appchainId].image
+      )
+    ) {
+      setIsImageNeedUpgrade.on();
+    } else {
+      setIsImageNeedUpgrade.off();
+    }
+  }, [node, deployConfig, appchainId]);
 
   const onNextStep = () => {
     window.localStorage.setItem('OCTOPUS_DEPLOYER_CLOUD_VENDOR', cloudVendor);
@@ -164,6 +187,29 @@ export const MyNode: React.FC<MyNodeProps> = ({ appchainId, needKeys, appchainAp
     });
   }
 
+  const onUpgradeImage = () => {
+    if (!appchainId) {
+      return;
+    }
+
+    const secretKey = window.prompt('Please enter the secret key of your server', '');
+
+    if (!secretKey) {
+      return;
+    }
+
+    setIsUpgrading.on();
+    axios.put(`${deployConfig.deployApiHost}/tasks/${node?.uuid}`, {
+      action: 'update', 
+      secret_key: secretKey,
+      base_image: deployConfig.baseImages[appchainId]?.image
+    }, {
+      headers: { authorization: node?.user }
+    }).then(res => {
+      window.location.reload();
+    });
+  }
+
   const onDestroyNode = () => {
     const secretKey = window.prompt('Please enter the secret key of your server', '');
 
@@ -199,7 +245,7 @@ export const MyNode: React.FC<MyNodeProps> = ({ appchainId, needKeys, appchainAp
             <MenuButton as={Button} size="sm" colorScheme="octo-blue" variant="ghost" position="relative">
               <Icon as={BsThreeDots} boxSize={5} />
               {
-                needKeys ?
+                needKeys || isImageNeedUpgrade ?
                   <Box position="absolute" top="0px" right="0px" boxSize={2} bg="red" borderRadius="full" /> : null
               }
             </MenuButton>
@@ -208,6 +254,13 @@ export const MyNode: React.FC<MyNodeProps> = ({ appchainId, needKeys, appchainAp
                 <Icon as={TiKey} mr={2} boxSize={4} /> Set Session Key
                 {
                   needKeys ?
+                    <Box position="absolute" top="10px" right="10px" boxSize={2} bg="red" borderRadius="full" /> : null
+                }
+              </MenuItem>
+              <MenuItem position="relative" isDisabled={!isImageNeedUpgrade} onClick={setUpgradeAlertOpen.on}>
+                <Icon as={HiUpload} mr={2} boxSize={3} /> Upgrade Image
+                {
+                  isImageNeedUpgrade ?
                     <Box position="absolute" top="10px" right="10px" boxSize={2} bg="red" borderRadius="full" /> : null
                 }
               </MenuItem>
@@ -302,8 +355,14 @@ export const MyNode: React.FC<MyNodeProps> = ({ appchainId, needKeys, appchainAp
                   <Button onClick={onDeleteNode} isDisabled={isDeleting} isLoading={isDeleting}>
                     <Icon as={DeleteIcon} mr={2} boxSize={3} /> Delete
                   </Button>
-                </SimpleGrid> : null
+                </SimpleGrid> : 
 
+                node?.state === '30' ?
+                <SimpleGrid columns={1}>
+                  <Button as={Link} isExternal href={node.instance.ssh_key}>
+                    <Icon as={DownloadIcon} mr={2} boxSize={3} /> RSA
+                  </Button>
+                </SimpleGrid> : null
               }
             </Box>
           </Box> :
@@ -354,6 +413,17 @@ export const MyNode: React.FC<MyNodeProps> = ({ appchainId, needKeys, appchainAp
         appchainApi={appchainApi}
         isOpen={setSessionKeyModalOpen} 
         onClose={setSetSessionKeyModalOpen.off} />
+
+      <Alert
+        isOpen={upgradeAlertOpen}
+        onClose={setUpgradeAlertOpen.off}
+        title="Upgrade Image"
+        confirmButtonText="Upgrade"
+        isConfirming={isUpgrading}
+        message="Are you sure to upgrade your node image?"
+        onConfirm={onUpgradeImage}
+        confirmButtonColor="red" />
+
     </>
   );
 }
