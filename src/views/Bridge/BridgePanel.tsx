@@ -299,6 +299,7 @@ export const BridgePanel: React.FC = () => {
     
       if (txn.isAppchainSide) {
         return anchorContract?.get_appchain_message_processing_result_of({ nonce: txn.sequenceId }).then(result => {
+          console.log(result);
           if (result?.['Ok']) {
             updateTxn(txn.appchainId, { ...txn, status: BridgeHistoryStatus.Succeed });
             // toast({
