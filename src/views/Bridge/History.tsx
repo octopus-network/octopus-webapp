@@ -70,7 +70,7 @@ const HistoryItem: React.FC<HistoryItemProps> = ({ appchain, history, tokenAsset
                   history.amount, 
                   Array.isArray(tokenAsset?.metadata?.decimals) ?
                   tokenAsset?.metadata?.decimals[
-                    history.isAppchainSide ? 1 : 0
+                    history.isAppchainSide ? 0 : 0
                   ] :
                   tokenAsset?.metadata?.decimals
                 )
