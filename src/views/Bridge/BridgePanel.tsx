@@ -206,7 +206,6 @@ export const BridgePanel: React.FC = () => {
 
   const pendingTxns = useMemo(() => appchainTxns.filter(txn => txn.status === BridgeHistoryStatus.Pending), [appchainTxns]);
 
-
   const tokenContract = useMemo(() => tokenAsset && global.wallet ? new TokenContract(
     global.wallet.account(),
     tokenAsset.contractId,
@@ -555,7 +554,7 @@ export const BridgePanel: React.FC = () => {
     const amountInU64 = DecimalUtil.toU64(
       DecimalUtil.fromString(amount), 
       Array.isArray(tokenAsset?.metadata.decimals) ?
-      tokenAsset?.metadata.decimals[1] :
+      tokenAsset?.metadata.decimals[0] :
       tokenAsset?.metadata.decimals
     );
 
@@ -564,9 +563,7 @@ export const BridgePanel: React.FC = () => {
       appchainApi?.tx.octopusAppchain.burnAsset(tokenAsset?.assetId, targetAccountInHex, amountInU64.toString());
 
     await tx.signAndSend(fromAccount, ({ events = [] }: any) => {
-
       events.forEach(({ event: { data, method, section } }: any) => {
-  
         if (section === 'octopusAppchain' && (
           method === 'Locked' || method === 'AssetBurned'
         )) {
