@@ -386,7 +386,7 @@ export const BridgePanel: React.FC = () => {
     } else {
       
       const query = appchainApi?.query[bridgeConfig.tokenPallet.section]?.[bridgeConfig.tokenPallet.method];
-     
+   
       if (!query) {
         return;
       }
@@ -412,13 +412,13 @@ export const BridgePanel: React.FC = () => {
 
   // fetch balance from appchain rpc
   useEffect(() => {
-
+ 
     if (isReverse || !tokenAsset || !global.wallet || !appchainApi || !fromAccount || !bridgeConfig) {
       return;
     }
 
     checkBalanceViaRPC?.current();
-  }, [isReverse, appchainApi, global, fromAccount, tokenAsset]);
+  }, [isReverse, appchainApi, global, fromAccount, tokenAsset, bridgeConfig]);
 
   useEffect(() => {
     if (!fromAccount) {
