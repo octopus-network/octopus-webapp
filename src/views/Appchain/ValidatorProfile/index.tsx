@@ -445,7 +445,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
         title="Unbond Delegation"
         confirmButtonText="Unbond"
         isConfirming={isUnbondingDelegation}
-        message="Are you confirm to unbond delegation? (Your unbonded stakes will be withdrawable in next era)"
+        message="Are you confirm to unbond delegation? (Your unbonded stakes will be claimable after 28 days)"
         onConfirm={onUnbondDelegation}
         confirmButtonColor="red" />
 

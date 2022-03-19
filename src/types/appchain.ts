@@ -26,6 +26,7 @@ export type AppchainInfo = {
     initial_era_reward: string;
     premined_wrapped_appchain_token: string;
     premined_wrapped_appchain_token_beneficiary: string;
+    initial_supply_of_wrapped_appchain_token: string;
     website_url: string;
   },
   appchain_owner: string;

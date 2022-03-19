@@ -231,7 +231,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
           <Heading fontSize="xl">{appchain?.appchain_metadata?.fungible_token_metadata?.symbol || '-'}</Heading>
         </VStack>
         <VStack alignItems="flex-start">
-          <Text variant="gray" fontSize="sm" >Total Issuance</Text>
+          <Text variant="gray" fontSize="sm" >Total Supply</Text>
           <Skeleton isLoaded={!!totalIssuance}>
             <Heading fontSize="xl">
               {
@@ -274,7 +274,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
           </Heading>
         </VStack>
 
-        <VStack alignItems="flex-start">
+        {/* <VStack alignItems="flex-start">
           <Text variant="gray" fontSize="sm" >Total Supply</Text>
           <Heading fontSize="xl">
             {
@@ -288,7 +288,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
                 ) : '-'
             }
           </Heading>
-        </VStack>
+        </VStack> */}
         <VStack alignItems="flex-start">
           <Text variant="gray" fontSize="sm" >Era Reward</Text>
           <Heading fontSize="xl">
