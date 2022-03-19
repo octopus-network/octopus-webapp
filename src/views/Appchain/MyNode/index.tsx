@@ -42,6 +42,7 @@ import { TiKey } from 'react-icons/ti';
 import { BsThreeDots } from 'react-icons/bs';
 import { API_HOST } from 'config';
 import { Alert } from 'components';
+import { useGlobalStore } from 'stores';
 import { SetSessionKeyModal } from './SetSessionKeyModal';
 import type { ApiPromise } from '@polkadot/api';
 
@@ -93,6 +94,7 @@ export const MyNode: React.FC<MyNodeProps> = ({ appchainId, needKeys, appchainAp
 
   const { data: deployConfig } = useSWR('deploy-config');
 
+  const { global } = useGlobalStore();
   const { hasCopied: hasInstanceCopied, onCopy: onCopyInstance } = useClipboard(
     node?.instance ? `${node.instance.user}@${node.instance.ip}` : ''
   );
@@ -120,13 +122,13 @@ export const MyNode: React.FC<MyNodeProps> = ({ appchainId, needKeys, appchainAp
     if (
       deployConfig.baseImages[appchainId].image && (
         node.task?.base_image !== deployConfig.baseImages[appchainId].image
-      )
+      ) && deployConfig.upgradeWhitelist.includes(global.accountId)
     ) {
       setIsImageNeedUpgrade.on();
     } else {
       setIsImageNeedUpgrade.off();
     }
-  }, [node, deployConfig, appchainId]);
+  }, [node, deployConfig, appchainId, global]);
 
   const onNextStep = () => {
     window.localStorage.setItem('OCTOPUS_DEPLOYER_CLOUD_VENDOR', cloudVendor);

@@ -129,11 +129,11 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
       cursor="pointer"
       alignItems="center"
       onClick={() => navigate(`/appchains/${appchainId}/validator/${validator.validator_id}`)}>
-      <GridItem colSpan={2}>
+      <GridItem colSpan={2} w="100%">
         <VStack spacing={1} alignItems="flex-start">
           <HStack w="100%">
             <Identicon value={ss58Address} size={24} />
-            <Heading fontSize="md" whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden" w="calc(100% - 40px)">
+            <Heading fontSize="md" whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden">
               {validator.validator_id}
             </Heading>
           </HStack>

@@ -293,41 +293,12 @@ export const RegisterForm: React.FC = () => {
                   </FormControl>
                 )}
               </Field>
-              <SimpleGrid columns={2} gap={4}>
-                <Field name="initialSupply" validate={validateInitialSupply}>
-                  {({ field, form }: any) => (
-                    <FormControl isInvalid={form.errors.initialSupply && form.touched.initialSupply} isRequired>
-                      <FormLabel htmlFor="initialSupply">Initial Supply</FormLabel>
-                      <Input {...field} type="number" id="initialSupply" placeholder="Initial supply" />
-                      <FormErrorMessage>{form.errors.initialSupply}</FormErrorMessage>
-                    </FormControl>
-                  )}
-                </Field>
-                <Field name="preminedAmount">
-                  {({ field, form }: any) => (
-                    <FormControl isInvalid={form.errors.preminedAmount && form.touched.preminedAmount}>
-                      <FormLabel htmlFor="preminedAmount">Premined</FormLabel>
-                      <Input {...field} type="number" id="preminedAmount" placeholder="0" defaultValue={0} />
-                      <FormErrorMessage>{form.errors.preminedAmount}</FormErrorMessage>
-                    </FormControl>
-                  )}
-                </Field>
-              </SimpleGrid>
-              <Field name="preminedBeneficiary">
+              <Field name="initialSupply" validate={validateInitialSupply}>
                 {({ field, form }: any) => (
-                  <FormControl isInvalid={form.errors.preminedBeneficiary && form.touched.preminedBeneficiary}>
-                    <FormLabel htmlFor="preminedBeneficiary">Premined Beneficiary</FormLabel>
-                    <Input {...field} id="preminedBeneficiary" placeholder="Beneficiary NEAR account" />
-                    <FormErrorMessage>{form.errors.preminedBeneficiary}</FormErrorMessage>
-                  </FormControl>
-                )}
-              </Field>
-              <Field name="idoAmount">
-                {({ field, form }: any) => (
-                  <FormControl isInvalid={form.errors.idoAmount && form.touched.idoAmount}>
-                    <FormLabel htmlFor="idoAmount">IDO Amount</FormLabel>
-                    <Input {...field} type="number" id="idoAmount" placeholder="0" defaultValue={0} />
-                    <FormErrorMessage>{form.errors.idoAmount}</FormErrorMessage>
+                  <FormControl isInvalid={form.errors.initialSupply && form.touched.initialSupply} isRequired>
+                    <FormLabel htmlFor="initialSupply">Initial Supply</FormLabel>
+                    <Input {...field} type="number" id="initialSupply" placeholder="Initial supply" />
+                    <FormErrorMessage>{form.errors.initialSupply}</FormErrorMessage>
                   </FormControl>
                 )}
               </Field>
@@ -340,6 +311,36 @@ export const RegisterForm: React.FC = () => {
                   </FormControl>
                 )}
               </Field>
+              <SimpleGrid columns={2} gap={4}>
+                <Field name="preminedAmount">
+                  {({ field, form }: any) => (
+                    <FormControl isInvalid={form.errors.preminedAmount && form.touched.preminedAmount}>
+                      <FormLabel htmlFor="preminedAmount">Premined</FormLabel>
+                      <Input {...field} type="number" id="preminedAmount" placeholder="0" defaultValue={0} />
+                      <FormErrorMessage>{form.errors.preminedAmount}</FormErrorMessage>
+                    </FormControl>
+                  )}
+                </Field>
+                <Field name="preminedBeneficiary">
+                  {({ field, form }: any) => (
+                    <FormControl isInvalid={form.errors.preminedBeneficiary && form.touched.preminedBeneficiary}>
+                      <FormLabel htmlFor="preminedBeneficiary">Beneficiary</FormLabel>
+                      <Input {...field} id="preminedBeneficiary" placeholder="Beneficiary NEAR account" />
+                      <FormErrorMessage>{form.errors.preminedBeneficiary}</FormErrorMessage>
+                    </FormControl>
+                  )}
+                </Field>
+              </SimpleGrid>
+              <Field name="idoAmount">
+                {({ field, form }: any) => (
+                  <FormControl isInvalid={form.errors.idoAmount && form.touched.idoAmount}>
+                    <FormLabel htmlFor="idoAmount">IDO Amount</FormLabel>
+                    <Input {...field} type="number" id="idoAmount" placeholder="0" defaultValue={0} />
+                    <FormErrorMessage>{form.errors.idoAmount}</FormErrorMessage>
+                  </FormControl>
+                )}
+              </Field>
+              
               <VStack spacing={1} alignItems="flex-start" justifyContent="center">
                 <HStack>
                   <Heading fontSize="md">Auditing Fee:</Heading>

@@ -34,7 +34,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({ data }) => {
   return (
     <Box p={4} borderWidth={1} borderRadius="lg">
       <List spacing={3}>
-        <DescriptionItem name="Premined Amount" value={
+        {/* <DescriptionItem name="Premined Amount" value={
           DecimalUtil.beautify(
             DecimalUtil.fromString(
               data?.appchain_metadata?.premined_wrapped_appchain_token
@@ -44,6 +44,14 @@ export const Descriptions: React.FC<DescriptionsProps> = ({ data }) => {
         } />
         <DescriptionItem name="Premined Beneficiary" value={
           data?.appchain_metadata?.premined_wrapped_appchain_token_beneficiary
+        } /> */}
+        <DescriptionItem name="Initial Supply" value={
+          DecimalUtil.beautify(
+            DecimalUtil.fromString(
+              data?.appchain_metadata?.initial_supply_of_wrapped_appchain_token
+            ),
+            0
+          )
         } />
         <DescriptionItem name="IDO Amount" value={
           DecimalUtil.beautify(
