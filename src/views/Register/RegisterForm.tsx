@@ -70,8 +70,8 @@ export const RegisterForm: React.FC = () => {
   }
 
   const validateUrl = (value: string) => {
-    if (!/^http(s)?:\/\//.test(value)) {
-      return 'Start with https:// or http://';
+    if (!/^https:\/\//.test(value)) {
+      return 'Start with https://';
     }
   }
 
@@ -114,19 +114,6 @@ export const RegisterForm: React.FC = () => {
         position: 'top-right',
         title: 'Error',
         description: 'Please input the token info',
-        status: 'error'
-      });
-      setTimeout(() => {
-        actions.setSubmitting(false);
-      }, 300);
-      return;
-    }
-
-    if (isNaN(preminedAmount) || isNaN(idoAmount) || isNaN(eraReward)) {
-      toast({
-        position: 'top-right',
-        title: 'Error',
-        description: 'Premined/IDO amount or Era Reward must be numeric',
         status: 'error'
       });
       setTimeout(() => {
