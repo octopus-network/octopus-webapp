@@ -48,7 +48,8 @@ export const Descriptions: React.FC<DescriptionsProps> = ({ data }) => {
         <DescriptionItem name="Initial Supply" value={
           DecimalUtil.beautify(
             DecimalUtil.fromString(
-              data?.appchain_metadata?.initial_supply_of_wrapped_appchain_token
+              data?.appchain_metadata?.initial_supply_of_wrapped_appchain_token,
+              data?.appchain_metadata?.fungible_token_metadata?.decimals
             ),
             0
           )

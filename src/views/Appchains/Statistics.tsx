@@ -70,7 +70,7 @@ export const Statistics: React.FC = () => {
       <SimpleGrid gap={8} mt={8} columns={{ base: 1, md: 3 }}>
         <StatCard label="Booting" value={statistics?.bootingAppchainsCount} icon={bootingIcon} />
         <StatCard label="Voting" value={statistics?.votingAppchainsCount} icon={votingIcon} />
-        <StatCard label="Established" value={
+        <StatCard label="Pre-Voting" value={
           statistics ? statistics.preAuditAppchainsCount + statistics.auditingAppchainsCount : undefined
         } icon={establishedIcon} />
       </SimpleGrid>

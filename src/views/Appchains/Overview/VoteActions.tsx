@@ -200,6 +200,7 @@ const VotePopover: React.FC<VotePopoverProps> = ({ isOpen, appchainId, voteType,
       ref={ref}
       zIndex={1}
       borderRadius="lg"
+      overflow="hidden"
       position="absolute" bottom="0" left="0" w="100%"
       boxShadow="0px 0px 30px 0px rgba(0,29,97,0.10)">
       <animated.div style={withdrawPanelProps}>  
