@@ -238,7 +238,8 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
                 totalIssuance && appchain?.appchain_metadata ?
                   DecimalUtil.beautify(
                     DecimalUtil.fromString(
-                      totalIssuance, appchain?.appchain_metadata?.fungible_token_metadata.decimals
+                      totalIssuance, 
+                      appchain?.appchain_metadata?.fungible_token_metadata.decimals
                     ),
                     0
                   ) : 'loading'
@@ -267,7 +268,10 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
             {
               appchain?.appchain_metadata?.ido_amount_of_wrapped_appchain_token ?
                 DecimalUtil.beautify(
-                  DecimalUtil.fromString(appchain?.appchain_metadata?.ido_amount_of_wrapped_appchain_token),
+                  DecimalUtil.fromString(
+                    appchain?.appchain_metadata?.ido_amount_of_wrapped_appchain_token,
+                    appchain?.appchain_metadata?.fungible_token_metadata.decimals
+                  ),
                   0
                 ) : '-'
             }
