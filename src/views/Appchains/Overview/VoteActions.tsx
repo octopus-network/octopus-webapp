@@ -407,10 +407,10 @@ export const VoteActions: React.FC<VoteActionsProps> = ({ data }) => {
               }}
               isFullWidth>
               <Icon as={IoMdThumbsUp} mr={1} /> Upvote
-              {
+              {/* {
                 upvotes.gt(ZERO_DECIMAL) ?
                 `(${DecimalUtil.beautify(upvotes)})` : ''
-              }
+              } */}
             </Button>
             <VotePopover voteType="upvote" onClose={setUpvotePopoverOpen.off} isOpen={upvotePopoverOpen} 
               voted={userUpvotes} appchainId={data?.appchain_id} />
@@ -428,10 +428,10 @@ export const VoteActions: React.FC<VoteActionsProps> = ({ data }) => {
               }}
               isFullWidth>
               <Icon as={IoMdThumbsDown} mr={1} /> Downvote
-              {
+              {/* {
                 downvotes.gt(ZERO_DECIMAL) ?
                 `(${DecimalUtil.beautify(downvotes)})` : ''
-              }
+              } */}
             </Button>
             <VotePopover voteType="downvote" onClose={setDownvotePopoverOpen.off} isOpen={downvotePopoverOpen} 
               voted={userDownvotes} appchainId={data?.appchain_id} />

@@ -57,7 +57,8 @@ export const Descriptions: React.FC<DescriptionsProps> = ({ data }) => {
         <DescriptionItem name="IDO Amount" value={
           DecimalUtil.beautify(
             DecimalUtil.fromString(
-              data?.appchain_metadata?.ido_amount_of_wrapped_appchain_token
+              data?.appchain_metadata?.ido_amount_of_wrapped_appchain_token,
+              data?.appchain_metadata?.fungible_token_metadata?.decimals
             ),
             0
           )
@@ -65,7 +66,8 @@ export const Descriptions: React.FC<DescriptionsProps> = ({ data }) => {
         <DescriptionItem name="Era Reward" value={
           DecimalUtil.beautify(
             DecimalUtil.fromString(
-              data?.appchain_metadata?.initial_era_reward
+              data?.appchain_metadata?.initial_era_reward,
+              data?.appchain_metadata?.fungible_token_metadata?.decimals
             ),
             0
           )

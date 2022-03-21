@@ -25,6 +25,7 @@ import {
   ChevronRightIcon 
 } from '@chakra-ui/icons';
 
+import { IoMdThumbsUp, IoMdThumbsDown } from 'react-icons/io';
 import { AppchainInfo } from 'types';
 
 import Decimal from 'decimal.js';
@@ -104,11 +105,17 @@ const VotingItem: React.FC<VotingItemProps> = ({ rank, data, highestVotes }) => 
         <GridItem colSpan={4} display={{ base: 'none', md: 'table-cell' }}>
           <SimpleGrid columns={2} gap={6}>
             <VStack alignItems="flex-start" spacing={1}>
-              <Text fontSize="sm" className="octo-gray">{DecimalUtil.beautify(new Decimal(upvotes))}</Text>
+              <HStack className="octo-gray" spacing={1}>
+                <Icon as={IoMdThumbsUp} />
+                <Text fontSize="sm">{DecimalUtil.beautify(new Decimal(upvotes))}</Text>
+              </HStack>
               <Progress colorScheme="octo-blue" size="sm" value={upvotes.toNumber()} max={highestVotes} w="100%" borderRadius="lg" />
             </VStack>
             <VStack alignItems="flex-start" spacing={1}>
-              <Text fontSize="sm" className="octo-gray">{DecimalUtil.beautify(new Decimal(downvotes))}</Text>
+              <HStack className="octo-gray" spacing={1}>
+                <Icon as={IoMdThumbsDown} />
+                <Text fontSize="sm">{DecimalUtil.beautify(new Decimal(downvotes))}</Text>
+              </HStack>
               <Progress colorScheme="whatsapp" size="sm" value={downvotes.toNumber()} max={highestVotes} w="100%" borderRadius="lg" />
             </VStack>
           </SimpleGrid>

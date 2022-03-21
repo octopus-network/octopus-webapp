@@ -144,7 +144,9 @@ export const RegisterForm: React.FC = () => {
             "ido_amount_of_wrapped_appchain_token": DecimalUtil.toU64(
               DecimalUtil.fromString(idoAmount), tokenInfo.decimals
             ).toString(),
-            "initial_era_reward": eraReward.toString(),
+            "initial_era_reward": DecimalUtil.toU64(
+              DecimalUtil.fromString(eraReward), tokenInfo.decimals
+            ).toString(),
             "fungible_token_metadata": {
               "spec": "ft-1.0.0",
               "name": tokenInfo.tokenName,
