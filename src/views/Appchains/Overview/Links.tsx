@@ -25,8 +25,6 @@ import {
 
 import { HiOutlineArrowNarrowRight } from 'react-icons/hi';
 
-import anchor1 from 'assets/icons/anchor1.png';
-import anchor2 from 'assets/icons/anchor2.png';
 import website1 from 'assets/icons/website1.png';
 import website2 from 'assets/icons/website2.png';
 import functionSpec1 from 'assets/icons/function-spec1.png';
@@ -85,7 +83,7 @@ const LinkBox: React.FC<LinkBoxProps> = ({ icons, href, copy, title, ...rest }) 
       cursor="pointer"
       onMouseEnter={setIsHovering.on} 
       onMouseLeave={setIsHovering.off}
-      {...rest} >
+      {...rest}>
       <Flex justifyContent="space-between" alignItems="center">
         <HStack spacing={4}>
           <Box boxSize="24px" position="relative">

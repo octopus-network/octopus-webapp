@@ -49,6 +49,18 @@ const CustomTooltip = ({
   return null;
 }
 
+function toUIValue(val: number) {
+
+  if (val > 1000000) {
+    return DecimalUtil.beautify(new Decimal(val).div(1000000)) + 'M';
+  } else if (val > 1000) {
+    return DecimalUtil.beautify(new Decimal(val).div(1000)) + 'K';
+  } else {
+    return DecimalUtil.beautify(new Decimal(val));
+  }
+
+}
+
 export const TotalStakedChart: React.FC = () => {
 
   const [days, setDays] = useState(1);
@@ -67,14 +79,15 @@ export const TotalStakedChart: React.FC = () => {
     return data.map(({ date, amount, octPrice }: any) => ({
       date,
       amount,
-      value: DecimalUtil.fromString(amount, OCT_TOKEN_DECIMALS).mul(octPrice).toNumber()
+      uiValue: toUIValue(DecimalUtil.fromString(amount, OCT_TOKEN_DECIMALS).toNumber()),
+      value: DecimalUtil.fromString(amount, OCT_TOKEN_DECIMALS).toNumber()
     }));
 
   }, [data]);
 
-  const lowestValue = useMemo(() => klineData?.length ? Math.min(klineData.map((k: any) => k.value)) : 0, [klineData]);
+  const lowestValue = useMemo(() => klineData?.length ? Math.min(...klineData.map((k: any) => k.value)) : 0, [klineData]);
 
-  const highestValue = useMemo(() => klineData?.length ? Math.max(klineData.map((k: any) => k.value)) : 0, [klineData]);
+  const highestValue = useMemo(() => klineData?.length ? Math.max(...klineData.map((k: any) => k.value)) : 0, [klineData]);
 
   useEffect(() => {
     if (klineData.length) {
@@ -116,7 +129,7 @@ export const TotalStakedChart: React.FC = () => {
       <Flex justifyContent="space-between" alignItems="flex-start">
         <Box>
           <Skeleton isLoaded={klineData.length}>
-            <Heading fontSize="2xl">${DecimalUtil.beautify(new Decimal(currentValue))}</Heading>
+            <Heading fontSize="2xl">{DecimalUtil.beautify(new Decimal(currentValue))}</Heading>
           </Skeleton>
           <HStack spacing={3} mt={2}>
             <Text variant="gray">Total Staked OCT</Text>
@@ -149,9 +162,11 @@ export const TotalStakedChart: React.FC = () => {
                   <stop offset="90%" stopColor="#2468f2" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <YAxis hide={true} domain={[lowestValue, highestValue]} />
-              <XAxis axisLine={false} tickLine={false} tick={{ fontSize: 14 }}
-                dataKey="date" interval="preserveStartEnd" />
+              
+              <XAxis axisLine={false} tickLine={false} tick={{ fontSize: 13 }} 
+                dataKey="date" interval="preserveStartEnd" height={20} />
+              <YAxis domain={[lowestValue, highestValue]} orientation="right" tickCount={3} padding={{ bottom: 20 }} tickFormatter={val => toUIValue(val)}
+                tick={{ fontSize: 13 }} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={0} />
               <Tooltip position={{ y: 0 }} content={<CustomTooltip />} />
               <Area type="monotone" strokeWidth={2} dataKey="value"
                 stroke="#2468f2" fill="url(#colorPrice)" />

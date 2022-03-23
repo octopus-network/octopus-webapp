@@ -175,7 +175,7 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
                     }
                     type="decrease"
                     anchor={anchor}
-                    helper="Your decreased stakes will be claimable after 28 days" />
+                    helper={`Your decreased stakes will be claimable after ${appchain?.appchain_id === 'debionetwork' ? 21 : 28} days`} />
 
                   <StakingPopover
                     trigger={

@@ -435,7 +435,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
         title="Unbond Validator"
         confirmButtonText="Unbond"
         isConfirming={isUnbonding}
-        message="Your unbonded stakes will be claimable after 28 days. Are you confirm to unbond?"
+        message={`Your unbonded stakes will be claimable after ${appchain?.appchain_id === 'debionetwork' ? 21 : 28} days. Are you confirm to unbond?`}
         onConfirm={onUnbondValidator}
         confirmButtonColor="red" />
 
@@ -445,7 +445,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
         title="Unbond Delegation"
         confirmButtonText="Unbond"
         isConfirming={isUnbondingDelegation}
-        message="Are you confirm to unbond delegation? (Your unbonded stakes will be claimable after 28 days)"
+        message={`Are you confirm to unbond delegation? (Your unbonded stakes will be claimable after ${appchain?.appchain_id === 'debionetwork' ? 21 : 28} days)`}
         onConfirm={onUnbondDelegation}
         confirmButtonColor="red" />
 
