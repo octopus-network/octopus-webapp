@@ -205,13 +205,18 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
                   
                 </VStack>
               </Flex>
-              <Divider mt={3} mb={3} />
-              <Flex>
-                <HStack color="red">
-                  <WarningTwoIcon boxSize={3} />
-                  <Text fontSize="sm">Rewards over 84 era will not be withrawable</Text>
-                </HStack>
-              </Flex>
+              {
+                unwithdrawnRewards.gt(ZERO_DECIMAL) ?
+                <>
+                  <Divider mt={3} mb={3} />
+                  <Flex>
+                    <HStack color="red">
+                      <WarningTwoIcon boxSize={3} />
+                      <Text fontSize="sm">Rewards over 84 era will not be withrawable</Text>
+                    </HStack>
+                  </Flex>
+                </> : null
+              }
             </Box>
             {
               rewards?.length ?
