@@ -62,7 +62,7 @@ const AppchainItem: React.FC<AppchainItemProps> = ({ appchain, isSelected, isRev
       cursor="pointer"
       onMouseEnter={setIsHovering.on}
       onMouseLeave={setIsHovering.off}
-      transition="transform 0.2s ease-in-out 0s, box-shadow 0.2s ease-in-out 0s"
+      transition="all 0.2s ease-in-out 0s, box-shadow 0.2s ease-in-out 0s"
       _hover={{
         transform: !isSelected ? 'scaleX(1.02)' : 'scaleX(1)'
       }}

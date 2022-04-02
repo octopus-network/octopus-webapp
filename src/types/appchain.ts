@@ -71,6 +71,7 @@ export type RewardHistory = {
   era_number: string;
   total_reward: string;
   unwithdrawn_reward: string;
+  expired: boolean;
 }
 
 export type Validator = {

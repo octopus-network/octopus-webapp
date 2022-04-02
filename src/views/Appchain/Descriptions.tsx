@@ -269,8 +269,8 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
               appchain?.appchain_metadata?.ido_amount_of_wrapped_appchain_token ?
                 DecimalUtil.beautify(
                   DecimalUtil.fromString(
-                    appchain?.appchain_metadata?.ido_amount_of_wrapped_appchain_token,
-                    appchain?.appchain_metadata?.fungible_token_metadata.decimals
+                    wrappedAppchainToken?.changed_balance,
+                    wrappedAppchainToken?.metadata.decimals
                   ),
                   0
                 ) : '-'

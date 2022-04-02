@@ -21,4 +21,5 @@ export type BridgeConfig = {
     paramsType: 'Tuple' | 'Array';
     valueKey: string;
   };
+  whitelist: Record<string, string[]>
 }

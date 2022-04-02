@@ -18,6 +18,7 @@ import {
   Text,
   InputGroup,
   Icon,
+  Link,
   IconButton,
   Avatar,
   Spinner,
@@ -63,16 +64,16 @@ import { SelectWeb3AccountModal } from './SelectWeb3AccountModal';
 import { SelectTokenModal } from './SelectTokenModal';
 import { History } from './History';
 import { AmountInput } from 'components';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import Decimal from 'decimal.js';
 import { ZERO_DECIMAL, DecimalUtil } from 'utils';
 import { useTxnsStore } from 'stores';
 import { useDebounce } from 'use-debounce';
 
-import { 
-  COMPLEX_CALL_GAS, 
-  FAILED_TO_REDIRECT_MESSAGE, 
-  SIMPLE_CALL_GAS 
+import {
+  COMPLEX_CALL_GAS,
+  FAILED_TO_REDIRECT_MESSAGE,
+  SIMPLE_CALL_GAS
 } from 'primitives';
 
 function toHexAddress(ss58Address: string) {
@@ -136,6 +137,22 @@ export const BridgePanel: React.FC = () => {
 
   const [debouncedTargetAccount] = useDebounce(targetAccount, 600);
 
+  const filteredTokens = useMemo(() => {
+    if (!tokens?.length) {
+      return [];
+    }
+
+    if (!bridgeConfig?.whitelist) {
+      return tokens;
+    }
+
+    return tokens.filter(t => !Object.keys(bridgeConfig.whitelist).includes(t.contractId) || (
+      Object.keys(bridgeConfig.whitelist).includes(t.contractId) && global?.accountId &&
+      Object.values(bridgeConfig.whitelist).flat(Infinity).includes(global?.accountId)
+    ));
+
+  }, [tokens, bridgeConfig, global]);
+
   useEffect(() => {
     web3Enable('Octopus Network').then(res => {
       extensionWeb3Accounts().then(accounts => {
@@ -185,12 +202,12 @@ export const BridgePanel: React.FC = () => {
   }, [appchainId]);
 
   useEffect(() => {
-    if (tokens?.length) {
+    if (filteredTokens.length) {
       setTokenAsset(
-        lastTokenContractId ? tokens.find(t => t.contractId === lastTokenContractId) || tokens[0] : tokens[0]
+        lastTokenContractId ? filteredTokens.find(t => t.contractId === lastTokenContractId) || filteredTokens[0] : filteredTokens[0]
       );
     }
-  }, [tokens, lastTokenContractId]);
+  }, [filteredTokens, lastTokenContractId]);
 
   const fromAccount = useMemo(() => isReverse ? global.accountId : appchainAccount?.address, [isReverse, global, appchainAccount, appchainId]);
   const initialTargetAccount = useMemo(() => !isReverse ? global.accountId : appchainAccount?.address, [isReverse, global, appchainAccount]);
@@ -198,8 +215,8 @@ export const BridgePanel: React.FC = () => {
   const appchainTxns = useMemo(() =>
     Object
       .values(appchainId ? txns?.[appchainId] || {} : {})
-      .filter(t => 
-        (t.fromAccount === fromAccount || t.toAccount === fromAccount) || 
+      .filter(t =>
+        (t.fromAccount === fromAccount || t.toAccount === fromAccount) ||
         (t.fromAccount === global.accountId || t.toAccount === global.accountId)
       ).sort((a, b) => b.timestamp - a.timestamp)
     , [appchainId, txns, global, fromAccount]);
@@ -296,7 +313,7 @@ export const BridgePanel: React.FC = () => {
     isCheckingTxns.current = true;
 
     const promises = pendingTxns.map(txn => {
-    
+
       if (txn.isAppchainSide) {
         return anchorContract?.get_appchain_message_processing_result_of({ nonce: txn.sequenceId }).then(result => {
           console.log(result);
@@ -354,10 +371,10 @@ export const BridgePanel: React.FC = () => {
     tokenContract.ft_balance_of({ account_id: global.accountId }).then(res => {
       setBalance(
         DecimalUtil.fromString(
-          res, 
+          res,
           Array.isArray(tokenAsset?.metadata.decimals) ?
-          tokenAsset?.metadata.decimals[0] :
-          tokenAsset?.metadata.decimals
+            tokenAsset?.metadata.decimals[0] :
+            tokenAsset?.metadata.decimals
         )
       );
       setIsLoadingBalance.off();
@@ -377,32 +394,32 @@ export const BridgePanel: React.FC = () => {
       const res = await appchainApi?.query.system.account(fromAccount);
       const resJSON: any = res?.toJSON();
       balance = DecimalUtil.fromString(
-        resJSON?.data?.free, 
+        resJSON?.data?.free,
         Array.isArray(tokenAsset?.metadata.decimals) ?
-        tokenAsset?.metadata.decimals[1] :
-        tokenAsset?.metadata.decimals
+          tokenAsset?.metadata.decimals[1] :
+          tokenAsset?.metadata.decimals
       );
 
     } else {
-      
+
       const query = appchainApi?.query[bridgeConfig.tokenPallet.section]?.[bridgeConfig.tokenPallet.method];
-   
+
       if (!query) {
         return;
       }
 
       const res = await (
-        bridgeConfig.tokenPallet.paramsType === 'Tuple' ? query([tokenAsset.assetId, fromAccount]) : 
-        query(tokenAsset.assetId, fromAccount)
+        bridgeConfig.tokenPallet.paramsType === 'Tuple' ? query([tokenAsset.assetId, fromAccount]) :
+          query(tokenAsset.assetId, fromAccount)
       );
 
       const resJSON: any = res?.toJSON();
 
       balance = DecimalUtil.fromString(
-        resJSON?.[bridgeConfig.tokenPallet.valueKey], 
+        resJSON?.[bridgeConfig.tokenPallet.valueKey],
         Array.isArray(tokenAsset?.metadata.decimals) ?
-        tokenAsset?.metadata.decimals[1] :
-        tokenAsset?.metadata.decimals
+          tokenAsset?.metadata.decimals[1] :
+          tokenAsset?.metadata.decimals
       );
     }
 
@@ -412,7 +429,7 @@ export const BridgePanel: React.FC = () => {
 
   // fetch balance from appchain rpc
   useEffect(() => {
- 
+
     if (isReverse || !tokenAsset || !global.wallet || !appchainApi || !fromAccount || !bridgeConfig) {
       return;
     }
@@ -494,10 +511,10 @@ export const BridgePanel: React.FC = () => {
     setIsTransferring.on();
 
     const amountInU64 = DecimalUtil.toU64(
-      DecimalUtil.fromString(amount), 
-      Array.isArray(tokenAsset?.metadata.decimals) ? 
-      tokenAsset?.metadata.decimals[0] :
-      tokenAsset?.metadata.decimals
+      DecimalUtil.fromString(amount),
+      Array.isArray(tokenAsset?.metadata.decimals) ?
+        tokenAsset?.metadata.decimals[0] :
+        tokenAsset?.metadata.decimals
     );
 
     try {
@@ -553,10 +570,10 @@ export const BridgePanel: React.FC = () => {
 
     const targetAccountInHex = stringToHex(targetAccount);
     const amountInU64 = DecimalUtil.toU64(
-      DecimalUtil.fromString(amount), 
+      DecimalUtil.fromString(amount),
       Array.isArray(tokenAsset?.metadata.decimals) ?
-      tokenAsset?.metadata.decimals[0] :
-      tokenAsset?.metadata.decimals
+        tokenAsset?.metadata.decimals[0] :
+        tokenAsset?.metadata.decimals
     );
 
     const tx: any = tokenAsset?.assetId === undefined ?
@@ -600,7 +617,7 @@ export const BridgePanel: React.FC = () => {
   }
 
   const onDepositStorage = async () => {
-   
+
     if (isReverse) {
       if (!appchainApi || !appchainAccount) {
         return;
@@ -612,9 +629,9 @@ export const BridgePanel: React.FC = () => {
       setIsDepositingStorage.on();
 
       const tx = appchainApi.tx.balances.transfer(
-        targetAccount, 
+        targetAccount,
         DecimalUtil.toU64(
-          new Decimal(0.01), 
+          new Decimal(0.01),
           appchain?.appchain_metadata?.fungible_token_metadata?.decimals
         ).toString()
       );
@@ -655,6 +672,10 @@ export const BridgePanel: React.FC = () => {
         <Flex justifyContent="space-between" alignItems="center" minH="32px">
           <Heading fontSize="xl">Bridge</Heading>
           {
+            // !appchainId ?
+            // <RouterLink to="/bridge/txs">
+            //   <Button variant="link" color="#2468f2" size="sm">Recent Transactions</Button>
+            // </RouterLink> :
             appchainTxns.length ?
               <Button colorScheme="octo-blue" variant="ghost" size="sm" onClick={setIsHistoryDrawerOpen.on}>
                 <HStack>
@@ -844,7 +865,7 @@ export const BridgePanel: React.FC = () => {
       <SelectTokenModal
         isOpen={selectTokenModalOpen}
         onClose={setSelectTokenModalOpen.off}
-        tokens={tokens}
+        tokens={filteredTokens}
         onSelectToken={onSelectToken}
         selectedToken={tokenAsset?.metadata?.symbol} />
 
@@ -860,7 +881,7 @@ export const BridgePanel: React.FC = () => {
             histories={appchainTxns}
             onDrawerClose={setIsHistoryDrawerOpen.off}
             onClearHistory={onClearHistory}
-            tokenAssets={tokens} />
+            tokenAssets={filteredTokens} />
         </DrawerContent>
       </Drawer>
     </>

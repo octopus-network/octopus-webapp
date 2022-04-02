@@ -87,7 +87,7 @@ export const Appchain: React.FC = () => {
   }, [drawerIOpen]);
 
   useEffect(() => {
-    if (!appchain || !global.accountId) {
+    if (!appchain) {
       return;
     }
 
@@ -119,21 +119,33 @@ export const Appchain: React.FC = () => {
       }
     );
 
-    anchorContract.get_wrapped_appchain_token().then(wrappedToken => {
-      setWrappedAppchainToken(wrappedToken);
-      setWrappedAppchainTokenContract(new TokenContract(
-        global.wallet?.account() as any,
-        wrappedToken.contract_account,
-        {
-          viewMethods: ['storage_balance_of', 'ft_balance_of'],
-          changeMethods: []
-        }
-      ));
-    });
-
     setAnchor(anchorContract);
 
   }, [appchain, global]);
+
+  useEffect(() => {
+    if (!anchor) {
+      return;
+    }
+    anchor.get_wrapped_appchain_token().then(wrappedToken => {
+      setWrappedAppchainToken(wrappedToken);
+    });
+  }, [anchor]);
+
+  useEffect(() => {
+    if (!global.accountId || !wrappedAppchainToken) {
+      return;
+    }
+
+    setWrappedAppchainTokenContract(new TokenContract(
+      global.wallet?.account() as any,
+      wrappedAppchainToken.contract_account,
+      {
+        viewMethods: ['storage_balance_of', 'ft_balance_of'],
+        changeMethods: []
+      }
+    ));
+  }, [wrappedAppchainToken, global]);
 
   useEffect(() => {
     if (!appchainSettings) {
@@ -152,7 +164,7 @@ export const Appchain: React.FC = () => {
       .then(vs => {
         setAppchainValidators(vs.map(v => v.toString()));
       });
-
+      
     if (validators) {
       appchainApi?.query?.session?.nextKeys.multi(
         validators.map(v => v.validator_id_in_appchain)
@@ -167,6 +179,19 @@ export const Appchain: React.FC = () => {
     }
     
   }, [appchainApi, validators]);
+
+  useEffect(() => {
+    if (!appchainApi) {
+      return;
+    }
+    appchainApi.query.octopusLpos.activeEra().then(era => {
+      const eraJSON: any = era.toJSON();
+      appchainApi.query.octopusLpos.erasRewardPoints(eraJSON.index).then(points => {
+        const pointsJSON: any = points.toJSON();
+        console.log(pointsJSON);
+      });
+    });
+  }, [appchainApi]);
 
   const isValidator = useMemo(() => validators?.some(v => v.validator_id === global.accountId && !v.is_unbonding) || false, [validators, global]);
   const isUnbonding = useMemo(() => validators?.some(v => v.validator_id === global.accountId && v.is_unbonding) || false, [validators, global]);

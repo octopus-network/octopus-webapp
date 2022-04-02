@@ -7,13 +7,16 @@ import {
   Text,
   HStack,
   Button,
+  Divider,
   useBoolean,
   Table,
   Thead,
   Tbody,
+  VStack,
   Tr,
   Th,
   Td,
+  Tag,
   Box,
   SimpleGrid,
   useColorModeValue,
@@ -30,6 +33,7 @@ import {
 import { BaseModal, Empty } from 'components';
 import { DecimalUtil, ZERO_DECIMAL } from 'utils';
 import { useGlobalStore } from 'stores';
+import { WarningTwoIcon } from '@chakra-ui/icons';
 
 import {
   SIMPLE_CALL_GAS,
@@ -94,6 +98,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
     }
 
     return rewards.reduce((total, next) => total.plus(
+      next.expired ? ZERO_DECIMAL :
       DecimalUtil.fromString(next.unwithdrawn_reward, appchain?.appchain_metadata?.fungible_token_metadata.decimals)
     ), ZERO_DECIMAL);
 
@@ -189,12 +194,22 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
                 <Text variant="gray">Total Rewards</Text>
                 <Heading fontSize="md">{DecimalUtil.beautify(totalRewards)} {appchain?.appchain_metadata?.fungible_token_metadata.symbol}</Heading>
               </Flex>
-              <Flex justifyContent="space-between" alignItems="center" mt={3}>
+              <Flex justifyContent="space-between" alignItems="flex-start" mt={3}>
                 <Text variant="gray">Unclaimed Rewards</Text>
-                <HStack>
-                  <Heading fontSize="md">{DecimalUtil.beautify(unwithdrawnRewards)} {appchain?.appchain_metadata?.fungible_token_metadata.symbol}</Heading>
-                  <Button colorScheme="octo-blue" size="sm" onClick={onClaimRewards} isLoading={isClaiming}
-                    isDisabled={unwithdrawnRewards.lte(ZERO_DECIMAL) || isClaiming}>Claim</Button>
+                <VStack spacing={0} alignItems="flex-end">
+                  <HStack>
+                    <Heading fontSize="md">{DecimalUtil.beautify(unwithdrawnRewards)} {appchain?.appchain_metadata?.fungible_token_metadata.symbol}</Heading>
+                    <Button colorScheme="octo-blue" size="sm" onClick={onClaimRewards} isLoading={isClaiming}
+                      isDisabled={unwithdrawnRewards.lte(ZERO_DECIMAL) || isClaiming}>Claim</Button>
+                  </HStack>
+                  
+                </VStack>
+              </Flex>
+              <Divider mt={3} mb={3} />
+              <Flex>
+                <HStack color="red">
+                  <WarningTwoIcon boxSize={3} />
+                  <Text fontSize="sm">Rewards over 84 era will not be withrawable</Text>
                 </HStack>
               </Flex>
             </Box>
@@ -219,6 +234,10 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
                             </Td>
                             <Td isNumeric>
                               {DecimalUtil.beautify(DecimalUtil.fromString(r.unwithdrawn_reward, appchain?.appchain_metadata?.fungible_token_metadata.decimals))}
+                              {
+                                DecimalUtil.fromString(r.unwithdrawn_reward).gt(ZERO_DECIMAL) && r.expired ?
+                                <Tag size="sm" colorScheme="red" mr={-2} transform="scale(.8)">Expired</Tag> : null
+                              }
                             </Td>
                           </Tr>
                         ))
