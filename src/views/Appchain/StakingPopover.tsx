@@ -26,16 +26,25 @@ import { useGlobalStore } from 'stores';
 
 import { AmountInput } from 'components';
 import { DecimalUtil, ZERO_DECIMAL } from 'utils';
+import Decimal from 'decimal.js';
 
 type StakingPopoverProps = {
   type: 'increase' | 'decrease';
+  deposit?: Decimal;
   anchor: AnchorContract | undefined;
   validatorId?: string;
   helper?: string;
   trigger: any;
 }
 
-export const StakingPopover: React.FC<StakingPopoverProps> = ({ trigger, type, helper, anchor, validatorId }) => {
+export const StakingPopover: React.FC<StakingPopoverProps> = ({ 
+  trigger, 
+  type, 
+  helper, 
+  deposit = ZERO_DECIMAL, 
+  anchor, 
+  validatorId 
+}) => {
   const initialFocusRef = React.useRef<any>();
 
   const inputRef = React.useRef<any>();
@@ -87,7 +96,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({ trigger, type, h
         const method = validatorId ? anchor.decrease_delegation : anchor.decrease_stake;
         const params: any = validatorId ? { amount: amountStr, validator_id: validatorId || '' } : { amount: amountStr };
 
-        await method(params, COMPLEX_CALL_GAS );
+        await method(params, COMPLEX_CALL_GAS);
       }
 
     } catch (err: any) {
@@ -128,7 +137,8 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({ trigger, type, h
               isDisabled={
                 isSubmitting ||
                 amountInDecimal.lte(ZERO_DECIMAL) ||
-                amountInDecimal.gt(octBalance)
+                (type === 'increase' && amountInDecimal.gt(octBalance)) ||
+                (type === 'decrease' && amountInDecimal.gt(deposit))
               }
               onClick={onSubmit}
               isLoading={isSubmitting}
@@ -136,8 +146,11 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({ trigger, type, h
               {
                 amountInDecimal.lte(ZERO_DECIMAL) ?
                   'Input Amount' :
-                  amountInDecimal.gt(octBalance) ?
-                    'Insufficient Balance' :
+                  (
+                    (type === 'increase' && amountInDecimal.gt(octBalance)) ||
+                    (type === 'decrease' && amountInDecimal.gt(deposit))
+                  ) ?
+                    `Insufficient ${type === 'increase' ? 'Balance' : 'Deposit'}` :
                     type === 'increase' ? 'Increase' : 'Decrease'
               }
             </Button>

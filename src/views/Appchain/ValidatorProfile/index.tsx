@@ -332,6 +332,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                       }
                       type="decrease"
                       anchor={anchor}
+                      deposit={delegatedDeposits}
                       validatorId={validatorId}
                       helper="Your decreased stakes will be claimable in next era" />
 

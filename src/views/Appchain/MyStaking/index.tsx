@@ -173,6 +173,7 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
                     trigger={
                       <Button variant="whiteAlpha"><Icon as={MinusIcon} mr={2} boxSize={3} /> Decrease</Button>
                     }
+                    deposit={deposit}
                     type="decrease"
                     anchor={anchor}
                     helper={`Your decreased stakes will be claimable after ${appchain?.appchain_id === 'debionetwork' ? 21 : 28} days`} />
