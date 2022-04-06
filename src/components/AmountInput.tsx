@@ -32,7 +32,7 @@ export const AmountInput: React.FC<AmountInputPropos> = ({ onChange, refObj, val
     onChange && onChange(targetValue);
   }
 
-  const beautifyValue = useMemo(() => beautify(value), [value]);
+  const beautifyValue = useMemo(() => beautify(value, false), [value]);
 
   return (
     <Box p={ unstyled ? '' : '10px 15px' } bg={ unstyled ? '' : bg } borderRadius="lg" w="100%">

@@ -334,7 +334,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                       anchor={anchor}
                       deposit={delegatedDeposits}
                       validatorId={validatorId}
-                      helper="Your decreased stakes will be claimable in next era" />
+                      helper={`Your decreased stakes will be claimable after ${appchain?.appchain_id === 'debionetwork' ? 21 : 28} days`} />
 
                     <Heading fontSize="md">{DecimalUtil.beautify(delegatedDeposits)} OCT</Heading>
 

@@ -33,7 +33,7 @@ export class DecimalUtil {
     return shiftedValue;
   }
 
-  public static beautify(input: Decimal, fixed?: number): string {
+  public static beautify(input: Decimal, fixed?: number, trim = true): string {
    
     if (fixed === undefined) {
       fixed = 
@@ -43,6 +43,6 @@ export class DecimalUtil {
     }
 
     const str = input.toFixed(fixed, 1);
-    return beautify(str);
+    return beautify(str, trim);
   }
 }

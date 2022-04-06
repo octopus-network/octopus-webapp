@@ -13,10 +13,10 @@ export function isNumber(value: any) {
   return reg.test(value);
 }
 
-export function beautify(str = ''): string {
+export function beautify(str = '', trim = true): string {
   const reg = str.indexOf('.') > -1 ? /(\d)(?=(\d{3})+\.)/g : /(\d)(?=(?:\d{3})+$)/g;
   str = str.replace(reg, '$1,');
-  return str.replace(/(\.[0-9]*[1-9]+)(0)*/, '$1');
+  return trim ? str.replace(/(\.[0-9]*[1-9]+)(0)*/, '$1') : str;
 }
 
 export function sleep(ts = 1000) {
