@@ -7,7 +7,8 @@ import {
   Heading,
   Avatar,
   useColorModeValue,
-  Text
+  Text,
+  VStack
 } from '@chakra-ui/react';
 
 import { TokenAsset } from 'types';
@@ -47,7 +48,10 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({ tokens, isOp
                   onClick={() => onSelectToken(token)}>
                   <HStack w="calc(100% - 100px)">
                     <Avatar name={token.metadata.symbol} src={token.metadata.icon as any} boxSize={8} size="sm" />
-                    <Heading fontSize="md">{token.metadata.symbol || 'UNKNOWN'}</Heading>
+                    <VStack alignItems="flex-start" spacing={0}>
+                      <Heading fontSize="md">{token.metadata.symbol || 'UNKNOWN'}</Heading>
+                      <Text fontSize="xs" color="gray">{token.metadata.name}</Text>
+                    </VStack>
                   </HStack>
                 </Box>
               ))

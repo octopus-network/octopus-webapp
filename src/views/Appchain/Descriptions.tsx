@@ -127,6 +127,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
       appchainApi.query.balances?.totalIssuance()
     ]).then(([era, issuance]) => {
       const eraJSON: any = era.toJSON();
+
       setCurrentEra(eraJSON?.index);
 
       setNextEraTime(eraJSON ? EPOCH_DURATION_MS + eraJSON.start : 0);
@@ -201,8 +202,8 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
         </VStack>
         <VStack alignItems="flex-start">
           <Text variant="gray" fontSize="sm" >Current Era</Text>
-          <Skeleton isLoaded={!!currentEra}>
-            <Heading fontSize="xl">{currentEra || 'loading'}</Heading>
+          <Skeleton isLoaded={currentEra !== undefined}>
+            <Heading fontSize="xl">{currentEra !== undefined ? currentEra : 'loading'}</Heading>
           </Skeleton>
         </VStack>
         <VStack alignItems="flex-start">
