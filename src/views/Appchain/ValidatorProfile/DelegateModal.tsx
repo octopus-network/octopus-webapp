@@ -76,6 +76,7 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({ isOpen, onClose, v
       COMPLEX_CALL_GAS,
       1,
     ).catch(err => {
+      setIsDepositing.off();
       if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
         return;
       }
@@ -85,7 +86,6 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({ isOpen, onClose, v
         description: err.toString(),
         status: 'error'
       });
-      setIsDepositing.off();
     });
   }
 

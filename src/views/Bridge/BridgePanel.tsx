@@ -548,6 +548,7 @@ export const BridgePanel: React.FC = () => {
       );
 
     } catch (err: any) {
+      setIsTransferring.off();
       if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
         return;
       }
@@ -556,7 +557,6 @@ export const BridgePanel: React.FC = () => {
         description: err.toString(),
         status: 'error'
       });
-      setIsTransferring.off();
     }
   }
 
@@ -646,7 +646,7 @@ export const BridgePanel: React.FC = () => {
       return;
     }
 
-    setIsDepositingStorage.on()
+    setIsDepositingStorage.on();
     global.wallet?.account().functionCall({
       contractId: tokenContract?.contractId || '',
       methodName: 'storage_deposit',
@@ -654,6 +654,7 @@ export const BridgePanel: React.FC = () => {
       gas: new BN(SIMPLE_CALL_GAS),
       attachedDeposit: new BN('1250000000000000000000')
     }).catch(err => {
+      setIsDepositingStorage.off();
       if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
         return;
       }

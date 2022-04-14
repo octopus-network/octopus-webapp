@@ -100,8 +100,9 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
       }
 
     } catch (err: any) {
-
+      
       if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
+        setIsSubmitting.off();
         return;
       }
 

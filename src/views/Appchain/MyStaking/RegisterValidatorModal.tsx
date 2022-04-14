@@ -104,6 +104,7 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({ 
       COMPLEX_CALL_GAS,
       1
     ).catch(err => {
+      setIsSubmitting.off();
       if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
         return;
       }
@@ -114,8 +115,6 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({ 
         description: err.toString(),
         status: 'error'
       });
-
-      setIsSubmitting.off();
     });
   }
 

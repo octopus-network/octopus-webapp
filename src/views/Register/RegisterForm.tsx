@@ -163,10 +163,10 @@ export const RegisterForm: React.FC = () => {
       COMPLEX_CALL_GAS,
       1,
     ).catch((err) => {
+      actions.setSubmitting(false);
       if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
         return;
       }
-      actions.setSubmitting(false);
       toast({
         position: 'top-right',
         title: 'Error',

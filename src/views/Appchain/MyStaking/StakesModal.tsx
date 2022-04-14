@@ -81,6 +81,7 @@ export const StakesModal: React.FC<RewardsModalProps> = ({ isOpen, onClose, stak
       { account_id: global.accountId },
       COMPLEX_CALL_GAS
     ).catch(err => {
+      setIsWithdrawing.off();
       if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
         return;
       }

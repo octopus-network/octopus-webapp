@@ -235,6 +235,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
     setIsUnbondingDelegation.on();
     anchor?.unbond_delegation({ validator_id: validator?.validator_id || '' }, COMPLEX_CALL_GAS)
       .catch(err => {
+        setIsUnbondingDelegation.off();
         if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
           return;
         }
@@ -244,7 +245,6 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
           description: err.toString(),
           status: 'error'
         });
-        setIsUnbondingDelegation.off();
       });
   }
 

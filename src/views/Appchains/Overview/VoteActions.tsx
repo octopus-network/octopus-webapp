@@ -175,6 +175,7 @@ const VotePopover: React.FC<VotePopoverProps> = ({ isOpen, appchainId, voteType,
     ).then(() => {
       axios.post(`${API_HOST}/update-appchains`).then(() => window.location.reload());
     }).catch(err => {
+      setIsWithdrawing.off();
       if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
         return;
       }

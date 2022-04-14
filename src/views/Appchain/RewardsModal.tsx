@@ -136,6 +136,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
       COMPLEX_CALL_GAS
     ).catch(err => {
       if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
+        setIsClaiming.off();
         return;
       }
 
@@ -157,6 +158,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
       gas: new BN(SIMPLE_CALL_GAS),
       attachedDeposit: new BN('1250000000000000000000')
     }).catch(err => {
+      setIsDepositingStorage.off();
       if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
         return;
       }
