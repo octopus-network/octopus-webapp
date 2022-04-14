@@ -120,7 +120,8 @@ export const MyNode: React.FC<MyNodeProps> = ({ appchainId, needKeys, appchainAp
     }
 
     if (
-      deployConfig.baseImages[appchainId].image && (
+      deployConfig.baseImages[appchainId]?.image && (
+        node.task?.base_image &&
         node.task?.base_image !== deployConfig.baseImages[appchainId].image
       ) && (
         !deployConfig.upgradeWhitelist?.length || 
