@@ -18,7 +18,6 @@ import {
   Text,
   InputGroup,
   Icon,
-  Link,
   IconButton,
   Avatar,
   Spinner,
@@ -43,6 +42,7 @@ import {
   BridgeConfig
 } from 'types';
 
+import { ChevronRightIcon } from '@chakra-ui/icons';
 import { decodeAddress, isAddress } from '@polkadot/util-crypto';
 import { u8aToHex, stringToHex, isHex } from '@polkadot/util';
 import type { InjectedAccountWithMeta } from '@polkadot/extension-inject/types';
@@ -675,7 +675,10 @@ export const BridgePanel: React.FC = () => {
           {
             !appchainId ?
             <RouterLink to="/bridge/txs">
-              <Button variant="link" color="#2468f2" size="sm">Recent Transactions</Button>
+              <Button variant="link" color="#2468f2" size="sm">
+                Recent Transactions
+                <Icon as={ChevronRightIcon} ml={1} />
+              </Button>
             </RouterLink> :
             appchainTxns.length ?
               <Button colorScheme="octo-blue" variant="ghost" size="sm" onClick={setIsHistoryDrawerOpen.on}>

@@ -11,7 +11,8 @@ import {
   HStack,
   Heading,
   Text,
-  Tooltip,
+  Tag,
+  Icon,
   Spinner,
   Button,
   Skeleton,
@@ -21,7 +22,6 @@ import {
   List,
   Link,
   Flex,
-  Tag,
   useColorModeValue
 } from '@chakra-ui/react';
 
@@ -29,9 +29,17 @@ import { DecimalUtil } from 'utils';
 import { Link as RouterLink } from 'react-router-dom';
 
 import { 
-  AppchainInfoWithAnchorStatus
+  ExternalLinkIcon, 
+  ChevronRightIcon, 
+  ChevronLeftIcon 
+} from '@chakra-ui/icons';
+
+import { 
+  AppchainInfoWithAnchorStatus, NetworkConfig
 } from 'types';
 
+import { BiTimeFive } from 'react-icons/bi';
+import { AiOutlineArrowRight } from 'react-icons/ai';
 import nearLogo from 'assets/near.svg';
 import { useGlobalStore } from 'stores';
 
@@ -56,24 +64,24 @@ type BridgeHistory = {
 
 type RowProps = {
   data: BridgeHistory;
-  network: any;
+  network: NetworkConfig | null;
 }
 
 dayjs.extend(relativeTime);
 
-const statusObj: Record<BridgeStatus, {
+const statusObj: Record<string, {
   color: string;
   label: string;
 }> = {
-  [BridgeStatus.Pending]: {
+  'Pending': {
     color: 'green',
     label: 'Pending'
   },
-  [BridgeStatus.Success]: {
+  'Success': {
     color: 'blue',
     label: 'Success'
   },
-  [BridgeStatus.Failed]: {
+  'Failed': {
     color: 'red',
     label: 'Failed'
   }
@@ -81,19 +89,57 @@ const statusObj: Record<BridgeStatus, {
 
 const Row: React.FC<RowProps> = ({ data, network }) => {
   const bg = useColorModeValue('white', '#15172c');
-  const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(`appchain/${data.appchain_name.replace(`${network}-`, '')}`);
 
-  const isAppchainSide = useMemo(() => data.direction === 'appchain_to_near', [data]);
+  const [isAppchainSide, appchainId] = useMemo(() => [
+    data.direction === 'appchain_to_near',
+    data.appchain_name.replace(`${network?.near.networkId}-`, '')
+  ], [data]);
 
-  console.log(isAppchainSide, data.from, data.to);
+  const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(`appchain/${appchainId}`);
 
   return (
-    <Skeleton isLoaded={!!appchain}>
-    <Grid templateColumns="repeat(13, 1fr)" p={6} bg={bg} borderRadius="lg" gap={6} alignItems="center">
+    <Skeleton isLoaded={!!appchain || !network}>
+    <Box left={0} top={0} right={0} pb={1} opacity={.6}>
+      <Flex justifyContent="space-between">
+        <Box p={1} borderRadius="lg">
+          <HStack>
+            <HStack spacing={1}>
+              <Avatar boxSize={3} src={
+                isAppchainSide ?
+                appchain?.appchain_metadata?.fungible_token_metadata?.icon as any :
+                nearLogo
+              } />
+              <Text fontSize="xs">{isAppchainSide ? appchainId : 'NEAR'}</Text>
+            </HStack>
+            <Icon as={AiOutlineArrowRight} boxSize={3} />
+            <HStack spacing={1}>
+              <Avatar boxSize={3} src={
+                !isAppchainSide ?
+                appchain?.appchain_metadata?.fungible_token_metadata?.icon as any :
+                nearLogo
+              } />
+              <Text fontSize="xs">{!isAppchainSide ? appchainId : 'NEAR'}</Text>
+            </HStack>
+          </HStack>
+        </Box>
+        <Box p={1} borderRadius="lg">
+          <HStack spacing={1}>
+            <Icon as={BiTimeFive} boxSize={3} />
+            <Text fontSize="xs">{dayjs(data.timestamp).fromNow()}</Text>
+          </HStack>
+        </Box>
+      </Flex>
+    </Box>
+    <Grid templateColumns="repeat(11, 1fr)" p={6} pr={4} bg={bg} borderRadius="lg" gap={8} alignItems="center"
+      cursor="pointer" transition="all .3s ease"
+      _hover={{
+        boxShadow: '0 10px 10px -5px rgba(0,0,12,.06)',
+        transform: 'translateY(-3px) scale(1.01)'
+      }}>
       <GridItem colSpan={2}>
-        <HStack>
-          <Avatar boxSize={6} src={isAppchainSide ? appchain?.appchain_metadata?.fungible_token_metadata?.icon as any : nearLogo} />
-          <Heading fontSize="md">
+        <HStack spacing={1}>
+          <Avatar boxSize={5} src={appchain?.appchain_metadata?.fungible_token_metadata?.icon as any} />
+          <Heading fontSize="md" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">
             {
               appchain ?
               DecimalUtil.beautify(DecimalUtil.fromString(data.amount.replaceAll(',', ''), appchain?.appchain_metadata?.fungible_token_metadata?.decimals)) :
@@ -101,13 +147,19 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
             }
           </Heading>
           <Text fontSize="sm" color="gray.500">
-            -
+            {
+              appchain?.appchain_metadata?.fungible_token_metadata.symbol || '-'
+            }
           </Text>
         </HStack>
       </GridItem>
       <GridItem colSpan={2}>
-        <Link href="" _hover={{ textDecoration: 'underline' }} color="#2468f2">
-          <HStack>
+        <Link href={
+          isAppchainSide ?
+          `${network?.octopus.explorerUrl}/` :
+          `${network?.near.explorerUrl}/accounts/${data.from}`
+        } _hover={{ textDecoration: 'underline' }} color="#2468f2" isExternal>
+          <HStack spacing={1}>
             {
               isAppchainSide ?
               <Identicon value={data.from} size={18} /> : null
@@ -115,16 +167,30 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
             <Text whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">
               {isAppchainSide && data.from ? encodeAddress(data.from) : data.from}
             </Text>
+            <Icon as={ExternalLinkIcon} boxSize={3} color="gray" />
           </HStack>
         </Link>
       </GridItem>
-      <GridItem colSpan={2}>
+      <GridItem colSpan={3}>
+        <Link href={
+          isAppchainSide ?
+          `${network?.octopus.explorerUrl}/` :
+          `${network?.near.explorerUrl}/transactions/${data.outHash}`
+        } _hover={{ textDecoration: 'underline' }} color="#2468f2" isExternal>
+          <HStack spacing={1}>
+            <Text whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">{data.outHash}</Text>
+            <Icon as={ExternalLinkIcon} boxSize={3} color="gray" />
+          </HStack>
+        </Link>
       </GridItem>
-      <GridItem colSpan={1}>
-      </GridItem>
+     
       <GridItem colSpan={2}>
-        <Link href="" _hover={{ textDecoration: 'underline' }} color="#2468f2">
-          <HStack>
+        <Link href={
+          !isAppchainSide ?
+          `${network?.octopus.explorerUrl}/` :
+          `${network?.near.explorerUrl}/accounts/${data.to}`
+        } _hover={{ textDecoration: 'underline' }} color="#2468f2" isExternal>
+          <HStack spacing={1}>
             {
               !isAppchainSide ?
               <Identicon value={data.to} size={18} /> : null
@@ -132,53 +198,19 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
             <Text whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">
               {!isAppchainSide && data.to ? encodeAddress(data.to) : data.to}
             </Text>
+            <Icon as={ExternalLinkIcon} boxSize={3} color="gray" />
           </HStack>
         </Link>
       </GridItem>
-      <GridItem colSpan={2}>
-      </GridItem>
-      <GridItem colSpan={2} textAlign="right">
-        <Text fontSize="sm" color="gray.500">{dayjs(data.timestamp).fromNow()}</Text>
-      </GridItem>
-      {/*
-      <GridItem colSpan={2}>
-        <Link href="" _hover={{ textDecoration: 'underline' }} color="#2468f2">
-          <Text whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">{data.outHash}</Text>
-        </Link>
-      </GridItem>
-      <GridItem colSpan={1}>
-        {
-          data.message ?
-          <Tooltip label={data.message}>
-            <Tag size="sm" colorScheme={statusObj[data.status].color}>{statusObj[data.status].label}</Tag>
-          </Tooltip> :
-          <Tag size="sm" colorScheme={statusObj[data.status].color}>{statusObj[data.status].label}</Tag>
-        }
-        
-      </GridItem>
-      <GridItem colSpan={2}>
-        <Link href="" _hover={{ textDecoration: 'underline' }} color="#2468f2">
-          <HStack>
-            {
-              !isAppchainSide ?
-              <Identicon value={data.toAccount} size={18} /> : null
-            }
-            <Text whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">{data.toAccount}</Text>
-          </HStack>
-        </Link>
-      </GridItem>
-      <GridItem colSpan={2}>
-        {
-          data.inHash ?
-          <Link href="" _hover={{ textDecoration: 'underline' }} color="#2468f2">
-            <Text whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">{data.inHash}</Text>
-          </Link> : 
-          '-'
-        }
-      </GridItem>
-      <GridItem colSpan={2} textAlign="right">
-        <Text fontSize="sm" color="gray.500">{dayjs(data.timestamp).fromNow()}</Text>
+      {/* <GridItem colSpan={2}>
       </GridItem> */}
+      <GridItem colSpan={2}>
+        <HStack justifyContent="flex-end">
+          <Tag size="sm" colorScheme={statusObj[data.status].color}>{statusObj[data.status].label}</Tag>
+          <Icon as={ChevronRightIcon} boxSize={4} opacity={.3} />
+        </HStack>
+      </GridItem>
+      
     </Grid>
     </Skeleton>
   )
@@ -196,106 +228,34 @@ export const Status: React.FC = () => {
     { refreshInterval: 3000 }
   );
 
-  // const [list, setList] = useState<BridgeHistory[]>([
-  //   {
-  //     isAppchainSide: false,
-  //     appchainId: 'fusotao',
-  //     amount: '1234567800000000000',
-  //     outHash: 'GWUekaQbgobaAKm8gYPoSECn6p8c3qiKUBTt4WX3n8KJ',
-  //     inHash: '',
-  //     fromAccount: 'cz.testnet',
-  //     toAccount: '5G3nCM9xhWe4TeoqUpavKXqHPHoCEThn7oR9SJkCV6XirvHQ',
-  //     status: BridgeStatus.Pending,
-  //     timestamp: new Date().getTime()
-  //   },
-  //   {
-  //     isAppchainSide: true,
-  //     appchainId: 'fusotao',
-  //     amount: '1234567800000000000',
-  //     outHash: '0x99aae7cedb06c42f9d961b8134700c1198dbe800d9ddec4284caa4a8321406fe',
-  //     inHash: 'GWUekaQbgobaAKm8gYPoSECn6p8c3qiKUBTt4WX3n8KJ',
-  //     fromAccount: '5G3nCM9xhWe4TeoqUpavKXqHPHoCEThn7oR9SJkCV6XirvHQ',
-  //     toAccount: 'cz.testnet',
-  //     status: BridgeStatus.Success,
-  //     timestamp: new Date().getTime() - 50 * 1000
-  //   },
-  //   {
-  //     isAppchainSide: false,
-  //     appchainId: 'fusotao',
-  //     amount: '1234567800000000000',
-  //     outHash: 'GWUekaQbgobaAKm8gYPoSECn6p8c3qiKUBTt4WX3n8KJ',
-  //     inHash: '',
-  //     fromAccount: 'cz.testnet',
-  //     toAccount: '5G3nCM9xhWe4TeoqUpavKXqHPHoCEThn7oR9SJkCV6XirvHQ',
-  //     status: BridgeStatus.Failed,
-  //     message: 'Burn Asset Failed',
-  //     timestamp: new Date().getTime() - 100 * 1000
-  //   },
-  //   {
-  //     isAppchainSide: true,
-  //     appchainId: 'fusotao',
-  //     amount: '1234567800000000000',
-  //     outHash: '0x99aae7cedb06c42f9d961b8134700c1198dbe800d9ddec4284caa4a8321406fe',
-  //     inHash: '',
-  //     fromAccount: '5G3nCM9xhWe4TeoqUpavKXqHPHoCEThn7oR9SJkCV6XirvHQ',
-  //     toAccount: 'cz.testnet',
-  //     status: BridgeStatus.Pending,
-  //     timestamp: new Date().getTime() - 150 * 1000
-  //   },
-  //   {
-  //     isAppchainSide: false,
-  //     appchainId: 'fusotao',
-  //     amount: '1234567800000000000',
-  //     outHash: 'GWUekaQbgobaAKm8gYPoSECn6p8c3qiKUBTt4WX3n8KJ',
-  //     inHash: '0x99aae7cedb06c42f9d961b8134700c1198dbe800d9ddec4284caa4a8321406fe',
-  //     fromAccount: 'cz.testnet',
-  //     toAccount: '5G3nCM9xhWe4TeoqUpavKXqHPHoCEThn7oR9SJkCV6XirvHQ',
-  //     status: BridgeStatus.Success,
-  //     timestamp: new Date().getTime() - 200 * 1000
-  //   },
-  //   {
-  //     isAppchainSide: true,
-  //     appchainId: 'fusotao',
-  //     amount: '1234567800000000000',
-  //     outHash: '0x99aae7cedb06c42f9d961b8134700c1198dbe800d9ddec4284caa4a8321406fe',
-  //     inHash: '',
-  //     fromAccount: '5G3nCM9xhWe4TeoqUpavKXqHPHoCEThn7oR9SJkCV6XirvHQ',
-  //     message: 'Max amount limit',
-  //     toAccount: 'cz.testnet',
-  //     status: BridgeStatus.Failed,
-  //     timestamp: new Date().getTime() - 250 * 1000
-  //   }
-  // ]);
-
   return (
     <Box mt={12}>
       <Flex justifyContent="space-between" alignItems="center">
         <Heading fontSize="xl">Recent Transactions</Heading>
         <RouterLink to="/bridge">
-          <Button variant="link" color="#2468f2" size="sm">Back to Bridge</Button>
+          <Button variant="link" color="#2468f2" size="sm">
+            <Icon as={ChevronLeftIcon} mr={1} /> Back to Bridge
+          </Button>
         </RouterLink>
       </Flex>
-      <Grid templateColumns="repeat(13, 1fr)" p={4} color="gray.500" gap={6} fontSize="sm">
+      <Grid templateColumns="repeat(11, 1fr)" p={4} color="gray.500" gap={8} fontSize="sm">
         <GridItem colSpan={2}>
           <Text>Token</Text>
         </GridItem>
         <GridItem colSpan={2}>
           <Text>From</Text>
         </GridItem>
-        <GridItem colSpan={2}>
+        <GridItem colSpan={3}>
           <Text>Out Hash</Text>
-        </GridItem>
-        <GridItem colSpan={1}>
-          <Text>Status</Text>
         </GridItem>
         <GridItem colSpan={2}>
           <Text>To</Text>
         </GridItem>
-        <GridItem colSpan={2}>
+        {/* <GridItem colSpan={2}>
           <Text>In Hash</Text>
-        </GridItem>
+        </GridItem> */}
         <GridItem colSpan={2} textAlign="right">
-          <Text>Time</Text>
+          <Text>Status</Text>
         </GridItem>
       </Grid>
       {
@@ -303,7 +263,7 @@ export const Status: React.FC = () => {
         <List spacing={5}>
           {
             txns.map((tx, idx) => (
-              <Row data={tx} key={`row-${idx}`} network={global.network?.near.networkId} />
+              <Row data={tx} key={`row-${idx}`} network={global.network} />
             ))
           }
         </List> :
