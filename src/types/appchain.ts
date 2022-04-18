@@ -202,3 +202,23 @@ export type UserVotes = {
   downvotes: string;
   upvotes: string;
 }
+
+export type ProtocolSettings = {
+  minimum_validator_deposit: string
+  minimum_validator_deposit_changing_amount: string
+  maximum_validator_stake_percent: number
+  minimum_delegator_deposit: string
+  minimum_delegator_deposit_changing_amount: string
+  minimum_total_stake_price_for_booting: string
+  maximum_market_value_percent_of_near_fungible_tokens: number
+  maximum_market_value_percent_of_wrapped_appchain_token: number
+  minimum_validator_count: string
+  maximum_validator_count: string
+  maximum_validators_per_delegator: string
+  unlock_period_of_validator_deposit: string
+  unlock_period_of_delegator_deposit: string
+  maximum_era_count_of_unwithdrawn_reward: string
+  maximum_era_count_of_valid_appchain_message: string
+  validator_commission_percent: number
+  maximum_allowed_unprofitable_era_count: number
+}
