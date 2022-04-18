@@ -270,7 +270,7 @@ export const Appchain: React.FC = () => {
                 userDownvotes.gt(ZERO_DECIMAL) ?
                 <HStack>
                   <Heading fontSize="md">{DecimalUtil.beautify(userDownvotes)}</Heading>
-                  <Text>{DecimalUtil.beautify(userDownvotes)} downvotes</Text>
+                  <Text>downvotes</Text>
                   <Button 
                     size="xs" 
                     colorScheme="octo-blue" 

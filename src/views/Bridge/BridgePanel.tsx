@@ -673,10 +673,10 @@ export const BridgePanel: React.FC = () => {
         <Flex justifyContent="space-between" alignItems="center" minH="32px">
           <Heading fontSize="xl">Bridge</Heading>
           {
-            // !appchainId ?
-            // <RouterLink to="/bridge/txs">
-            //   <Button variant="link" color="#2468f2" size="sm">Recent Transactions</Button>
-            // </RouterLink> :
+            !appchainId ?
+            <RouterLink to="/bridge/txs">
+              <Button variant="link" color="#2468f2" size="sm">Recent Transactions</Button>
+            </RouterLink> :
             appchainTxns.length ?
               <Button colorScheme="octo-blue" variant="ghost" size="sm" onClick={setIsHistoryDrawerOpen.on}>
                 <HStack>
