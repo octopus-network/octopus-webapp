@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import useSWR from 'swr';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -20,8 +20,12 @@ import {
   GridItem,
   Center,
   List,
+  Drawer,
+  DrawerContent,
+  DrawerOverlay,
   Link,
   Flex,
+  useBoolean,
   useColorModeValue
 } from '@chakra-ui/react';
 
@@ -42,6 +46,7 @@ import { BiTimeFive } from 'react-icons/bi';
 import { AiOutlineArrowRight } from 'react-icons/ai';
 import nearLogo from 'assets/near.svg';
 import { useGlobalStore } from 'stores';
+import { TxDetail } from './TxDetail';
 
 enum BridgeStatus {
   Pending,
@@ -52,6 +57,7 @@ enum BridgeStatus {
 type BridgeHistory = {
   direction: string;
   appchain_name: string;
+  event: string;
   amount: string;
   from: string;
   to: string;
@@ -65,6 +71,7 @@ type BridgeHistory = {
 type RowProps = {
   data: BridgeHistory;
   network: NetworkConfig | null;
+  onClick: (tx: any) => void;
 }
 
 dayjs.extend(relativeTime);
@@ -87,7 +94,7 @@ const statusObj: Record<string, {
   }
 }
 
-const Row: React.FC<RowProps> = ({ data, network }) => {
+const Row: React.FC<RowProps> = ({ data, network, onClick }) => {
   const bg = useColorModeValue('white', '#15172c');
 
   const [isAppchainSide, appchainId] = useMemo(() => [
@@ -131,7 +138,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
       </Flex>
     </Box>
     <Grid templateColumns="repeat(11, 1fr)" p={6} pr={4} bg={bg} borderRadius="lg" gap={8} alignItems="center"
-      cursor="pointer" transition="all .3s ease"
+      cursor="pointer" transition="all .3s ease" onClick={() => onClick(data)}
       _hover={{
         boxShadow: '0 10px 10px -5px rgba(0,0,12,.06)',
         transform: 'translateY(-3px) scale(1.01)'
@@ -153,6 +160,9 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
           </Text>
         </HStack>
       </GridItem>
+      <GridItem colSpan={1}>
+        <Tag size="sm">{data.event}</Tag>
+      </GridItem>
       <GridItem colSpan={2}>
         <Link href={
           isAppchainSide ?
@@ -171,7 +181,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
           </HStack>
         </Link>
       </GridItem>
-      <GridItem colSpan={3}>
+      <GridItem colSpan={2}>
         <Link href={
           isAppchainSide ?
           `${network?.octopus.explorerUrl}/` :
@@ -221,56 +231,84 @@ export const Status: React.FC = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
+  const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useBoolean();
+
   const { global } = useGlobalStore();
+
+  // useEffect(() => {
+  //   window.addEventListener('scroll', (e) => {
+  //     console.log(e);
+  //   });
+  // }, []);
 
   const { data: txns } = useSWR<any[]>(
     `bridge-helper/bridge_txs?start=${((page - 1) * pageSize)}&size=${pageSize}`, 
     { refreshInterval: 3000 }
   );
 
+  const onTxClick = (tx: any) => {
+    console.log(tx);
+    setIsDetailDrawerOpen.on();
+  }
+
   return (
-    <Box mt={12}>
-      <Flex justifyContent="space-between" alignItems="center">
-        <Heading fontSize="xl">Recent Transactions</Heading>
-        <RouterLink to="/bridge">
-          <Button variant="link" color="#2468f2" size="sm">
-            <Icon as={ChevronLeftIcon} mr={1} /> Back to Bridge
-          </Button>
-        </RouterLink>
-      </Flex>
-      <Grid templateColumns="repeat(11, 1fr)" p={4} color="gray.500" gap={8} fontSize="sm">
-        <GridItem colSpan={2}>
-          <Text>Token</Text>
-        </GridItem>
-        <GridItem colSpan={2}>
-          <Text>From</Text>
-        </GridItem>
-        <GridItem colSpan={3}>
-          <Text>Out Hash</Text>
-        </GridItem>
-        <GridItem colSpan={2}>
-          <Text>To</Text>
-        </GridItem>
-        {/* <GridItem colSpan={2}>
-          <Text>In Hash</Text>
-        </GridItem> */}
-        <GridItem colSpan={2} textAlign="right">
-          <Text>Status</Text>
-        </GridItem>
-      </Grid>
-      {
-        txns?.length ?
-        <List spacing={5}>
-          {
-            txns.map((tx, idx) => (
-              <Row data={tx} key={`row-${idx}`} network={global.network} />
-            ))
-          }
-        </List> :
-        <Center minH="320px">
-          <Spinner size="md" thickness="4px" speed="1s" color="octo-blue.500" />
-        </Center>
-      }
-    </Box>
+    <>
+      <Box mt={12}>
+        <Flex justifyContent="space-between" alignItems="center">
+          <Heading fontSize="xl">Recent Transactions</Heading>
+          <RouterLink to="/bridge">
+            <Button variant="link" color="#2468f2" size="sm">
+              <Icon as={ChevronLeftIcon} mr={1} /> Back to Bridge
+            </Button>
+          </RouterLink>
+        </Flex>
+        <Grid templateColumns="repeat(11, 1fr)" p={4} color="gray.500" gap={8} fontSize="sm">
+          <GridItem colSpan={2}>
+            <Text>Token</Text>
+          </GridItem>
+          <GridItem colSpan={1}>
+            <Text>Event</Text>
+          </GridItem>
+          <GridItem colSpan={2}>
+            <Text>From</Text>
+          </GridItem>
+          <GridItem colSpan={2}>
+            <Text>Out Hash</Text>
+          </GridItem>
+          <GridItem colSpan={2}>
+            <Text>To</Text>
+          </GridItem>
+          {/* <GridItem colSpan={2}>
+            <Text>In Hash</Text>
+          </GridItem> */}
+          <GridItem colSpan={2} textAlign="right">
+            <Text>Status</Text>
+          </GridItem>
+        </Grid>
+        {
+          txns?.length ?
+          <List spacing={5}>
+            {
+              txns.map((tx, idx) => (
+                <Row data={tx} key={`row-${idx}`} network={global.network} onClick={onTxClick} />
+              ))
+            }
+          </List> :
+          <Center minH="320px">
+            <Spinner size="md" thickness="4px" speed="1s" color="octo-blue.500" />
+          </Center>
+        }
+      </Box>
+      <Drawer
+        placement="right"
+        isOpen={isDetailDrawerOpen}
+        onClose={setIsDetailDrawerOpen.off}
+        size="lg">
+        <DrawerOverlay />
+        <DrawerContent>
+          <TxDetail onDrawerClose={setIsDetailDrawerOpen.off} />
+        </DrawerContent>
+      </Drawer>
+    </>
   );
 }

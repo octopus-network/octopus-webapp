@@ -24,7 +24,6 @@ export const Bridge: React.FC = () => {
 
   return (
     <Container position="relative">
-
       <SlideFade in={showTxs}>
         {
           showTxs ?

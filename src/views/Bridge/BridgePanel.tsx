@@ -181,7 +181,11 @@ export const BridgePanel: React.FC = () => {
     const provider = new WsProvider(appchainSettings.rpc_endpoint);
     const api = new ApiPromise({ provider });
 
-    api.isReady.then(api => setAppchainApi(api));
+    console.log(appchainSettings, appchainSettings.rpc_endpoint);
+    api.isReady.then(api => {
+      setAppchainApi(api);
+      console.log('api ready')
+    });
 
   }, [appchainSettings, appchain]);
 
@@ -305,7 +309,6 @@ export const BridgePanel: React.FC = () => {
   const pendingTxnsChecker = React.useRef<any>();
   const isCheckingTxns = React.useRef(false);
   pendingTxnsChecker.current = async () => {
-
     if (isCheckingTxns.current) {
       return;
     }
@@ -313,7 +316,7 @@ export const BridgePanel: React.FC = () => {
     isCheckingTxns.current = true;
 
     const promises = pendingTxns.map(txn => {
-
+    
       if (txn.isAppchainSide) {
         return anchorContract?.get_appchain_message_processing_result_of({ nonce: txn.sequenceId }).then(result => {
           console.log(result);
@@ -334,6 +337,7 @@ export const BridgePanel: React.FC = () => {
         });
       } else {
         return appchainApi?.query.octopusAppchain.notificationHistory(txn.sequenceId).then(res => {
+          console.log(txn, res);
           const jsonRes: string | null = res?.toJSON() as any;
           if (jsonRes === 'Success') {
             updateTxn(txn.appchainId, { ...txn, status: BridgeHistoryStatus.Succeed });
@@ -350,7 +354,7 @@ export const BridgePanel: React.FC = () => {
     });
     try {
       await Promise.all(promises);
-    } catch (err) { }
+    } catch (err) { console.log(err); }
 
     isCheckingTxns.current = false;
   }
