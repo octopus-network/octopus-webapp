@@ -82,7 +82,8 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
 
     try {
       if (type === 'increase') {
-        await validateValidatorStake(anchor, validator!, appchain!, DecimalUtil.fromString(amountStr));
+        await validateValidatorStake(anchor, DecimalUtil.fromString(amountStr), !validatorId ? 'IncreaseStake' : 'IncreaseDelegation', validator, appchain);
+        
         await global.octToken?.ft_transfer_call(
           {
             receiver_id: anchor?.contractId || '',

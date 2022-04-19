@@ -28,7 +28,7 @@ import {
   AppchainInfoWithAnchorStatus,
   TokenContract,
   UnbondedHistory,
-  StakingHistory
+  StakingHistory,
 } from 'types';
 
 import { OCT_TOKEN_DECIMALS } from 'primitives';
@@ -176,14 +176,18 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
                     deposit={deposit}
                     type="decrease"
                     anchor={anchor}
-                    helper={`Your decreased stakes will be claimable after ${appchain?.appchain_id === 'debionetwork' ? 21 : 28} days`} />
+                    helper={`Your decreased stakes will be claimable after ${appchain?.appchain_id === 'debionetwork' ? 21 : 28} days`}
+                    appchain={appchain}
+                  />
 
                   <StakingPopover
                     trigger={
                       <Button variant="white"><Icon as={AddIcon} mr={2} boxSize={3} />Increase</Button>
                     }
                     type="increase"
-                    anchor={anchor} />
+                    anchor={anchor}
+                    appchain={appchain}
+                  />
 
                 </SimpleGrid>
               </Box>
