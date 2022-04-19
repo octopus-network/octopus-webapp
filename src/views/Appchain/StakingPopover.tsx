@@ -82,8 +82,9 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
 
     try {
       if (type === 'increase') {
-        await validateValidatorStake(anchor, DecimalUtil.fromString(amountStr), !validatorId ? 'IncreaseStake' : 'IncreaseDelegation', validator, appchain);
-        
+        const type = !validatorId ? 'IncreaseStake' : 'IncreaseDelegation'
+        await validateValidatorStake(anchor, DecimalUtil.fromString(amountStr), type, validator, appchain);
+
         await global.octToken?.ft_transfer_call(
           {
             receiver_id: anchor?.contractId || '',
@@ -97,7 +98,9 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
           COMPLEX_CALL_GAS,
           1,
         );
-      } else {        
+      } else {
+        const type = !validatorId ? 'DecreaseStake' : 'DecreaseDelegation'
+        await validateValidatorStake(anchor, DecimalUtil.fromString(amountStr), type, validator, appchain);
         const method = validatorId ? anchor.decrease_delegation : anchor.decrease_stake;
         const params: any = validatorId ? { amount: amountStr, validator_id: validatorId || '' } : { amount: amountStr };
 
