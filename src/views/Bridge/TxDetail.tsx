@@ -2,17 +2,24 @@ import {
   DrawerHeader,
   Flex,
   HStack,
-  Button,
   CloseButton,
   Heading,
   DrawerBody
 } from '@chakra-ui/react';
+
+import useSWR from 'swr';
+import { useParams } from 'react-router-dom';
 
 type TxDetailProps = {
   onDrawerClose: VoidFunction;
 }
 
 export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
+  const { txId } = useParams();
+
+  const { data: transaction } = useSWR(txId ? `bridge-helper/bridgeTx/${txId}` : null);
+
+  console.log(transaction);
 
   return (
     <>

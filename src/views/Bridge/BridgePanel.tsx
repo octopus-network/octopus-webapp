@@ -181,10 +181,8 @@ export const BridgePanel: React.FC = () => {
     const provider = new WsProvider(appchainSettings.rpc_endpoint);
     const api = new ApiPromise({ provider });
 
-    console.log(appchainSettings, appchainSettings.rpc_endpoint);
     api.isReady.then(api => {
       setAppchainApi(api);
-      console.log('api ready')
     });
 
   }, [appchainSettings, appchain]);
