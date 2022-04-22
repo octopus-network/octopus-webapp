@@ -65,13 +65,13 @@ import { DecimalUtil, ZERO_DECIMAL } from 'utils';
 import octoAvatar from 'assets/icons/avatar.png';
 
 type ValidatorProfileProps = {
-  wrappedAppchainTokenContract: TokenContract | undefined;
-  appchain: AppchainInfoWithAnchorStatus | undefined;
-  anchor: AnchorContract | undefined;
+  wrappedAppchainTokenContract?: TokenContract;
+  appchain?: AppchainInfoWithAnchorStatus;
+  anchor?: AnchorContract;
   validatorId: string;
-  appchainValidators: string[] | undefined;
-  validators: Validator[] | undefined;
-  validatorSessionKeys: Record<string, ValidatorSessionKey> | undefined;
+  appchainValidators?: string[];
+  validators?: Validator[];
+  validatorSessionKeys?: Record<string, ValidatorSessionKey>;
   onDrawerClose: () => void;
 }
 
@@ -334,7 +334,10 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                       anchor={anchor}
                       deposit={delegatedDeposits}
                       validatorId={validatorId}
-                      helper={`Your decreased stakes will be claimable after ${appchain?.appchain_id === 'debionetwork' ? 21 : 28} days`} />
+                      helper={`Your decreased stakes will be claimable after ${appchain?.appchain_id === 'debionetwork' ? 21 : 28} days`}
+                      validator={validator}
+                      appchain={appchain}
+                    />
 
                     <Heading fontSize="md">{DecimalUtil.beautify(delegatedDeposits)} OCT</Heading>
 
@@ -346,7 +349,10 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                       }
                       type="increase"
                       validatorId={validatorId}
-                      anchor={anchor} />
+                      anchor={anchor}
+                      validator={validator}
+                      appchain={appchain}
+                    />
 
                   </HStack>
                 </Flex>

@@ -28,7 +28,8 @@ import {
   AppchainInfoWithAnchorStatus,
   TokenContract,
   UnbondedHistory,
-  StakingHistory
+  StakingHistory,
+  Validator,
 } from 'types';
 
 import { OCT_TOKEN_DECIMALS } from 'primitives';
@@ -55,9 +56,10 @@ type MyStakingProps = {
   isValidator: boolean;
   isUnbonding: boolean;
   wrappedAppchainTokenContract: TokenContract | undefined;
+  validator?: Validator
 }
 
-export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedAppchainTokenContract, isValidator, isUnbonding }) => {
+export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedAppchainTokenContract, isValidator, isUnbonding, validator }) => {
 
   const bg = useColorModeValue(
     'linear-gradient(137deg,#1486ff 4%, #0c4df5)',
@@ -176,14 +178,20 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
                     deposit={deposit}
                     type="decrease"
                     anchor={anchor}
-                    helper={`Your decreased stakes will be claimable after ${appchain?.appchain_id === 'debionetwork' ? 21 : 28} days`} />
+                    helper={`Your decreased stakes will be claimable after ${appchain?.appchain_id === 'debionetwork' ? 21 : 28} days`}
+                    appchain={appchain}
+                    validator={validator}
+                  />
 
                   <StakingPopover
                     trigger={
                       <Button variant="white"><Icon as={AddIcon} mr={2} boxSize={3} />Increase</Button>
                     }
                     type="increase"
-                    anchor={anchor} />
+                    anchor={anchor}
+                    appchain={appchain}
+                    validator={validator}
+                  />
 
                 </SimpleGrid>
               </Box>

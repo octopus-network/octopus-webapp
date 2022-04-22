@@ -8,6 +8,7 @@ import {
   UnbondedHistory,
   StakingHistory
 } from 'types';
+import { ProtocolSettings } from './appchain';
 
 type FtBalanceOfArgs = {
   account_id: string
@@ -97,7 +98,7 @@ export class AnchorContract extends Contract {
     return this.decrease_stake(args, gas);
   }
 
-  get_protocol_settings(): Promise<any> {
+  get_protocol_settings(): Promise<ProtocolSettings> {
     return this.get_protocol_settings();
   }
 

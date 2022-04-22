@@ -195,6 +195,7 @@ export const Appchain: React.FC = () => {
 
   const isValidator = useMemo(() => validators?.some(v => v.validator_id === global.accountId && !v.is_unbonding) || false, [validators, global]);
   const isUnbonding = useMemo(() => validators?.some(v => v.validator_id === global.accountId && v.is_unbonding) || false, [validators, global]);
+  const validator = validators?.find(v => v.validator_id === global.accountId)
   
   const needKeys = useMemo(() => {
     if (!validatorSessionKeys || !global.accountId) {
@@ -303,7 +304,9 @@ export const Appchain: React.FC = () => {
               anchor={anchor}
               isUnbonding={isUnbonding}
               isValidator={isValidator}
-              wrappedAppchainTokenContract={wrappedAppchainTokenContract} />
+              wrappedAppchainTokenContract={wrappedAppchainTokenContract}
+              validator={validator}
+            />
 
             <Box mt={5}>
               <MyNode appchainId={id} needKeys={needKeys} appchainApi={appchainApi} />

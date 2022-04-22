@@ -14,7 +14,7 @@ import {
   useToast
 } from '@chakra-ui/react';
 
-import { AnchorContract } from 'types';
+import { AnchorContract, AppchainInfoWithAnchorStatus, Validator } from 'types';
 
 import {
   COMPLEX_CALL_GAS,
@@ -27,14 +27,17 @@ import { useGlobalStore } from 'stores';
 import { AmountInput } from 'components';
 import { DecimalUtil, ZERO_DECIMAL } from 'utils';
 import Decimal from 'decimal.js';
+import { validateValidatorStake } from 'utils/validate';
 
 type StakingPopoverProps = {
   type: 'increase' | 'decrease';
   deposit?: Decimal;
-  anchor: AnchorContract | undefined;
+  anchor?: AnchorContract;
   validatorId?: string;
   helper?: string;
   trigger: any;
+  validator?: Validator
+  appchain?: AppchainInfoWithAnchorStatus
 }
 
 export const StakingPopover: React.FC<StakingPopoverProps> = ({ 
@@ -43,7 +46,9 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
   helper, 
   deposit = ZERO_DECIMAL, 
   anchor, 
-  validatorId 
+  validatorId,
+  validator,
+  appchain
 }) => {
   const initialFocusRef = React.useRef<any>();
 
@@ -67,7 +72,6 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
   }
 
   const onSubmit = async () => {
-
     if (!anchor) {
       return;
     }
@@ -78,6 +82,9 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
 
     try {
       if (type === 'increase') {
+        const type = !validatorId ? 'IncreaseStake' : 'IncreaseDelegation'
+        await validateValidatorStake(anchor, DecimalUtil.fromString(amountStr), type, validator, appchain);
+
         await global.octToken?.ft_transfer_call(
           {
             receiver_id: anchor?.contractId || '',
@@ -92,7 +99,8 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
           1,
         );
       } else {
-
+        const type = !validatorId ? 'DecreaseStake' : 'DecreaseDelegation'
+        await validateValidatorStake(anchor, DecimalUtil.fromString(amountStr), type, validator, appchain);
         const method = validatorId ? anchor.decrease_delegation : anchor.decrease_stake;
         const params: any = validatorId ? { amount: amountStr, validator_id: validatorId || '' } : { amount: amountStr };
 
