@@ -67,6 +67,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
   const { global } = useGlobalStore();
 
   const [isClaiming, setIsClaiming] = useBoolean(false);
+  const [isClaimRewardsPaused, setIsClaimRewardsPaused] = useState(false);
   const [isDepositingStorage, setIsDepositingStorage] = useBoolean(false);
   const [needDepositStorage, setNeedDepositStorage] = useBoolean(false);
 
@@ -80,6 +81,15 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
       setNeedDepositStorage.off();
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!anchor) {
+      setIsClaimRewardsPaused(false);
+    }
+    anchor?.get_anchor_status().then(({ rewards_withdrawal_is_paused }) => {
+      setIsClaimRewardsPaused(rewards_withdrawal_is_paused as boolean);
+    });
+  }, [anchor]);
 
   useEffect(() => {
     if (!wrappedAppchainTokenContract) {
@@ -202,7 +212,9 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
                   <HStack>
                     <Heading fontSize="md">{DecimalUtil.beautify(unwithdrawnRewards)} {appchain?.appchain_metadata?.fungible_token_metadata.symbol}</Heading>
                     <Button colorScheme="octo-blue" size="sm" onClick={onClaimRewards} isLoading={isClaiming}
-                      isDisabled={unwithdrawnRewards.lte(ZERO_DECIMAL) || isClaiming}>Claim</Button>
+                      isDisabled={unwithdrawnRewards.lte(ZERO_DECIMAL) || isClaiming || isClaimRewardsPaused}>
+                      { isClaimRewardsPaused ? 'Claim Paused' : 'Claim' }
+                      </Button>
                   </HStack>
                   
                 </VStack>
