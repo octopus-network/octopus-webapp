@@ -139,15 +139,15 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
       </Flex>
     </Box>
     <RouterLink to={`/bridge/txs/${data.id}`}>
-      <Grid templateColumns="repeat(13, 1fr)" p={6} pr={4} bg={bg} borderRadius="lg" gap={8} alignItems="center"
+      <Grid templateColumns="repeat(12, 1fr)" p={6} pr={4} bg={bg} borderRadius="lg" gap={8} alignItems="center"
         cursor="pointer" transition="all .3s ease"
         _hover={{
           boxShadow: '0 10px 10px -5px rgba(0,0,12,.06)',
           transform: 'translateY(-3px) scale(1.01)'
         }}>
         <GridItem colSpan={2}>
-          <HStack spacing={1}>
-            <Avatar boxSize={5} src={appchain?.appchain_metadata?.fungible_token_metadata?.icon as any} />
+          <HStack spacing={2}>
+            <Heading fontSize="sm" color={ data.event === 'Burnt' ? 'green.500' : 'blue.500' }>{data.event}</Heading>
             <Heading fontSize="md" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">
               {
                 appchain ?
@@ -161,9 +161,6 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
               }
             </Text>
           </HStack>
-        </GridItem>
-        <GridItem colSpan={1}>
-          <Tag size="sm">{data.event}</Tag>
         </GridItem>
         <GridItem colSpan={2}>
           <Link href={
@@ -235,7 +232,6 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
             <Icon as={ChevronRightIcon} boxSize={4} opacity={.3} />
           </HStack>
         </GridItem>
-        
       </Grid>
     </RouterLink>
     </Skeleton>
@@ -277,12 +273,9 @@ export const Status: React.FC = () => {
             </Button>
           </RouterLink>
         </Flex>
-        <Grid templateColumns="repeat(13, 1fr)" p={4} color="gray.500" gap={8} fontSize="sm">
+        <Grid templateColumns="repeat(12, 1fr)" p={4} color="gray.500" gap={8} fontSize="sm">
           <GridItem colSpan={2}>
             <Text>Token</Text>
-          </GridItem>
-          <GridItem colSpan={1}>
-            <Text>Event</Text>
           </GridItem>
           <GridItem colSpan={2}>
             <Text>From</Text>

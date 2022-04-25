@@ -101,7 +101,7 @@ export const Root: React.FC = () => {
         wallet.account(),
         network.octopus.octTokenContractId,
         {
-          viewMethods: ['ft_balance_of'],
+          viewMethods: ['ft_balance_of', 'total_supply'],
           changeMethods: ['ft_transfer_call']
         }
       );
