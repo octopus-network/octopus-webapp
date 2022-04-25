@@ -675,7 +675,7 @@ export const BridgePanel: React.FC = () => {
         <Flex justifyContent="space-between" alignItems="center" minH="32px">
           <Heading fontSize="xl">Bridge</Heading>
           {
-            !appchainId ?
+            global?.network && global?.network?.near.networkId !== 'mainnet' ?
             <RouterLink to="/bridge/txs">
               <Button variant="link" color="#2468f2" size="sm">
                 Recent Transactions

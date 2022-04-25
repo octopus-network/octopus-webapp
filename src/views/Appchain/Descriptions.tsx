@@ -46,6 +46,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import websiteIcon from 'assets/icons/website.png';
 import explorerIcon from 'assets/icons/explorer.png';
 import bridgeIcon from 'assets/icons/bridge.png';
+import anchorIcon from 'assets/icons/anchor.png';
 import functionSpecIcon from 'assets/icons/function-spec.png';
 import githubIcon from 'assets/icons/github.png';
 
@@ -150,7 +151,9 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
           </SkeletonCircle>
           <VStack alignItems="flex-start" spacing={0}>
             <Skeleton isLoaded={!!appchain}>
-              <Heading fontSize="2xl">{appchain?.appchain_id || 'loading'}</Heading>
+              <Link isExternal href={toValidUrl(appchain?.appchain_metadata?.website_url)}>
+                <Heading fontSize="2xl">{appchain?.appchain_id || 'loading'}</Heading>
+              </Link>
             </Skeleton>
             {
               appchain ?
@@ -171,12 +174,15 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
         </VStack>
       </Flex>
       
-      <SimpleGrid columns={{ base: 3, md: 5 }} spacing={4} mt={8} bg={linksBg} borderRadius="lg">
+      <SimpleGrid columns={{ base: 3, md: 6 }} spacing={4} mt={8} bg={linksBg} borderRadius="lg">
         <RouterLink to={`/bridge/near/${appchain?.appchain_id}`}>
           <LinkBox icon={bridgeIcon} label="Bridge" />
         </RouterLink>
         <Link href={`${global?.network?.octopus.explorerUrl}/?appchain=${appchain?.appchain_id}`} isExternal>
           <LinkBox icon={explorerIcon} label="Explorer" />
+        </Link>
+        <Link href={`${global?.network?.near.explorerUrl}/accounts/${appchain?.appchain_anchor}`} isExternal>
+          <LinkBox icon={anchorIcon} label="Anchor" />
         </Link>
         <Link href={toValidUrl(appchain?.appchain_metadata?.website_url)} isExternal>
           <LinkBox icon={websiteIcon} label="Website" />
