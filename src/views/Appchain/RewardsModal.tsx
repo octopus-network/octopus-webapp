@@ -226,7 +226,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
                   <Flex>
                     <HStack color="red">
                       <WarningTwoIcon boxSize={3} />
-                      <Text fontSize="sm">Rewards over 84 era will not be withrawable</Text>
+                      <Text fontSize="sm">Rewards over 84 era will be unclaimable</Text>
                     </HStack>
                   </Flex>
                 </> : null
