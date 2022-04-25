@@ -27,6 +27,8 @@ import { HiOutlineArrowNarrowRight } from 'react-icons/hi';
 
 import website1 from 'assets/icons/website1.png';
 import website2 from 'assets/icons/website2.png';
+import anchor1 from 'assets/icons/anchor1.png';
+import anchor2 from 'assets/icons/anchor2.png';
 import functionSpec1 from 'assets/icons/function-spec1.png';
 import functionSpec2 from 'assets/icons/function-spec2.png';
 import github1 from 'assets/icons/github1.png';
@@ -98,7 +100,7 @@ const LinkBox: React.FC<LinkBoxProps> = ({ icons, href, copy, title, ...rest }) 
             <Heading fontSize="16px">{title}</Heading>
             {
               copy ?
-              <Text variant="gray" fontSize="sm">{copy}</Text> : null
+              <Text variant="gray" fontSize="sm" maxW="180px" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">{copy}</Text> : null
             }
           </VStack>
         </HStack>
@@ -124,10 +126,16 @@ export const Links: React.FC<LinksProps> = ({ data }) => {
 
   const toast = useToast();
   const { onCopy: onEmailCopy } = useClipboard(data?.appchain_metadata?.contact_email as any);
+  const { onCopy: onAnchorCopy } = useClipboard(data?.appchain_anchor as any);
 
   const onCopyEmail = () => {
     onEmailCopy();
     toast({ title: 'Email Copied', position: 'top-right' });
+  }
+
+  const onCopyAnchor = () => {
+    onAnchorCopy();
+    toast({ title: 'Anchor Copied', position: 'top-right' });
   }
 
   return (
@@ -161,6 +169,14 @@ export const Links: React.FC<LinksProps> = ({ data }) => {
         title="Email" 
         onClick={onCopyEmail}
         copy={data?.appchain_metadata?.contact_email} />
+      {
+        data?.appchain_anchor ?
+        <LinkBox 
+          icons={[anchor1, anchor2]} 
+          title="Anchor" 
+          onClick={onCopyAnchor}
+          copy={data?.appchain_anchor} /> : null
+      }
     </SimpleGrid>
   );
 }

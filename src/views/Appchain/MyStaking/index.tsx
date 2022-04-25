@@ -90,6 +90,7 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
     }
 
     return rewards.reduce((total, next) => total.plus(
+      next.expired ? ZERO_DECIMAL :
       DecimalUtil.fromString(next.unwithdrawn_reward, appchain?.appchain_metadata?.fungible_token_metadata.decimals)
     ), ZERO_DECIMAL);
 
