@@ -102,6 +102,10 @@ export class AnchorContract extends Contract {
     return this.get_protocol_settings();
   }
 
+  get_anchor_status(): Promise<any> {
+    return this.get_anchor_status();
+  }
+
   get_validator_deposit_of(args: { validator_id: string }): Promise<string> {
     return this.get_validator_deposit_of(args);
   } 

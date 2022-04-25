@@ -76,15 +76,15 @@ export const Appchain: React.FC = () => {
   const [wrappedAppchainToken, setWrappedAppchainToken] = useState<WrappedAppchainToken>();
   const [wrappedAppchainTokenContract, setWrappedAppchainTokenContract] = useState<TokenContract>();
 
-  const drawerIOpen = useMemo(() => !!id && !!validatorId, [validatorId]);
+  const drawerOpen = useMemo(() => !!id && !!validatorId, [validatorId]);
 
   useEffect(() => {
-    if (drawerIOpen) {
+    if (drawerOpen) {
       (document.getElementById('root') as any).style = 'transition: all .3s ease-in-out; transform: translateX(-5%)';
     } else {
       (document.getElementById('root') as any).style = 'transition: all .15s ease-in-out; transform: translateX(0)';
     }
-  }, [drawerIOpen]);
+  }, [drawerOpen]);
 
   useEffect(() => {
     if (!appchain) {
@@ -103,6 +103,7 @@ export const Appchain: React.FC = () => {
           'get_validator_profile',
           'get_unbonded_stakes_of',
           'get_delegator_rewards_of',
+          'get_anchor_status',
           'get_user_staking_histories_of'
         ],
         changeMethods: [
@@ -326,7 +327,7 @@ export const Appchain: React.FC = () => {
       </Container>
       <Drawer 
         placement="right" 
-        isOpen={drawerIOpen} 
+        isOpen={drawerOpen} 
         onClose={onDrawerClose} 
         size="lg">
         <DrawerOverlay />

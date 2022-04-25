@@ -19,12 +19,11 @@ export const Bridge: React.FC = () => {
   const location = useLocation();
 
   const showTxs = useMemo(() => {
-    return location.pathname === '/bridge/txs';
+    return /^\/bridge\/txs/.test(location.pathname);
   }, [location]);
 
   return (
     <Container position="relative">
-
       <SlideFade in={showTxs}>
         {
           showTxs ?

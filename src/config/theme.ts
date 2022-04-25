@@ -1,6 +1,7 @@
 import { extendTheme } from '@chakra-ui/react';
 import { mode } from '@chakra-ui/theme-tools';
 import type { GlobalStyleProps } from '@chakra-ui/theme-tools';
+import { StepsStyleConfig as Steps } from 'chakra-ui-steps';
 
 const themeConfig = {
   config: {
@@ -33,6 +34,7 @@ const themeConfig = {
     })
   },
   components: {
+    Steps,
     Text: {
       variants: {
         'gray': (props: GlobalStyleProps) => ({
