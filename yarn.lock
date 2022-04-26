@@ -4399,11 +4399,6 @@ case-sensitive-paths-webpack-plugin@2.3.0:
   resolved "https://registry.yarnpkg.com/case-sensitive-paths-webpack-plugin/-/case-sensitive-paths-webpack-plugin-2.3.0.tgz#23ac613cc9a856e4f88ff8bb73bbb5e989825cf7"
   integrity sha512-/4YgnZS8y1UXXmC02xD5rRrBEu6T5ub+mQHLNRj0fzTRbgdBYhsNo2V5EqwgqrExjxsjtF/OpAKAMkKsxbD5XQ==
 
-chakra-ui-steps@^1.7.2:
-  version "1.7.2"
-  resolved "https://registry.yarnpkg.com/chakra-ui-steps/-/chakra-ui-steps-1.7.2.tgz#1a6a757fd977aeabb3ba4447222f4534d8f499e9"
-  integrity sha512-2D+t2G2OzALaEN6ugeiLcB/hD9jdylWi8JouTQeGmWI9Y+ub2aC0lHI29m5OvwHzyPKTevbl+fgHLYvLDVCiHg==
-
 chalk@2.4.2, chalk@^2.0.0, chalk@^2.4.1, chalk@^2.4.2:
   version "2.4.2"
   resolved "https://registry.yarnpkg.com/chalk/-/chalk-2.4.2.tgz#cd42541677a54333cf541a49108c1432b44c9424"
