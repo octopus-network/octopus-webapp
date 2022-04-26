@@ -1,15 +1,14 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react'
 
-import relativeTime from 'dayjs/plugin/relativeTime';
-import duration from 'dayjs/plugin/duration';
-import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime'
+import duration from 'dayjs/plugin/duration'
+import dayjs from 'dayjs'
 
 import {
   Box,
   Flex,
   HStack,
   Avatar,
-  Image,
   VStack,
   Link,
   Text,
@@ -21,267 +20,362 @@ import {
   CircularProgress,
   Skeleton,
   Icon,
-  useBoolean,
   useClipboard,
-  IconButton
-} from '@chakra-ui/react';
+  IconButton,
+} from '@chakra-ui/react'
+
+import { StateBadge } from 'components'
 
 import {
-  useSpring,
-  animated,
-} from 'react-spring';
-
-import { StateBadge } from 'components';
-
-import { 
-  AppchainInfoWithAnchorStatus, 
+  AppchainInfoWithAnchorStatus,
   AppchainSettings,
-  WrappedAppchainToken
-} from 'types';
+  WrappedAppchainToken,
+} from 'types'
 
-import type { ApiPromise } from '@polkadot/api';
-import { CheckIcon, CopyIcon } from '@chakra-ui/icons';
-import { Link as RouterLink } from 'react-router-dom';
+import type { ApiPromise } from '@polkadot/api'
+import { CheckIcon, CopyIcon } from '@chakra-ui/icons'
 
-import websiteIcon from 'assets/icons/website.png';
-import explorerIcon from 'assets/icons/explorer.png';
-import bridgeIcon from 'assets/icons/bridge.png';
-import anchorIcon from 'assets/icons/anchor.png';
-import functionSpecIcon from 'assets/icons/function-spec.png';
-import githubIcon from 'assets/icons/github.png';
+import { DecimalUtil, toValidUrl } from 'utils'
+import Decimal from 'decimal.js'
+import { EPOCH_DURATION_MS } from 'primitives'
+import { useGlobalStore } from 'stores'
+import { FaUser } from 'react-icons/fa'
+import {
+  FiAnchor,
+  FiGlobe,
+  FiCompass,
+  FiGithub,
+  FiRepeat,
+  FiFileText,
+} from 'react-icons/fi'
 
-import { DecimalUtil, toValidUrl } from 'utils';
-import Decimal from 'decimal.js';
-import { EPOCH_DURATION_MS } from 'primitives';
-import { useGlobalStore } from 'stores';
-import { FaUser } from 'react-icons/fa';
-
-dayjs.extend(duration);
-dayjs.extend(relativeTime);
+dayjs.extend(duration)
+dayjs.extend(relativeTime)
 
 type DescriptionsProps = {
-  appchain: AppchainInfoWithAnchorStatus | undefined;
-  appchainSettings: AppchainSettings | undefined;
-  wrappedAppchainToken: WrappedAppchainToken | undefined;
-  appchainApi: ApiPromise | undefined;
+  appchain: AppchainInfoWithAnchorStatus | undefined
+  appchainSettings: AppchainSettings | undefined
+  wrappedAppchainToken: WrappedAppchainToken | undefined
+  appchainApi: ApiPromise | undefined
 }
 
 type LinkBoxProps = {
-  label: string;
-  icon: any;
-  to?: string;
-  href?: string;
+  label: string
+  icon: any
+  link?: string
 }
 
-const LinkBox: React.FC<LinkBoxProps> = ({ label, icon }) => {
-  const [isHovering, setIsHovering] = useBoolean(false);
-
-  const iconHoveringProps = useSpring({
-    transform: isHovering ? 'translateY(-5pxpx)' : 'translateY(0px)'
-  });
-
+const LinkBox = ({ label, icon, link }: LinkBoxProps) => {
   return (
-    <Box p={2} cursor="pointer" onMouseEnter={setIsHovering.on} onMouseLeave={setIsHovering.off}>
-      <VStack spacing={1}>
-        <animated.div style={iconHoveringProps}>
-          <Box boxSize={8}><Image src={icon} w="100%" /></Box>
-        </animated.div>
-        <Text fontSize="sm" whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden" maxW="100%">{label}</Text>
-      </VStack>
-    </Box>
-  );
+    <HStack style={{ flex: 1 }}>
+      <Link
+        href={link}
+        target={link?.startsWith('http') ? '_blank' : '_self'}
+        style={{ color: '#008cd5' }}
+      >
+        <HStack spacing={1} style={{ cursor: 'pointer' }}>
+          {icon}
+          <Text
+            fontSize="sm"
+            whiteSpace="nowrap"
+            textOverflow="ellipsis"
+            overflow="hidden"
+            maxW="100%"
+          >
+            {label}
+          </Text>
+        </HStack>
+      </Link>
+    </HStack>
+  )
 }
 
-export const Descriptions: React.FC<DescriptionsProps> = ({ 
-  appchain, 
-  appchainApi, 
+export const Descriptions: React.FC<DescriptionsProps> = ({
+  appchain,
+  appchainApi,
   appchainSettings,
-  wrappedAppchainToken
+  wrappedAppchainToken,
 }) => {
-  const bg = useColorModeValue('white', '#15172c');
-  const linksBg = useColorModeValue('#f5f7fa', '#1e1f34');
+  const bg = useColorModeValue('white', '#15172c')
+  const linksBg = useColorModeValue('#f5f7fa', '#1e1f34')
 
-  const { global } = useGlobalStore();
+  const { global } = useGlobalStore()
 
-  const [bestBlock, setBestBlock] = useState<number>();
-  const [currentEra, setCurrentEra] = useState<number>();
-  const [totalIssuance, setTotalIssuance] = useState<string>();
+  const [bestBlock, setBestBlock] = useState<number>()
+  const [currentEra, setCurrentEra] = useState<number>()
+  const [totalIssuance, setTotalIssuance] = useState<string>()
 
-  const [nextEraTime, setNextEraTime] = useState(0);
-  const [nextEraTimeLeft, setNextEraTimeLeft] = useState(0);
+  const [nextEraTime, setNextEraTime] = useState(0)
+  const [nextEraTimeLeft, setNextEraTimeLeft] = useState(0)
 
-  const { hasCopied: hasRpcEndpointCopied, onCopy: onCopyRpcEndpoint } = useClipboard(appchainSettings?.rpc_endpoint || '');
+  const { hasCopied: hasRpcEndpointCopied, onCopy: onCopyRpcEndpoint } =
+    useClipboard(appchainSettings?.rpc_endpoint || '')
 
   useEffect(() => {
     if (!appchainApi) {
-      return;
+      return
     }
 
     // subscribe new head
-    let unsubNewHeads: any;
+    let unsubNewHeads: any
     appchainApi.rpc.chain
-      .subscribeNewHeads((lastHeader) => setBestBlock(lastHeader.number.toNumber()))
-      .then(unsub => unsubNewHeads = unsub);
+      .subscribeNewHeads((lastHeader) =>
+        setBestBlock(lastHeader.number.toNumber())
+      )
+      .then((unsub) => (unsubNewHeads = unsub))
 
     Promise.all([
       appchainApi.query.octopusLpos.activeEra(),
-      appchainApi.query.balances?.totalIssuance()
+      appchainApi.query.balances?.totalIssuance(),
     ]).then(([era, issuance]) => {
-      const eraJSON: any = era.toJSON();
+      const eraJSON: any = era.toJSON()
 
-      setCurrentEra(eraJSON?.index);
+      setCurrentEra(eraJSON?.index)
 
-      setNextEraTime(eraJSON ? EPOCH_DURATION_MS + eraJSON.start : 0);
-      setNextEraTimeLeft(eraJSON ? (eraJSON.start + EPOCH_DURATION_MS) - new Date().getTime() : 0);
-      setTotalIssuance(issuance?.toString() || '0');
+      setNextEraTime(eraJSON ? EPOCH_DURATION_MS + eraJSON.start : 0)
+      setNextEraTimeLeft(
+        eraJSON ? eraJSON.start + EPOCH_DURATION_MS - new Date().getTime() : 0
+      )
+      setTotalIssuance(issuance?.toString() || '0')
+    })
 
-    });
+    return () => unsubNewHeads && unsubNewHeads()
+  }, [appchainApi])
 
-    return () => unsubNewHeads && unsubNewHeads();
-
-  }, [appchainApi]);
+  const linkItems = [
+    [
+      {
+        link: `/bridge/near/${appchain?.appchain_id}`,
+        label: 'Bridge',
+        icon: <FiRepeat size={18} />,
+      },
+      {
+        link: `${global?.network?.octopus.explorerUrl}/?appchain=${appchain?.appchain_id}`,
+        label: 'Explorer',
+        icon: <FiCompass size={18} />,
+      },
+      {
+        link: `${global?.network?.near.explorerUrl}/accounts/${appchain?.appchain_anchor}`,
+        label: 'Anchor Contract',
+        icon: <FiAnchor size={18} />,
+      },
+    ],
+    [
+      {
+        link: toValidUrl(appchain?.appchain_metadata?.website_url),
+        label: 'Website',
+        icon: <FiGlobe size={18} />,
+      },
+      {
+        link: toValidUrl(appchain?.appchain_metadata?.function_spec_url),
+        label: 'Function Spec',
+        icon: <FiFileText size={18} />,
+      },
+      {
+        link: toValidUrl(appchain?.appchain_metadata?.github_address),
+        label: 'Github',
+        icon: <FiGithub size={18} />,
+      },
+    ],
+  ]
 
   return (
     <Box bg={bg} p={6} borderRadius="lg">
       <Flex alignItems="center" justifyContent="space-between" minH="68px">
         <HStack spacing={4}>
           <SkeletonCircle size="12" isLoaded={!!appchain}>
-            <Avatar src={appchain?.appchain_metadata?.fungible_token_metadata.icon as any}
-              name={appchain?.appchain_id} boxSize={12} />
+            <Avatar
+              src={
+                appchain?.appchain_metadata?.fungible_token_metadata.icon as any
+              }
+              name={appchain?.appchain_id}
+              boxSize={12}
+            />
           </SkeletonCircle>
           <VStack alignItems="flex-start" spacing={0}>
             <Skeleton isLoaded={!!appchain}>
-              <Link isExternal href={toValidUrl(appchain?.appchain_metadata?.website_url)}>
-                <Heading fontSize="2xl">{appchain?.appchain_id || 'loading'}</Heading>
+              <Link
+                isExternal
+                href={toValidUrl(appchain?.appchain_metadata?.website_url)}
+              >
+                <Heading fontSize="2xl">
+                  {appchain?.appchain_id || 'loading'}
+                </Heading>
               </Link>
             </Skeleton>
-            {
-              appchain ?
+            {appchain ? (
               <HStack className="octo-gray" fontSize="sm">
                 <Icon as={FaUser} boxSize={3} />
                 <Text>{appchain?.appchain_owner}</Text>
-              </HStack> : null
-            }
+              </HStack>
+            ) : null}
           </VStack>
         </HStack>
         <VStack alignItems="flex-end" spacing={0}>
           <StateBadge state={appchain?.appchain_state || ''} />
           <HStack className="octo-gray" fontSize="sm">
             <Text variant="gray">
-              {appchain ? dayjs(Math.floor(appchain.registered_time as any / 1e6)).format('YYYY-MM-DD') : '-'}
+              {appchain
+                ? dayjs(
+                    Math.floor((appchain.registered_time as any) / 1e6)
+                  ).format('YYYY-MM-DD')
+                : '-'}
             </Text>
           </HStack>
         </VStack>
       </Flex>
-      
-      <SimpleGrid columns={{ base: 3, md: 6 }} spacing={4} mt={8} bg={linksBg} borderRadius="lg">
-        <RouterLink to={`/bridge/near/${appchain?.appchain_id}`}>
-          <LinkBox icon={bridgeIcon} label="Bridge" />
-        </RouterLink>
-        <Link href={`${global?.network?.octopus.explorerUrl}/?appchain=${appchain?.appchain_id}`} isExternal>
-          <LinkBox icon={explorerIcon} label="Explorer" />
-        </Link>
-        <Link href={`${global?.network?.near.explorerUrl}/accounts/${appchain?.appchain_anchor}`} isExternal>
-          <LinkBox icon={anchorIcon} label="Anchor" />
-        </Link>
-        <Link href={toValidUrl(appchain?.appchain_metadata?.website_url)} isExternal>
-          <LinkBox icon={websiteIcon} label="Website" />
-        </Link>
-        <Link href={toValidUrl(appchain?.appchain_metadata?.function_spec_url)} isExternal>
-          <LinkBox icon={functionSpecIcon} label="Function Spec" />
-        </Link>
-        <Link href={toValidUrl(appchain?.appchain_metadata?.github_address)} isExternal>
-          <LinkBox icon={githubIcon} label="Github" />
-        </Link>
+
+      <SimpleGrid
+        columns={{ base: 1, md: 1 }}
+        spacing={4}
+        mt={8}
+        padding={4}
+        bg={linksBg}
+        borderRadius="lg"
+      >
+        <VStack width="100%">
+          {linkItems.map((items, index) => {
+            return (
+              <HStack key={index} width="100%">
+                {items.map((item, index) => {
+                  return <LinkBox key={item.link} {...item} />
+                })}
+              </HStack>
+            )
+          })}
+        </VStack>
       </SimpleGrid>
-      <SimpleGrid mt={8} columns={{ base: 2, md: 3 }} spacing={8} display={{ base: 'none', md: 'grid' }}>
+      <SimpleGrid
+        mt={8}
+        columns={{ base: 2, md: 3 }}
+        spacing={8}
+        display={{ base: 'none', md: 'grid' }}
+      >
         <VStack alignItems="flex-start">
-          <Text variant="gray" fontSize="sm" >Block Height</Text>
+          <Text variant="gray" fontSize="sm">
+            Block Height
+          </Text>
           <Skeleton isLoaded={!!nextEraTime}>
             <Heading fontSize="xl">
-              {
-                bestBlock !== undefined ?
-                  DecimalUtil.beautify(new Decimal(bestBlock), 0) : 'loading'
-              }
+              {bestBlock !== undefined
+                ? DecimalUtil.beautify(new Decimal(bestBlock), 0)
+                : 'loading'}
             </Heading>
           </Skeleton>
         </VStack>
         <VStack alignItems="flex-start">
-          <Text variant="gray" fontSize="sm" >Current Era</Text>
+          <Text variant="gray" fontSize="sm">
+            Current Era
+          </Text>
           <Skeleton isLoaded={currentEra !== undefined}>
-            <Heading fontSize="xl">{currentEra !== undefined ? currentEra : 'loading'}</Heading>
+            <Heading fontSize="xl">
+              {currentEra !== undefined ? currentEra : 'loading'}
+            </Heading>
           </Skeleton>
         </VStack>
         <VStack alignItems="flex-start">
           <HStack>
-            <Text variant="gray" fontSize="sm" >Next Era</Text>
-            {
-              nextEraTime ?
-                <CircularProgress value={(EPOCH_DURATION_MS - nextEraTimeLeft) / (EPOCH_DURATION_MS / 100)}
-                  size={4} thickness={16} color="octo-blue.500" /> : null
-            }
+            <Text variant="gray" fontSize="sm">
+              Next Era
+            </Text>
+            {nextEraTime ? (
+              <CircularProgress
+                value={
+                  (EPOCH_DURATION_MS - nextEraTimeLeft) /
+                  (EPOCH_DURATION_MS / 100)
+                }
+                size={4}
+                thickness={16}
+                color="octo-blue.500"
+              />
+            ) : null}
           </HStack>
           <Skeleton isLoaded={!!nextEraTime}>
-            {
-              nextEraTime ?
-                <Tooltip label={dayjs(nextEraTime).format('YYYY-MM-DD HH:mm:ss')}>
-                  <Heading fontSize="xl">
-                    {dayjs.duration(Math.floor(nextEraTimeLeft / 1000), 'seconds').humanize(true)}
-                  </Heading>
-                </Tooltip> :
-                <Heading fontSize="xl">loading</Heading>
-            }
+            {nextEraTime ? (
+              <Tooltip label={dayjs(nextEraTime).format('YYYY-MM-DD HH:mm:ss')}>
+                <Heading fontSize="xl">
+                  {dayjs
+                    .duration(Math.floor(nextEraTimeLeft / 1000), 'seconds')
+                    .humanize(true)}
+                </Heading>
+              </Tooltip>
+            ) : (
+              <Heading fontSize="xl">loading</Heading>
+            )}
           </Skeleton>
         </VStack>
         <VStack alignItems="flex-start">
-          <Text variant="gray" fontSize="sm" >Token</Text>
-          <Heading fontSize="xl">{appchain?.appchain_metadata?.fungible_token_metadata?.symbol || '-'}</Heading>
+          <Text variant="gray" fontSize="sm">
+            Token
+          </Text>
+          <Heading fontSize="xl">
+            {appchain?.appchain_metadata?.fungible_token_metadata?.symbol ||
+              '-'}
+          </Heading>
         </VStack>
         <VStack alignItems="flex-start">
-          <Text variant="gray" fontSize="sm" >Total Supply</Text>
+          <Text variant="gray" fontSize="sm">
+            Total Supply
+          </Text>
           <Skeleton isLoaded={!!totalIssuance}>
             <Heading fontSize="xl">
-              {
-                totalIssuance && appchain?.appchain_metadata ?
-                  DecimalUtil.beautify(
+              {totalIssuance && appchain?.appchain_metadata
+                ? DecimalUtil.beautify(
                     DecimalUtil.fromString(
-                      totalIssuance, 
-                      appchain?.appchain_metadata?.fungible_token_metadata.decimals
+                      totalIssuance,
+                      appchain?.appchain_metadata?.fungible_token_metadata
+                        .decimals
                     ),
                     0
-                  ) : 'loading'
-              }
+                  )
+                : 'loading'}
             </Heading>
           </Skeleton>
         </VStack>
         <VStack alignItems="flex-start">
-          <Text variant="gray" fontSize="sm" >RPC Endpoint</Text>
-          {
-            appchainSettings?.rpc_endpoint ?
-              <HStack w="100%">
-                <Heading fontSize="md" textOverflow="ellipsis" overflow="hidden" whiteSpace="nowrap" w="calc(100% - 30px)">
-                  {appchainSettings?.rpc_endpoint || '-'}
-                </Heading>
-                <IconButton aria-label="copy" onClick={onCopyRpcEndpoint} size="xs">
-                  {hasRpcEndpointCopied ? <CheckIcon /> : <CopyIcon />}
-                </IconButton>
-              </HStack> :
-              <Heading fontSize="xl">-</Heading>
-          }
+          <Text variant="gray" fontSize="sm">
+            RPC Endpoint
+          </Text>
+          {appchainSettings?.rpc_endpoint ? (
+            <HStack w="100%">
+              <Heading
+                fontSize="md"
+                textOverflow="ellipsis"
+                overflow="hidden"
+                whiteSpace="nowrap"
+                w="calc(100% - 30px)"
+                title={appchainSettings?.rpc_endpoint}
+              >
+                {appchainSettings?.rpc_endpoint || '-'}
+              </Heading>
+              <IconButton
+                aria-label="copy"
+                onClick={onCopyRpcEndpoint}
+                size="xs"
+              >
+                {hasRpcEndpointCopied ? <CheckIcon /> : <CopyIcon />}
+              </IconButton>
+            </HStack>
+          ) : (
+            <Heading fontSize="xl">-</Heading>
+          )}
         </VStack>
         <VStack alignItems="flex-start">
-          <Text variant="gray" fontSize="sm" >IDO Amount</Text>
+          <Text variant="gray" fontSize="sm">
+            IDO Amount
+          </Text>
           <Heading fontSize="xl">
-            {
-              appchain?.appchain_metadata?.ido_amount_of_wrapped_appchain_token ?
-                DecimalUtil.beautify(
+            {appchain?.appchain_metadata?.ido_amount_of_wrapped_appchain_token
+              ? DecimalUtil.beautify(
                   DecimalUtil.fromString(
-                    appchain?.appchain_metadata?.ido_amount_of_wrapped_appchain_token,
-                    appchain?.appchain_metadata?.fungible_token_metadata.decimals
+                    appchain?.appchain_metadata
+                      ?.ido_amount_of_wrapped_appchain_token,
+                    appchain?.appchain_metadata?.fungible_token_metadata
+                      .decimals
                   ),
                   0
-                ) : '-'
-            }
+                )
+              : '-'}
           </Heading>
         </VStack>
 
@@ -301,21 +395,22 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
           </Heading>
         </VStack> */}
         <VStack alignItems="flex-start">
-          <Text variant="gray" fontSize="sm" >Era Reward</Text>
+          <Text variant="gray" fontSize="sm">
+            Era Reward
+          </Text>
           <Heading fontSize="xl">
-            {
-              appchainSettings?.era_reward && wrappedAppchainToken ?
-                DecimalUtil.beautify(
+            {appchainSettings?.era_reward && wrappedAppchainToken
+              ? DecimalUtil.beautify(
                   DecimalUtil.fromString(
                     appchainSettings?.era_reward,
                     wrappedAppchainToken.metadata.decimals
                   ),
                   0
-                ) : '-'
-            }
+                )
+              : '-'}
           </Heading>
         </VStack>
       </SimpleGrid>
     </Box>
-  );
+  )
 }
