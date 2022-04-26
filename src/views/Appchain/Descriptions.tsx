@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 
 import relativeTime from 'dayjs/plugin/relativeTime'
 import duration from 'dayjs/plugin/duration'
@@ -67,26 +67,24 @@ type LinkBoxProps = {
 
 const LinkBox = ({ label, icon, link }: LinkBoxProps) => {
   return (
-    <HStack style={{ flex: 1 }}>
-      <Link
-        href={link}
-        target={link?.startsWith('http') ? '_blank' : '_self'}
-        style={{ color: '#008cd5' }}
-      >
-        <HStack spacing={1} style={{ cursor: 'pointer' }}>
-          {icon}
-          <Text
-            fontSize="sm"
-            whiteSpace="nowrap"
-            textOverflow="ellipsis"
-            overflow="hidden"
-            maxW="100%"
-          >
-            {label}
-          </Text>
-        </HStack>
-      </Link>
-    </HStack>
+    <Link
+      href={link}
+      target={link?.startsWith('http') ? '_blank' : '_self'}
+      style={{ color: '#008cd5' }}
+    >
+      <HStack spacing={1} style={{ cursor: 'pointer' }}>
+        {icon}
+        <Text
+          fontSize="sm"
+          whiteSpace="nowrap"
+          textOverflow="ellipsis"
+          overflow="hidden"
+          maxW="100%"
+        >
+          {label}
+        </Text>
+      </HStack>
+    </Link>
   )
 }
 
@@ -142,42 +140,38 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
     return () => unsubNewHeads && unsubNewHeads()
   }, [appchainApi])
 
-  const linkItems = [
-    [
-      {
-        link: `/bridge/near/${appchain?.appchain_id}`,
-        label: 'Bridge',
-        icon: <FiRepeat size={18} />,
-      },
-      {
-        link: `${global?.network?.octopus.explorerUrl}/?appchain=${appchain?.appchain_id}`,
-        label: 'Explorer',
-        icon: <FiCompass size={18} />,
-      },
-      {
-        link: `${global?.network?.near.explorerUrl}/accounts/${appchain?.appchain_anchor}`,
-        label: 'Anchor Contract',
-        icon: <FiAnchor size={18} />,
-      },
-    ],
-    [
-      {
-        link: toValidUrl(appchain?.appchain_metadata?.website_url),
-        label: 'Website',
-        icon: <FiGlobe size={18} />,
-      },
-      {
-        link: toValidUrl(appchain?.appchain_metadata?.function_spec_url),
-        label: 'Function Spec',
-        icon: <FiFileText size={18} />,
-      },
-      {
-        link: toValidUrl(appchain?.appchain_metadata?.github_address),
-        label: 'Github',
-        icon: <FiGithub size={18} />,
-      },
-    ],
-  ]
+  const linkItems = useMemo(() => !appchain ? [] : [
+    {
+      link: `/bridge/near/${appchain?.appchain_id}`,
+      label: 'Bridge',
+      icon: <FiRepeat size={18} />,
+    },
+    {
+      link: `${global?.network?.octopus.explorerUrl}/?appchain=${appchain?.appchain_id}`,
+      label: 'Explorer',
+      icon: <FiCompass size={18} />,
+    },
+    {
+      link: `${global?.network?.near.explorerUrl}/accounts/${appchain?.appchain_anchor}`,
+      label: 'Anchor Contract',
+      icon: <FiAnchor size={18} />,
+    },
+    {
+      link: toValidUrl(appchain?.appchain_metadata?.website_url),
+      label: 'Website',
+      icon: <FiGlobe size={18} />,
+    },
+    {
+      link: toValidUrl(appchain?.appchain_metadata?.function_spec_url),
+      label: 'Function Spec',
+      icon: <FiFileText size={18} />,
+    },
+    {
+      link: toValidUrl(appchain?.appchain_metadata?.github_address),
+      label: 'Github',
+      icon: <FiGithub size={18} />,
+    }
+  ], [appchain]);
 
   return (
     <Box bg={bg} p={6} borderRadius="lg">
@@ -226,24 +220,18 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
       </Flex>
 
       <SimpleGrid
-        columns={{ base: 1, md: 1 }}
+        columns={3}
         spacing={4}
         mt={8}
         padding={4}
         bg={linksBg}
         borderRadius="lg"
       >
-        <VStack width="100%">
-          {linkItems.map((items, index) => {
-            return (
-              <HStack key={index} width="100%">
-                {items.map((item, index) => {
-                  return <LinkBox key={item.link} {...item} />
-                })}
-              </HStack>
-            )
-          })}
-        </VStack>
+        {
+          linkItems.map((item) => (
+            <LinkBox key={item.link} {...item} />
+          ))
+        }
       </SimpleGrid>
       <SimpleGrid
         mt={8}
