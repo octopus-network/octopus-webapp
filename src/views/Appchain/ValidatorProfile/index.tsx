@@ -62,7 +62,7 @@ import { useGlobalStore } from 'stores'
 import { DecimalUtil, toShortAddress, ZERO_DECIMAL } from 'utils'
 
 import octoAvatar from 'assets/icons/avatar.png'
-import { Mail, Server, Twitter } from 'react-feather'
+import { FiMail, FiServer, FiTwitter } from 'react-icons/fi'
 
 type ValidatorProfileProps = {
   wrappedAppchainTokenContract?: TokenContract
@@ -322,7 +322,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
               justifyContent="flex-start"
             >
               <HStack justify="flex-start" width="100%">
-                <Server size={18} />
+                <FiServer size={18} />
                 <Text ml={2} title={ss58Address}>
                   {toShortAddress(ss58Address)}
                 </Text>
@@ -334,7 +334,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                 <HStack justify="flex-start" width="100%">
                   <Link href={`mailto:${validatorProfile?.profile?.email}`}>
                     <HStack>
-                      <Mail size={18} />
+                      <FiMail size={18} />
                       <Text ml={2}>{validatorProfile?.profile?.email}</Text>
                     </HStack>
                   </Link>
@@ -347,7 +347,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                     href={`https://www.twitter.com/${validatorProfile?.profile?.socialMediaHandle}`}
                   >
                     <HStack>
-                      <Twitter size={18} />
+                      <FiTwitter size={18} />
                       <Text ml={2}>
                         {validatorProfile?.profile?.socialMediaHandle}
                       </Text>

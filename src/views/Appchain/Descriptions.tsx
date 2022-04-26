@@ -40,8 +40,14 @@ import Decimal from 'decimal.js'
 import { EPOCH_DURATION_MS } from 'primitives'
 import { useGlobalStore } from 'stores'
 import { FaUser } from 'react-icons/fa'
-import { Anchor, Globe, Compass, GitHub, Repeat, FileText } from 'react-feather'
-import _ from 'lodash'
+import {
+  FiAnchor,
+  FiGlobe,
+  FiCompass,
+  FiGithub,
+  FiRepeat,
+  FiFileText,
+} from 'react-icons/fi'
 
 dayjs.extend(duration)
 dayjs.extend(relativeTime)
@@ -137,36 +143,40 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
   }, [appchainApi])
 
   const linkItems = [
-    {
-      link: `/bridge/near/${appchain?.appchain_id}`,
-      label: 'Bridge',
-      icon: <Repeat size={18} />,
-    },
-    {
-      link: `${global?.network?.octopus.explorerUrl}/?appchain=${appchain?.appchain_id}`,
-      label: 'Explorer',
-      icon: <Compass size={18} />,
-    },
-    {
-      link: `${global?.network?.near.explorerUrl}/accounts/${appchain?.appchain_anchor}`,
-      label: 'Anchor Contract',
-      icon: <Anchor size={18} />,
-    },
-    {
-      link: toValidUrl(appchain?.appchain_metadata?.website_url),
-      label: 'Website',
-      icon: <Globe size={18} />,
-    },
-    {
-      link: toValidUrl(appchain?.appchain_metadata?.function_spec_url),
-      label: 'Function Spec',
-      icon: <FileText size={18} />,
-    },
-    {
-      link: toValidUrl(appchain?.appchain_metadata?.github_address),
-      label: 'Github',
-      icon: <GitHub size={18} />,
-    },
+    [
+      {
+        link: `/bridge/near/${appchain?.appchain_id}`,
+        label: 'Bridge',
+        icon: <FiRepeat size={18} />,
+      },
+      {
+        link: `${global?.network?.octopus.explorerUrl}/?appchain=${appchain?.appchain_id}`,
+        label: 'Explorer',
+        icon: <FiCompass size={18} />,
+      },
+      {
+        link: `${global?.network?.near.explorerUrl}/accounts/${appchain?.appchain_anchor}`,
+        label: 'Anchor Contract',
+        icon: <FiAnchor size={18} />,
+      },
+    ],
+    [
+      {
+        link: toValidUrl(appchain?.appchain_metadata?.website_url),
+        label: 'Website',
+        icon: <FiGlobe size={18} />,
+      },
+      {
+        link: toValidUrl(appchain?.appchain_metadata?.function_spec_url),
+        label: 'Function Spec',
+        icon: <FiFileText size={18} />,
+      },
+      {
+        link: toValidUrl(appchain?.appchain_metadata?.github_address),
+        label: 'Github',
+        icon: <FiGithub size={18} />,
+      },
+    ],
   ]
 
   return (
@@ -224,7 +234,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
         borderRadius="lg"
       >
         <VStack width="100%">
-          {_.chunk(linkItems, 3).map((items, index) => {
+          {linkItems.map((items, index) => {
             return (
               <HStack key={index} width="100%">
                 {items.map((item, index) => {
