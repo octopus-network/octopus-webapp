@@ -314,7 +314,7 @@ export const BridgePanel: React.FC = () => {
     isCheckingTxns.current = true;
 
     const promises = pendingTxns.map(txn => {
-    
+
       if (txn.isAppchainSide) {
         return anchorContract?.get_appchain_message_processing_result_of({ nonce: txn.sequenceId }).then(result => {
           console.log(result);
@@ -675,13 +675,7 @@ export const BridgePanel: React.FC = () => {
         <Flex justifyContent="space-between" alignItems="center" minH="32px">
           <Heading fontSize="xl">Bridge</Heading>
           {
-            global?.network && global?.network?.near.networkId !== 'mainnet' ?
-            <RouterLink to="/bridge/txs">
-              <Button variant="link" color="#2468f2" size="sm">
-                Recent Transactions
-                <Icon as={ChevronRightIcon} ml={1} />
-              </Button>
-            </RouterLink> :
+
             appchainTxns.length ?
               <Button colorScheme="octo-blue" variant="ghost" size="sm" onClick={setIsHistoryDrawerOpen.on}>
                 <HStack>
@@ -693,7 +687,14 @@ export const BridgePanel: React.FC = () => {
                   }
                   <Text>History</Text>
                 </HStack>
-              </Button> : null
+              </Button> :
+              global?.network && !appchainId && global?.network?.near.networkId !== 'mainnet' ?
+                <RouterLink to="/bridge/txs">
+                  <Button variant="link" color="#2468f2" size="sm">
+                    Recent Transactions
+                    <Icon as={ChevronRightIcon} ml={1} />
+                  </Button>
+                </RouterLink> : null
           }
         </Flex>
         {
@@ -711,7 +712,7 @@ export const BridgePanel: React.FC = () => {
                       <Avatar
                         boxSize={8}
                         name={fromChainName}
-                        src={isReverse ? nearLogo : appchain?.appchain_metadata.fungible_token_metadata.icon as any} />
+                        src={isReverse ? nearLogo : appchain?.appchain_metadata?.fungible_token_metadata.icon as any} />
                       <Heading fontSize="lg" textOverflow="ellipsis" overflow="hidden" whiteSpace="nowrap">
                         {fromAccount || fromChainName}
                       </Heading>
@@ -739,33 +740,33 @@ export const BridgePanel: React.FC = () => {
                     <Heading fontSize="md" className="octo-gray">Target</Heading>
                     {
                       isInvalidTargetAccount ?
-                      <HStack color="red">
-                        <WarningIcon boxSize={3} />
-                        <Text fontSize="xs">Invalid account</Text>
-                      </HStack> :
-                      targetAccountNeedDepositStorage ?
-                      <HStack>
-                        <WarningIcon color="red" boxSize={3} />
-                        <Text fontSize="xs" color="red">This account isn't setup yet</Text>
-                        <Button 
-                          colorScheme="octo-blue" 
-                          variant="ghost" 
-                          size="xs" 
-                          isDisabled={isDepositingStorage || !global.accountId} 
-                          isLoading={isDepositingStorage} 
-                          onClick={onDepositStorage}>
-                          {
-                            global.accountId ? 'Setup' : 'Please Login'
-                          }
-                        </Button>
-                      </HStack> : null
+                        <HStack color="red">
+                          <WarningIcon boxSize={3} />
+                          <Text fontSize="xs">Invalid account</Text>
+                        </HStack> :
+                        targetAccountNeedDepositStorage ?
+                          <HStack>
+                            <WarningIcon color="red" boxSize={3} />
+                            <Text fontSize="xs" color="red">This account isn't setup yet</Text>
+                            <Button
+                              colorScheme="octo-blue"
+                              variant="ghost"
+                              size="xs"
+                              isDisabled={isDepositingStorage || !global.accountId}
+                              isLoading={isDepositingStorage}
+                              onClick={onDepositStorage}>
+                              {
+                                global.accountId ? 'Setup' : 'Please Login'
+                              }
+                            </Button>
+                          </HStack> : null
                     }
                   </Flex>
                   <HStack spacing={3} mt={3}>
                     <Avatar
                       boxSize={8}
                       name={targetChainName}
-                      src={!isReverse ? nearLogo : appchain?.appchain_metadata.fungible_token_metadata.icon as any} />
+                      src={!isReverse ? nearLogo : appchain?.appchain_metadata?.fungible_token_metadata.icon as any} />
                     <InputGroup
                       variant="unstyled">
                       <Input
