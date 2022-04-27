@@ -1,4 +1,4 @@
-import React from 'react';
+import React from 'react'
 
 import {
   Container,
@@ -15,53 +15,53 @@ import {
   MenuButton,
   MenuGroup,
   MenuDivider,
-  useDisclosure
-} from '@chakra-ui/react';
+  useDisclosure,
+} from '@chakra-ui/react'
 
-import { 
-  ColorModeSwitcher,
-  LoginButton
-} from 'components';
+import { ColorModeSwitcher, LoginButton } from 'components'
 
-import { 
-  AiOutlinePoweroff, 
-  AiOutlineDashboard 
-} from 'react-icons/ai';
+import { AiOutlinePoweroff, AiOutlineDashboard } from 'react-icons/ai'
 
-import { Link as RouterLink, useLocation } from 'react-router-dom';
-import logo from 'assets/logo.png';
-import octoAvatar from 'assets/icons/avatar.png';
+import { Link as RouterLink, useLocation } from 'react-router-dom'
+import logo from 'assets/logo.png'
+import octoAvatar from 'assets/icons/avatar.png'
 
-import { useGlobalStore } from 'stores';
+import { useGlobalStore } from 'stores'
 
 type NavLinkProps = {
-  path: string;
-  label: string;
+  path: string
+  label: string
 }
 
 const NavLink: React.FC<NavLinkProps> = ({ path, label }) => {
-  const location = useLocation();
-  const locationPath = location.pathname;
+  const location = useLocation()
+  const locationPath = location.pathname
 
   return (
-    <Link 
-      as={RouterLink} 
-      to={path} 
-      aria-selected={new RegExp(`^${path}`).test(locationPath)}>
-      <Heading fontSize="sm" fontWeight={600}>{label}</Heading>
+    <Link
+      as={RouterLink}
+      to={path}
+      aria-selected={new RegExp(`^${path}`).test(locationPath)}
+    >
+      <Heading fontSize="sm" fontWeight={600}>
+        {label}
+      </Heading>
     </Link>
-  );
-} 
+  )
+}
 
 export const Header: React.FC = () => {
+  const { global } = useGlobalStore()
 
-  const { global } = useGlobalStore();
-
-  const { isOpen: isMenuOpen, onOpen: onMenuOpen, onClose: onMenuClose } = useDisclosure();
+  const {
+    isOpen: isMenuOpen,
+    onOpen: onMenuOpen,
+    onClose: onMenuClose,
+  } = useDisclosure()
 
   const onLogout = () => {
-    global.wallet?.signOut();
-    window.location.replace(window.location.origin + window.location.pathname);
+    global.wallet?.signOut()
+    window.location.replace(window.location.origin + window.location.pathname)
   }
 
   return (
@@ -75,31 +75,44 @@ export const Header: React.FC = () => {
             <NavLink path="/home" label="Home" />
             <NavLink path="/appchains" label="Appchains" />
             <NavLink path="/bridge" label="Bridge" />
+            <NavLink path="/converter" label="Converter" />
             <Link href="https://docs.oct.network/" isExternal>
-              <Heading fontSize="sm" fontWeight={600}>Docs</Heading>
+              <Heading fontSize="sm" fontWeight={600}>
+                Docs
+              </Heading>
             </Link>
             <ColorModeSwitcher />
           </HStack>
-          {
-            global.accountId ?
+          {global.accountId ? (
             <Menu isOpen={isMenuOpen} placement="top-end">
-              <MenuButton as={Box} onMouseEnter={onMenuOpen} onMouseLeave={onMenuClose}>
+              <MenuButton
+                as={Box}
+                onMouseEnter={onMenuOpen}
+                onMouseLeave={onMenuClose}
+              >
                 <Avatar boxSize={9} src={octoAvatar} />
               </MenuButton>
-              <MenuList onMouseEnter={onMenuOpen} onMouseLeave={onMenuClose} mt={-1}>
+              <MenuList
+                onMouseEnter={onMenuOpen}
+                onMouseLeave={onMenuClose}
+                mt={-1}
+              >
                 <MenuGroup title={global.accountId}>
                   <RouterLink to="/dashboard">
                     <MenuItem icon={<AiOutlineDashboard />}>Dashboard</MenuItem>
                   </RouterLink>
                 </MenuGroup>
                 <MenuDivider />
-                <MenuItem onClick={onLogout} icon={<AiOutlinePoweroff />}>Logout</MenuItem>
+                <MenuItem onClick={onLogout} icon={<AiOutlinePoweroff />}>
+                  Logout
+                </MenuItem>
               </MenuList>
-            </Menu> :
+            </Menu>
+          ) : (
             <LoginButton />
-          }
+          )}
         </HStack>
       </Flex>
     </Container>
-  );
+  )
 }

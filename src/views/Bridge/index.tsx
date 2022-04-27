@@ -1,48 +1,39 @@
-import React, { useMemo } from 'react';
+import React, { useMemo } from 'react'
 
-import {
-  Container,
-  Grid,
-  GridItem,
-  useBoolean,
-  SlideFade,
-  ScaleFade,
-  Fade
-} from '@chakra-ui/react';
+import { Container, Grid, GridItem, SlideFade } from '@chakra-ui/react'
 
-import { Appchains } from './Appchains';
-import { BridgePanel } from './BridgePanel';
-import { Status } from './Status';
-import { useLocation } from 'react-router-dom';
+import { Appchains } from './Appchains'
+import { BridgePanel } from './BridgePanel'
+import { Status } from './Status'
+import { useLocation } from 'react-router-dom'
 
 export const Bridge: React.FC = () => {
-  const location = useLocation();
+  const location = useLocation()
 
   const showTxs = useMemo(() => {
-    return /^\/bridge\/txs/.test(location.pathname);
-  }, [location]);
+    return /^\/bridge\/txs/.test(location.pathname)
+  }, [location])
 
   return (
     <Container position="relative">
-      <SlideFade in={showTxs}>
-        {
-          showTxs ?
-          <Status /> : null
-        }
-      </SlideFade>
+      <SlideFade in={showTxs}>{showTxs ? <Status /> : null}</SlideFade>
       <SlideFade in={!showTxs}>
-        {
-          !showTxs ?
-          <Grid templateColumns={{ base: 'repeat(3, 1fr)', md: 'repeat(6, 1fr)' }} mt={12} gap={6} top={0}>
+        {!showTxs ? (
+          <Grid
+            templateColumns={{ base: 'repeat(3, 1fr)', md: 'repeat(6, 1fr)' }}
+            mt={12}
+            gap={6}
+            top={0}
+          >
             <GridItem colSpan={3}>
               <Appchains />
             </GridItem>
             <GridItem colSpan={3}>
               <BridgePanel />
             </GridItem>
-          </Grid> : null
-        }
+          </Grid>
+        ) : null}
       </SlideFade>
     </Container>
-  );
+  )
 }
