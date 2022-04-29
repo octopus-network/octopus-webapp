@@ -25,7 +25,7 @@ export function Converter() {
   return (
     <Container position="relative">
       <Flex direction="column" padding={4} pt={10}>
-        <MyPool pools={myPools} />
+        <MyPool pools={myPools} whitelist={whitelist} />
         <CreatePool whitelist={whitelist} />
 
         <PoolList pools={pools} whitelist={whitelist} />

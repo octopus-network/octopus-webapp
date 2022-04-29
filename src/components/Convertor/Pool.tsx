@@ -12,9 +12,11 @@ import { ConversionPool, FungibleTokenMetadata } from 'types'
 export default function Pool({
   pool,
   whitelist,
+  onSelect,
 }: {
   pool: ConversionPool
   whitelist: FungibleTokenMetadata[]
+  onSelect: (pool: ConversionPool) => void
 }) {
   const bg = useColorModeValue('white', '#25263c')
   const inToken = whitelist.find((t) => t.token_id === pool.in_token)
@@ -23,7 +25,7 @@ export default function Pool({
     <Flex
       direction="row"
       bg={bg}
-      p={10}
+      p={6}
       align="center"
       justify="space-between"
       mb={2}
@@ -67,7 +69,9 @@ export default function Pool({
           </Flex>
         </Flex>
       </Flex>
-      <Button colorScheme="blue">Select</Button>
+      <Button colorScheme="blue" onClick={() => onSelect(pool)}>
+        Select
+      </Button>
     </Flex>
   )
 }

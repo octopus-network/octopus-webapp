@@ -2,11 +2,13 @@ import axios from 'axios'
 import { API_HOST } from 'config'
 import { Account, keyStores, Near } from 'near-api-js'
 import { useEffect, useState } from 'react'
+import { useGlobalStore } from 'stores'
 import {
   ConversionPool,
   ConvertorContract,
   FungibleTokenMetadata,
   NetworkConfig,
+  TokenContract,
 } from 'types'
 
 export const useNear = () => {
@@ -64,6 +66,26 @@ export const usePools = (
   return pools
 }
 
+// export const useMyPools = (
+//   contract: ConvertorContract | null,
+//   accountId: string
+// ) => {
+//   const [pools, setPools] = useState<ConversionPool[]>([])
+//   useEffect(() => {
+//     if (contract) {
+//       contract
+//         .get_creator_pools({ from_index, limit })
+//         .then((pools) => {
+//           setPools(pools)
+//         })
+//         .catch((error) => {
+//           console.error(error)
+//         })
+//     }
+//   }, [contract, from_index, limit])
+//   return pools
+// }
+
 export const useWhitelist = (contract: ConvertorContract | null) => {
   const [whitelist, setWhitelist] = useState<FungibleTokenMetadata[]>([])
   const near = useNear()
@@ -90,4 +112,28 @@ export const useWhitelist = (contract: ConvertorContract | null) => {
     fetch()
   }, [contract, near])
   return whitelist
+}
+
+export const useTokenBalance = (contractId: string | undefined) => {
+  const [balance, setBalance] = useState('0')
+  const { global } = useGlobalStore()
+  useEffect(() => {
+    if (global && global.wallet && global.accountId && contractId) {
+      const contract = new TokenContract(
+        global?.wallet?.account(),
+        contractId,
+        {
+          viewMethods: ['ft_balance_of', 'storage_balance_of'],
+          changeMethods: ['ft_transfer_call'],
+        }
+      )
+      contract
+        .ft_balance_of({ account_id: global.accountId })
+        .then((balance) => {
+          setBalance(balance)
+        })
+        .catch(console.error)
+    }
+  }, [global, contractId])
+  return balance
 }

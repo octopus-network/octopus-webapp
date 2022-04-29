@@ -14,6 +14,7 @@ import {
   Box,
   Image,
   useToast,
+  ModalCloseButton,
 } from '@chakra-ui/react'
 import { BN } from '@polkadot/util'
 import { Select, chakraComponents } from 'chakra-react-select'
@@ -94,7 +95,10 @@ export default function CreatePool({
   }
 
   return (
-    <Flex direction="row" justify={'end'}>
+    <Flex direction="row" justify="space-between">
+      <Text fontSize="2xl" fontWeight="bold">
+        Pool list
+      </Text>
       <Button leftIcon={<FiPlus />} colorScheme="blue" onClick={onOpen}>
         Create Pool
       </Button>
@@ -103,6 +107,7 @@ export default function CreatePool({
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>Create Pool</ModalHeader>
+          <ModalCloseButton />
           <ModalBody>
             <Flex direction="column" gap={2}>
               <Flex gap={2}>
