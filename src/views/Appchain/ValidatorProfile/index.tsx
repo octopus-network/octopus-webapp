@@ -62,7 +62,6 @@ import { useGlobalStore } from 'stores'
 import { DecimalUtil, toShortAddress, ZERO_DECIMAL } from 'utils'
 
 import octoAvatar from 'assets/icons/avatar.png'
-import { FiMail, FiServer, FiTwitter } from 'react-icons/fi'
 
 type ValidatorProfileProps = {
   wrappedAppchainTokenContract?: TokenContract
@@ -193,6 +192,10 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
   const { hasCopied: hasSS58AddressCopied, onCopy: onSS58AddressCopy } =
     useClipboard(ss58Address)
 
+  const { hasCopied: hasEmailCopied, onCopy: onEmailCopy } = useClipboard(
+    validatorProfile?.profile?.email ?? ''
+  )
+
   const isMyself = useMemo(
     () => global && validator && global.accountId === validator.validator_id,
     [global, validator]
@@ -322,7 +325,6 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
               justifyContent="flex-start"
             >
               <HStack justify="flex-start" width="100%">
-                <FiServer size={18} />
                 <Text ml={2} title={ss58Address}>
                   {toShortAddress(ss58Address)}
                 </Text>
@@ -332,12 +334,10 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
               </HStack>
               {validatorProfile?.profile?.email && (
                 <HStack justify="flex-start" width="100%">
-                  <Link href={`mailto:${validatorProfile?.profile?.email}`}>
-                    <HStack>
-                      <FiMail size={18} />
-                      <Text ml={2}>{validatorProfile?.profile?.email}</Text>
-                    </HStack>
-                  </Link>
+                  <Text ml={2}>{validatorProfile?.profile?.email}</Text>
+                  <Button variant="link" onClick={onEmailCopy} size="sm">
+                    {hasEmailCopied ? <CheckIcon /> : <CopyIcon />}
+                  </Button>
                 </HStack>
               )}
 
@@ -347,7 +347,6 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                     href={`https://www.twitter.com/${validatorProfile?.profile?.socialMediaHandle}`}
                   >
                     <HStack>
-                      <FiTwitter size={18} />
                       <Text ml={2}>
                         {validatorProfile?.profile?.socialMediaHandle}
                       </Text>
