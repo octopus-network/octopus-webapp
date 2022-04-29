@@ -1,27 +1,34 @@
-import React from 'react'
 import { Container, Flex } from '@chakra-ui/react'
 import CreatePool from 'components/Convertor/CreatePool'
+import MyPool from 'components/Convertor/MyPool'
 import Pool from 'components/Convertor/Pool'
+import PoolList from 'components/Convertor/PoolList'
+import {
+  useConvertorContract,
+  usePools,
+  useWhitelist,
+} from 'hooks/useConvertorContract'
+import { useGlobalStore } from 'stores'
 
 export function Converter() {
-  const pools = [
-    {
-      isReverse: true,
-      token0: 'USDT',
-      token1: 'TAO',
-    },
-  ]
+  const { global } = useGlobalStore()
+  const contract = useConvertorContract(
+    global.wallet?.account() as any,
+    'contract.convertor.testnet'
+  )
+  const whitelist = useWhitelist(contract)
+
+  const pools = usePools(contract, 0, 10)
+
+  const myPools = pools.filter((p) => p.creator === global.accountId)
 
   return (
     <Container position="relative">
       <Flex direction="column" padding={4} pt={10}>
-        <CreatePool />
+        <MyPool pools={myPools} />
+        <CreatePool whitelist={whitelist} />
 
-        <Flex direction="column" mt={10}>
-          {pools.map((pool, idx) => {
-            return <Pool key={idx} pool={pool} />
-          })}
-        </Flex>
+        <PoolList pools={pools} whitelist={whitelist} />
       </Flex>
     </Container>
   )
