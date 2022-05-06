@@ -36,7 +36,7 @@ export const useConvertorContract = (account: Account, contractId: string) => {
 
   useEffect(() => {
     const _contract = new ConvertorContract(account, contractId, {
-      viewMethods: ['get_whitelist', 'get_pools'],
+      viewMethods: ['get_whitelist', 'get_pools', 'get_storage_fee_gap_of'],
       changeMethods: [],
     })
     setContract(_contract)
@@ -51,19 +51,21 @@ export const usePools = (
   limit: number
 ) => {
   const [pools, setPools] = useState<ConversionPool[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   useEffect(() => {
     if (contract) {
       contract
         .get_pools({ from_index, limit })
         .then((pools) => {
           setPools(pools)
+          setIsLoading(false)
         })
         .catch((error) => {
-          console.error(error)
+          setIsLoading(false)
         })
     }
   }, [contract, from_index, limit])
-  return pools
+  return { pools, isLoading }
 }
 
 // export const useMyPools = (
@@ -88,6 +90,7 @@ export const usePools = (
 
 export const useWhitelist = (contract: ConvertorContract | null) => {
   const [whitelist, setWhitelist] = useState<FungibleTokenMetadata[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const near = useNear()
   useEffect(() => {
     async function fetch() {
@@ -104,14 +107,15 @@ export const useWhitelist = (contract: ConvertorContract | null) => {
             })
           )
           setWhitelist(metas)
+          setIsLoading(false)
         } catch (error) {
-          console.error(error)
+          setIsLoading(false)
         }
       }
     }
     fetch()
   }, [contract, near])
-  return whitelist
+  return { whitelist, isLoading }
 }
 
 export const useTokenBalance = (contractId: string | undefined) => {

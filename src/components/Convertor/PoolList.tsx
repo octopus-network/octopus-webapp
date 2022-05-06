@@ -1,6 +1,7 @@
 import { Flex } from '@chakra-ui/react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ConversionPool, FungibleTokenMetadata } from 'types'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import ConvertToken from './ConvertToken'
 import Pool from './Pool'
 
@@ -12,6 +13,18 @@ export default function PoolList({
   whitelist: FungibleTokenMetadata[]
 }) {
   const [selectedPool, setSelectedPool] = useState<ConversionPool | null>(null)
+
+  const { poolId } = useParams()
+  const navigate = useNavigate()
+  const location = useLocation()
+  useEffect(() => {
+    if (pools.length && /^\/converter\/pool\/\d{1,}$/.test(location.pathname)) {
+      setSelectedPool(pools.find((p) => String(p.id) === poolId) ?? null)
+    } else {
+      setSelectedPool(null)
+    }
+  }, [poolId, pools, location])
+
   return (
     <Flex direction="column" mt={10}>
       {pools.map((pool, idx) => {
@@ -20,14 +33,14 @@ export default function PoolList({
             key={pool.id}
             pool={pool}
             whitelist={whitelist}
-            onSelect={setSelectedPool}
+            onSelect={(p) => navigate(`/converter/pool/${p.id}`)}
           />
         )
       })}
       <ConvertToken
         pool={selectedPool}
         whitelist={whitelist}
-        onClose={() => setSelectedPool(null)}
+        onClose={() => navigate('/converter')}
       />
     </Flex>
   )

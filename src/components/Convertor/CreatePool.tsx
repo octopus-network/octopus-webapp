@@ -82,16 +82,7 @@ export default function CreatePool({
         gas: new BN(SIMPLE_CALL_GAS),
         attachedDeposit: new BN(parseNearAmount('1')!),
       })
-    } catch (error) {
-      if (error instanceof Error) {
-        toast({
-          position: 'top-right',
-          title: 'Error',
-          description: error.toString(),
-          status: 'error',
-        })
-      }
-    }
+    } catch (error) {}
   }
 
   return (

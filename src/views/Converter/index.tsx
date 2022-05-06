@@ -1,7 +1,6 @@
 import { Container, Flex } from '@chakra-ui/react'
 import CreatePool from 'components/Convertor/CreatePool'
 import MyPool from 'components/Convertor/MyPool'
-import Pool from 'components/Convertor/Pool'
 import PoolList from 'components/Convertor/PoolList'
 import {
   useConvertorContract,
@@ -16,9 +15,9 @@ export function Converter() {
     global.wallet?.account() as any,
     'contract.convertor.testnet'
   )
-  const whitelist = useWhitelist(contract)
+  const { whitelist, isLoading: isLoadingWhitelist } = useWhitelist(contract)
 
-  const pools = usePools(contract, 0, 10)
+  const { pools, isLoading: isLoadingPools } = usePools(contract, 0, 10)
 
   const myPools = pools.filter((p) => p.creator === global.accountId)
 

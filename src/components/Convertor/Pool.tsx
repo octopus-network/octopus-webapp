@@ -1,13 +1,7 @@
-import {
-  Box,
-  Button,
-  Flex,
-  Image,
-  Text,
-  useColorModeValue,
-} from '@chakra-ui/react'
+import { Button, Flex, Image, Text, useColorModeValue } from '@chakra-ui/react'
 import { FiArrowRight, FiRepeat } from 'react-icons/fi'
 import { ConversionPool, FungibleTokenMetadata } from 'types'
+import { DecimalUtil } from 'utils'
 
 export default function Pool({
   pool,
@@ -21,6 +15,17 @@ export default function Pool({
   const bg = useColorModeValue('white', '#25263c')
   const inToken = whitelist.find((t) => t.token_id === pool.in_token)
   const outToken = whitelist.find((t) => t.token_id === pool.out_token)
+
+  const inTokenLiq = DecimalUtil.fromString(
+    pool.in_token_balance,
+    inToken?.decimals
+  ).toString()
+
+  const outTokenLiq = DecimalUtil.fromString(
+    pool.out_token_balance,
+    outToken?.decimals
+  ).toString()
+
   return (
     <Flex
       direction="row"
@@ -31,7 +36,7 @@ export default function Pool({
       mb={2}
     >
       <Flex direction="column" gap={2}>
-        <Text color="blue">{`#${pool.id} Creator: ${pool.creator}`}</Text>
+        <Text color="#008cd5">{`#${pool.id} Owner: ${pool.creator}`}</Text>
         <Flex direction="row" align="flex-start" gap={8}>
           <Flex direction="column" gap={2}>
             <Flex gap={2} align="center">
@@ -40,9 +45,7 @@ export default function Pool({
               )}
               <Text fontSize="2xl">{inToken?.symbol}</Text>
             </Flex>
-            {pool.reversible && (
-              <Text>{`Balance: ${pool.in_token_balance}`}</Text>
-            )}
+            {pool.reversible && <Text>{`Liquidity: ${inTokenLiq}`}</Text>}
           </Flex>
           <Flex direction="column" align="center" gap={1}>
             <Text fontSize="sm">{`${pool.in_token_rate} : ${pool.out_token_rate}`}</Text>
@@ -65,7 +68,7 @@ export default function Pool({
               <Text fontSize="2xl">{outToken?.symbol}</Text>
             </Flex>
 
-            <Text>{`Balance: ${pool.out_token_balance}`}</Text>
+            <Text fontSize="sm">{`Liquidity: ${outTokenLiq}`}</Text>
           </Flex>
         </Flex>
       </Flex>

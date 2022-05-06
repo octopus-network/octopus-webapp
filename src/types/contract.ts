@@ -244,4 +244,16 @@ export class ConvertorContract extends Contract {
   }): Promise<number> {
     return this.create_pool(args)
   }
+
+  get_storage_fee_gap_of(args: { account_id: AccountId }): Promise<number> {
+    return this.get_storage_fee_gap_of(args)
+  }
+
+  withdraw_token_in_pool(args: {
+    pool_id: number
+    token_id: AccountId
+    amount: string
+  }): Promise<void> {
+    return this.withdraw_token_in_pool(args)
+  }
 }
