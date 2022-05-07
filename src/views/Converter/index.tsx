@@ -27,7 +27,11 @@ export function Converter() {
         <MyPool pools={myPools} whitelist={whitelist} />
         <CreatePool whitelist={whitelist} />
 
-        <PoolList pools={pools} whitelist={whitelist} />
+        <PoolList
+          pools={pools}
+          whitelist={whitelist}
+          isLoading={isLoadingWhitelist || isLoadingPools}
+        />
       </Flex>
     </Container>
   )

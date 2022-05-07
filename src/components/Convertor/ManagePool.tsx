@@ -11,13 +11,11 @@ import {
   DrawerHeader,
   Heading,
   CloseButton,
+  useColorModeValue,
 } from '@chakra-ui/react'
-import { BN, formatBalance } from '@polkadot/util'
+import { BN } from '@polkadot/util'
 import Decimal from 'decimal.js'
-import {
-  useConvertorContract,
-  useTokenBalance,
-} from 'hooks/useConvertorContract'
+import { useTokenBalance } from 'hooks/useConvertorContract'
 import { SIMPLE_CALL_GAS } from 'primitives'
 import { useState } from 'react'
 import { useGlobalStore } from 'stores'
@@ -44,7 +42,7 @@ export default function ManagePool({
   const [outTokenValue, setOutTokenValue] = useState('')
 
   const { global } = useGlobalStore()
-  // const contract = useConvertorContract(global.wallet?.account() as any, 'contract.convertor.testnet')
+  const inputBg = useColorModeValue('#f5f7fa', 'whiteAlpha.100')
 
   if (!pool) {
     return null
@@ -96,6 +94,20 @@ export default function ManagePool({
     } catch (error) {}
   }
 
+  const onDeletePool = async () => {
+    try {
+      global.wallet?.account().functionCall({
+        contractId: 'contract.convertor.testnet',
+        methodName: 'delete_pool',
+        args: {
+          pool_id: pool.id,
+        },
+        gas: new BN(SIMPLE_CALL_GAS),
+        attachedDeposit: new BN(1),
+      })
+    } catch (error) {}
+  }
+
   const inTokenLiq = DecimalUtil.fromString(
     pool.in_token_balance,
     inToken?.decimals
@@ -138,20 +150,29 @@ export default function ManagePool({
             <Flex direction="column" gap={2}>
               <Flex direction="column" flex={1} gap={1}>
                 <Flex justify="space-between">
-                  <Text fontSize="sm">{`Pool liquidity: ${inTokenLiq}`}</Text>
-                  <Text fontSize="sm">{`Your balance: ${inTokenBalance}`}</Text>
+                  <Text
+                    fontSize="sm"
+                    className="octo-gray"
+                  >{`Pool liquidity: ${inTokenLiq}`}</Text>
+                  <Text
+                    fontSize="sm"
+                    className="octo-gray"
+                  >{`Your balance: ${inTokenBalance}`}</Text>
                 </Flex>
                 <Input
                   placeholder="Please input deposit amount"
                   value={inTokenValue}
+                  autoFocus
+                  size="lg"
                   onChange={(e) => setInTokenValue(e.target.value)}
                   type="number"
+                  bg={inputBg}
                 />
               </Flex>
-              <Flex justify="center" gap={2}>
+              <Flex justify="center" gap={4}>
                 <Button
-                  colorScheme="blue"
-                  width={150}
+                  flex={1}
+                  size="lg"
                   disabled={!isValidNumber(inTokenValue, inTokenLiq)}
                   onClick={() => onWithdrawToken(inTokenValue, inToken!)}
                 >
@@ -161,7 +182,8 @@ export default function ManagePool({
                 {pool.reversible && (
                   <Button
                     colorScheme="blue"
-                    width={150}
+                    flex={1}
+                    size="lg"
                     disabled={!isValidNumber(inTokenValue, inTokenBalance)}
                     onClick={() => onDepositToken(inTokenValue, inToken!)}
                   >
@@ -184,20 +206,28 @@ export default function ManagePool({
           <Flex direction="column" gap={4}>
             <Flex direction="column" flex={1} gap={1}>
               <Flex justify="space-between">
-                <Text fontSize="sm">{`Pool liquidity: ${outTokenLiq}`}</Text>
-                <Text fontSize="sm">{`Your balance:  ${outTokenBalance}`}</Text>
+                <Text
+                  fontSize="sm"
+                  className="octo-gray"
+                >{`Pool liquidity: ${outTokenLiq}`}</Text>
+                <Text
+                  fontSize="sm"
+                  className="octo-gray"
+                >{`Your balance:  ${outTokenBalance}`}</Text>
               </Flex>
               <Input
                 placeholder="Please input deposit amount"
                 value={outTokenValue}
                 onChange={(e) => setOutTokenValue(e.target.value)}
                 type="number"
+                size="lg"
+                bg={inputBg}
               />
             </Flex>
-            <Flex justify="center" gap={2}>
+            <Flex justify="center" gap={4}>
               <Button
-                colorScheme="blue"
-                width={150}
+                flex={1}
+                size="lg"
                 disabled={!isValidNumber(outTokenValue, outTokenLiq)}
                 onClick={() => onWithdrawToken(outTokenValue, outToken!)}
               >
@@ -205,11 +235,21 @@ export default function ManagePool({
               </Button>
               <Button
                 colorScheme="blue"
-                width={150}
+                flex={1}
+                size="lg"
                 disabled={!isValidNumber(outTokenValue, outTokenBalance)}
                 onClick={() => onDepositToken(outTokenValue, outToken!)}
               >
                 Deposit
+              </Button>
+            </Flex>
+          </Flex>
+
+          <Flex mt={10} direction="column" gap={2}>
+            <Text fontSize="xl">Danger zone</Text>
+            <Flex>
+              <Button onClick={onDeletePool}>
+                <Text color="red">DELETE</Text>
               </Button>
             </Flex>
           </Flex>

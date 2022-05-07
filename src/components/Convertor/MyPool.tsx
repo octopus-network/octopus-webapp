@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { FiArrowRight, FiRepeat } from 'react-icons/fi'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { ConversionPool, FungibleTokenMetadata } from 'types'
+import { MdSyncAlt, MdTrendingFlat } from 'react-icons/md'
 import ManagePool from './ManagePool'
 
 export default function MyPool({
@@ -70,9 +71,9 @@ export default function MyPool({
                   <Flex direction="column" align="center" gap={1}>
                     {/* <Text fontSize="sm">{`${pool.in_token_rate} : ${pool.out_token_rate}`}</Text> */}
                     {pool.reversible ? (
-                      <FiRepeat size={20} />
+                      <MdSyncAlt size={30} className="octo-gray" />
                     ) : (
-                      <FiArrowRight size={20} />
+                      <MdTrendingFlat size={30} className="octo-gray" />
                     )}
                   </Flex>
                   <Flex direction="column" gap={2}>

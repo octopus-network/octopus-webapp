@@ -18,13 +18,16 @@ import {
 } from '@chakra-ui/react'
 import { BN } from '@polkadot/util'
 import { Select, chakraComponents } from 'chakra-react-select'
-import { useConvertorContract } from 'hooks/useConvertorContract'
 import { parseNearAmount } from 'near-api-js/lib/utils/format'
 import { SIMPLE_CALL_GAS } from 'primitives'
 import { useState } from 'react'
-import { FiArrowDown, FiPlus, FiRepeat } from 'react-icons/fi'
 import { useGlobalStore } from 'stores'
 import { FungibleTokenMetadata } from 'types'
+import {
+  MdOutlineSwapVert,
+  MdOutlineArrowDownward,
+  MdOutlineAdd,
+} from 'react-icons/md'
 
 const customComponents = {
   Option: ({ children, ...props }: any) => (
@@ -61,12 +64,7 @@ export default function CreatePool({
     out_token_decimals: 0,
   })
 
-  const toast = useToast()
   const { global } = useGlobalStore()
-  // const contract = useConvertorContract(
-  //   global.wallet?.account() as any,
-  //   'contract.convertor.testnet'
-  // )
   const onCreate = async () => {
     try {
       await global.wallet?.account().functionCall({
@@ -90,11 +88,11 @@ export default function CreatePool({
       <Text fontSize="2xl" fontWeight="bold">
         Pool list
       </Text>
-      <Button leftIcon={<FiPlus />} colorScheme="blue" onClick={onOpen}>
+      <Button leftIcon={<MdOutlineAdd />} colorScheme="blue" onClick={onOpen}>
         Create Pool
       </Button>
 
-      <Modal isOpen={isOpen} onClose={onClose} isCentered>
+      <Modal isOpen={isOpen} onClose={onClose} isCentered size="lg">
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>Create Pool</ModalHeader>
@@ -106,14 +104,19 @@ export default function CreatePool({
                   type="number"
                   step={1}
                   min={1}
+                  max={10000}
+                  size="lg"
                   value={pool.in_token_rate}
-                  onChange={(e) =>
-                    setPool({ ...pool, in_token_rate: e.target.value })
-                  }
+                  onChange={(e) => {
+                    if (/^[0-9]+$/.test(e.target.value)) {
+                      setPool({ ...pool, in_token_rate: e.target.value })
+                    }
+                  }}
                 />
                 <Box w={400}>
                   <Select
                     colorScheme="purple"
+                    size="lg"
                     options={whitelist
                       .filter((t) => {
                         if (pool.out_token) {
@@ -143,9 +146,9 @@ export default function CreatePool({
               </Flex>
               <Flex justify="center" p={3}>
                 {pool.is_reversible ? (
-                  <FiRepeat size={24} />
+                  <MdOutlineSwapVert size={30} />
                 ) : (
-                  <FiArrowDown size={24} />
+                  <MdOutlineArrowDownward size={30} />
                 )}
               </Flex>
               <Flex gap={2}>
@@ -153,14 +156,19 @@ export default function CreatePool({
                   type="number"
                   step={1}
                   min={1}
+                  max={10000}
+                  size="lg"
                   value={pool.out_token_rate}
-                  onChange={(e) =>
-                    setPool({ ...pool, out_token_rate: e.target.value })
-                  }
+                  onChange={(e) => {
+                    if (/^[0-9]+$/.test(e.target.value)) {
+                      setPool({ ...pool, out_token_rate: e.target.value })
+                    }
+                  }}
                 />
                 <Box w={400}>
                   <Select
                     colorScheme="purple"
+                    size="lg"
                     options={whitelist
                       .filter((t) => {
                         if (pool.in_token) {
@@ -197,14 +205,11 @@ export default function CreatePool({
                   setPool({ ...pool, is_reversible: e.target.checked })
                 }
               />
-              <Text size="lg">is reversable</Text>
+              <Text size="lg">is conversion reversable?</Text>
             </Flex>
           </ModalBody>
-          <ModalFooter>
-            <Button mr={3} onClick={onClose}>
-              Cancel
-            </Button>
-            <Button colorScheme="blue" onClick={onCreate}>
+          <ModalFooter justifyContent="center">
+            <Button colorScheme="blue" onClick={onCreate} size="lg">
               Confirm
             </Button>
           </ModalFooter>

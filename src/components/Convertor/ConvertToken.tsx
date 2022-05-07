@@ -10,20 +10,30 @@ import {
   DrawerHeader,
   Heading,
   CloseButton,
+  IconButton,
+  Icon,
+  useColorModeValue,
 } from '@chakra-ui/react'
-import { BN, formatBalance } from '@polkadot/util'
+import { BN } from '@polkadot/util'
 import Decimal from 'decimal.js'
 import {
   useConvertorContract,
   useTokenBalance,
 } from 'hooks/useConvertorContract'
-import { COMPLEX_CALL_GAS } from 'primitives'
+import {
+  COMPLEX_CALL_GAS,
+  FT_MINIMUM_STORAGE_BALANCE,
+  SIMPLE_CALL_GAS,
+} from 'primitives'
 import { useState } from 'react'
-import { FiRepeat } from 'react-icons/fi'
+import { MdSwapVert } from 'react-icons/md'
 import { useGlobalStore } from 'stores'
 import { ConversionPool, FungibleTokenMetadata } from 'types'
 import { DecimalUtil } from 'utils'
 import { isValidNumber } from 'utils/validate'
+import { createTransaction, functionCall } from 'near-api-js/lib/transaction'
+import { baseDecode } from 'borsh'
+import { PublicKey } from 'near-api-js/lib/utils'
 
 const TokenInput = ({
   value,
@@ -31,30 +41,38 @@ const TokenInput = ({
   token,
   liquidity,
   inputDisabled = false,
+  autoFocus = false,
 }: {
   value: string
   onValueChange: (value: string) => void
   token: FungibleTokenMetadata | undefined
   liquidity: string
   inputDisabled?: boolean
+  autoFocus?: boolean
 }) => {
   const tokenBlance = useTokenBalance(token?.token_id)
   const liq = DecimalUtil.fromString(liquidity, token?.decimals)
 
   const balance = DecimalUtil.fromString(tokenBlance, token?.decimals)
+  const inputBg = useColorModeValue('#f5f7fa', 'whiteAlpha.100')
 
   return (
     <Flex direction="row" align="flex-end" gap={4}>
       <Flex direction="column" flex={1} gap={1}>
         <Flex justify="space-between">
-          <Text>{`Liquidity: ${liq}`}</Text>
-          <Text>{`Balance: ${balance}`}</Text>
+          <Text fontSize="sm" className="octo-gray">{`Liquidity: ${liq}`}</Text>
+          <Text
+            fontSize="sm"
+            className="octo-gray"
+          >{`Balance: ${balance}`}</Text>
         </Flex>
         <Input
           placeholder="Amount"
           size="lg"
+          bg={inputBg}
           value={value}
           disabled={inputDisabled}
+          autoFocus={autoFocus}
           onChange={(e) => onValueChange(e.target.value)}
         />
       </Flex>
@@ -84,13 +102,21 @@ export default function ConvertToken({
     global.wallet?.account() as any,
     'contract.convertor.testnet'
   )
+  const bg = useColorModeValue('white', '#15172c')
+
+  const inToken = whitelist.find((t) => t.token_id === pool?.in_token)
+  const outToken = whitelist.find((t) => t.token_id === pool?.out_token)
+
+  const _inToken = isReversed ? outToken : inToken
+  const tokenBlance = useTokenBalance(_inToken?.token_id)
+  const inTokenBalance = DecimalUtil.fromString(
+    tokenBlance,
+    _inToken?.decimals
+  ).toString()
 
   if (!pool) {
     return null
   }
-
-  const inToken = whitelist.find((t) => t.token_id === pool.in_token)
-  const outToken = whitelist.find((t) => t.token_id === pool.out_token)
 
   const onTokenValueChange = (value: string) => {
     setInTokenValue(value)
@@ -108,25 +134,59 @@ export default function ConvertToken({
     }
   }
 
-  console.log(pool)
-
   const onConvert = async () => {
     try {
-      // const storageFee = await contract?.get_storage_fee_gap_of({
-      //   account_id: global.accountId,
-      // })
-      // await global.wallet?.account().functionCall({
-      //   contractId: 'contract.convertor.testnet',
-      //   methodName: 'storage_deposit',
-      //   args: {
-      //     account_id: global.accountId,
-      //     registration_only: true,
-      //   },
-      //   gas: new BN(SIMPLE_CALL_GAS),
-      //   attachedDeposit: new BN(storageFee!),
-      // })
+      const account = global.wallet?.account()
+      if (!account) {
+        throw new Error('No account')
+      }
+      const storageFee = await contract?.get_storage_fee_gap_of({
+        account_id: global.accountId,
+      })
+      const actions = []
+
+      if (String(storageFee) !== '0') {
+        actions.push({
+          receiverId: 'contract.convertor.testnet',
+          actions: [
+            functionCall(
+              'storage_deposit',
+              {
+                account_id: account?.accountId,
+              },
+              new BN(SIMPLE_CALL_GAS),
+              new BN(storageFee!)
+            ),
+          ],
+        })
+      }
+
+      const receiveTokenId = !isReversed ? pool.out_token : pool.in_token
+      const storageBalance = await account?.viewFunction(
+        receiveTokenId,
+        'storage_balance_of',
+        { account_id: account.accountId }
+      )
+
+      if (!storageBalance || storageBalance === '0') {
+        actions.push({
+          receiverId: receiveTokenId,
+          actions: [
+            functionCall(
+              'storage_deposit',
+              {
+                registration_only: true,
+                account_id: account?.accountId,
+              },
+              new BN(SIMPLE_CALL_GAS),
+              new BN(FT_MINIMUM_STORAGE_BALANCE!)
+            ),
+          ],
+        })
+      }
+
       const contractId = isReversed ? pool.out_token : pool.in_token
-      const amount = isReversed ? outTokenValue : inTokenValue
+      const amount = inTokenValue
       const token = whitelist.find((t) => t.token_id === contractId)
       const _amount = DecimalUtil.toU64(
         new Decimal(amount),
@@ -139,17 +199,56 @@ export default function ConvertToken({
         pool_id: pool.id,
       }
 
-      global.wallet?.account().functionCall({
-        contractId,
-        methodName: 'ft_transfer_call',
-        args: {
-          receiver_id: 'contract.convertor.testnet',
-          amount: _amount,
-          msg: JSON.stringify({ Convert: { convert_action: convertAction } }),
-        },
-        gas: new BN(COMPLEX_CALL_GAS),
-        attachedDeposit: new BN(1),
+      actions.push({
+        receiverId: contractId,
+        actions: [
+          functionCall(
+            'ft_transfer_call',
+            {
+              receiver_id: 'contract.convertor.testnet',
+              amount: _amount,
+              msg: JSON.stringify({
+                Convert: { convert_action: convertAction },
+              }),
+            },
+            new BN(COMPLEX_CALL_GAS),
+            new BN(1)
+          ),
+        ],
       })
+
+      let localKey = await account?.connection.signer.getPublicKey(
+        account.accountId,
+        account.connection.networkId
+      )
+
+      const transactions = await Promise.all(
+        actions.map(async (t) => {
+          let accessKey = await account.accessKeyForTransaction(
+            t.receiverId,
+            t.actions,
+            localKey
+          )
+
+          const block = await account?.connection.provider.block({
+            finality: 'final',
+          })
+          const blockHash = baseDecode(block.header.hash)
+
+          const publicKey = PublicKey.from(accessKey.public_key)
+          const nonce = accessKey.access_key.nonce + 1
+
+          return createTransaction(
+            account?.accountId!,
+            publicKey,
+            t.receiverId,
+            nonce,
+            t.actions,
+            blockHash
+          )
+        })
+      )
+      await account.walletConnection.requestSignTransactions({ transactions })
     } catch (error) {
       console.error(error)
     }
@@ -171,35 +270,44 @@ export default function ConvertToken({
             value={String(inTokenValue)}
             onValueChange={onTokenValueChange}
             token={isReversed ? outToken : inToken}
+            autoFocus
             liquidity={
               isReversed ? pool.out_token_balance : pool.in_token_balance
             }
           />
           {pool.reversible && (
             <Flex align="center" justify="center">
-              <Button
-                colorScheme="blue"
+              <IconButton
+                aria-label="switch"
+                isRound
+                size="sm"
+                borderWidth={3}
+                borderColor={bg}
+                transform="scale(1.4)"
                 onClick={() => {
                   setIsReversed(!isReversed)
                   setInTokenValue('')
                   setOutTokenValue('')
                 }}
-                borderRadius={50}
               >
-                <FiRepeat />
-              </Button>
+                <Icon as={MdSwapVert} boxSize={4} />
+              </IconButton>
             </Flex>
           )}
           <TokenInput
             value={String(outTokenValue)}
             onValueChange={onTokenValueChange}
             token={!isReversed ? outToken : inToken}
-            inputDisabled
             liquidity={
               !isReversed ? pool.out_token_balance : pool.in_token_balance
             }
           />
-          <Button colorScheme="blue" onClick={onConvert}>
+          <Button
+            colorScheme="blue"
+            onClick={onConvert}
+            size="lg"
+            disabled={!isValidNumber(String(inTokenValue), inTokenBalance)}
+          >
             Convert
           </Button>
         </Flex>

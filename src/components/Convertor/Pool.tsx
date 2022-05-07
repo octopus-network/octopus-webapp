@@ -1,7 +1,7 @@
 import { Button, Flex, Image, Text, useColorModeValue } from '@chakra-ui/react'
-import { FiArrowRight, FiRepeat } from 'react-icons/fi'
 import { ConversionPool, FungibleTokenMetadata } from 'types'
 import { DecimalUtil } from 'utils'
+import { MdSyncAlt, MdTrendingFlat } from 'react-icons/md'
 
 export default function Pool({
   pool,
@@ -45,14 +45,19 @@ export default function Pool({
               )}
               <Text fontSize="2xl">{inToken?.symbol}</Text>
             </Flex>
-            {pool.reversible && <Text>{`Liquidity: ${inTokenLiq}`}</Text>}
+            {pool.reversible && (
+              <Text
+                fontSize="sm"
+                className="octo-gray"
+              >{`Liquidity: ${inTokenLiq}`}</Text>
+            )}
           </Flex>
-          <Flex direction="column" align="center" gap={1}>
+          <Flex direction="column" align="center">
             <Text fontSize="sm">{`${pool.in_token_rate} : ${pool.out_token_rate}`}</Text>
             {pool.reversible ? (
-              <FiRepeat size={20} />
+              <MdSyncAlt size={30} className="octo-gray" />
             ) : (
-              <FiArrowRight size={20} />
+              <MdTrendingFlat size={30} className="octo-gray" />
             )}
           </Flex>
           <Flex direction="column" gap={2}>
@@ -68,7 +73,10 @@ export default function Pool({
               <Text fontSize="2xl">{outToken?.symbol}</Text>
             </Flex>
 
-            <Text fontSize="sm">{`Liquidity: ${outTokenLiq}`}</Text>
+            <Text
+              fontSize="sm"
+              className="octo-gray"
+            >{`Liquidity: ${outTokenLiq}`}</Text>
           </Flex>
         </Flex>
       </Flex>
