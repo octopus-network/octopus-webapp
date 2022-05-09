@@ -9,6 +9,7 @@ import {
   Flex,
   HStack,
   Avatar,
+  Image,
   VStack,
   Link,
   Text,
@@ -20,9 +21,12 @@ import {
   CircularProgress,
   Skeleton,
   Icon,
+  useBoolean,
   useClipboard,
   IconButton,
 } from '@chakra-ui/react'
+
+import { useSpring, animated } from 'react-spring'
 
 import { StateBadge } from 'components'
 
@@ -34,20 +38,19 @@ import {
 
 import type { ApiPromise } from '@polkadot/api'
 import { CheckIcon, CopyIcon } from '@chakra-ui/icons'
+import { Link as RouterLink } from 'react-router-dom'
+
+import websiteIcon from 'assets/icons/website.png'
+import explorerIcon from 'assets/icons/explorer.png'
+import bridgeIcon from 'assets/icons/bridge.png'
+import anchorIcon from 'assets/icons/anchor.png'
+import githubIcon from 'assets/icons/github.png'
 
 import { DecimalUtil, toValidUrl } from 'utils'
 import Decimal from 'decimal.js'
 import { EPOCH_DURATION_MS } from 'primitives'
 import { useGlobalStore } from 'stores'
 import { FaUser } from 'react-icons/fa'
-import {
-  FiAnchor,
-  FiGlobe,
-  FiCompass,
-  FiGithub,
-  FiRepeat,
-  FiFileText,
-} from 'react-icons/fi'
 
 dayjs.extend(duration)
 dayjs.extend(relativeTime)
@@ -62,18 +65,30 @@ type DescriptionsProps = {
 type LinkBoxProps = {
   label: string
   icon: any
-  link?: string
+  to?: string
+  href?: string
 }
 
-const LinkBox = ({ label, icon, link }: LinkBoxProps) => {
+const LinkBox: React.FC<LinkBoxProps> = ({ label, icon }) => {
+  const [isHovering, setIsHovering] = useBoolean(false)
+
+  const iconHoveringProps = useSpring({
+    transform: isHovering ? 'translateY(-5pxpx)' : 'translateY(0px)',
+  })
+
   return (
-    <Link
-      href={link}
-      target={link?.startsWith('http') ? '_blank' : '_self'}
-      style={{ color: '#008cd5' }}
+    <Box
+      p={2}
+      cursor="pointer"
+      onMouseEnter={setIsHovering.on}
+      onMouseLeave={setIsHovering.off}
     >
-      <HStack spacing={1} style={{ cursor: 'pointer' }}>
-        {icon}
+      <VStack spacing={1}>
+        <animated.div style={iconHoveringProps}>
+          <Box boxSize={8}>
+            <Image src={icon} w="100%" />
+          </Box>
+        </animated.div>
         <Text
           fontSize="sm"
           whiteSpace="nowrap"
@@ -83,8 +98,8 @@ const LinkBox = ({ label, icon, link }: LinkBoxProps) => {
         >
           {label}
         </Text>
-      </HStack>
-    </Link>
+      </VStack>
+    </Box>
   )
 }
 
@@ -108,6 +123,11 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
 
   const { hasCopied: hasRpcEndpointCopied, onCopy: onCopyRpcEndpoint } =
     useClipboard(appchainSettings?.rpc_endpoint || '')
+
+  const { hasCopied: hasFunctionSpecCopied, onCopy: onCopyFunctionSpec } =
+    useClipboard(
+      toValidUrl(appchain?.appchain_metadata?.function_spec_url) || ''
+    )
 
   useEffect(() => {
     if (!appchainApi) {
@@ -139,39 +159,6 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
 
     return () => unsubNewHeads && unsubNewHeads()
   }, [appchainApi])
-
-  const linkItems = useMemo(() => !appchain ? [] : [
-    {
-      link: `/bridge/near/${appchain?.appchain_id}`,
-      label: 'Bridge',
-      icon: <FiRepeat size={18} />,
-    },
-    {
-      link: `${global?.network?.octopus.explorerUrl}/?appchain=${appchain?.appchain_id}`,
-      label: 'Explorer',
-      icon: <FiCompass size={18} />,
-    },
-    {
-      link: `${global?.network?.near.explorerUrl}/accounts/${appchain?.appchain_anchor}`,
-      label: 'Anchor Contract',
-      icon: <FiAnchor size={18} />,
-    },
-    {
-      link: toValidUrl(appchain?.appchain_metadata?.website_url),
-      label: 'Website',
-      icon: <FiGlobe size={18} />,
-    },
-    {
-      link: toValidUrl(appchain?.appchain_metadata?.function_spec_url),
-      label: 'Function Spec',
-      icon: <FiFileText size={18} />,
-    },
-    {
-      link: toValidUrl(appchain?.appchain_metadata?.github_address),
-      label: 'Github',
-      icon: <FiGithub size={18} />,
-    }
-  ], [appchain]);
 
   return (
     <Box bg={bg} p={6} borderRadius="lg">
@@ -220,18 +207,39 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
       </Flex>
 
       <SimpleGrid
-        columns={3}
+        columns={{ base: 3, md: 5 }}
         spacing={4}
         mt={8}
-        padding={4}
         bg={linksBg}
         borderRadius="lg"
       >
-        {
-          linkItems.map((item) => (
-            <LinkBox key={item.link} {...item} />
-          ))
-        }
+        <RouterLink to={`/bridge/near/${appchain?.appchain_id}`}>
+          <LinkBox icon={bridgeIcon} label="Bridge" />
+        </RouterLink>
+        <Link
+          href={`${global?.network?.octopus.explorerUrl}/?appchain=${appchain?.appchain_id}`}
+          isExternal
+        >
+          <LinkBox icon={explorerIcon} label="Explorer" />
+        </Link>
+        <Link
+          href={`${global?.network?.near.explorerUrl}/accounts/${appchain?.appchain_anchor}`}
+          isExternal
+        >
+          <LinkBox icon={anchorIcon} label="Anchor" />
+        </Link>
+        <Link
+          href={toValidUrl(appchain?.appchain_metadata?.website_url)}
+          isExternal
+        >
+          <LinkBox icon={websiteIcon} label="Website" />
+        </Link>
+        <Link
+          href={toValidUrl(appchain?.appchain_metadata?.github_address)}
+          isExternal
+        >
+          <LinkBox icon={githubIcon} label="Github" />
+        </Link>
       </SimpleGrid>
       <SimpleGrid
         mt={8}
@@ -332,7 +340,6 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
                 overflow="hidden"
                 whiteSpace="nowrap"
                 w="calc(100% - 30px)"
-                title={appchainSettings?.rpc_endpoint}
               >
                 {appchainSettings?.rpc_endpoint || '-'}
               </Heading>
@@ -397,6 +404,40 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
                 )
               : '-'}
           </Heading>
+        </VStack>
+
+        <VStack alignItems="flex-start">
+          <Text variant="gray" fontSize="sm">
+            Function Spec
+          </Text>
+          <HStack w="100%">
+            <Heading
+              fontSize="md"
+              textOverflow="ellipsis"
+              overflow="hidden"
+              whiteSpace="nowrap"
+              w="calc(100% - 30px)"
+              title={toValidUrl(appchain?.appchain_metadata?.function_spec_url)}
+            >
+              {toValidUrl(appchain?.appchain_metadata?.function_spec_url) ||
+                '-'}
+            </Heading>
+            <IconButton
+              aria-label="copy"
+              onClick={onCopyFunctionSpec}
+              size="xs"
+            >
+              {hasFunctionSpecCopied ? <CheckIcon /> : <CopyIcon />}
+            </IconButton>
+          </HStack>
+          {/* <Heading fontSize="xl">
+            <Link
+              href={toValidUrl(appchain?.appchain_metadata?.function_spec_url)}
+              isExternal
+            >
+              <LinkBox icon={functionSpecIcon} label="Function Spec" />
+            </Link>
+          </Heading> */}
         </VStack>
       </SimpleGrid>
     </Box>
