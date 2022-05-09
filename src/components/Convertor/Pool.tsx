@@ -2,6 +2,7 @@ import { Button, Flex, Image, Text, useColorModeValue } from '@chakra-ui/react'
 import { ConversionPool, FungibleTokenMetadata } from 'types'
 import { DecimalUtil } from 'utils'
 import { MdSyncAlt, MdTrendingFlat } from 'react-icons/md'
+import { isMobile } from 'react-device-detect'
 
 export default function Pool({
   pool,
@@ -28,16 +29,17 @@ export default function Pool({
 
   return (
     <Flex
-      direction="row"
+      direction={isMobile ? 'column' : 'row'}
       bg={bg}
       p={6}
+      gap={isMobile ? 2 : 0}
       align="center"
       justify="space-between"
       mb={2}
     >
-      <Flex direction="column" gap={2}>
+      <Flex direction="column" gap={2} flexShrink={0}>
         <Text color="#008cd5">{`#${pool.id} Owner: ${pool.creator}`}</Text>
-        <Flex direction="row" align="flex-start" gap={8}>
+        <Flex direction="row" align="flex-start" gap={4}>
           <Flex direction="column" gap={2}>
             <Flex gap={2} align="center">
               {inToken && (
@@ -80,7 +82,11 @@ export default function Pool({
           </Flex>
         </Flex>
       </Flex>
-      <Button colorScheme="blue" onClick={() => onSelect(pool)}>
+      <Button
+        colorScheme="blue"
+        alignSelf="flex-end"
+        onClick={() => onSelect(pool)}
+      >
         Select
       </Button>
     </Flex>

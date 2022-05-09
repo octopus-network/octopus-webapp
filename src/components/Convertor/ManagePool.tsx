@@ -12,16 +12,92 @@ import {
   Heading,
   CloseButton,
   useColorModeValue,
+  Tabs,
+  TabList,
+  Tab,
+  TabPanels,
+  TabPanel,
 } from '@chakra-ui/react'
 import { BN } from '@polkadot/util'
+import { baseDecode } from 'borsh'
 import Decimal from 'decimal.js'
 import { useTokenBalance } from 'hooks/useConvertorContract'
+import { createTransaction, functionCall } from 'near-api-js/lib/transaction'
+import { PublicKey } from 'near-api-js/lib/utils'
 import { SIMPLE_CALL_GAS } from 'primitives'
 import { useState } from 'react'
 import { useGlobalStore } from 'stores'
 import { ConversionPool, FungibleTokenMetadata } from 'types'
 import { DecimalUtil } from 'utils'
 import { isValidNumber } from 'utils/validate'
+
+function TokenInput({
+  token,
+  liquidity,
+  onSubmit,
+  isWithdraw = false,
+}: {
+  token: FungibleTokenMetadata | undefined
+  liquidity: string
+  onSubmit: (value: string, token: FungibleTokenMetadata) => void
+  isWithdraw?: boolean
+}) {
+  const [value, setValue] = useState('')
+  const balance = useTokenBalance(token?.token_id)
+  const inputBg = useColorModeValue('#f5f7fa', 'whiteAlpha.100')
+  const tokenLiq = DecimalUtil.fromString(liquidity, token?.decimals)
+    .toFixed(2)
+    .toString()
+  const tokenBalance = DecimalUtil.fromString(balance, token?.decimals)
+    .toFixed(2)
+    .toString()
+  return (
+    <Box mb={6}>
+      <Flex direction="row" align="center" gap={2} mb={2}>
+        {token && <Image src={token.icon || ''} width={8} height={8} alt="" />}
+        <Text fontSize="2xl" lineHeight={1}>
+          {token?.symbol}
+        </Text>
+      </Flex>
+      <Flex direction="column" gap={2}>
+        <Flex direction="column" flex={1} gap={1}>
+          <Flex justify="space-between">
+            <Text
+              fontSize="sm"
+              className="octo-gray"
+            >{`Pool liquidity: ${tokenLiq}`}</Text>
+            <Text
+              fontSize="sm"
+              className="octo-gray"
+            >{`Your balance: ${tokenBalance}`}</Text>
+          </Flex>
+          <Input
+            placeholder="Please input deposit amount"
+            value={value}
+            autoFocus
+            size="lg"
+            onChange={(e) => setValue(e.target.value)}
+            type="number"
+            bg={inputBg}
+          />
+        </Flex>
+        <Flex justify="center" gap={4}>
+          <Button
+            flex={1}
+            size="lg"
+            colorScheme="blue"
+            disabled={
+              !isValidNumber(value, isWithdraw ? liquidity : tokenBalance)
+            }
+            onClick={() => onSubmit(value, token!)}
+          >
+            {isWithdraw ? 'Withdraw' : 'Deposit'}
+          </Button>
+        </Flex>
+      </Flex>
+    </Box>
+  )
+}
 
 export default function ManagePool({
   pool,
@@ -35,14 +111,7 @@ export default function ManagePool({
   const inToken = whitelist.find((t) => t.token_id === pool?.in_token)
   const outToken = whitelist.find((t) => t.token_id === pool?.out_token)
 
-  const inTokenBalanceRaw = useTokenBalance(inToken?.token_id)
-  const outTokenBlance = useTokenBalance(outToken?.token_id)
-
-  const [inTokenValue, setInTokenValue] = useState('')
-  const [outTokenValue, setOutTokenValue] = useState('')
-
   const { global } = useGlobalStore()
-  const inputBg = useColorModeValue('#f5f7fa', 'whiteAlpha.100')
 
   if (!pool) {
     return null
@@ -96,34 +165,94 @@ export default function ManagePool({
 
   const onDeletePool = async () => {
     try {
-      global.wallet?.account().functionCall({
-        contractId: 'contract.convertor.testnet',
-        methodName: 'delete_pool',
-        args: {
-          pool_id: pool.id,
-        },
-        gas: new BN(SIMPLE_CALL_GAS),
-        attachedDeposit: new BN(1),
+      const account = global.wallet?.account()
+      if (!account) {
+        throw new Error('No account')
+      }
+
+      const actions = []
+      if (pool.in_token_balance !== '0') {
+        actions.push({
+          receiverId: 'contract.convertor.testnet',
+          actions: [
+            functionCall(
+              'withdraw_token_in_pool',
+              {
+                pool_id: pool.id,
+                token_id: pool.in_token,
+                amount: pool.in_token_balance,
+              },
+              new BN(SIMPLE_CALL_GAS),
+              new BN(1)
+            ),
+          ],
+        })
+      }
+
+      if (pool.out_token_balance !== '0') {
+        actions.push({
+          receiverId: 'contract.convertor.testnet',
+          actions: [
+            functionCall(
+              'withdraw_token_in_pool',
+              {
+                pool_id: pool.id,
+                token_id: pool.out_token,
+                amount: pool.out_token_balance,
+              },
+              new BN(SIMPLE_CALL_GAS),
+              new BN(1)
+            ),
+          ],
+        })
+      }
+
+      actions.push({
+        receiverId: 'contract.convertor.testnet',
+        actions: [
+          functionCall(
+            'delete_pool',
+            { pool_id: pool.id },
+            new BN(SIMPLE_CALL_GAS),
+            new BN(1)
+          ),
+        ],
       })
+
+      let localKey = await account?.connection.signer.getPublicKey(
+        account.accountId,
+        account.connection.networkId
+      )
+
+      const transactions = await Promise.all(
+        actions.map(async (t) => {
+          let accessKey = await account.accessKeyForTransaction(
+            t.receiverId,
+            t.actions,
+            localKey
+          )
+
+          const block = await account?.connection.provider.block({
+            finality: 'final',
+          })
+          const blockHash = baseDecode(block.header.hash)
+
+          const publicKey = PublicKey.from(accessKey.public_key)
+          const nonce = accessKey.access_key.nonce + 1
+
+          return createTransaction(
+            account?.accountId!,
+            publicKey,
+            t.receiverId,
+            nonce,
+            t.actions,
+            blockHash
+          )
+        })
+      )
+      await account.walletConnection.requestSignTransactions({ transactions })
     } catch (error) {}
   }
-
-  const inTokenLiq = DecimalUtil.fromString(
-    pool.in_token_balance,
-    inToken?.decimals
-  ).toString()
-  const inTokenBalance = DecimalUtil.fromString(
-    inTokenBalanceRaw,
-    inToken?.decimals
-  ).toString()
-  const outTokenLiq = DecimalUtil.fromString(
-    pool.out_token_balance,
-    outToken?.decimals
-  ).toString()
-  const outTokenBalance = DecimalUtil.fromString(
-    outTokenBlance,
-    outToken?.decimals
-  ).toString()
 
   return (
     <Drawer placement="right" isOpen onClose={onClose} size="md">
@@ -138,112 +267,42 @@ export default function ManagePool({
         <Flex direction="column" gap={2} pl={6} pr={6}>
           <Text color="#008cd5">{`#${pool.id} Owner: ${pool.creator}`}</Text>
 
-          <Box>
-            <Flex direction="row" align="center" gap={2} mb={2}>
-              {inToken && (
-                <Image src={inToken.icon || ''} width={8} height={8} alt="" />
-              )}
-              <Text fontSize="2xl" lineHeight={1}>
-                {inToken?.symbol}
-              </Text>
-            </Flex>
-            <Flex direction="column" gap={2}>
-              <Flex direction="column" flex={1} gap={1}>
-                <Flex justify="space-between">
-                  <Text
-                    fontSize="sm"
-                    className="octo-gray"
-                  >{`Pool liquidity: ${inTokenLiq}`}</Text>
-                  <Text
-                    fontSize="sm"
-                    className="octo-gray"
-                  >{`Your balance: ${inTokenBalance}`}</Text>
-                </Flex>
-                <Input
-                  placeholder="Please input deposit amount"
-                  value={inTokenValue}
-                  autoFocus
-                  size="lg"
-                  onChange={(e) => setInTokenValue(e.target.value)}
-                  type="number"
-                  bg={inputBg}
-                />
-              </Flex>
-              <Flex justify="center" gap={4}>
-                <Button
-                  flex={1}
-                  size="lg"
-                  disabled={!isValidNumber(inTokenValue, inTokenLiq)}
-                  onClick={() => onWithdrawToken(inTokenValue, inToken!)}
-                >
-                  Withdraw
-                </Button>
-
+          <Tabs>
+            <TabList>
+              <Tab>Deposit</Tab>
+              <Tab>Withdraw</Tab>
+            </TabList>
+            <TabPanels>
+              <TabPanel gap={4}>
                 {pool.reversible && (
-                  <Button
-                    colorScheme="blue"
-                    flex={1}
-                    size="lg"
-                    disabled={!isValidNumber(inTokenValue, inTokenBalance)}
-                    onClick={() => onDepositToken(inTokenValue, inToken!)}
-                  >
-                    Deposit
-                  </Button>
+                  <TokenInput
+                    token={inToken}
+                    onSubmit={onDepositToken}
+                    liquidity={pool.in_token_balance}
+                  />
                 )}
-              </Flex>
-            </Flex>
-          </Box>
-
-          <Flex direction="row" align="center" gap={2} mt={4}>
-            {outToken && (
-              <Image src={outToken.icon || ''} width={8} height={8} alt="" />
-            )}
-
-            <Text fontSize="2xl" lineHeight={1}>
-              {outToken?.symbol}
-            </Text>
-          </Flex>
-          <Flex direction="column" gap={4}>
-            <Flex direction="column" flex={1} gap={1}>
-              <Flex justify="space-between">
-                <Text
-                  fontSize="sm"
-                  className="octo-gray"
-                >{`Pool liquidity: ${outTokenLiq}`}</Text>
-                <Text
-                  fontSize="sm"
-                  className="octo-gray"
-                >{`Your balance:  ${outTokenBalance}`}</Text>
-              </Flex>
-              <Input
-                placeholder="Please input deposit amount"
-                value={outTokenValue}
-                onChange={(e) => setOutTokenValue(e.target.value)}
-                type="number"
-                size="lg"
-                bg={inputBg}
-              />
-            </Flex>
-            <Flex justify="center" gap={4}>
-              <Button
-                flex={1}
-                size="lg"
-                disabled={!isValidNumber(outTokenValue, outTokenLiq)}
-                onClick={() => onWithdrawToken(outTokenValue, outToken!)}
-              >
-                Withdraw
-              </Button>
-              <Button
-                colorScheme="blue"
-                flex={1}
-                size="lg"
-                disabled={!isValidNumber(outTokenValue, outTokenBalance)}
-                onClick={() => onDepositToken(outTokenValue, outToken!)}
-              >
-                Deposit
-              </Button>
-            </Flex>
-          </Flex>
+                <TokenInput
+                  token={outToken}
+                  onSubmit={onDepositToken}
+                  liquidity={pool.out_token_balance}
+                />
+              </TabPanel>
+              <TabPanel gap={4}>
+                <TokenInput
+                  token={inToken}
+                  onSubmit={onWithdrawToken}
+                  liquidity={pool.in_token_balance}
+                  isWithdraw
+                />
+                <TokenInput
+                  token={outToken}
+                  onSubmit={onWithdrawToken}
+                  liquidity={pool.out_token_balance}
+                  isWithdraw
+                />
+              </TabPanel>
+            </TabPanels>
+          </Tabs>
 
           <Flex mt={10} direction="column" gap={2}>
             <Text fontSize="xl">Danger zone</Text>

@@ -1,6 +1,12 @@
-import { Button, Flex, Image, Text, useColorModeValue } from '@chakra-ui/react'
+import {
+  Button,
+  Flex,
+  Image,
+  SimpleGrid,
+  Text,
+  useColorModeValue,
+} from '@chakra-ui/react'
 import { useEffect, useState } from 'react'
-import { FiArrowRight, FiRepeat } from 'react-icons/fi'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { ConversionPool, FungibleTokenMetadata } from 'types'
 import { MdSyncAlt, MdTrendingFlat } from 'react-icons/md'
@@ -35,26 +41,19 @@ export default function MyPool({
   }
 
   return (
-    <Flex direction="column" gap={6}>
+    <Flex direction="column" gap={6} mb={10}>
       <Text fontSize="2xl" fontWeight="bold">
         My pools
       </Text>
-      <Flex pb={10} gap={4}>
+      <SimpleGrid gap={3} mt={1} columns={{ base: 1, md: 3 }}>
         {pools.map((pool) => {
           const inToken = whitelist.find((t) => t.token_id === pool.in_token)
           const outToken = whitelist.find((t) => t.token_id === pool.out_token)
           return (
-            <Flex
-              key={pool.id}
-              bg={bg}
-              p={4}
-              direction="column"
-              gap={4}
-              w="33%"
-            >
+            <Flex key={pool.id} bg={bg} p={4} direction="column" gap={4}>
               <Flex direction="column" gap={2}>
                 <Text color="#008cd5">{`#${pool.id} Owner: ${pool.creator}`}</Text>
-                <Flex direction="row" align="center" gap={8}>
+                <Flex direction="row" align="center" gap={4}>
                   <Flex direction="column" gap={2}>
                     <Flex gap={2} align="center">
                       {inToken && (
@@ -69,7 +68,7 @@ export default function MyPool({
                     </Flex>
                   </Flex>
                   <Flex direction="column" align="center" gap={1}>
-                    {/* <Text fontSize="sm">{`${pool.in_token_rate} : ${pool.out_token_rate}`}</Text> */}
+                    <Text fontSize="sm">{`${pool.in_token_rate} : ${pool.out_token_rate}`}</Text>
                     {pool.reversible ? (
                       <MdSyncAlt size={30} className="octo-gray" />
                     ) : (
@@ -105,14 +104,14 @@ export default function MyPool({
             </Flex>
           )
         })}
-        <ManagePool
-          pool={selectedPool}
-          whitelist={whitelist}
-          onClose={() => {
-            navigate('/converter')
-          }}
-        />
-      </Flex>
+      </SimpleGrid>
+      <ManagePool
+        pool={selectedPool}
+        whitelist={whitelist}
+        onClose={() => {
+          navigate('/converter')
+        }}
+      />
     </Flex>
   )
 }

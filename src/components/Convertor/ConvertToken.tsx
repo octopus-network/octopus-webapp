@@ -26,7 +26,7 @@ import {
   SIMPLE_CALL_GAS,
 } from 'primitives'
 import { useState } from 'react'
-import { MdSwapVert } from 'react-icons/md'
+import { MdArrowDownward, MdSwapVert } from 'react-icons/md'
 import { useGlobalStore } from 'stores'
 import { ConversionPool, FungibleTokenMetadata } from 'types'
 import { DecimalUtil } from 'utils'
@@ -73,6 +73,7 @@ const TokenInput = ({
           value={value}
           disabled={inputDisabled}
           autoFocus={autoFocus}
+          onFocus={() => onValueChange('')}
           onChange={(e) => onValueChange(e.target.value)}
         />
       </Flex>
@@ -118,17 +119,27 @@ export default function ConvertToken({
     return null
   }
 
-  const onTokenValueChange = (value: string) => {
-    setInTokenValue(value)
-
+  const onTokenValueChange = (value: string, _isReversed: boolean) => {
     if (value.trim() !== '') {
-      setOutTokenValue(
-        new Decimal(value)
-          .mul(isReversed ? pool.in_token_rate : pool.out_token_rate)
-          .div(!isReversed ? pool.in_token_rate : pool.out_token_rate)
-          .toFixed(inToken?.decimals)
-          .toString()
-      )
+      if (isReversed || isReversed) {
+        setOutTokenValue(value)
+        setInTokenValue(
+          new Decimal(value)
+            .mul(pool.in_token_rate)
+            .div(pool.out_token_rate)
+            .toFixed(inToken?.decimals)
+            .toString()
+        )
+      } else {
+        setInTokenValue(value)
+        setOutTokenValue(
+          new Decimal(value)
+            .mul(pool.out_token_rate)
+            .div(pool.in_token_rate)
+            .toFixed(inToken?.decimals)
+            .toString()
+        )
+      }
     } else {
       setOutTokenValue('')
     }
@@ -268,35 +279,38 @@ export default function ConvertToken({
         <Flex direction="column" gap={5} pl={6} pr={6}>
           <TokenInput
             value={String(inTokenValue)}
-            onValueChange={onTokenValueChange}
+            onValueChange={(value: string) => onTokenValueChange(value, false)}
             token={isReversed ? outToken : inToken}
             autoFocus
             liquidity={
               isReversed ? pool.out_token_balance : pool.in_token_balance
             }
           />
-          {pool.reversible && (
-            <Flex align="center" justify="center">
-              <IconButton
-                aria-label="switch"
-                isRound
-                size="sm"
-                borderWidth={3}
-                borderColor={bg}
-                transform="scale(1.4)"
-                onClick={() => {
-                  setIsReversed(!isReversed)
-                  setInTokenValue('')
-                  setOutTokenValue('')
-                }}
-              >
-                <Icon as={MdSwapVert} boxSize={4} />
-              </IconButton>
-            </Flex>
-          )}
+          <Flex align="center" justify="center" gap={4}>
+            <IconButton
+              aria-label="switch"
+              isRound
+              size="sm"
+              borderWidth={3}
+              borderColor={bg}
+              transform="scale(1.4)"
+              disabled={!pool.reversible}
+              onClick={() => {
+                setIsReversed(!isReversed)
+                setInTokenValue('')
+                setOutTokenValue('')
+              }}
+            >
+              <Icon
+                as={pool.reversible ? MdSwapVert : MdArrowDownward}
+                boxSize={4}
+              />
+            </IconButton>
+            <Text>{`${pool.in_token_rate} : ${pool.out_token_rate}`}</Text>
+          </Flex>
           <TokenInput
             value={String(outTokenValue)}
-            onValueChange={onTokenValueChange}
+            onValueChange={(value: string) => onTokenValueChange(value, true)}
             token={!isReversed ? outToken : inToken}
             liquidity={
               !isReversed ? pool.out_token_balance : pool.in_token_balance

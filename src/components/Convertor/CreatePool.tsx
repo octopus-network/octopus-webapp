@@ -13,8 +13,10 @@ import {
   Text,
   Box,
   Image,
-  useToast,
   ModalCloseButton,
+  Link,
+  UnorderedList,
+  ListItem,
 } from '@chakra-ui/react'
 import { BN } from '@polkadot/util'
 import { Select, chakraComponents } from 'chakra-react-select'
@@ -106,6 +108,7 @@ export default function CreatePool({
                   min={1}
                   max={10000}
                   size="lg"
+                  placeholder="Input conversion rate"
                   value={pool.in_token_rate}
                   onChange={(e) => {
                     if (/^[0-9]+$/.test(e.target.value)) {
@@ -158,6 +161,7 @@ export default function CreatePool({
                   min={1}
                   max={10000}
                   size="lg"
+                  placeholder="Input conversion rate"
                   value={pool.out_token_rate}
                   onChange={(e) => {
                     if (/^[0-9]+$/.test(e.target.value)) {
@@ -197,7 +201,7 @@ export default function CreatePool({
                 </Box>
               </Flex>
             </Flex>
-            <Flex gap={2} align="center" pt={4}>
+            <Flex gap={2} align="center" pt={4} mb={2}>
               <Switch
                 checked={pool.is_reversible}
                 size="lg"
@@ -207,6 +211,12 @@ export default function CreatePool({
               />
               <Text size="lg">is conversion reversable?</Text>
             </Flex>
+            <UnorderedList className="octo-gray">
+              <ListItem>Conversion rate must be integer</ListItem>
+              <ListItem>
+                Click <Link color="#008cd5">here</Link> to submit new token
+              </ListItem>
+            </UnorderedList>
           </ModalBody>
           <ModalFooter justifyContent="center">
             <Button colorScheme="blue" onClick={onCreate} size="lg">
