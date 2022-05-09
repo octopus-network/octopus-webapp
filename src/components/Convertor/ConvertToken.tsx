@@ -51,9 +51,11 @@ const TokenInput = ({
   autoFocus?: boolean
 }) => {
   const tokenBlance = useTokenBalance(token?.token_id)
-  const liq = DecimalUtil.fromString(liquidity, token?.decimals)
+  const liq = DecimalUtil.fromString(liquidity, token?.decimals).toFixed(2)
 
-  const balance = DecimalUtil.fromString(tokenBlance, token?.decimals)
+  const balance = DecimalUtil.fromString(tokenBlance, token?.decimals).toFixed(
+    2
+  )
   const inputBg = useColorModeValue('#f5f7fa', 'whiteAlpha.100')
 
   return (
@@ -109,9 +111,15 @@ export default function ConvertToken({
   const outToken = whitelist.find((t) => t.token_id === pool?.out_token)
 
   const _inToken = isReversed ? outToken : inToken
-  const tokenBlance = useTokenBalance(_inToken?.token_id)
+  const _outToken = !isReversed ? outToken : inToken
+  const inTokenBalanceRaw = useTokenBalance(_inToken?.token_id)
   const inTokenBalance = DecimalUtil.fromString(
-    tokenBlance,
+    inTokenBalanceRaw,
+    _inToken?.decimals
+  ).toString()
+  const outTokenBalanceRaw = useTokenBalance(_outToken?.token_id)
+  const outTokenBalance = DecimalUtil.fromString(
+    outTokenBalanceRaw,
     _inToken?.decimals
   ).toString()
 
@@ -119,14 +127,32 @@ export default function ConvertToken({
     return null
   }
 
+  const isValid =
+    isValidNumber(String(inTokenValue), inTokenBalance) &&
+    isValidNumber(String(outTokenValue), outTokenBalance) &&
+    isValidNumber(
+      String(inTokenValue),
+      DecimalUtil.fromString(
+        pool?.in_token_balance!,
+        _inToken?.decimals
+      ).toString()
+    ) &&
+    isValidNumber(
+      String(outTokenValue),
+      DecimalUtil.fromString(
+        pool?.out_token_balance,
+        _outToken?.decimals
+      ).toString()
+    )
+
   const onTokenValueChange = (value: string, _isReversed: boolean) => {
     if (value.trim() !== '') {
-      if (isReversed || isReversed) {
+      if (_isReversed) {
         setOutTokenValue(value)
         setInTokenValue(
           new Decimal(value)
-            .mul(pool.in_token_rate)
-            .div(pool.out_token_rate)
+            .mul(!isReversed ? pool.in_token_rate : pool.out_token_rate)
+            .div(isReversed ? pool.in_token_rate : pool.out_token_rate)
             .toFixed(inToken?.decimals)
             .toString()
         )
@@ -134,14 +160,15 @@ export default function ConvertToken({
         setInTokenValue(value)
         setOutTokenValue(
           new Decimal(value)
-            .mul(pool.out_token_rate)
-            .div(pool.in_token_rate)
+            .mul(isReversed ? pool.in_token_rate : pool.out_token_rate)
+            .div(!isReversed ? pool.in_token_rate : pool.out_token_rate)
             .toFixed(inToken?.decimals)
             .toString()
         )
       }
     } else {
       setOutTokenValue('')
+      setInTokenValue('')
     }
   }
 
@@ -281,7 +308,6 @@ export default function ConvertToken({
             value={String(inTokenValue)}
             onValueChange={(value: string) => onTokenValueChange(value, false)}
             token={isReversed ? outToken : inToken}
-            autoFocus
             liquidity={
               isReversed ? pool.out_token_balance : pool.in_token_balance
             }
@@ -306,7 +332,11 @@ export default function ConvertToken({
                 boxSize={4}
               />
             </IconButton>
-            <Text>{`${pool.in_token_rate} : ${pool.out_token_rate}`}</Text>
+            <Text>
+              {isReversed
+                ? `${pool.out_token_rate} : ${pool.in_token_rate}`
+                : `${pool.in_token_rate} : ${pool.out_token_rate}`}
+            </Text>
           </Flex>
           <TokenInput
             value={String(outTokenValue)}
@@ -320,7 +350,7 @@ export default function ConvertToken({
             colorScheme="blue"
             onClick={onConvert}
             size="lg"
-            disabled={!isValidNumber(String(inTokenValue), inTokenBalance)}
+            disabled={!isValid}
           >
             Convert
           </Button>

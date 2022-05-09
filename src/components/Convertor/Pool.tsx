@@ -20,12 +20,16 @@ export default function Pool({
   const inTokenLiq = DecimalUtil.fromString(
     pool.in_token_balance,
     inToken?.decimals
-  ).toString()
+  )
+    .toFixed(2)
+    .toString()
 
   const outTokenLiq = DecimalUtil.fromString(
     pool.out_token_balance,
     outToken?.decimals
-  ).toString()
+  )
+    .toFixed(2)
+    .toString()
 
   return (
     <Flex
