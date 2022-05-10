@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from 'react';
-import useSWR from 'swr';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
-import Identicon from '@polkadot/react-identicon';
-import { encodeAddress } from '@polkadot/util-crypto';
+import React, { useState, useMemo } from 'react'
+import useSWR from 'swr'
+import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
+import Identicon from '@polkadot/react-identicon'
+import { encodeAddress } from '@polkadot/util-crypto'
 
 import {
   Box,
@@ -27,225 +27,317 @@ import {
   Flex,
   useBoolean,
   useColorModeValue,
-  VStack
-} from '@chakra-ui/react';
+  VStack,
+} from '@chakra-ui/react'
 
-import { DecimalUtil } from 'utils';
-import { Link as RouterLink, useParams, useNavigate } from 'react-router-dom';
+import { DecimalUtil } from 'utils'
+import { Link as RouterLink, useParams, useNavigate } from 'react-router-dom'
 
-import { 
-  ExternalLinkIcon, 
-  ChevronRightIcon, 
-  ChevronLeftIcon 
-} from '@chakra-ui/icons';
+import {
+  ExternalLinkIcon,
+  ChevronRightIcon,
+  ChevronLeftIcon,
+} from '@chakra-ui/icons'
 
-import { 
-  AppchainInfoWithAnchorStatus, NetworkConfig
-} from 'types';
+import { AppchainInfoWithAnchorStatus, NetworkConfig } from 'types'
 
-import { BiTimeFive } from 'react-icons/bi';
-import { AiOutlineArrowRight } from 'react-icons/ai';
-import nearLogo from 'assets/near.svg';
-import { useGlobalStore } from 'stores';
-import { TxDetail } from './TxDetail';
+import { BiTimeFive } from 'react-icons/bi'
+import { AiOutlineArrowRight } from 'react-icons/ai'
+import nearLogo from 'assets/near.svg'
+import { useGlobalStore } from 'stores'
+import { TxDetail } from './TxDetail'
 
 enum BridgeStatus {
   Pending,
   Success,
-  Failed
+  Failed,
 }
 
 type BridgeHistory = {
-  id: string;
-  direction: string;
-  appchain_name: string;
-  event: string;
-  amount: string;
-  from: string;
-  to: string;
-  outHash: string;
-  inHashes: (string|null)[];
-  status: BridgeStatus,
-  timestamp: number;
-  message?: string;
+  id: string
+  direction: string
+  appchain_name: string
+  event: string
+  amount: string
+  from: string
+  to: string
+  outHash: string
+  inHashes: (string | null)[]
+  status: BridgeStatus
+  timestamp: number
+  message?: string
 }
 
 type RowProps = {
-  data: BridgeHistory;
-  network: NetworkConfig | null;
+  data: BridgeHistory
+  network: NetworkConfig | null
 }
 
-dayjs.extend(relativeTime);
+dayjs.extend(relativeTime)
 
-const statusObj: Record<string, {
-  color: string;
-  label: string;
-}> = {
-  'Pending': {
-    color: 'green',
-    label: 'Pending'
-  },
-  'Success': {
-    color: 'blue',
-    label: 'Success'
-  },
-  'Failed': {
-    color: 'red',
-    label: 'Failed'
+const statusObj: Record<
+  string,
+  {
+    color: string
+    label: string
   }
+> = {
+  Pending: {
+    color: 'green',
+    label: 'Pending',
+  },
+  Success: {
+    color: 'blue',
+    label: 'Success',
+  },
+  Failed: {
+    color: 'red',
+    label: 'Failed',
+  },
 }
 
 const Row: React.FC<RowProps> = ({ data, network }) => {
-  const bg = useColorModeValue('white', '#15172c');
+  const bg = useColorModeValue('white', '#15172c')
 
-  const [isAppchainSide, appchainId] = useMemo(() => [
-    data.direction === 'appchain_to_near',
-    data.appchain_name.replace(`${network?.near.networkId}-`, '')
-  ], [data]);
+  const [isAppchainSide, appchainId] = useMemo(
+    () => [
+      data.direction === 'appchain_to_near',
+      data.appchain_name.replace(`${network?.near.networkId}-`, ''),
+    ],
+    [data]
+  )
 
-  const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(`appchain/${appchainId}`);
+  const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(
+    `appchain/${appchainId}`
+  )
 
   return (
     <Skeleton isLoaded={!!appchain || !network}>
-    <Box left={0} top={0} right={0} pb={1} opacity={.6}>
-      <Flex justifyContent="space-between">
-        <Box p={1} borderRadius="lg">
-          <HStack>
-            <HStack spacing={1}>
-              <Avatar boxSize={3} src={
-                isAppchainSide ?
-                appchain?.appchain_metadata?.fungible_token_metadata?.icon as any :
-                nearLogo
-              } />
-              <Text fontSize="xs">{isAppchainSide ? appchainId : 'NEAR'}</Text>
-            </HStack>
-            <Icon as={AiOutlineArrowRight} boxSize={3} />
-            <HStack spacing={1}>
-              <Avatar boxSize={3} src={
-                !isAppchainSide ?
-                appchain?.appchain_metadata?.fungible_token_metadata?.icon as any :
-                nearLogo
-              } />
-              <Text fontSize="xs">{!isAppchainSide ? appchainId : 'NEAR'}</Text>
-            </HStack>
-          </HStack>
-        </Box>
-        <Box p={1} borderRadius="lg">
-          <HStack spacing={1}>
-            <Icon as={BiTimeFive} boxSize={3} />
-            <Text fontSize="xs">{dayjs(data.timestamp).fromNow()}</Text>
-          </HStack>
-        </Box>
-      </Flex>
-    </Box>
-    <RouterLink to={`/bridge/txs/${data.id}`}>
-      <Grid templateColumns="repeat(12, 1fr)" p={6} pr={4} bg={bg} borderRadius="lg" gap={8} alignItems="center"
-        cursor="pointer" transition="all .3s ease"
-        _hover={{
-          boxShadow: '0 10px 10px -5px rgba(0,0,12,.06)',
-          transform: 'translateY(-3px) scale(1.01)'
-        }}>
-        <GridItem colSpan={2}>
-          <HStack spacing={2}>
-            <Heading fontSize="sm" color={ data.event === 'Burnt' ? 'green.500' : 'blue.500' }>{data.event}</Heading>
-            <Heading fontSize="md" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">
-              {
-                appchain ?
-                DecimalUtil.beautify(DecimalUtil.fromString(data.amount.replaceAll(',', ''), appchain?.appchain_metadata?.fungible_token_metadata?.decimals)) :
-                '-'
-              }
-            </Heading>
-            <Text fontSize="sm" color="gray.500">
-              {
-                appchain?.appchain_metadata?.fungible_token_metadata.symbol || '-'
-              }
-            </Text>
-          </HStack>
-        </GridItem>
-        <GridItem colSpan={2}>
-          <Link href={
-            isAppchainSide ?
-            `${network?.octopus.explorerUrl}/` :
-            `${network?.near.explorerUrl}/accounts/${data.from}`
-          } _hover={{ textDecoration: 'underline' }} color="#2468f2" isExternal onClick={e => e.stopPropagation()}>
-            <HStack spacing={1}>
-              {
-                isAppchainSide ?
-                <Identicon value={data.from} size={18} /> : null
-              }
-              <Text whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">
-                {isAppchainSide && data.from ? encodeAddress(data.from) : data.from}
-              </Text>
-              <Icon as={ExternalLinkIcon} boxSize={3} color="gray" />
-            </HStack>
-          </Link>
-        </GridItem>
-        <GridItem colSpan={2}>
-          <Link href={
-            isAppchainSide ?
-            `${network?.octopus.explorerUrl}/` :
-            `${network?.near.explorerUrl}/transactions/${data.outHash}`
-          } _hover={{ textDecoration: 'underline' }} color="#2468f2" isExternal onClick={e => e.stopPropagation()}>
-            <HStack spacing={1}>
-              <Text whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">{data.outHash}</Text>
-              <Icon as={ExternalLinkIcon} boxSize={3} color="gray" />
-            </HStack>
-          </Link>
-        </GridItem>
-      
-        <GridItem colSpan={2}>
-          <Link href={
-            !isAppchainSide ?
-            `${network?.octopus.explorerUrl}/` :
-            `${network?.near.explorerUrl}/accounts/${data.to}`
-          } _hover={{ textDecoration: 'underline' }} color="#2468f2" isExternal  onClick={e => e.stopPropagation()}>
-            <HStack spacing={1}>
-              {
-                !isAppchainSide ?
-                <Identicon value={data.to} size={18} /> : null
-              }
-              <Text whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">
-                {!isAppchainSide && data.to ? encodeAddress(data.to) : data.to}
-              </Text>
-              <Icon as={ExternalLinkIcon} boxSize={3} color="gray" />
-            </HStack>
-          </Link>
-        </GridItem>
-        <GridItem colSpan={2}>
-          {
-            data.inHashes?.[0] ? 
-            <Link href={
-              !isAppchainSide ?
-              `${network?.octopus.explorerUrl}/` :
-              `${network?.near.explorerUrl}/transactions/${data.inHashes?.[0]}`
-            } _hover={{ textDecoration: 'underline' }} color="#2468f2" isExternal onClick={e => e.stopPropagation()}>
+      <Box left={0} top={0} right={0} pb={1} opacity={0.6}>
+        <Flex justifyContent="space-between">
+          <Box p={1} borderRadius="lg">
+            <HStack>
               <HStack spacing={1}>
-                <Text whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">{data.inHashes?.[0]}</Text>
+                <Avatar
+                  boxSize={3}
+                  src={
+                    isAppchainSide
+                      ? (appchain?.appchain_metadata?.fungible_token_metadata
+                          ?.icon as any)
+                      : nearLogo
+                  }
+                />
+                <Text fontSize="xs">
+                  {isAppchainSide ? appchainId : 'NEAR'}
+                </Text>
+              </HStack>
+              <Icon as={AiOutlineArrowRight} boxSize={3} />
+              <HStack spacing={1}>
+                <Avatar
+                  boxSize={3}
+                  src={
+                    !isAppchainSide
+                      ? (appchain?.appchain_metadata?.fungible_token_metadata
+                          ?.icon as any)
+                      : nearLogo
+                  }
+                />
+                <Text fontSize="xs">
+                  {!isAppchainSide ? appchainId : 'NEAR'}
+                </Text>
+              </HStack>
+            </HStack>
+          </Box>
+          <Box p={1} borderRadius="lg">
+            <HStack spacing={1}>
+              <Icon as={BiTimeFive} boxSize={3} />
+              <Text fontSize="xs">{dayjs(data.timestamp).fromNow()}</Text>
+            </HStack>
+          </Box>
+        </Flex>
+      </Box>
+      <RouterLink to={`/bridge/txs/${data.id}`}>
+        <Grid
+          templateColumns="repeat(12, 1fr)"
+          p={6}
+          pr={4}
+          bg={bg}
+          borderRadius="lg"
+          gap={6}
+          alignItems="center"
+          cursor="pointer"
+          transition="all .3s ease"
+          _hover={{
+            boxShadow: '0 10px 10px -5px rgba(0,0,12,.06)',
+            transform: 'translateY(-3px) scale(1.01)',
+          }}
+        >
+          <GridItem colSpan={2}>
+            <HStack spacing={2}>
+              <Heading
+                fontSize="sm"
+                color={data.event === 'Burnt' ? 'green.500' : 'blue.500'}
+              >
+                {data.event}
+              </Heading>
+              <Heading
+                fontSize="md"
+                whiteSpace="nowrap"
+                overflow="hidden"
+                textOverflow="ellipsis"
+                className="tx-hash-ellipsis"
+                style={{ width: 90 }}
+              >
+                {appchain
+                  ? DecimalUtil.beautify(
+                      DecimalUtil.fromString(
+                        data.amount.replaceAll(',', ''),
+                        appchain?.appchain_metadata?.fungible_token_metadata
+                          ?.decimals
+                      )
+                    )
+                  : '-'}
+              </Heading>
+              <Text fontSize="sm" color="gray.500">
+                {appchain?.appchain_metadata?.fungible_token_metadata.symbol ||
+                  '-'}
+              </Text>
+            </HStack>
+          </GridItem>
+          <GridItem colSpan={2}>
+            <Link
+              href={
+                isAppchainSide
+                  ? `${network?.octopus.explorerUrl}/`
+                  : `${network?.near.explorerUrl}/accounts/${data.from}`
+              }
+              _hover={{ textDecoration: 'underline' }}
+              color="#2468f2"
+              isExternal
+              onClick={(e) => e.stopPropagation()}
+            >
+              <HStack spacing={1}>
+                {isAppchainSide ? (
+                  <Identicon value={data.from} size={18} />
+                ) : null}
+                <Text
+                  whiteSpace="nowrap"
+                  overflow="hidden"
+                  textOverflow="ellipsis"
+                  className="tx-hash-ellipsis"
+                >
+                  {isAppchainSide && data.from
+                    ? encodeAddress(data.from)
+                    : data.from}
+                </Text>
                 <Icon as={ExternalLinkIcon} boxSize={3} color="gray" />
               </HStack>
-            </Link> : null
-          }
-        </GridItem>
-        <GridItem colSpan={2}>
-          <HStack justifyContent="flex-end">
-            <Tag size="sm" colorScheme={statusObj[data.status].color}>{statusObj[data.status].label}</Tag>
-            <Icon as={ChevronRightIcon} boxSize={4} opacity={.3} />
-          </HStack>
-        </GridItem>
-      </Grid>
-    </RouterLink>
+            </Link>
+          </GridItem>
+          <GridItem colSpan={2}>
+            <Link
+              href={
+                isAppchainSide
+                  ? `${network?.octopus.explorerUrl}/`
+                  : `${network?.near.explorerUrl}/transactions/${data.outHash}`
+              }
+              _hover={{ textDecoration: 'underline' }}
+              color="#2468f2"
+              isExternal
+              onClick={(e) => e.stopPropagation()}
+            >
+              <HStack spacing={1}>
+                <Text
+                  whiteSpace="nowrap"
+                  overflow="hidden"
+                  textOverflow="ellipsis"
+                  className="tx-hash-ellipsis"
+                >
+                  {data.outHash}
+                </Text>
+                <Icon as={ExternalLinkIcon} boxSize={3} color="gray" />
+              </HStack>
+            </Link>
+          </GridItem>
+
+          <GridItem colSpan={2}>
+            <Link
+              href={
+                !isAppchainSide
+                  ? `${network?.octopus.explorerUrl}/`
+                  : `${network?.near.explorerUrl}/accounts/${data.to}`
+              }
+              _hover={{ textDecoration: 'underline' }}
+              color="#2468f2"
+              isExternal
+              onClick={(e) => e.stopPropagation()}
+            >
+              <HStack spacing={1}>
+                {!isAppchainSide ? (
+                  <Identicon value={data.to} size={18} />
+                ) : null}
+                <Text
+                  whiteSpace="nowrap"
+                  overflow="hidden"
+                  textOverflow="ellipsis"
+                  className="tx-hash-ellipsis"
+                >
+                  {!isAppchainSide && data.to
+                    ? encodeAddress(data.to)
+                    : data.to}
+                </Text>
+                <Icon as={ExternalLinkIcon} boxSize={3} color="gray" />
+              </HStack>
+            </Link>
+          </GridItem>
+          <GridItem colSpan={2}>
+            {data.inHashes?.[0] ? (
+              <Link
+                href={
+                  !isAppchainSide
+                    ? `${network?.octopus.explorerUrl}/`
+                    : `${network?.near.explorerUrl}/transactions/${data.inHashes?.[0]}`
+                }
+                _hover={{ textDecoration: 'underline' }}
+                color="#2468f2"
+                isExternal
+                onClick={(e) => e.stopPropagation()}
+              >
+                <HStack spacing={1}>
+                  <Text
+                    whiteSpace="nowrap"
+                    overflow="hidden"
+                    textOverflow="ellipsis"
+                    className="tx-hash-ellipsis"
+                  >
+                    {data.inHashes?.[0]}
+                  </Text>
+                  <Icon as={ExternalLinkIcon} boxSize={3} color="gray" />
+                </HStack>
+              </Link>
+            ) : null}
+          </GridItem>
+          <GridItem colSpan={2}>
+            <HStack justifyContent="flex-end">
+              <Tag size="sm" colorScheme={statusObj[data.status].color}>
+                {statusObj[data.status].label}
+              </Tag>
+              <Icon as={ChevronRightIcon} boxSize={4} opacity={0.3} />
+            </HStack>
+          </GridItem>
+        </Grid>
+      </RouterLink>
     </Skeleton>
   )
 }
 
 export const Status: React.FC = () => {
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
 
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
-
-  const { txId } = useParams();
-  const navigate = useNavigate();
-  const { global } = useGlobalStore();
+  const { txId } = useParams()
+  const navigate = useNavigate()
+  const { global } = useGlobalStore()
 
   // useEffect(() => {
   //   window.addEventListener('scroll', (e) => {
@@ -254,12 +346,12 @@ export const Status: React.FC = () => {
   // }, []);
 
   const { data: txns } = useSWR<any[]>(
-    `bridge-helper/bridge_txs?start=${((page - 1) * pageSize)}&size=${pageSize}`, 
+    `bridge-helper/bridge_txs?start=${(page - 1) * pageSize}&size=${pageSize}`,
     { refreshInterval: 3000 }
-  );
+  )
 
   const onDetailDrawerClose = () => {
-    navigate(`/bridge/txs`);
+    navigate(`/bridge/txs`)
   }
 
   return (
@@ -273,7 +365,13 @@ export const Status: React.FC = () => {
             </Button>
           </RouterLink>
         </Flex>
-        <Grid templateColumns="repeat(12, 1fr)" p={4} color="gray.500" gap={8} fontSize="sm">
+        <Grid
+          templateColumns="repeat(12, 1fr)"
+          p={4}
+          color="gray.500"
+          gap={8}
+          fontSize="sm"
+        >
           <GridItem colSpan={2}>
             <Text>Token</Text>
           </GridItem>
@@ -293,30 +391,34 @@ export const Status: React.FC = () => {
             <Text>Status</Text>
           </GridItem>
         </Grid>
-        {
-          txns?.length ?
+        {txns?.length ? (
           <List spacing={5}>
-            {
-              txns.map((tx, idx) => (
-                <Row data={tx} key={`row-${idx}`} network={global.network} />
-              ))
-            }
-          </List> :
+            {txns.map((tx, idx) => (
+              <Row data={tx} key={`row-${idx}`} network={global.network} />
+            ))}
+          </List>
+        ) : (
           <Center minH="320px">
-            <Spinner size="md" thickness="4px" speed="1s" color="octo-blue.500" />
+            <Spinner
+              size="md"
+              thickness="4px"
+              speed="1s"
+              color="octo-blue.500"
+            />
           </Center>
-        }
+        )}
       </Box>
       <Drawer
         placement="right"
         isOpen={!!txId}
         onClose={onDetailDrawerClose}
-        size="lg">
+        size="lg"
+      >
         <DrawerOverlay />
         <DrawerContent>
           <TxDetail onDrawerClose={onDetailDrawerClose} />
         </DrawerContent>
       </Drawer>
     </>
-  );
+  )
 }
