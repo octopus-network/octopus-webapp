@@ -2,22 +2,26 @@ import {
   Button,
   Flex,
   Image,
+  Link,
   SimpleGrid,
   Text,
   useColorModeValue,
 } from '@chakra-ui/react'
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
-import { ConversionPool, FungibleTokenMetadata } from 'types'
+import { AccountId, ConversionPool, FungibleTokenMetadata } from 'types'
 import { MdSyncAlt, MdTrendingFlat } from 'react-icons/md'
 import ManagePool from './ManagePool'
+import { useGlobalStore } from 'stores'
 
 export default function MyPool({
   pools,
   whitelist,
+  contractId,
 }: {
   pools: ConversionPool[]
   whitelist: FungibleTokenMetadata[]
+  contractId: AccountId
 }) {
   const bg = useColorModeValue('white', '#25263c')
   const [selectedPool, setSelectedPool] = useState<ConversionPool | null>(null)
@@ -36,6 +40,7 @@ export default function MyPool({
     }
   }, [poolId, pools, location])
 
+  const { global } = useGlobalStore()
   if (pools.length === 0) {
     return null
   }
@@ -52,7 +57,14 @@ export default function MyPool({
           return (
             <Flex key={pool.id} bg={bg} p={4} direction="column" gap={4}>
               <Flex direction="column" gap={2}>
-                <Text color="#008cd5">{`#${pool.id} Owner: ${pool.creator}`}</Text>
+                <Text color="#008cd5">
+                  {`#${pool.id} Owner: `}
+                  <Link
+                    href={`${global.network?.near.explorerUrl}/accounts/${pool.creator}`}
+                  >
+                    {pool.creator}
+                  </Link>
+                </Text>
                 <Flex direction="row" align="center" gap={4}>
                   <Flex direction="column" gap={2}>
                     <Flex gap={2} align="center">
@@ -92,7 +104,7 @@ export default function MyPool({
               </Flex>
               <Flex justify="flex-end">
                 <Button
-                  colorScheme="blue"
+                  variant="octo-linear"
                   size="sm"
                   onClick={() => {
                     navigate(`/converter/pool/${pool.id}/manage`)
@@ -108,6 +120,7 @@ export default function MyPool({
       <ManagePool
         pool={selectedPool}
         whitelist={whitelist}
+        contractId={contractId}
         onClose={() => {
           navigate('/converter')
         }}

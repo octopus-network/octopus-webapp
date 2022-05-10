@@ -1,6 +1,6 @@
 import { Flex, Skeleton, Stack } from '@chakra-ui/react'
 import { useEffect, useState } from 'react'
-import { ConversionPool, FungibleTokenMetadata } from 'types'
+import { AccountId, ConversionPool, FungibleTokenMetadata } from 'types'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import ConvertToken from './ConvertToken'
 import Pool from './Pool'
@@ -9,7 +9,9 @@ export default function PoolList({
   isLoading,
   pools,
   whitelist,
+  contractId,
 }: {
+  contractId: AccountId
   isLoading: boolean
   pools: ConversionPool[]
   whitelist: FungibleTokenMetadata[]
@@ -50,6 +52,7 @@ export default function PoolList({
         pool={selectedPool}
         whitelist={whitelist}
         onClose={() => navigate('/converter')}
+        contractId={contractId}
       />
     </Flex>
   )

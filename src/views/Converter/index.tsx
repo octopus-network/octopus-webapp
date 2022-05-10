@@ -8,12 +8,20 @@ import {
   useWhitelist,
 } from 'hooks/useConvertorContract'
 import { useGlobalStore } from 'stores'
+import useSWR from 'swr'
+import { ConverterConfig, NetworkType } from 'types'
 
 export function Converter() {
   const { global } = useGlobalStore()
+  const { data } = useSWR<ConverterConfig>(`converter-config`)
+
+  const contractId = data
+    ? data[global.network?.near.networkId ?? NetworkType.TESTNET].contractId
+    : ''
+
   const contract = useConvertorContract(
     global.wallet?.account() as any,
-    'contract.convertor.testnet'
+    contractId
   )
   const { whitelist, isLoading: isLoadingWhitelist } = useWhitelist(contract)
 
@@ -24,13 +32,14 @@ export function Converter() {
   return (
     <Container position="relative">
       <Flex direction="column" padding={4} pt={10}>
-        <MyPool pools={myPools} whitelist={whitelist} />
-        <CreatePool whitelist={whitelist} />
+        <MyPool pools={myPools} whitelist={whitelist} contractId={contractId} />
+        <CreatePool whitelist={whitelist} contractId={contractId} />
 
         <PoolList
           pools={pools}
           whitelist={whitelist}
           isLoading={isLoadingWhitelist || isLoadingPools}
+          contractId={contractId}
         />
       </Flex>
     </Container>

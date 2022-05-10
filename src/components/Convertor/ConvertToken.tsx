@@ -28,7 +28,7 @@ import {
 import { useState } from 'react'
 import { MdArrowDownward, MdSwapVert } from 'react-icons/md'
 import { useGlobalStore } from 'stores'
-import { ConversionPool, FungibleTokenMetadata } from 'types'
+import { AccountId, ConversionPool, FungibleTokenMetadata } from 'types'
 import { DecimalUtil } from 'utils'
 import { isValidNumber } from 'utils/validate'
 import { createTransaction, functionCall } from 'near-api-js/lib/transaction'
@@ -70,7 +70,6 @@ const TokenInput = ({
         </Flex>
         <Input
           placeholder="Amount"
-          size="lg"
           bg={inputBg}
           value={value}
           disabled={inputDisabled}
@@ -79,7 +78,7 @@ const TokenInput = ({
           onChange={(e) => onValueChange(e.target.value)}
         />
       </Flex>
-      <Flex direction="row" align="center" gap={2} p={2} pr={4}>
+      <Flex direction="row" align="center" gap={2} pt={2} pr={4}>
         <Text fontWeight={600}>{token?.symbol}</Text>
         <Image src={token?.icon || ''} width={10} height={10} alt="" />
       </Flex>
@@ -91,10 +90,12 @@ export default function ConvertToken({
   pool,
   whitelist,
   onClose,
+  contractId,
 }: {
   pool: ConversionPool | null
   whitelist: FungibleTokenMetadata[]
   onClose: () => void
+  contractId: AccountId
 }) {
   const [inTokenValue, setInTokenValue] = useState<string | number>('')
   const [outTokenValue, setOutTokenValue] = useState<string | number>('')
@@ -103,7 +104,7 @@ export default function ConvertToken({
 
   const contract = useConvertorContract(
     global.wallet?.account() as any,
-    'contract.convertor.testnet'
+    contractId
   )
   const bg = useColorModeValue('white', '#15172c')
 
@@ -185,7 +186,7 @@ export default function ConvertToken({
 
       if (String(storageFee) !== '0') {
         actions.push({
-          receiverId: 'contract.convertor.testnet',
+          receiverId: contractId,
           actions: [
             functionCall(
               'storage_deposit',
@@ -223,9 +224,9 @@ export default function ConvertToken({
         })
       }
 
-      const contractId = isReversed ? pool.out_token : pool.in_token
+      const tokenContractId = isReversed ? pool.out_token : pool.in_token
       const amount = inTokenValue
-      const token = whitelist.find((t) => t.token_id === contractId)
+      const token = whitelist.find((t) => t.token_id === tokenContractId)
       const _amount = DecimalUtil.toU64(
         new Decimal(amount),
         token?.decimals
@@ -233,17 +234,17 @@ export default function ConvertToken({
 
       const convertAction = {
         input_token_amount: _amount,
-        input_token_id: contractId,
+        input_token_id: tokenContractId,
         pool_id: pool.id,
       }
 
       actions.push({
-        receiverId: contractId,
+        receiverId: tokenContractId,
         actions: [
           functionCall(
             'ft_transfer_call',
             {
-              receiver_id: 'contract.convertor.testnet',
+              receiver_id: contractId,
               amount: _amount,
               msg: JSON.stringify({
                 Convert: { convert_action: convertAction },
@@ -346,12 +347,7 @@ export default function ConvertToken({
               !isReversed ? pool.out_token_balance : pool.in_token_balance
             }
           />
-          <Button
-            colorScheme="blue"
-            onClick={onConvert}
-            size="lg"
-            disabled={!isValid}
-          >
+          <Button variant="octo-linear" onClick={onConvert} disabled={!isValid}>
             Convert
           </Button>
         </Flex>

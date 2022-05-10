@@ -1,8 +1,16 @@
-import { Button, Flex, Image, Text, useColorModeValue } from '@chakra-ui/react'
+import {
+  Button,
+  Flex,
+  Image,
+  Link,
+  Text,
+  useColorModeValue,
+} from '@chakra-ui/react'
 import { ConversionPool, FungibleTokenMetadata } from 'types'
 import { DecimalUtil } from 'utils'
 import { MdSyncAlt, MdTrendingFlat } from 'react-icons/md'
 import { isMobile } from 'react-device-detect'
+import { useGlobalStore } from 'stores'
 
 export default function Pool({
   pool,
@@ -17,6 +25,7 @@ export default function Pool({
   const inToken = whitelist.find((t) => t.token_id === pool.in_token)
   const outToken = whitelist.find((t) => t.token_id === pool.out_token)
 
+  const { global } = useGlobalStore()
   const inTokenLiq = DecimalUtil.fromString(
     pool.in_token_balance,
     inToken?.decimals
@@ -42,7 +51,14 @@ export default function Pool({
       mb={2}
     >
       <Flex direction="column" gap={2} flexShrink={0}>
-        <Text color="#008cd5">{`#${pool.id} Owner: ${pool.creator}`}</Text>
+        <Text color="#008cd5">
+          {`#${pool.id} Owner: `}
+          <Link
+            href={`${global.network?.near.explorerUrl}/accounts/${pool.creator}`}
+          >
+            {pool.creator}
+          </Link>
+        </Text>
         <Flex direction="row" align="flex-start" gap={4}>
           <Flex direction="column" gap={2}>
             <Flex gap={2} align="center">
@@ -87,8 +103,9 @@ export default function Pool({
         </Flex>
       </Flex>
       <Button
-        colorScheme="blue"
+        variant="octo-linear"
         alignSelf="flex-end"
+        size="sm"
         onClick={() => onSelect(pool)}
       >
         Select

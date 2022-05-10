@@ -35,11 +35,13 @@ export const useConvertorContract = (account: Account, contractId: string) => {
   const [contract, setContract] = useState<ConvertorContract | null>(null)
 
   useEffect(() => {
-    const _contract = new ConvertorContract(account, contractId, {
-      viewMethods: ['get_whitelist', 'get_pools', 'get_storage_fee_gap_of'],
-      changeMethods: [],
-    })
-    setContract(_contract)
+    if (contractId) {
+      const _contract = new ConvertorContract(account, contractId, {
+        viewMethods: ['get_whitelist', 'get_pools', 'get_storage_fee_gap_of'],
+        changeMethods: [],
+      })
+      setContract(_contract)
+    }
   }, [account, contractId])
 
   return contract

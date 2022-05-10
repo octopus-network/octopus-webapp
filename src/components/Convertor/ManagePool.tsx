@@ -17,6 +17,7 @@ import {
   Tab,
   TabPanels,
   TabPanel,
+  Link,
 } from '@chakra-ui/react'
 import { BN } from '@polkadot/util'
 import { baseDecode } from 'borsh'
@@ -27,7 +28,7 @@ import { PublicKey } from 'near-api-js/lib/utils'
 import { SIMPLE_CALL_GAS } from 'primitives'
 import { useState } from 'react'
 import { useGlobalStore } from 'stores'
-import { ConversionPool, FungibleTokenMetadata } from 'types'
+import { AccountId, ConversionPool, FungibleTokenMetadata } from 'types'
 import { DecimalUtil } from 'utils'
 import { isValidNumber } from 'utils/validate'
 
@@ -75,7 +76,6 @@ function TokenInput({
             placeholder="Please input deposit amount"
             value={value}
             autoFocus
-            size="lg"
             onChange={(e) => setValue(e.target.value)}
             type="number"
             bg={inputBg}
@@ -84,8 +84,7 @@ function TokenInput({
         <Flex justify="center" gap={4}>
           <Button
             flex={1}
-            size="lg"
-            colorScheme="blue"
+            variant="octo-linear"
             disabled={
               !isValidNumber(value, isWithdraw ? liquidity : tokenBalance)
             }
@@ -103,10 +102,12 @@ export default function ManagePool({
   pool,
   whitelist,
   onClose,
+  contractId,
 }: {
   pool: ConversionPool | null
   whitelist: FungibleTokenMetadata[]
   onClose: () => void
+  contractId: AccountId
 }) {
   const inToken = whitelist.find((t) => t.token_id === pool?.in_token)
   const outToken = whitelist.find((t) => t.token_id === pool?.out_token)
@@ -126,7 +127,7 @@ export default function ManagePool({
         contractId: token.token_id!,
         methodName: 'ft_transfer_call',
         args: {
-          receiver_id: 'contract.convertor.testnet',
+          receiver_id: contractId,
           amount: DecimalUtil.toU64(
             new Decimal(amount),
             token.decimals
@@ -147,7 +148,7 @@ export default function ManagePool({
   ) => {
     try {
       global.wallet?.account().functionCall({
-        contractId: 'contract.convertor.testnet',
+        contractId: contractId,
         methodName: 'withdraw_token_in_pool',
         args: {
           pool_id: pool.id,
@@ -173,7 +174,7 @@ export default function ManagePool({
       const actions = []
       if (pool.in_token_balance !== '0') {
         actions.push({
-          receiverId: 'contract.convertor.testnet',
+          receiverId: contractId,
           actions: [
             functionCall(
               'withdraw_token_in_pool',
@@ -191,7 +192,7 @@ export default function ManagePool({
 
       if (pool.out_token_balance !== '0') {
         actions.push({
-          receiverId: 'contract.convertor.testnet',
+          receiverId: contractId,
           actions: [
             functionCall(
               'withdraw_token_in_pool',
@@ -208,7 +209,7 @@ export default function ManagePool({
       }
 
       actions.push({
-        receiverId: 'contract.convertor.testnet',
+        receiverId: contractId,
         actions: [
           functionCall(
             'delete_pool',
@@ -265,7 +266,14 @@ export default function ManagePool({
           </Flex>
         </DrawerHeader>
         <Flex direction="column" gap={2} pl={6} pr={6}>
-          <Text color="#008cd5">{`#${pool.id} Owner: ${pool.creator}`}</Text>
+          <Text color="#008cd5">
+            {`#${pool.id} Owner: `}
+            <Link
+              href={`${global.network?.near.explorerUrl}/accounts/${pool.creator}`}
+            >
+              {pool.creator}
+            </Link>
+          </Text>
 
           <Tabs>
             <TabList>

@@ -17,6 +17,7 @@ import {
   Link,
   UnorderedList,
   ListItem,
+  useToast,
 } from '@chakra-ui/react'
 import { BN } from '@polkadot/util'
 import { Select, chakraComponents } from 'chakra-react-select'
@@ -24,7 +25,7 @@ import { parseNearAmount } from 'near-api-js/lib/utils/format'
 import { SIMPLE_CALL_GAS } from 'primitives'
 import { useState } from 'react'
 import { useGlobalStore } from 'stores'
-import { FungibleTokenMetadata } from 'types'
+import { AccountId, FungibleTokenMetadata } from 'types'
 import {
   MdOutlineSwapVert,
   MdOutlineArrowDownward,
@@ -50,27 +51,42 @@ interface PoolProps {
   out_token_decimals: number
 }
 
+const DEFAULT_POOL = {
+  in_token: '',
+  out_token: '',
+  in_token_rate: '',
+  out_token_rate: '',
+  is_reversible: false,
+  in_token_decimals: 0,
+  out_token_decimals: 0,
+}
+
 export default function CreatePool({
   whitelist,
+  contractId,
 }: {
   whitelist: FungibleTokenMetadata[]
+  contractId: AccountId
 }) {
   const { isOpen, onOpen, onClose } = useDisclosure()
-  const [pool, setPool] = useState<PoolProps>({
-    in_token: '',
-    out_token: '',
-    in_token_rate: '',
-    out_token_rate: '',
-    is_reversible: false,
-    in_token_decimals: 0,
-    out_token_decimals: 0,
-  })
+  const [pool, setPool] = useState<PoolProps>(DEFAULT_POOL)
 
   const { global } = useGlobalStore()
+  const toast = useToast()
   const onCreate = async () => {
     try {
-      await global.wallet?.account().functionCall({
-        contractId: 'contract.convertor.testnet',
+      const account = global.wallet?.account()
+      if (!account?.accountId) {
+        toast({
+          position: 'top-right',
+          title: 'Error',
+          description: 'Please login first',
+          status: 'error',
+        })
+        return
+      }
+      await account?.functionCall({
+        contractId: contractId,
         methodName: 'create_pool',
         args: {
           in_token: pool.in_token,
@@ -82,7 +98,9 @@ export default function CreatePool({
         gas: new BN(SIMPLE_CALL_GAS),
         attachedDeposit: new BN(parseNearAmount('1')!),
       })
-    } catch (error) {}
+    } catch (error) {
+      console.error(error)
+    }
   }
 
   return (
@@ -90,11 +108,23 @@ export default function CreatePool({
       <Text fontSize="2xl" fontWeight="bold">
         Pool list
       </Text>
-      <Button leftIcon={<MdOutlineAdd />} colorScheme="blue" onClick={onOpen}>
+      <Button
+        variant="octo-linear"
+        leftIcon={<MdOutlineAdd />}
+        onClick={onOpen}
+      >
         Create Pool
       </Button>
 
-      <Modal isOpen={isOpen} onClose={onClose} isCentered size="lg">
+      <Modal
+        isOpen={isOpen}
+        onClose={() => {
+          onClose()
+          setPool(DEFAULT_POOL)
+        }}
+        isCentered
+        size="lg"
+      >
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>Create Pool</ModalHeader>
@@ -111,14 +141,13 @@ export default function CreatePool({
                   placeholder="Input conversion rate"
                   value={pool.in_token_rate}
                   onChange={(e) => {
-                    if (/^[0-9]+$/.test(e.target.value)) {
+                    if (/^[0-9]{0,}$/.test(e.target.value)) {
                       setPool({ ...pool, in_token_rate: e.target.value })
                     }
                   }}
                 />
                 <Box w={400}>
                   <Select
-                    colorScheme="purple"
                     size="lg"
                     options={whitelist
                       .filter((t) => {
@@ -164,7 +193,7 @@ export default function CreatePool({
                   placeholder="Input conversion rate"
                   value={pool.out_token_rate}
                   onChange={(e) => {
-                    if (/^[0-9]+$/.test(e.target.value)) {
+                    if (/^[0-9]{0,}$/.test(e.target.value)) {
                       setPool({ ...pool, out_token_rate: e.target.value })
                     }
                   }}
@@ -214,12 +243,20 @@ export default function CreatePool({
             <UnorderedList className="octo-gray">
               <ListItem>Conversion rate must be integer</ListItem>
               <ListItem>
-                Click <Link color="#008cd5">here</Link> to submit new token
+                Click{' '}
+                <Link
+                  color="#008cd5"
+                  target="_blank"
+                  href="https://docs.google.com/forms/d/e/1FAIpQLSd1ZbxY70HyCH33-59DrQBT8tVBZZ1HX0MlXrxFS1GDr1zR0A/viewform"
+                >
+                  here
+                </Link>{' '}
+                to submit new token
               </ListItem>
             </UnorderedList>
           </ModalBody>
           <ModalFooter justifyContent="center">
-            <Button colorScheme="blue" onClick={onCreate} size="lg">
+            <Button variant="octo-linear" onClick={onCreate} size="lg">
               Confirm
             </Button>
           </ModalFooter>
