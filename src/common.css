@@ -1,17 +1,17 @@
 .octo-linear-button {
   color: white;
-  background-image: linear-gradient(137deg, #1486ff 4%, #2468f2)!important;
-  transition: all .3s cubic-bezier(.4, 0, .2, 1)!important;
+  background-image: linear-gradient(137deg, #1486ff 4%, #2468f2) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .octo-linear-button:hover {
-  background-image: linear-gradient(137deg, #2468f2 4%, #1486ff)!important;
-  filter: brightness(110%)!important;
+  background-image: linear-gradient(137deg, #2468f2 4%, #1486ff) !important;
+  filter: brightness(110%) !important;
 }
 
 .octo-linear-button:active {
-  background-image: linear-gradient(137deg, #1486ff 4%, #2468f2)!important;
-  filter: brightness(90%)!important;
+  background-image: linear-gradient(137deg, #1486ff 4%, #2468f2) !important;
+  filter: brightness(90%) !important;
 }
 
 .absolute {
@@ -23,17 +23,21 @@
 }
 
 .hover-underline:hover {
-  text-decoration: underline!important;
+  text-decoration: underline !important;
 }
 
 .hover-blue:hover {
-  color: #2468f2!important;
+  color: #2468f2 !important;
 }
 
 .transition {
-  transition: all .3s ease;
+  transition: all 0.3s ease;
 }
 
 .chakra-toast__inner {
-  min-width: 0!important;
+  min-width: 0 !important;
+}
+
+.tx-hash-ellipsis {
+  width: 130px;
 }
