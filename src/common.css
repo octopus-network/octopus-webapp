@@ -45,3 +45,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.tx-hash-ellipsis {
+  width: 130px;
+}
