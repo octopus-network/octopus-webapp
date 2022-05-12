@@ -38,6 +38,14 @@
   min-width: 0 !important;
 }
 
+.success-tx-link {
+  max-width: 300px;
+  display: block;
+  overflow-x: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .tx-hash-ellipsis {
   width: 130px;
 }
