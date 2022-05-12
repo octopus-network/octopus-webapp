@@ -52,7 +52,9 @@ const customComponents = {
     return (
       <chakraComponents.Option {...props} selectProps={{ size: 'sm' }}>
         {icon}
-        <Text ml={2}>{label}</Text>
+        <Text ml={2} fontSize="lg">
+          {label}
+        </Text>
       </chakraComponents.Option>
     )
   },
