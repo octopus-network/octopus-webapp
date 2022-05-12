@@ -106,6 +106,12 @@ export default function CreatePool({
         })
         return
       }
+
+      const attachedDeposit = await account.viewFunction(
+        contractId,
+        'get_deposit_amount_of_pool_creation'
+      )
+
       await account?.functionCall({
         contractId: contractId,
         methodName: 'create_pool',
@@ -117,7 +123,7 @@ export default function CreatePool({
           is_reversible: pool.is_reversible,
         },
         gas: new BN(SIMPLE_CALL_GAS),
-        attachedDeposit: new BN(parseNearAmount('1')!),
+        attachedDeposit: new BN(attachedDeposit),
       })
     } catch (error) {
       console.error(error)
