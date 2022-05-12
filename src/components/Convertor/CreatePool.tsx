@@ -33,12 +33,30 @@ import {
 } from 'react-icons/md'
 
 const customComponents = {
-  Option: ({ children, ...props }: any) => (
-    <chakraComponents.Option {...props}>
-      {props.data.icon}
-      <Box ml={2}>{children}</Box>
-    </chakraComponents.Option>
-  ),
+  Option: ({ children, ...props }: any) => {
+    return (
+      <chakraComponents.Option {...props}>
+        {props.data.icon}
+        <Box ml={2}>{children}</Box>
+      </chakraComponents.Option>
+    )
+  },
+  Input: ({ children, ...props }: any) => {
+    let icon = null
+    let label = ''
+    if (props.hasValue) {
+      const value = props.getValue()[0]
+      icon = value.icon
+      label = value.label
+    }
+    return (
+      <chakraComponents.Option {...props} selectProps={{ size: 'sm' }}>
+        {icon}
+        <Text ml={2}>{label}</Text>
+      </chakraComponents.Option>
+    )
+  },
+  SingleValue: () => null,
 }
 
 interface PoolProps {
@@ -163,7 +181,14 @@ export default function CreatePool({
                         label: t.symbol,
                         value: t.token_id,
                         decimals: t.decimals,
-                        icon: <Image src={t.icon || ''} alt="" />,
+                        icon: (
+                          <Image
+                            src={t.icon || ''}
+                            w={30}
+                            h={30}
+                            alt={t.symbol}
+                          />
+                        ),
                       }))}
                     onChange={(newValue) => {
                       setPool({
@@ -216,7 +241,14 @@ export default function CreatePool({
                         label: t.symbol,
                         value: t.token_id,
                         decimals: t.decimals,
-                        icon: <Image src={t.icon || ''} alt="" />,
+                        icon: (
+                          <Image
+                            src={t.icon || ''}
+                            alt={t.symbol}
+                            w={30}
+                            h={30}
+                          />
+                        ),
                       }))}
                     onChange={(newValue) => {
                       setPool({
