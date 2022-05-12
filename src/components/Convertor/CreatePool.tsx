@@ -31,6 +31,7 @@ import {
   MdOutlineArrowDownward,
   MdOutlineAdd,
 } from 'react-icons/md'
+import NEP141 from 'assets/icons/nep141-token.png'
 
 const customComponents = {
   Option: ({ children, ...props }: any) => {
@@ -185,10 +186,11 @@ export default function CreatePool({
                         decimals: t.decimals,
                         icon: (
                           <Image
-                            src={t.icon || ''}
+                            src={t.icon || NEP141}
                             w={30}
                             h={30}
                             alt={t.symbol}
+                            borderRadius={15}
                           />
                         ),
                       }))}
@@ -245,10 +247,11 @@ export default function CreatePool({
                         decimals: t.decimals,
                         icon: (
                           <Image
-                            src={t.icon || ''}
+                            src={t.icon || NEP141}
                             alt={t.symbol}
                             w={30}
                             h={30}
+                            borderRadius={15}
                           />
                         ),
                       }))}

@@ -3,7 +3,6 @@ import {
   Button,
   Input,
   Text,
-  Image,
   Box,
   Drawer,
   DrawerOverlay,
@@ -18,6 +17,7 @@ import {
   TabPanels,
   TabPanel,
   Link,
+  Avatar,
 } from '@chakra-ui/react'
 import { BN } from '@polkadot/util'
 import { baseDecode } from 'borsh'
@@ -31,6 +31,7 @@ import { useGlobalStore } from 'stores'
 import { AccountId, ConversionPool, FungibleTokenMetadata } from 'types'
 import { DecimalUtil } from 'utils'
 import { isValidNumber } from 'utils/validate'
+import NEP141 from 'assets/icons/nep141-token.png'
 
 function TokenInput({
   token,
@@ -55,7 +56,7 @@ function TokenInput({
   return (
     <Box mb={6}>
       <Flex direction="row" align="center" gap={2} mb={2}>
-        {token && <Image src={token.icon || ''} width={8} height={8} alt="" />}
+        {token && <Avatar src={token.icon || NEP141} width={10} height={10} />}
         <Text fontSize="2xl" lineHeight={1}>
           {token?.symbol}
         </Text>

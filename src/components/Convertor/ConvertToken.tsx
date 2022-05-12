@@ -3,7 +3,6 @@ import {
   Button,
   Input,
   Text,
-  Image,
   Drawer,
   DrawerOverlay,
   DrawerContent,
@@ -13,6 +12,7 @@ import {
   IconButton,
   Icon,
   useColorModeValue,
+  Avatar,
 } from '@chakra-ui/react'
 import { BN } from '@polkadot/util'
 import Decimal from 'decimal.js'
@@ -34,6 +34,7 @@ import { isValidNumber } from 'utils/validate'
 import { createTransaction, functionCall } from 'near-api-js/lib/transaction'
 import { baseDecode } from 'borsh'
 import { PublicKey } from 'near-api-js/lib/utils'
+import NEP141 from 'assets/icons/nep141-token.png'
 
 const TokenInput = ({
   value,
@@ -80,7 +81,7 @@ const TokenInput = ({
       </Flex>
       <Flex direction="row" align="center" gap={2} pt={2} pr={4}>
         <Text fontWeight={600}>{token?.symbol}</Text>
-        <Image src={token?.icon || ''} width={10} height={10} alt="" />
+        <Avatar src={token?.icon || NEP141} width={10} height={10} />
       </Flex>
     </Flex>
   )
