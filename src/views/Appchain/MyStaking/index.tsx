@@ -179,7 +179,7 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
                     deposit={deposit}
                     type="decrease"
                     anchor={anchor}
-                    helper={`Your decreased stakes will be claimable after ${appchain?.appchain_id === 'debionetwork' ? 21 : 28} days`}
+                    helper={`Your decreased stakes will be claimable after 21 days`}
                     appchain={appchain}
                     validator={validator}
                   />
@@ -200,30 +200,39 @@ export const MyStaking: React.FC<MyStakingProps> = ({ appchain, anchor, wrappedA
             <Box>
               <Flex justifyContent="space-between" alignItems="center">
                 <Heading fontSize="lg">My Staking</Heading>
-                {
-                  isUnbonding || unbonedStakes?.length || stakingHistories?.length ?
-                  <Menu>
-                    <MenuButton as={Button} size="sm" colorScheme="octo-blue" variant="ghost" position="relative">
-                      <Icon as={BsThreeDots} boxSize={5} />
-                      {
-                        withdrawableStakes?.gt(ZERO_DECIMAL) ?
-                          <Box position="absolute" top="0px" right="0px" boxSize={2} bg="red" borderRadius="full" /> : null
-                      }
-                    </MenuButton>
-                    <MenuList>
-                      <MenuItem position="relative" onClick={setStakesModalOpen.on}>
-                        <Icon as={BsCheckCircle} mr={2} boxSize={4} /> Withdraw Stakes
+                <HStack spacing={0}>
+                  {
+                    unwithdrawnRewards.gt(ZERO_DECIMAL) ?
+                    <Box position="relative">
+                      <Button size="sm" variant="ghost" colorScheme="octo-blue" onClick={setRewardsModalOpen.on}>Rewards</Button>
+                      <Box boxSize={2} borderRadius="full" bg="red" position="absolute" right="2px" top="2px" />
+                    </Box> : null
+                  }
+                  {
+                    isUnbonding || unbonedStakes?.length || stakingHistories?.length ?
+                    <Menu>
+                      <MenuButton as={Button} size="sm" colorScheme="octo-blue" variant="ghost" position="relative">
+                        <Icon as={BsThreeDots} boxSize={5} />
                         {
                           withdrawableStakes?.gt(ZERO_DECIMAL) ?
-                            <Box position="absolute" top="10px" right="10px" boxSize={2} bg="red" borderRadius="full" /> : null
+                            <Box position="absolute" top="0px" right="0px" boxSize={2} bg="red" borderRadius="full" /> : null
                         }
-                      </MenuItem>
-                      <MenuItem  onClick={setStakingHistoryModalOpen.on}>
-                        <Icon as={AiOutlineMenu} mr={2} boxSize={4} /> Staking History
-                      </MenuItem>
-                    </MenuList>
-                  </Menu> : null
-                }
+                      </MenuButton>
+                      <MenuList>
+                        <MenuItem position="relative" onClick={setStakesModalOpen.on}>
+                          <Icon as={BsCheckCircle} mr={2} boxSize={4} /> Withdraw Stakes
+                          {
+                            withdrawableStakes?.gt(ZERO_DECIMAL) ?
+                              <Box position="absolute" top="10px" right="10px" boxSize={2} bg="red" borderRadius="full" /> : null
+                          }
+                        </MenuItem>
+                        <MenuItem  onClick={setStakingHistoryModalOpen.on}>
+                          <Icon as={AiOutlineMenu} mr={2} boxSize={4} /> Staking History
+                        </MenuItem>
+                      </MenuList>
+                    </Menu> : null
+                  }
+                </HStack>
               </Flex>
               <Center minH="115px">
                 <Box boxSize={20}>
