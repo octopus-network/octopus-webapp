@@ -269,7 +269,9 @@ export const Root: React.FC = () => {
                   variant="octo-linear"
                   href={`TxHash: ${global.network?.near.explorerUrl}/transactions/${transactionHashes}`}
                   className="success-tx-link"
-                >{`TxHash: ${global.network?.near.explorerUrl}/transactions/${transactionHashes}`}</Link>
+                >
+                  Click to check transaction detail
+                </Link>
               ),
               duration: 2500,
               variant: 'left-accent',

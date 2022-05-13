@@ -131,7 +131,6 @@ export default function ConvertToken({
 
   const isValid =
     isValidNumber(String(inTokenValue), inTokenBalance) &&
-    isValidNumber(String(outTokenValue), outTokenBalance) &&
     isValidNumber(
       String(inTokenValue),
       DecimalUtil.fromString(
@@ -348,7 +347,11 @@ export default function ConvertToken({
               !isReversed ? pool.out_token_balance : pool.in_token_balance
             }
           />
-          <Button variant="octo-linear" onClick={onConvert} disabled={!isValid}>
+          <Button
+            colorScheme="octo-blue"
+            onClick={onConvert}
+            disabled={!isValid}
+          >
             Convert
           </Button>
         </Flex>
