@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react'
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, { useState, useMemo, useEffect } from 'react'
 import useSWR from 'swr'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -331,24 +332,48 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
   )
 }
 
+function Page({
+  page,
+  network,
+}: {
+  page: number
+  network: NetworkConfig | null
+}) {
+  const pageSize = 20
+  const { data: txns } = useSWR<any[]>(
+    `bridge-helper/bridge_txs?start=${(page - 1) * pageSize}&size=${pageSize}`
+  )
+  return (
+    <>
+      {(txns ?? []).map((tx, idx) => (
+        <Row data={tx} key={`row-${idx}`} network={network} />
+      ))}
+    </>
+  )
+}
+
 export const Status: React.FC = () => {
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(20)
 
   const { txId } = useParams()
   const navigate = useNavigate()
   const { global } = useGlobalStore()
 
-  // useEffect(() => {
-  //   window.addEventListener('scroll', (e) => {
-  //     console.log(e);
-  //   });
-  // }, []);
+  const pages = []
+  for (let i = 1; i < page + 1; i++) {
+    pages.push(<Page page={i} key={i} network={global.network} />)
+  }
 
-  const { data: txns } = useSWR<any[]>(
-    `bridge-helper/bridge_txs?start=${(page - 1) * pageSize}&size=${pageSize}`,
-    { refreshInterval: 3000 }
-  )
+  useEffect(() => {
+    const onScroll = (e: any) => {
+      if (document.body.getBoundingClientRect().bottom <= window.innerHeight) {
+        setPage(page + 1)
+      }
+    }
+    document?.addEventListener('scroll', onScroll)
+
+    return () => document?.removeEventListener('scroll', onScroll)
+  }, [page])
 
   const onDetailDrawerClose = () => {
     navigate(`/bridge/txs`)
@@ -391,11 +416,9 @@ export const Status: React.FC = () => {
             <Text>Status</Text>
           </GridItem>
         </Grid>
-        {txns?.length ? (
-          <List spacing={5}>
-            {txns.map((tx, idx) => (
-              <Row data={tx} key={`row-${idx}`} network={global.network} />
-            ))}
+        {pages?.length ? (
+          <List spacing={5} id="txs-container">
+            {pages}
           </List>
         ) : (
           <Center minH="320px">
