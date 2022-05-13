@@ -130,18 +130,14 @@ export default function ConvertToken({
   }
 
   const isValid =
-    isValidNumber(String(inTokenValue), inTokenBalance) &&
     isValidNumber(
-      String(inTokenValue),
-      DecimalUtil.fromString(
-        pool?.in_token_balance!,
-        _inToken?.decimals
-      ).toString()
+      String(isReversed ? outTokenValue : inTokenValue),
+      isReversed ? outTokenBalance : inTokenBalance
     ) &&
     isValidNumber(
-      String(outTokenValue),
+      String(isReversed ? inTokenValue : outTokenValue),
       DecimalUtil.fromString(
-        pool?.out_token_balance,
+        isReversed ? pool?.in_token_balance : pool?.out_token_balance,
         _outToken?.decimals
       ).toString()
     )
@@ -294,7 +290,16 @@ export default function ConvertToken({
   }
 
   return (
-    <Drawer placement="right" isOpen onClose={onClose} size="md">
+    <Drawer
+      placement="right"
+      isOpen
+      onClose={() => {
+        onClose()
+        setInTokenValue('')
+        setOutTokenValue('')
+      }}
+      size="md"
+    >
       <DrawerOverlay />
       <DrawerContent>
         <DrawerHeader borderBottomWidth="0">
