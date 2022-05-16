@@ -175,10 +175,10 @@ export default function ConvertToken({
       if (!account) {
         throw new Error('No account')
       }
+      const actions = []
       const storageFee = await contract?.get_storage_fee_gap_of({
         account_id: global.accountId,
       })
-      const actions = []
 
       if (String(storageFee) !== '0') {
         actions.push({

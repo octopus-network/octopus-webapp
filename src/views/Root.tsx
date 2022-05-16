@@ -180,6 +180,7 @@ export const Root: React.FC = () => {
     const transactionHashes = urlParams.get('transactionHashes') || ''
     const errorMessage = urlParams.get('errorMessage') || ''
 
+    console.log('transactionHashes', transactionHashes)
     if (errorMessage) {
       toast({
         position: 'top-right',
@@ -203,8 +204,10 @@ export const Root: React.FC = () => {
       global.network?.near.archivalUrl
     )
 
+    const txHashes = transactionHashes.split(',')
+    const lastTxHash = txHashes[txHashes.length - 1]
     provider
-      .txStatus(transactionHashes, global.accountId)
+      .txStatus(lastTxHash, global.accountId)
       .then((status) => {
         const { receipts_outcome } = status
         let message = ''
@@ -267,7 +270,7 @@ export const Root: React.FC = () => {
               description: (
                 <Link
                   variant="octo-linear"
-                  href={`TxHash: ${global.network?.near.explorerUrl}/transactions/${transactionHashes}`}
+                  href={`TxHash: ${global.network?.near.explorerUrl}/transactions/${lastTxHash}`}
                   className="success-tx-link"
                 >
                   Click to check transaction detail

@@ -22,7 +22,10 @@ import {
 import { BN } from '@polkadot/util'
 import { baseDecode } from 'borsh'
 import Decimal from 'decimal.js'
-import { useTokenBalance } from 'hooks/useConvertorContract'
+import {
+  useConvertorContract,
+  useTokenBalance,
+} from 'hooks/useConvertorContract'
 import { createTransaction, functionCall } from 'near-api-js/lib/transaction'
 import { PublicKey } from 'near-api-js/lib/utils'
 import { SIMPLE_CALL_GAS } from 'primitives'
@@ -115,6 +118,11 @@ export default function ManagePool({
 
   const { global } = useGlobalStore()
 
+  const contract = useConvertorContract(
+    global.wallet?.account() as any,
+    contractId
+  )
+
   if (!pool) {
     return null
   }
@@ -173,6 +181,25 @@ export default function ManagePool({
       }
 
       const actions = []
+      const storageFee = await contract?.get_storage_fee_gap_of({
+        account_id: global.accountId,
+      })
+
+      if (String(storageFee) !== '0') {
+        actions.push({
+          receiverId: contractId,
+          actions: [
+            functionCall(
+              'storage_deposit',
+              {
+                account_id: account?.accountId,
+              },
+              new BN(SIMPLE_CALL_GAS),
+              new BN(storageFee!)
+            ),
+          ],
+        })
+      }
       if (pool.in_token_balance !== '0') {
         actions.push({
           receiverId: contractId,
