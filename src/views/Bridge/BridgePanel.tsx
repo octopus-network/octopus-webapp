@@ -292,6 +292,7 @@ export const BridgePanel: React.FC = () => {
 
     const near = new Near({
       keyStore: new keyStores.BrowserLocalStorageKeyStore(),
+      headers: {},
       ...global.network.near,
     })
 
@@ -1061,7 +1062,7 @@ export const BridgePanel: React.FC = () => {
               <Button
                 colorScheme="octo-blue"
                 size="lg"
-                isFullWidth
+                width="100%"
                 isDisabled={
                   !fromAccount ||
                   isLoadingBalance ||

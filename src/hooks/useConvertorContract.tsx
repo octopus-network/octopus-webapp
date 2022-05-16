@@ -21,6 +21,7 @@ export const useNear = () => {
       .then((network: NetworkConfig) => {
         const near = new Near({
           keyStore: new keyStores.BrowserLocalStorageKeyStore(),
+          headers: {},
           ...network.near,
         })
         setNear(near)

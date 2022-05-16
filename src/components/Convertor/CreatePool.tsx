@@ -21,7 +21,6 @@ import {
 } from '@chakra-ui/react'
 import { BN } from '@polkadot/util'
 import { Select, chakraComponents } from 'chakra-react-select'
-import { parseNearAmount } from 'near-api-js/lib/utils/format'
 import { SIMPLE_CALL_GAS } from 'primitives'
 import { useState } from 'react'
 import { useGlobalStore } from 'stores'

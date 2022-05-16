@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useMemo, useEffect, useCallback } from 'react'
 import { DecimalUtil } from 'utils'
 import useSWR from 'swr'
 
@@ -20,8 +20,6 @@ import {
   Skeleton,
   Text,
 } from '@chakra-ui/react'
-
-import { TriangleUpIcon, TriangleDownIcon } from '@chakra-ui/icons'
 
 import { OCT_TOKEN_DECIMALS } from 'primitives'
 import Decimal from 'decimal.js'
