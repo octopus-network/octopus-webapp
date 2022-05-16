@@ -9,7 +9,6 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { AccountId, ConversionPool, FungibleTokenMetadata } from 'types'
 import ManagePool from './ManagePool'
-import { useGlobalStore } from 'stores'
 import PoolInfo from './PoolInfo'
 
 export default function MyPool({

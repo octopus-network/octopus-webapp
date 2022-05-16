@@ -31,7 +31,7 @@ export function Converter() {
 
   return (
     <Container position="relative">
-      <Flex direction="column" padding={4} pt={10}>
+      <Flex direction="column" pt={10}>
         <MyPool pools={myPools} whitelist={whitelist} contractId={contractId} />
         <CreatePool whitelist={whitelist} contractId={contractId} />
 
