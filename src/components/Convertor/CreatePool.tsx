@@ -318,6 +318,16 @@ export default function CreatePool({
               <Text size="lg">is conversion reversible?</Text>
             </Flex>
             <UnorderedList className="octo-gray">
+              <ListItem>
+                <Link
+                  color="#008cd5"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  href="https://bob-xsb-near.gitbook.io/nep141-token-convertor/guides/how-to-create-a-pool"
+                >
+                  How to create a pool
+                </Link>
+              </ListItem>
               <ListItem>Conversion rate must be integer</ListItem>
               <ListItem>The decimals of pool tokens must be same</ListItem>
               <ListItem>
@@ -325,6 +335,7 @@ export default function CreatePool({
                 <Link
                   color="#008cd5"
                   target="_blank"
+                  rel="noopener noreferrer"
                   href="https://docs.google.com/forms/d/e/1FAIpQLSd1ZbxY70HyCH33-59DrQBT8tVBZZ1HX0MlXrxFS1GDr1zR0A/viewform"
                 >
                   here
