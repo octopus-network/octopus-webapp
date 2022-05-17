@@ -76,6 +76,8 @@ export const Appchain: React.FC = () => {
   const [wrappedAppchainToken, setWrappedAppchainToken] = useState<WrappedAppchainToken>();
   const [wrappedAppchainTokenContract, setWrappedAppchainTokenContract] = useState<TokenContract>();
 
+  const [unbondedValidators, setUnbondedValidators] = useState<any[]>();
+
   const drawerOpen = useMemo(() => !!id && !!validatorId, [validatorId]);
 
   useEffect(() => {
@@ -121,6 +123,24 @@ export const Appchain: React.FC = () => {
     );
 
     setAnchor(anchorContract);
+
+    axios.post(`${global.network?.near.restApiUrl}/explorer`, {
+      user: 'public_readonly',
+      host: `${global.network?.near.networkId}.db.explorer.indexer.near.dev`,
+      database: `${global.network?.near.networkId}_explorer`,
+      password: 'nearprotocol',
+      port: 5432,
+      parameters: [appchain.appchain_anchor],
+      query: `
+        SELECT * FROM public.action_receipt_actions 
+        WHERE receipt_receiver_account_id = $1
+        AND args->>'method_name' = 'unbond_stake'
+        LIMIT 100;
+      `
+    }).then(res => {
+      const tmpArr = res.data.map((r: any) => r.receipt_predecessor_account_id);
+      setUnbondedValidators(Array.from(new Set(tmpArr)));
+    });
 
   }, [appchain, global]);
 
@@ -320,8 +340,10 @@ export const Appchain: React.FC = () => {
             appchain={appchain}
             isLoadingValidators={!validators && !validatorsError}
             validators={validators}
+            unbondedValidators={unbondedValidators}
             appchainValidators={appchainValidators}
             validatorSessionKeys={validatorSessionKeys}
+            wrappedAppchainTokenContract={wrappedAppchainTokenContract}
             anchor={anchor} />
         </Box>
       </Container>

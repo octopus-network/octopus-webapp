@@ -15,6 +15,7 @@ import {
   GridItem,
   List,
   Icon,
+  useBoolean,
   VStack
 } from '@chakra-ui/react';
 
@@ -24,11 +25,14 @@ import {
   Validator,
   AnchorContract,
   AppchainInfoWithAnchorStatus,
-  ValidatorSessionKey
+  ValidatorSessionKey,
+  RewardHistory,
+  TokenContract
 } from 'types';
 
 import { ValidatorRow } from './ValidatorRow';
-
+import { UnbondedValidatorRow } from './UnbondedValidatorRow';
+import { RewardsModal } from '../RewardsModal';
 import { DecimalUtil } from 'utils';
 import { OCT_TOKEN_DECIMALS } from 'primitives';
 import { Empty } from 'components';
@@ -36,9 +40,11 @@ import { Empty } from 'components';
 type ValidatorsProps = {
   appchain: AppchainInfoWithAnchorStatus | undefined;
   isLoadingValidators: boolean;
+  unbondedValidators?: string[];
   validators: Validator[] | undefined;
   appchainValidators: string[] | undefined;
   validatorSessionKeys: Record<string, ValidatorSessionKey> | undefined;
+  wrappedAppchainTokenContract: TokenContract | undefined;
   anchor: AnchorContract | undefined;
 }
 
@@ -77,6 +83,8 @@ export const Validators: React.FC<ValidatorsProps> = ({
   anchor, 
   isLoadingValidators, 
   validators, 
+  unbondedValidators,
+  wrappedAppchainTokenContract,
   appchainValidators,
   validatorSessionKeys
 }) => {
@@ -84,6 +92,10 @@ export const Validators: React.FC<ValidatorsProps> = ({
 
   const [showType, setShowType] = useState('all');
   const [sortIdx, setSortIdx] = useState(1);
+
+  const [claimRewardsModalOpen, setClaimRewardsModalOpen] = useBoolean();
+  const [unbondedDelegatorRewards, setUnbondedDelegatorRewards] = useState<RewardHistory[]>();
+  const [unbondedRewardsValidatorId, setUnbondedRewardsValidatorId] = useState('');
 
   const filteredValidators = useMemo(() => {
 
@@ -155,6 +167,12 @@ export const Validators: React.FC<ValidatorsProps> = ({
     return tmpArr;
   }, [filteredValidators, sortIdx]);
 
+  const onClaimUnbondedDelegatorRewards = (validator: string, rewards: RewardHistory[]) => {
+    setUnbondedRewardsValidatorId(validator);
+    setUnbondedDelegatorRewards(rewards);
+    setClaimRewardsModalOpen.on();
+  }
+
   return (
     <>
       <Flex justifyContent="space-between" alignItems="center">
@@ -202,8 +220,14 @@ export const Validators: React.FC<ValidatorsProps> = ({
             <Center minH="260px">
               <Spinner size="lg" thickness="5px" speed="1s" color="octo-blue.500" />
             </Center> :
-            filteredValidators?.length ?
+            filteredValidators?.length || unbondedValidators?.length ?
             <List spacing={3} mt={2}>
+              {
+                unbondedValidators?.map(id => (
+                  <UnbondedValidatorRow id={id} appchainId={appchain?.appchain_id} onClaimRewards={onClaimUnbondedDelegatorRewards}
+                    key={`unbonded-validator-${id}`} validatorSetHistoryEndIndex={appchain?.anchor_status?.index_range_of_validator_set_history?.end_index} />
+                ))
+              }
               {
                 sortedValidators?.map((v, idx) => {
                   let ss58Address: string;
@@ -235,6 +259,9 @@ export const Validators: React.FC<ValidatorsProps> = ({
             <Empty />
         }
       </Box>
+      <RewardsModal isOpen={claimRewardsModalOpen} onClose={setClaimRewardsModalOpen.off} 
+        rewards={unbondedDelegatorRewards} anchor={anchor} appchain={appchain} validatorId={unbondedRewardsValidatorId}
+        wrappedAppchainTokenContract={wrappedAppchainTokenContract} />
     </>
   );
 }

@@ -6,6 +6,7 @@ export type NetworkConfig = {
     networkId: NetworkType
     nodeUrl: string
     walletUrl: string
+    restApiUrl: string
   }
   octopus: {
     explorerUrl: string
