@@ -160,7 +160,7 @@ export default function CreatePool({
               <Link
                 href="https://bob-xsb-near.gitbook.io/nep141-token-convertor/"
                 target="_blank"
-                className="octo-blue"
+                color="#008cd5"
                 rel="noopener noreferrer"
               >
                 our docs
