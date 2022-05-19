@@ -270,7 +270,7 @@ export const Root: React.FC = () => {
               description: (
                 <Link
                   variant="octo-linear"
-                  href={`TxHash: ${global.network?.near.explorerUrl}/transactions/${lastTxHash}`}
+                  href={`${global.network?.near.explorerUrl}/transactions/${lastTxHash}`}
                   className="success-tx-link"
                 >
                   Click to check transaction detail
