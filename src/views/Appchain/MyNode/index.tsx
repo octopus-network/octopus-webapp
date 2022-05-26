@@ -272,17 +272,17 @@ export const MyNode: React.FC<MyNodeProps> = ({ appchainId, needKeys, appchainAp
               }
             </MenuButton>
             <MenuList>
-              <MenuItem position="relative" onClick={setInstanceInfoModalOpen.on} isDisabled={!nodeMetrics}>
-                <Icon as={BsFillTerminalFill} mr={2} boxSize={4} /> Instance Info
-                {
-                  nodeMetrics?.filesystem?.percentage > 0.8 ?
-                    <Box position="absolute" top="10px" right="10px" boxSize={2} bg="red" borderRadius="full" /> : null
-                }
-              </MenuItem>
               <MenuItem position="relative" onClick={setSetSessionKeyModalOpen.on} isDisabled={!appchainApi}>
                 <Icon as={TiKey} mr={2} boxSize={4} /> Set Session Key
                 {
                   needKeys ?
+                    <Box position="absolute" top="10px" right="10px" boxSize={2} bg="red" borderRadius="full" /> : null
+                }
+              </MenuItem>
+              <MenuItem position="relative" onClick={setInstanceInfoModalOpen.on} isDisabled={!nodeMetrics}>
+                <Icon as={BsFillTerminalFill} mr={2} boxSize={4} /> Instance Info
+                {
+                  nodeMetrics?.filesystem?.percentage > 0.8 ?
                     <Box position="absolute" top="10px" right="10px" boxSize={2} bg="red" borderRadius="full" /> : null
                 }
               </MenuItem>
