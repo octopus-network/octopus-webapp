@@ -96,17 +96,17 @@ const RunningItem: React.FC<RunningItemProps> = ({ whiteBg = false, data }) => {
   }, [prices, data, appchainSettings]);
 
   useEffect(() => {
-   
     if (appchainSettings?.rpc_endpoint) {
       new ApiPromise({ 
         provider: new WsProvider(appchainSettings.rpc_endpoint) 
-      }).isReady.then(api => {
-        api.query.octopusLpos.activeEra().then(era => {
+      }).isReady.then((api: any) => {
+        api.query.octopusLpos.activeEra().then((era: any) => {
           const eraJSON: any = era.toJSON();
           setCurrentEra(eraJSON?.index);
 
           setNextEraTime(eraJSON ? EPOCH_DURATION_MS + eraJSON.start : 0);
           setNextEraTimeLeft(eraJSON ? (eraJSON.start + EPOCH_DURATION_MS) - new Date().getTime() : 0);
+          api.disconnect();
         });
       });
     }

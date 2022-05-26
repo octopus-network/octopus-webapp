@@ -21,8 +21,6 @@ import {
   Text,
 } from '@chakra-ui/react'
 
-import { TriangleUpIcon, TriangleDownIcon } from '@chakra-ui/icons'
-
 import { OCT_TOKEN_DECIMALS } from 'primitives'
 import Decimal from 'decimal.js'
 
@@ -56,7 +54,7 @@ function toUIValue(val: number) {
 }
 
 export const TotalStakedChart: React.FC = () => {
-  const [days, setDays] = useState(1)
+  const [days, setDays] = useState(7)
 
   const { data } = useSWR(`total-staked/${days}`)
 

@@ -37,6 +37,7 @@ import {
   RepeatIcon
 } from '@chakra-ui/icons';
 
+import { BsFillTerminalFill } from 'react-icons/bs';
 import { HiUpload } from 'react-icons/hi';
 import { TiKey } from 'react-icons/ti';
 import { BsThreeDots } from 'react-icons/bs';
@@ -45,6 +46,8 @@ import { Alert } from 'components';
 import { useGlobalStore } from 'stores';
 import { SetSessionKeyModal } from './SetSessionKeyModal';
 import type { ApiPromise } from '@polkadot/api';
+
+import { InstanceInfoModal } from './InstanceInfoModal';
 
 type MyNodeProps = {
   appchainId: string | undefined;
@@ -82,8 +85,11 @@ export const MyNode: React.FC<MyNodeProps> = ({ appchainId, needKeys, appchainAp
   const [isDestroying, setIsDestroying] = useBoolean();
   const [isUpgrading, setIsUpgrading] = useBoolean();
 
+  const [nodeMetrics, setNodeMetrics] = useState<any>();
+
   const [upgradeAlertOpen, setUpgradeAlertOpen] = useBoolean();
   const [setSessionKeyModalOpen, setSetSessionKeyModalOpen] = useBoolean();
+  const [instanceInfoModalOpen, setInstanceInfoModalOpen] = useBoolean();
 
   const [isImageNeedUpgrade, setIsImageNeedUpgrade] = useBoolean();
   const [deployRegion, setDeployRegion] = useState<string>('');
@@ -102,21 +108,31 @@ export const MyNode: React.FC<MyNodeProps> = ({ appchainId, needKeys, appchainAp
   const { hasCopied: hasNodeIdCopied, onCopy: onCopyNodeId } = useClipboard(node?.uuid || '');
 
   useEffect(() => {
-    if (!accessKeyInLocalStorage || !appchainId || !cloudVendorInLocalStorage) {
+    if (!accessKeyInLocalStorage || !appchainId || !cloudVendorInLocalStorage || !global.accountId) {
       return;
     }
     setIsInitializing.on();
-    axios.get(`${API_HOST}/node/${cloudVendorInLocalStorage}/${accessKeyInLocalStorage}/${appchainId}`).then(res => res.data).then(res => {
+    axios.get(`
+      ${API_HOST}/node/${cloudVendorInLocalStorage}/${accessKeyInLocalStorage}/${appchainId}/${global.accountId}
+    `).then(res => res.data).then(res => {
       if (res) {
         setNode(res);
       }
       setIsInitializing.off();
     });
-  }, [appchainId]);
+  }, [appchainId, global]);
 
   useEffect(() => {
     if (!node || !deployConfig || !appchainId) {
       return;
+    }
+
+    if (global.accountId && node?.state === '12') {
+      axios.get(`
+        ${API_HOST}/node-metrics/${node.uuid}/${cloudVendorInLocalStorage}/${accessKeyInLocalStorage}/${appchainId}/${global.accountId}
+      `).then(res => res.data).then(res => {
+        setNodeMetrics(res);
+      });
     }
 
     if (
@@ -139,7 +155,7 @@ export const MyNode: React.FC<MyNodeProps> = ({ appchainId, needKeys, appchainAp
     window.localStorage.setItem('OCTOPUS_DEPLOYER_ACCESS_KEY', inputAccessKey);
 
     setIsLoadingNode.on();
-    axios.get(`${API_HOST}/node/${cloudVendor}/${inputAccessKey}/${appchainId}`).then(res => res.data).then(res => {
+    axios.get(`${API_HOST}/node/${cloudVendor}/${inputAccessKey}/${appchainId}/${global.accountId}`).then(res => res.data).then(res => {
       if (res) {
         setNode(res);
       }
@@ -150,7 +166,7 @@ export const MyNode: React.FC<MyNodeProps> = ({ appchainId, needKeys, appchainAp
 
   const onDeploy = () => {
     setIsDeploying.on();
-    axios.post(`${API_HOST}/deploy-node/${cloudVendor}/${accessKey}/${appchainId}/${deployRegion}`).then(res => res.data).then(res => {
+    axios.post(`${API_HOST}/deploy-node/${cloudVendor}/${accessKey}/${appchainId}/${global.accountId}/${deployRegion}`).then(res => res.data).then(res => {
       if (res) {
         setNode(res);
       }
@@ -160,7 +176,7 @@ export const MyNode: React.FC<MyNodeProps> = ({ appchainId, needKeys, appchainAp
 
   const onRefresh = () => {
     setIsRefreshing.on();
-    axios.get(`${API_HOST}/node/${cloudVendor}/${accessKey}/${appchainId}`).then(res => res.data).then(res => {
+    axios.get(`${API_HOST}/node/${cloudVendor}/${accessKey}/${appchainId}/${global.accountId}`).then(res => res.data).then(res => {
       if (res) {
         setNode(res);
       }
@@ -251,11 +267,18 @@ export const MyNode: React.FC<MyNodeProps> = ({ appchainId, needKeys, appchainAp
             <MenuButton as={Button} size="sm" colorScheme="octo-blue" variant="ghost" position="relative">
               <Icon as={BsThreeDots} boxSize={5} />
               {
-                needKeys || isImageNeedUpgrade ?
+                needKeys || isImageNeedUpgrade || nodeMetrics?.filesystem?.percentage > 0.8 ?
                   <Box position="absolute" top="0px" right="0px" boxSize={2} bg="red" borderRadius="full" /> : null
               }
             </MenuButton>
             <MenuList>
+              <MenuItem position="relative" onClick={setInstanceInfoModalOpen.on} isDisabled={!nodeMetrics}>
+                <Icon as={BsFillTerminalFill} mr={2} boxSize={4} /> Instance Info
+                {
+                  nodeMetrics?.filesystem?.percentage > 0.8 ?
+                    <Box position="absolute" top="10px" right="10px" boxSize={2} bg="red" borderRadius="full" /> : null
+                }
+              </MenuItem>
               <MenuItem position="relative" onClick={setSetSessionKeyModalOpen.on} isDisabled={!appchainApi}>
                 <Icon as={TiKey} mr={2} boxSize={4} /> Set Session Key
                 {
@@ -419,6 +442,11 @@ export const MyNode: React.FC<MyNodeProps> = ({ appchainId, needKeys, appchainAp
         appchainApi={appchainApi}
         isOpen={setSessionKeyModalOpen} 
         onClose={setSetSessionKeyModalOpen.off} />
+      
+      <InstanceInfoModal 
+        metrics={nodeMetrics}
+        isOpen={instanceInfoModalOpen} 
+        onClose={setInstanceInfoModalOpen.off} />
 
       <Alert
         isOpen={upgradeAlertOpen}

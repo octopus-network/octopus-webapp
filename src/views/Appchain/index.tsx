@@ -123,24 +123,27 @@ export const Appchain: React.FC = () => {
     );
 
     setAnchor(anchorContract);
-
-    axios.post(`${global.network?.near.restApiUrl}/explorer`, {
-      user: 'public_readonly',
-      host: `${global.network?.near.networkId}.db.explorer.indexer.near.dev`,
-      database: `${global.network?.near.networkId}_explorer`,
-      password: 'nearprotocol',
-      port: 5432,
-      parameters: [appchain.appchain_anchor],
-      query: `
-        SELECT * FROM public.action_receipt_actions 
-        WHERE receipt_receiver_account_id = $1
-        AND args->>'method_name' = 'unbond_stake'
-        LIMIT 100;
-      `
-    }).then(res => {
-      const tmpArr = res.data.map((r: any) => r.receipt_predecessor_account_id);
-      setUnbondedValidators(Array.from(new Set(tmpArr)));
-    });
+    
+    if (global.network?.near) {
+      axios.post(`${global.network?.near.restApiUrl}/explorer`, {
+        user: 'public_readonly',
+        host: `${global.network?.near.networkId}.db.explorer.indexer.near.dev`,
+        database: `${global.network?.near.networkId}_explorer`,
+        password: 'nearprotocol',
+        port: 5432,
+        parameters: [appchain.appchain_anchor],
+        query: `
+          SELECT * FROM public.action_receipt_actions 
+          WHERE receipt_receiver_account_id = $1
+          AND args->>'method_name' = 'unbond_stake'
+          LIMIT 100;
+        `
+      }).then(res => {
+        const tmpArr = res.data.map((r: any) => r.receipt_predecessor_account_id);
+        setUnbondedValidators(Array.from(new Set(tmpArr)));
+      });
+    }
+    
 
   }, [appchain, global]);
 

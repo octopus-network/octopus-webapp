@@ -314,7 +314,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
             Total Supply
           </Text>
           <Skeleton isLoaded={!!totalIssuance}>
-            <Heading fontSize="xl">
+            <Heading fontSize="xl" maxW="200px" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
               {totalIssuance && appchain?.appchain_metadata
                 ? DecimalUtil.beautify(
                     DecimalUtil.fromString(
