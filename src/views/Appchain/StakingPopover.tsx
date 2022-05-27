@@ -12,6 +12,7 @@ import {
   PopoverContent,
   PopoverBody,
   useToast,
+  Flex,
 } from '@chakra-ui/react'
 
 import { AnchorContract, AppchainInfoWithAnchorStatus, Validator } from 'types'
@@ -171,6 +172,13 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
             </Text>
           ) : null}
           <Box mt={3}>
+            {type === 'increase' && (
+              <Flex mb={2} justifyContent="flex-end">
+                <Text variant="gray" size="sm">
+                  OCT balance: {octBalance.toFixed(0)}
+                </Text>
+              </Flex>
+            )}
             <AmountInput
               placeholder="Amount of OCT"
               refObj={inputRef}

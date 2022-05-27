@@ -18,6 +18,14 @@ import {
   UnorderedList,
   ListItem,
   useToast,
+  HStack,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverArrow,
+  PopoverCloseButton,
+  PopoverHeader,
+  PopoverBody,
 } from '@chakra-ui/react'
 import { BN } from '@polkadot/util'
 import { Select, chakraComponents } from 'chakra-react-select'
@@ -29,6 +37,7 @@ import {
   MdOutlineSwapVert,
   MdOutlineArrowDownward,
   MdOutlineAdd,
+  MdInfoOutline,
 } from 'react-icons/md'
 import NEP141 from 'assets/icons/nep141-token.png'
 
@@ -131,9 +140,34 @@ export default function CreatePool({
 
   return (
     <Flex direction="row" justify="space-between">
-      <Text fontSize="2xl" fontWeight="bold">
-        Pool list
-      </Text>
+      <HStack>
+        <Text fontSize="2xl" fontWeight="bold">
+          Pool list
+        </Text>
+        <Popover>
+          <PopoverTrigger>
+            <Button bgColor="transparent" size="sm">
+              <MdInfoOutline size={20} className="octo-gray" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent>
+            <PopoverArrow />
+            <PopoverCloseButton />
+            <PopoverHeader>Info</PopoverHeader>
+            <PopoverBody>
+              To learn more, forward{' '}
+              <Link
+                href="https://bob-xsb-near.gitbook.io/nep141-token-convertor/"
+                target="_blank"
+                color="#008cd5"
+                rel="noopener noreferrer"
+              >
+                our docs
+              </Link>
+            </PopoverBody>
+          </PopoverContent>
+        </Popover>
+      </HStack>
       <Button
         variant="octo-linear"
         leftIcon={<MdOutlineAdd />}
@@ -280,15 +314,27 @@ export default function CreatePool({
                   setPool({ ...pool, is_reversible: e.target.checked })
                 }
               />
-              <Text size="lg">is conversion reversable?</Text>
+              <Text size="lg">is conversion reversible?</Text>
             </Flex>
             <UnorderedList className="octo-gray">
+              <ListItem>
+                <Link
+                  color="#008cd5"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  href="https://bob-xsb-near.gitbook.io/nep141-token-convertor/guides/how-to-create-a-pool"
+                >
+                  How to create a pool
+                </Link>
+              </ListItem>
               <ListItem>Conversion rate must be integer</ListItem>
+              <ListItem>The decimals of pool tokens must be same</ListItem>
               <ListItem>
                 Click{' '}
                 <Link
                   color="#008cd5"
                   target="_blank"
+                  rel="noopener noreferrer"
                   href="https://docs.google.com/forms/d/e/1FAIpQLSd1ZbxY70HyCH33-59DrQBT8tVBZZ1HX0MlXrxFS1GDr1zR0A/viewform"
                 >
                   here

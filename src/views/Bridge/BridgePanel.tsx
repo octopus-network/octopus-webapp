@@ -597,7 +597,7 @@ export const BridgePanel: React.FC = () => {
   const onSetMax = () => {
     if (!isReverse && tokenAsset?.assetId === undefined) {
       setAmount(
-        balance?.sub(0.01).gt(ZERO_DECIMAL) ? balance?.sub(0.01).toString() : ''
+        balance?.sub(0.1).gt(ZERO_DECIMAL) ? balance?.sub(0.1).toString() : ''
       )
     } else {
       setAmount(balance?.toString() || '')

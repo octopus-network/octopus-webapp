@@ -54,7 +54,7 @@ function toUIValue(val: number) {
 }
 
 export const TotalStakedChart: React.FC = () => {
-  const [days, setDays] = useState(1)
+  const [days, setDays] = useState(7)
 
   const { data } = useSWR(`total-staked/${days}`)
 

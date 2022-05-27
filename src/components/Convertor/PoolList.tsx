@@ -31,7 +31,7 @@ export default function PoolList({
 
   return (
     <Flex direction="column" mt={10}>
-      {isLoading && (
+      {isLoading && pools.length === 0 && (
         <Stack>
           <Skeleton height="160px" />
           <Skeleton height="160px" />

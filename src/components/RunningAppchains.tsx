@@ -99,8 +99,8 @@ const RunningItem: React.FC<RunningItemProps> = ({ whiteBg = false, data }) => {
     if (appchainSettings?.rpc_endpoint) {
       new ApiPromise({
         provider: new WsProvider(appchainSettings.rpc_endpoint),
-      }).isReady.then((api) => {
-        api.query.octopusLpos.activeEra().then((era) => {
+      }).isReady.then((api: any) => {
+        api.query.octopusLpos.activeEra().then((era: any) => {
           const eraJSON: any = era.toJSON()
           setCurrentEra(eraJSON?.index)
 
@@ -110,6 +110,7 @@ const RunningItem: React.FC<RunningItemProps> = ({ whiteBg = false, data }) => {
               ? eraJSON.start + EPOCH_DURATION_MS - new Date().getTime()
               : 0
           )
+          api.disconnect()
         })
       })
     }

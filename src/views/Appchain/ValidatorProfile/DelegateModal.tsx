@@ -111,11 +111,20 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
         onChange={(v) => setAmount(v)}
         refObj={inputRef}
       />
-      <Flex mt={2} justifyContent="flex-end">
-        <Text variant="gray">
-          Minimum deposit: {DecimalUtil.beautify(minimumDeposit)}
+      <Flex mb={2} justifyContent="space-between">
+        <Text variant="gray" size="sm">
+          Minimum deposit: {DecimalUtil.beautify(minimumDeposit, 0)}
+        </Text>
+        <Text variant="gray" size="sm">
+          OCT balance: {octBalance.toFixed(0)}
         </Text>
       </Flex>
+      <AmountInput
+        placeholder="Deposit amount"
+        value={amount}
+        onChange={(v) => setAmount(v)}
+        refObj={inputRef}
+      />
       <Box mt={4}>
         <Button
           colorScheme="octo-blue"

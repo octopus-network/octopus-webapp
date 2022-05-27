@@ -23,10 +23,6 @@ export function sleep(ts = 1000) {
   return new Promise((resolve) => setTimeout(() => resolve(0), ts));
 }
 
-export function getAuthKey(appchainId: string, networkId: string, cloudVendor: string, accessKey: string) {
-  return `appchain-${appchainId}-network-${networkId}-cloud-${cloudVendor}-${accessKey}`;
-}
-
 export function toValidUrl(url: string | undefined) {
   if (!url) {
     return 'https://www.oct.network';

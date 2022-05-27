@@ -159,7 +159,12 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
         </FormControl>
 
         <FormControl isRequired>
-          <FormLabel htmlFor="amount">Deposit Amount</FormLabel>
+          <Flex alignItems="center" justifyContent="space-between">
+            <FormLabel htmlFor="amount">Deposit Amount</FormLabel>
+            <FormHelperText>
+              OCT balance: {octBalance.toFixed(0)}
+            </FormHelperText>
+          </Flex>
           <Input
             id="amount"
             placeholder="Deposit amount"
