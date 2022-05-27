@@ -26,9 +26,7 @@ import {
   DrawerOverlay,
   Link,
   Flex,
-  useBoolean,
   useColorModeValue,
-  VStack,
 } from '@chakra-ui/react'
 
 import { DecimalUtil } from 'utils'

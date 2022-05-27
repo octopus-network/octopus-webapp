@@ -105,6 +105,12 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
       onClose={onClose}
       title={`Delegate on ${validatorId}`}
     >
+      <AmountInput
+        placeholder="Deposit amount"
+        value={amount}
+        onChange={(v) => setAmount(v)}
+        refObj={inputRef}
+      />
       <Flex mb={2} justifyContent="space-between">
         <Text variant="gray" size="sm">
           Minimum deposit: {DecimalUtil.beautify(minimumDeposit, 0)}
@@ -130,7 +136,7 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
             amountInDecimal.lt(minimumDeposit) ||
             isDepositing
           }
-          isFullWidth
+          width="100%"
         >
           {!amount
             ? 'Input Amount'

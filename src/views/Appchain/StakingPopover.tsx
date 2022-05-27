@@ -197,7 +197,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
               }
               onClick={onSubmit}
               isLoading={isSubmitting}
-              isFullWidth
+              width="100%"
             >
               {amountInDecimal.lte(ZERO_DECIMAL)
                 ? 'Input Amount'

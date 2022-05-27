@@ -1,18 +1,11 @@
-import React from 'react';
+import React from 'react'
 
-import {
-  Box,
-  Image,
-  Container
-} from '@chakra-ui/react';
+import { Box, Container } from '@chakra-ui/react'
 
-import { Hero } from './Hero';
-import { Overview } from './Overview';
+import { Hero } from './Hero'
+import { Overview } from './Overview'
 
-import { 
-  JoinBanner, 
-  RunningAppchains 
-} from 'components';
+import { JoinBanner, RunningAppchains } from 'components'
 
 export const Home: React.FC = () => {
   return (
@@ -34,5 +27,5 @@ export const Home: React.FC = () => {
         </Container>
       </Box>
     </>
-  );
+  )
 }

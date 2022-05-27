@@ -209,7 +209,7 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
       </List>
       <Box mt={8}>
         <Button
-          isFullWidth
+          width="100%"
           colorScheme="octo-blue"
           type="submit"
           isLoading={isSubmitting}

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useMemo, useEffect, useCallback } from 'react'
 import { DecimalUtil } from 'utils'
 import useSWR from 'swr'
 
