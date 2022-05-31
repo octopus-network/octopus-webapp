@@ -92,7 +92,7 @@ export const Header: React.FC = () => {
             <NavLink path="/home" label="Home" />
             <NavLink path="/appchains" label="Appchains" />
             <NavLink path="/bridge" label="Bridge" />
-            <NavLink path="/converter" label="Token converter" />
+            {/* <NavLink path="/converter" label="Token converter" /> */}
             <Link href="https://docs.oct.network/" isExternal>
               <Heading fontSize="sm" fontWeight={600}>
                 Docs
@@ -161,12 +161,12 @@ export const Header: React.FC = () => {
                       fontSize="lg"
                       onClick={onClose}
                     />
-                    <NavLink
+                    {/* <NavLink
                       path="/converter"
                       label="Token converter"
                       fontSize="lg"
                       onClick={onClose}
-                    />
+                    /> */}
                     <Link href="https://docs.oct.network/" isExternal>
                       <Heading fontSize="lg" fontWeight={600}>
                         Docs
