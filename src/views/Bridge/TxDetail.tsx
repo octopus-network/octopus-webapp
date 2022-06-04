@@ -22,7 +22,7 @@ import {
   AppchainInfoWithAnchorStatus
 } from 'types';
 
-import { DecimalUtil } from 'utils';
+import { DecimalUtil, decodeNearAccount } from 'utils';
 import Identicon from '@polkadot/react-identicon';
 import { encodeAddress } from '@polkadot/util-crypto';
 import nearLogo from 'assets/near.svg';
@@ -149,7 +149,7 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
             <Text color="gray">From Account</Text>
             <Link maxW="70%" href={
               isAppchainSide ?
-              `${global.network?.octopus.explorerUrl}/` :
+              `${global.network?.octopus.explorerUrl}/?appchain=${appchain?.appchain_id}#/accounts/${transaction?.summary.from}` :
               `${global.network?.near.explorerUrl}/accounts/${transaction?.summary.from}`
             } _hover={{ textDecoration: 'underline' }} color="#2468f2" isExternal onClick={e => e.stopPropagation()}>
               <HStack spacing={1}>
@@ -158,7 +158,7 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
                   <Identicon value={transaction?.summary.from} size={18} /> : null
                 }
                 <Text whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">
-                  {isAppchainSide && transaction?.summary.from ? encodeAddress(transaction?.summary.from) : transaction?.summary.from}
+                  {isAppchainSide && transaction?.summary.from ? encodeAddress(transaction?.summary.from) : decodeNearAccount(transaction?.summary.from)}
                 </Text>
                 <Icon as={ExternalLinkIcon} boxSize={4} color="gray" />
               </HStack>
@@ -168,7 +168,7 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
             <Text color="gray">To Account</Text>
             <Link maxW="70%" href={
               !isAppchainSide ?
-              `${global.network?.octopus.explorerUrl}/` :
+              `${global.network?.octopus.explorerUrl}/?appchain=${appchain?.appchain_id}#/accounts/${transaction?.summary.to}` :
               `${global.network?.near.explorerUrl}/accounts/${transaction?.summary.to}`
             } _hover={{ textDecoration: 'underline' }} color="#2468f2" isExternal onClick={e => e.stopPropagation()}>
               <HStack spacing={1}>
@@ -177,7 +177,7 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
                   <Identicon value={transaction?.summary.to} size={18} /> : null
                 }
                 <Text whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">
-                  {!isAppchainSide && transaction?.summary.to ? encodeAddress(transaction?.summary.to) : transaction?.summary.to}
+                  {!isAppchainSide && transaction?.summary.to ? encodeAddress(transaction?.summary.to) : decodeNearAccount(transaction?.summary.to)}
                 </Text>
                 <Icon as={ExternalLinkIcon} boxSize={4} color="gray" />
               </HStack>
