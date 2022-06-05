@@ -257,3 +257,29 @@ export class ConvertorContract extends Contract {
     return this.withdraw_token_in_pool(args)
   }
 }
+
+export class CollectibleContract extends Contract {
+  nft_tokens_for_owner(
+    args: {
+      account_id: AccountId;
+      from_index: string;
+      limit?: string;
+    }
+  ): Promise<any> {
+    return this.nft_tokens_for_owner(args);
+  }
+
+  nft_transfer_call(
+    args: {
+      receiver_id: AccountId;
+      token_id: string | null;
+      approval_id?: string;
+      memo?: string;
+      msg: string;
+    },
+    gas: string,
+    deposit: number
+  ): Promise<any> {
+    return this.nft_transfer_call(args, gas, deposit);
+  }
+}
