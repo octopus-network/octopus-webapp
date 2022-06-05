@@ -207,7 +207,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
             <Link
               href={
                 isAppchainSide
-                  ? `${network?.octopus.explorerUrl}/?appchain=${appchain?.appchain_id}#/accounts/${encodeAddress(data.from)}`
+                  ? `${network?.octopus.explorerUrl}/?appchain=${appchainId}#/accounts/${encodeAddress(data.from)}`
                   : `${network?.near.explorerUrl}/accounts/${decodeNearAccount(data.from)}`
               }
               _hover={{ textDecoration: 'underline' }}
@@ -239,7 +239,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
             <Link
               href={
                 isAppchainSide
-                  ? `${network?.octopus.explorerUrl}/?appchain=${appchain?.appchain_id}#/extrinsics/${data.outHash}`
+                  ? `${network?.octopus.explorerUrl}/?appchain=${appchainId}#/extrinsics/${data.outHash}`
                   : `${network?.near.explorerUrl}/transactions/${data.outHash}`
               }
               _hover={{ textDecoration: 'underline' }}
@@ -265,7 +265,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
             <Link
               href={
                 !isAppchainSide
-                  ? `${network?.octopus.explorerUrl}/?appchain=${appchain?.appchain_id}#/accounts/${encodeAddress(data.to)}`
+                  ? `${network?.octopus.explorerUrl}/?appchain=${appchainId}#/accounts/${encodeAddress(data.to)}`
                   : `${network?.near.explorerUrl}/accounts/${decodeNearAccount(data.to)}`
               }
               _hover={{ textDecoration: 'underline' }}
@@ -298,7 +298,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
               <Link
                 href={
                   !isAppchainSide
-                    ? `${network?.octopus.explorerUrl}/?appchain=${appchain?.appchain_id}#/extrinsics/${data.inHashes?.[0]}`
+                    ? `${network?.octopus.explorerUrl}/?appchain=${appchainId}#/extrinsics/${data.inHashes?.[0]}`
                     : `${network?.near.explorerUrl}/transactions/${data.inHashes?.[0]}`
                 }
                 _hover={{ textDecoration: 'underline' }}
