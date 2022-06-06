@@ -165,6 +165,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
 
         request.execute((res: any) => {
           setProjects(res?.projects)
+          console.log(res)
         })
       }
     }
@@ -320,7 +321,6 @@ export const MyNode: React.FC<MyNodeProps> = ({
       secretKey = access_token
     }
     
-
     setIsApplying.on()
     axios
       .put(
@@ -343,13 +343,20 @@ export const MyNode: React.FC<MyNodeProps> = ({
       return
     }
 
-    const secretKey = window.prompt(
-      'Please enter the secret key of your server',
-      ''
-    )
+    let secretKey;
 
-    if (!secretKey) {
-      return
+    if (cloudVendor === 'AWS') {
+      secretKey = window.prompt(
+        'Please enter the secret key of your server',
+        ''
+      )
+  
+      if (!secretKey) {
+        return
+      }
+    } else {
+      const { access_token } = oauthUser.getAuthResponse()
+      secretKey = access_token
     }
 
     setIsUpgrading.on()
@@ -371,13 +378,20 @@ export const MyNode: React.FC<MyNodeProps> = ({
   }
 
   const onDestroyNode = () => {
-    const secretKey = window.prompt(
-      'Please enter the secret key of your server',
-      ''
-    )
+    let secretKey;
 
-    if (!secretKey) {
-      return
+    if (cloudVendor === 'AWS') {
+      secretKey = window.prompt(
+        'Please enter the secret key of your server',
+        ''
+      )
+  
+      if (!secretKey) {
+        return
+      }
+    } else {
+      const { access_token } = oauthUser.getAuthResponse()
+      secretKey = access_token
     }
 
     setIsDestroying.on()
