@@ -664,26 +664,29 @@ export const MyNode: React.FC<MyNodeProps> = ({
         ) : accessKey ? (
           <>
             <Flex minH="120px" justifyContent="center" flexDirection="column">
-              <Flex bg={inputBg} p={1} borderRadius="lg" alignItems="center" mb={2}>
-                <Box p={2}>
-                  <Text variant="gray">Projects</Text>
-                </Box>
-                <Box flex={1}>
-                  <Select
-                    variant="unstyled"
-                    p={2}
-                    placeholder="Select Project"
-                    onChange={(e) => setProjectId(e.target.value)}
-                    textAlign="right"
-                  >
-                    {projects?.map((project: any, idx: number) => (
-                      <option value={project.projectId} key={`project-${idx}`}>
-                        {project.name}
-                      </option>
-                    ))}
-                  </Select>
-                </Box>
-              </Flex>
+              {
+                cloudVendor === 'GCP' ?
+                <Flex bg={inputBg} p={1} borderRadius="lg" alignItems="center" mb={2}>
+                  <Box p={2}>
+                    <Text variant="gray">Projects</Text>
+                  </Box>
+                  <Box flex={1}>
+                    <Select
+                      variant="unstyled"
+                      p={2}
+                      placeholder="Select Project"
+                      onChange={(e) => setProjectId(e.target.value)}
+                      textAlign="right"
+                    >
+                      {projects?.map((project: any, idx: number) => (
+                        <option value={project.projectId} key={`project-${idx}`}>
+                          {project.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </Box>
+                </Flex> : null
+              }
               <Flex bg={inputBg} p={1} borderRadius="lg" alignItems="center">
                 <Box p={2}>
                   <Text variant="gray">Deploy region</Text>
