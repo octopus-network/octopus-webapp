@@ -23,6 +23,7 @@ import {
 import { Empty, BaseModal } from 'components';
 import { useGlobalStore } from 'stores';
 import failedToLoad from 'assets/failed_to_load.svg';
+import { ApiPromise } from '@polkadot/api';
 
 type SelectTokenModalProps = {
   isOpen: boolean;
@@ -30,6 +31,8 @@ type SelectTokenModalProps = {
   selectedToken?: string;
   tokens: TokenAsset[] | undefined;
   isReverse?: boolean;
+  appchainApi: ApiPromise | undefined;
+  fromAccount: string | undefined;
   appchainId: string | undefined;
   collectibleClasses?: number[];
   onSelectToken: (account: TokenAsset | Collectible, isCollectible?: boolean) => void;
@@ -42,6 +45,8 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
   onSelectToken, 
   selectedToken, 
   appchainId,
+  appchainApi,
+  fromAccount,
   isReverse = false,
   collectibleClasses = []
 }) => {
@@ -52,7 +57,8 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
   const { global } = useGlobalStore();
 
   useEffect(() => {
-    if (!collectibleClasses?.length || !global.accountId || !appchainId || !global.registry) {
+    if (!collectibleClasses?.length || !appchainId || !global.registry || !fromAccount) {
+      setCollectibles([]);
       return;
     }
 
@@ -68,7 +74,7 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
         );
 
         return contract.nft_tokens_for_owner({
-          account_id: global.accountId,
+          account_id: fromAccount,
           from_index: '0'
         }).then(res => res ? res.map((item : any) => ({...item, class: classId})) : null);
       });
@@ -91,10 +97,48 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
       
     } else {
 
-      setCollectibles([]);
+      if (!appchainApi?.isReady) {
+        return;
+      }
+      const promises = collectibleClasses.map(classId => {
+        return appchainApi.query.octopusUniques.class(classId).then(info => {
 
+          const { instances } = info?.toJSON() as any || {};
+
+          const tmpPromises = [];
+
+          for (let i = 1; i <= instances; i++) {
+            tmpPromises.push(appchainApi.query.octopusUniques.asset(classId, i).then(res => res && res.toJSON() ? {
+              ...(res.toJSON() as any), 
+              id: i,
+              class: classId,
+              metadata: {
+
+              }
+            } : null));
+          }
+
+          return Promise.all(tmpPromises).then(res => res?.filter(item => !!item && item.owner === fromAccount));
+        });
+      });
+
+      Promise.all(promises).then(res => {
+        const tmpArr: any[] = res?.length ? res.flat(Infinity).map((item: any) => (
+          {
+            id: item.id,
+            class: item.class,
+            owner: item.owner,
+            metadata: {
+              title: item.metadata?.title || 'Unknown',
+              uri: item.metadata?.media
+            }
+          }
+        )) : [];
+       
+        setCollectibles(tmpArr);
+      });
     }
-  }, [appchainId, collectibleClasses, isReverse, global]);
+  }, [appchainId, collectibleClasses, isReverse, global, fromAccount, appchainApi, isOpen]);
 
   return (
     <BaseModal

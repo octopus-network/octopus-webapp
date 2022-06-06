@@ -720,20 +720,7 @@ export const BridgePanel: React.FC = () => {
     }
   }
 
-  const onBurn = () => {
-
-    if (!collectible) {
-      burnToken()
-    } else {
-      burnCollectible()
-    }
-  }
-
-  const onRedeem = async () => {
-    await web3Enable('Octopus Network')
-    const injected = await web3FromSource(appchainAccount?.meta.source || '')
-    appchainApi?.setSigner(injected.signer)
-
+  const redeemToken = async () => {
     setIsTransferring.on()
 
     const targetAccountInHex = stringToHex(targetAccount)
@@ -788,6 +775,61 @@ export const BridgePanel: React.FC = () => {
         })
         setIsTransferring.off()
       })
+  }
+
+  const redeemCollectible = async () => {
+    setIsTransferring.on()
+
+    const targetAccountInHex = stringToHex(targetAccount)
+
+    const tx: any = appchainApi?.tx.octopusAppchain.lockNft(
+      collectible?.class,
+      collectible?.id,
+      targetAccountInHex
+    )
+
+    await tx
+      .signAndSend(fromAccount, ({ events = [] }: any) => {
+        events.forEach(({ event: { data, method, section } }: any) => {
+          if (
+            section === 'octopusAppchain' &&
+            (method === 'NftLocked')
+          ) {
+           
+            setIsTransferring.off()
+            setCollectible(undefined)
+          }
+        })
+      })
+      .catch((err: any) => {
+        toast({
+          position: 'top-right',
+          description: err.toString(),
+          status: 'error',
+        })
+        setIsTransferring.off()
+      })
+  }
+
+  const onBurn = () => {
+
+    if (!collectible) {
+      burnToken()
+    } else {
+      burnCollectible()
+    }
+  }
+
+  const onRedeem = async () => {
+    await web3Enable('Octopus Network')
+    const injected = await web3FromSource(appchainAccount?.meta.source || '')
+    appchainApi?.setSigner(injected.signer)
+
+    if (!collectible) {
+      redeemToken()
+    } else {
+      redeemCollectible()
+    }
   }
 
   const onClearHistory = () => {
@@ -1217,7 +1259,9 @@ export const BridgePanel: React.FC = () => {
         onClose={setSelectTokenModalOpen.off}
         tokens={filteredTokens}
         isReverse={isReverse}
+        appchainApi={appchainApi}
         appchainId={appchainId}
+        fromAccount={fromAccount}
         collectibleClasses={collectibleClasses}
         onSelectToken={onSelectToken}
         selectedToken={tokenAsset?.metadata?.symbol}

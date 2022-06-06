@@ -225,21 +225,30 @@ export const Root: React.FC = () => {
             for (let j = 0; j < outcome.logs.length; j++) {
               const log = outcome.logs[j]
 
+              console.log(log)
+
               const reg1 =
                   /Wrapped appchain token burnt in contract '(.+)' by '(.+)' for '(.+)' of appchain. Amount: '(.+)', Crosschain notification index: '(.+)'/,
-                reg2 =
-                  /Received fungible token in contract '(.+)' from '(.+)'. Start transfer to '(.+)' of appchain. Amount: '(.+)', Crosschain notification index: '(.+)'/
 
-              res = reg1.exec(log) ?? reg2.exec(log)
+                reg2 =
+                  /Received fungible token in contract '(.+)' from '(.+)'. Start transfer to '(.+)' of appchain. Amount: '(.+)', Crosschain notification index: '(.+)'/,
+
+                reg3 = 
+                  /Received NFT in contract '(.+)' from '(.+)'. Start transfer to '(.+)' of appchain. Crosschain notification index: '(.+)'./
+
+              res = reg1.exec(log) ?? reg2.exec(log) ?? reg3.exec(log)
 
               if (res?.length) {
+
+                const isNFT = res.length === 5
+
                 const appchainId = (outcome as any).executor_id.split('.')?.[0]
 
                 const contractId = res[1],
                   nearAccount = res[2],
                   appchainAccount = res[3],
-                  amount = res[4],
-                  notificationIndex = res[5]
+                  amount = isNFT ? '1' : res[4],
+                  notificationIndex = isNFT ? res[4] : res[5]
 
                 onAppchainTokenBurnt({
                   hash: status.transaction.hash,
