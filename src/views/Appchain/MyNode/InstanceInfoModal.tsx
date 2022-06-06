@@ -23,7 +23,6 @@ type Props = {
 }
 
 export const InstanceInfoModal: React.FC<Props> = ({ metrics, isOpen, onClose }) => {
-  console.log(metrics);
 
   return (
     <BaseModal 

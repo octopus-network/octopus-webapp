@@ -3058,6 +3058,11 @@
     "@types/qs" "*"
     "@types/serve-static" "*"
 
+"@types/gapi@^0.0.42":
+  version "0.0.42"
+  resolved "https://registry.yarnpkg.com/@types/gapi/-/gapi-0.0.42.tgz#772aa461660de09e7a78258064e075818373493c"
+  integrity sha512-kskWpouTGqutaIVRo/swiGnMVoRxOYdRwvaDrh0yavfR9vQoHvJJ7Enp4KE9MEGS8qF7F5KiP6bRNOYcCgRXCA==
+
 "@types/graceful-fs@^4.1.2":
   version "4.1.5"
   resolved "https://registry.npmjs.org/@types/graceful-fs/-/graceful-fs-4.1.5.tgz#21ffba0d98da4350db64891f92a9e5db3cdb4e15"
