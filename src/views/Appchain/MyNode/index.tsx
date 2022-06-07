@@ -75,7 +75,7 @@ const statesRecord: any = {
   '30': { label: 'Upgrading', color: 'green', state: 30 },
 }
 
-const OAUTH_SCOPE = 'https://www.googleapis.com/auth/cloud-platform.read-only https://www.googleapis.com/auth/compute.readonly'
+const OAUTH_SCOPE = 'https://www.googleapis.com/auth/cloud-platform.read-only https://www.googleapis.com/auth/compute'
 
 export const MyNode: React.FC<MyNodeProps> = ({
   appchainId,
