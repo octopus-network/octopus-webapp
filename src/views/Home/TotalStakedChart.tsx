@@ -23,6 +23,7 @@ import {
 
 import { OCT_TOKEN_DECIMALS } from 'primitives'
 import Decimal from 'decimal.js'
+import dayjs from 'dayjs'
 
 const CustomTooltip = ({
   label,
@@ -56,7 +57,17 @@ function toUIValue(val: number) {
 export const TotalStakedChart: React.FC = () => {
   const [days, setDays] = useState(7)
 
-  const { data } = useSWR(`total-staked/${days}`)
+  const ticker = days
+  const end = dayjs().format('YYYY-MM-DD')
+  let start = ''
+  if (ticker === 7) {
+    start = dayjs().subtract(365, 'day').format('YYYY-MM-DD')
+  } else {
+    start = dayjs().subtract(31, 'day').format('YYYY-MM-DD')
+  }
+  const { data } = useSWR(
+    `total-staked?start=${start}&end=${end}&ticker=${ticker}`
+  )
 
   const [currentValue, setCurrentValue] = useState(0)
   const [lastValue, setLastValue] = useState(0)
@@ -176,7 +187,7 @@ export const TotalStakedChart: React.FC = () => {
                 height={20}
               />
               <YAxis
-                domain={[lowestValue, highestValue]}
+                domain={[lowestValue * 0.5, highestValue]}
                 orientation="right"
                 tickCount={3}
                 padding={{ bottom: 20 }}
