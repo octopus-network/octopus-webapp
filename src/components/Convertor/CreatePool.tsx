@@ -26,6 +26,7 @@ import {
   PopoverCloseButton,
   PopoverHeader,
   PopoverBody,
+  VStack,
 } from '@chakra-ui/react'
 import { BN } from '@polkadot/util'
 import { Select, chakraComponents } from 'chakra-react-select'
@@ -139,43 +140,35 @@ export default function CreatePool({
   }
 
   return (
-    <Flex direction="row" justify="space-between">
-      <HStack>
+    <Flex w="100%" direction="column">
+      <Flex direction="row" justify="space-between">
         <Text fontSize="2xl" fontWeight="bold">
-          Pool list
+          Token convertor
         </Text>
-        <Popover>
-          <PopoverTrigger>
-            <Button bgColor="transparent" size="sm">
-              <MdInfoOutline size={20} className="octo-gray" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent>
-            <PopoverArrow />
-            <PopoverCloseButton />
-            <PopoverHeader>Info</PopoverHeader>
-            <PopoverBody>
-              To learn more, forward{' '}
-              <Link
-                href="https://bob-xsb-near.gitbook.io/nep141-token-convertor/"
-                target="_blank"
-                color="#008cd5"
-                rel="noopener noreferrer"
-              >
-                our docs
-              </Link>
-            </PopoverBody>
-          </PopoverContent>
-        </Popover>
-      </HStack>
-      <Button
-        variant="octo-linear"
-        leftIcon={<MdOutlineAdd />}
-        onClick={onOpen}
-      >
-        Create Pool
-      </Button>
 
+        <Button
+          variant="octo-linear"
+          leftIcon={<MdOutlineAdd />}
+          onClick={onOpen}
+        >
+          Create Pool
+        </Button>
+      </Flex>
+
+      <Text mt="2" opacity="0.8">
+        Token Converter is a tool for converting one type of NEP-141 compatible
+        token to another at fixed rate based on the liquidity provided by
+        someone. For example, an Octopus appchain project can facilitate
+        convertion from early issued ERC20 token to appchain native token.{' '}
+        <Link
+          href="https://bob-xsb-near.gitbook.io/nep141-token-convertor/"
+          target="_blank"
+          color="#008cd5"
+          rel="noopener noreferrer"
+        >
+          👉 Learn more.
+        </Link>
+      </Text>
       <Modal
         isOpen={isOpen}
         onClose={() => {

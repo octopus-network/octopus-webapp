@@ -260,7 +260,9 @@ export const Root: React.FC = () => {
         if (message) {
           throw new Error(message)
         }
-        if (/bridge/.test(location.pathname)) {
+        if (/register/.test(location.pathname)) {
+          window.location.replace('/appchains')
+        } else if (/bridge/.test(location.pathname)) {
           toast.close(toastIdRef.current)
         } else if (toastIdRef.current) {
           if (/bridge/.test(location.pathname)) {
