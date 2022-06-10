@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { AccountId, ConversionPool, FungibleTokenMetadata } from 'types'
 import ManagePool from './ManagePool'
+import Pool from './Pool'
 import PoolInfo from './PoolInfo'
 
 export default function MyPool({
@@ -49,20 +50,12 @@ export default function MyPool({
       <SimpleGrid gap={3} mt={1} columns={{ base: 1, md: 3 }}>
         {pools.map((pool) => {
           return (
-            <Flex key={pool.id} bg={bg} p={4} direction="column" gap={4}>
-              <PoolInfo pool={pool} whitelist={whitelist} />
-              <Flex justify="flex-end">
-                <Button
-                  variant="octo-linear"
-                  size="sm"
-                  onClick={() => {
-                    navigate(`/converter/pool/${pool.id}/manage`)
-                  }}
-                >
-                  Manage
-                </Button>
-              </Flex>
-            </Flex>
+            <Pool
+              key={pool.id}
+              pool={pool}
+              whitelist={whitelist}
+              onSelect={(p) => navigate(`/converter/pool/${pool.id}/manage`)}
+            />
           )
         })}
       </SimpleGrid>
