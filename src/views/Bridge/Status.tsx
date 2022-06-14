@@ -207,8 +207,12 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
             <Link
               href={
                 isAppchainSide
-                  ? `${network?.octopus.explorerUrl}/?appchain=${appchainId}#/accounts/${encodeAddress(data.from)}`
-                  : `${network?.near.explorerUrl}/accounts/${decodeNearAccount(data.from)}`
+                  ? `${
+                      network?.octopus.explorerUrl
+                    }/${appchainId}/accounts/${encodeAddress(data.from)}`
+                  : `${network?.near.explorerUrl}/accounts/${decodeNearAccount(
+                      data.from
+                    )}`
               }
               _hover={{ textDecoration: 'underline' }}
               color="#2468f2"
@@ -225,11 +229,9 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
                   textOverflow="ellipsis"
                   className="tx-hash-ellipsis"
                 >
-                  {
-                  isAppchainSide && data.from
+                  {isAppchainSide && data.from
                     ? encodeAddress(data.from)
-                    : decodeNearAccount(data.from)
-                  }
+                    : decodeNearAccount(data.from)}
                 </Text>
                 <Icon as={ExternalLinkIcon} boxSize={3} color="gray" />
               </HStack>
@@ -239,7 +241,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
             <Link
               href={
                 isAppchainSide
-                  ? `${network?.octopus.explorerUrl}/?appchain=${appchainId}#/extrinsics/${data.outHash}`
+                  ? `${network?.octopus.explorerUrl}/${appchainId}/extrinsics/${data.outHash}`
                   : `${network?.near.explorerUrl}/transactions/${data.outHash}`
               }
               _hover={{ textDecoration: 'underline' }}
@@ -265,8 +267,12 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
             <Link
               href={
                 !isAppchainSide
-                  ? `${network?.octopus.explorerUrl}/?appchain=${appchainId}#/accounts/${encodeAddress(data.to)}`
-                  : `${network?.near.explorerUrl}/accounts/${decodeNearAccount(data.to)}`
+                  ? `${
+                      network?.octopus.explorerUrl
+                    }/${appchainId}/accounts/${encodeAddress(data.to)}`
+                  : `${network?.near.explorerUrl}/accounts/${decodeNearAccount(
+                      data.to
+                    )}`
               }
               _hover={{ textDecoration: 'underline' }}
               color="#2468f2"
@@ -283,11 +289,9 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
                   textOverflow="ellipsis"
                   className="tx-hash-ellipsis"
                 >
-                  {
-                  !isAppchainSide && data.to
+                  {!isAppchainSide && data.to
                     ? encodeAddress(data.to)
-                    : decodeNearAccount(data.to)
-                  }
+                    : decodeNearAccount(data.to)}
                 </Text>
                 <Icon as={ExternalLinkIcon} boxSize={3} color="gray" />
               </HStack>
@@ -298,7 +302,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
               <Link
                 href={
                   !isAppchainSide
-                    ? `${network?.octopus.explorerUrl}/?appchain=${appchainId}#/extrinsics/${data.inHashes?.[0]}`
+                    ? `${network?.octopus.explorerUrl}/${appchainId}/extrinsics/${data.inHashes?.[0]}`
                     : `${network?.near.explorerUrl}/transactions/${data.inHashes?.[0]}`
                 }
                 _hover={{ textDecoration: 'underline' }}
