@@ -207,7 +207,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
             <Link
               href={
                 isAppchainSide
-                  ? `${network?.octopus.explorerUrl}/`
+                  ? `${network?.octopus.explorerUrl}/${appchainId}/accounts/${data.from}`
                   : `${network?.near.explorerUrl}/accounts/${data.from}`
               }
               _hover={{ textDecoration: 'underline' }}
@@ -237,7 +237,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
             <Link
               href={
                 isAppchainSide
-                  ? `${network?.octopus.explorerUrl}/`
+                  ? `${network?.octopus.explorerUrl}/${appchainId}/extrinsics/${data.outHash}`
                   : `${network?.near.explorerUrl}/transactions/${data.outHash}`
               }
               _hover={{ textDecoration: 'underline' }}
@@ -263,7 +263,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
             <Link
               href={
                 !isAppchainSide
-                  ? `${network?.octopus.explorerUrl}/`
+                  ? `${network?.octopus.explorerUrl}/${appchainId}/accounts/${data.to}`
                   : `${network?.near.explorerUrl}/accounts/${data.to}`
               }
               _hover={{ textDecoration: 'underline' }}
@@ -294,7 +294,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
               <Link
                 href={
                   !isAppchainSide
-                    ? `${network?.octopus.explorerUrl}/`
+                    ? `${network?.octopus.explorerUrl}/${appchainId}/extrinsics/${data.inHashes?.[0]}`
                     : `${network?.near.explorerUrl}/transactions/${data.inHashes?.[0]}`
                 }
                 _hover={{ textDecoration: 'underline' }}

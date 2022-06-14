@@ -217,7 +217,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
           <LinkBox icon={bridgeIcon} label="Bridge" />
         </RouterLink>
         <Link
-          href={`${global?.network?.octopus.explorerUrl}/?appchain=${appchain?.appchain_id}`}
+          href={`${global?.network?.octopus.explorerUrl}/${appchain?.appchain_id}`}
           isExternal
         >
           <LinkBox icon={explorerIcon} label="Explorer" />
@@ -314,7 +314,13 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
             Total Supply
           </Text>
           <Skeleton isLoaded={!!totalIssuance}>
-            <Heading fontSize="xl" maxW="200px" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+            <Heading
+              fontSize="xl"
+              maxW="200px"
+              overflow="hidden"
+              textOverflow="ellipsis"
+              whiteSpace="nowrap"
+            >
               {totalIssuance && appchain?.appchain_metadata
                 ? DecimalUtil.beautify(
                     DecimalUtil.fromString(
