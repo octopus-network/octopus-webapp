@@ -1,3 +1,5 @@
+import { isHex, hexToString } from '@polkadot/util';
+ 
 export const toShortAddress = (address: string, maxLength = 24) => {
   const tmpArr = address.split('.');
   const halfLength = Math.floor(maxLength / 2);
@@ -31,4 +33,12 @@ export function toValidUrl(url: string | undefined) {
     return `https://${url}`;
   }
   return url;
+}
+
+export function decodeNearAccount(address: string) {
+  if (isHex(address)) {
+    return hexToString(address);
+  } else {
+    return address;
+  }
 }

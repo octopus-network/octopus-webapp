@@ -29,7 +29,7 @@ import {
   useColorModeValue,
 } from '@chakra-ui/react'
 
-import { DecimalUtil } from 'utils'
+import { DecimalUtil, decodeNearAccount } from 'utils'
 import { Link as RouterLink, useParams, useNavigate } from 'react-router-dom'
 
 import {
@@ -207,8 +207,12 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
             <Link
               href={
                 isAppchainSide
-                  ? `${network?.octopus.explorerUrl}/`
-                  : `${network?.near.explorerUrl}/accounts/${data.from}`
+                  ? `${
+                      network?.octopus.explorerUrl
+                    }/${appchainId}/accounts/${encodeAddress(data.from)}`
+                  : `${network?.near.explorerUrl}/accounts/${decodeNearAccount(
+                      data.from
+                    )}`
               }
               _hover={{ textDecoration: 'underline' }}
               color="#2468f2"
@@ -227,7 +231,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
                 >
                   {isAppchainSide && data.from
                     ? encodeAddress(data.from)
-                    : data.from}
+                    : decodeNearAccount(data.from)}
                 </Text>
                 <Icon as={ExternalLinkIcon} boxSize={3} color="gray" />
               </HStack>
@@ -237,7 +241,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
             <Link
               href={
                 isAppchainSide
-                  ? `${network?.octopus.explorerUrl}/`
+                  ? `${network?.octopus.explorerUrl}/${appchainId}/extrinsics/${data.outHash}`
                   : `${network?.near.explorerUrl}/transactions/${data.outHash}`
               }
               _hover={{ textDecoration: 'underline' }}
@@ -263,8 +267,12 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
             <Link
               href={
                 !isAppchainSide
-                  ? `${network?.octopus.explorerUrl}/`
-                  : `${network?.near.explorerUrl}/accounts/${data.to}`
+                  ? `${
+                      network?.octopus.explorerUrl
+                    }/${appchainId}/accounts/${encodeAddress(data.to)}`
+                  : `${network?.near.explorerUrl}/accounts/${decodeNearAccount(
+                      data.to
+                    )}`
               }
               _hover={{ textDecoration: 'underline' }}
               color="#2468f2"
@@ -283,7 +291,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
                 >
                   {!isAppchainSide && data.to
                     ? encodeAddress(data.to)
-                    : data.to}
+                    : decodeNearAccount(data.to)}
                 </Text>
                 <Icon as={ExternalLinkIcon} boxSize={3} color="gray" />
               </HStack>
@@ -294,7 +302,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
               <Link
                 href={
                   !isAppchainSide
-                    ? `${network?.octopus.explorerUrl}/`
+                    ? `${network?.octopus.explorerUrl}/${appchainId}/extrinsics/${data.inHashes?.[0]}`
                     : `${network?.near.explorerUrl}/transactions/${data.inHashes?.[0]}`
                 }
                 _hover={{ textDecoration: 'underline' }}
