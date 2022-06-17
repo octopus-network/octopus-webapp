@@ -39,6 +39,7 @@ import { DecimalUtil } from 'utils'
 import { OCT_TOKEN_DECIMALS } from 'primitives'
 import { Empty } from 'components'
 import OTTO from '../../../assets/otto.png'
+import { useGlobalStore } from 'stores'
 
 type ValidatorsProps = {
   appchain: AppchainInfoWithAnchorStatus | undefined
@@ -215,23 +216,30 @@ export const Validators: React.FC<ValidatorsProps> = ({
     setClaimRewardsModalOpen.on()
   }
 
+  const { global } = useGlobalStore()
+  const isMainnet = global?.network?.near.networkId !== 'mainnet'
+
   return (
     <>
       <Flex justifyContent="space-between" alignItems="center">
         <HStack>
           <Heading fontSize="xl">Validators</Heading>
           <Link
-            href="https://discord.com/invite/6GTJBkZA9Q"
+            href={
+              isMainnet
+                ? 'https://discord.gg/uVKUBSssxm'
+                : 'https://discord.gg/zgcdhu5BzT'
+            }
             target="_blank"
             display={{ base: 'none', md: 'block' }}
           >
             <HStack
               bg="#8ecafc"
               borderRadius={4}
-              pr={2}
+              pr={4}
               pt={1}
               pb={1}
-              pl={16}
+              pl={14}
               position="relative"
             >
               <Image
@@ -240,7 +248,7 @@ export const Validators: React.FC<ValidatorsProps> = ({
                   position: 'absolute',
                   width: 50,
                   height: 50,
-                  left: 10,
+                  left: 4,
                   top: -20,
                 }}
               />
