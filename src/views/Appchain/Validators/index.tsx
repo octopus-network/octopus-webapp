@@ -217,7 +217,7 @@ export const Validators: React.FC<ValidatorsProps> = ({
   }
 
   const { global } = useGlobalStore()
-  const isMainnet = global?.network?.near.networkId !== 'mainnet'
+  const isMainnet = global?.network?.near.networkId === 'mainnet'
 
   return (
     <>
