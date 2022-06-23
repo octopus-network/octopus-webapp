@@ -27,6 +27,7 @@ import {
   Link,
   Flex,
   useColorModeValue,
+  VStack,
 } from '@chakra-ui/react'
 
 import { DecimalUtil, decodeNearAccount } from 'utils'
@@ -172,158 +173,177 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
           }}
         >
           <GridItem colSpan={2}>
-            <HStack spacing={2}>
+            <VStack spacing={2} align="start">
               <Heading
                 fontSize="sm"
                 color={data.event === 'Burnt' ? 'green.500' : 'blue.500'}
               >
                 {data.event}
               </Heading>
-              <Heading
-                fontSize="md"
-                whiteSpace="nowrap"
-                overflow="hidden"
-                textOverflow="ellipsis"
-                className="tx-hash-ellipsis"
-                style={{ width: 90 }}
-              >
-                {appchain
-                  ? DecimalUtil.beautify(
-                      DecimalUtil.fromString(
-                        data.amount.replaceAll(',', ''),
-                        appchain?.appchain_metadata?.fungible_token_metadata
-                          ?.decimals
+              <HStack>
+                <Heading
+                  fontSize="md"
+                  whiteSpace="nowrap"
+                  overflow="hidden"
+                  textOverflow="ellipsis"
+                  className="tx-hash-ellipsis"
+                >
+                  {appchain
+                    ? DecimalUtil.beautify(
+                        DecimalUtil.fromString(
+                          data.amount.replaceAll(',', ''),
+                          appchain?.appchain_metadata?.fungible_token_metadata
+                            ?.decimals
+                        )
                       )
-                    )
-                  : '-'}
-              </Heading>
-              <Text fontSize="sm" color="gray.500">
-                {appchain?.appchain_metadata?.fungible_token_metadata.symbol ||
-                  '-'}
-              </Text>
-            </HStack>
-          </GridItem>
-          <GridItem colSpan={2}>
-            <Link
-              href={
-                isAppchainSide
-                  ? `${
-                      network?.octopus.explorerUrl
-                    }/${appchainId}/accounts/${encodeAddress(data.from)}`
-                  : `${network?.near.explorerUrl}/accounts/${decodeNearAccount(
-                      data.from
-                    )}`
-              }
-              _hover={{ textDecoration: 'underline' }}
-              color="#2468f2"
-              isExternal
-              onClick={(e) => e.stopPropagation()}
-            >
-              <HStack spacing={1}>
-                {isAppchainSide ? (
-                  <Identicon value={data.from} size={18} />
-                ) : null}
-                <Text
-                  whiteSpace="nowrap"
-                  overflow="hidden"
-                  textOverflow="ellipsis"
-                  className="tx-hash-ellipsis"
-                >
-                  {isAppchainSide && data.from
-                    ? encodeAddress(data.from)
-                    : decodeNearAccount(data.from)}
+                    : '-'}
+                </Heading>
+
+                <Text fontSize="sm" color="gray.500">
+                  {appchain?.appchain_metadata?.fungible_token_metadata
+                    .symbol || '-'}
                 </Text>
-                <Icon as={ExternalLinkIcon} boxSize={3} color="gray" />
               </HStack>
-            </Link>
-          </GridItem>
-          <GridItem colSpan={2}>
-            <Link
-              href={
-                isAppchainSide
-                  ? `${network?.octopus.explorerUrl}/${appchainId}/extrinsics/${data.outHash}`
-                  : `${network?.near.explorerUrl}/transactions/${data.outHash}`
-              }
-              _hover={{ textDecoration: 'underline' }}
-              color="#2468f2"
-              isExternal
-              onClick={(e) => e.stopPropagation()}
-            >
-              <HStack spacing={1}>
-                <Text
-                  whiteSpace="nowrap"
-                  overflow="hidden"
-                  textOverflow="ellipsis"
-                  className="tx-hash-ellipsis"
-                >
-                  {data.outHash}
-                </Text>
-                <Icon as={ExternalLinkIcon} boxSize={3} color="gray" />
-              </HStack>
-            </Link>
+            </VStack>
           </GridItem>
 
-          <GridItem colSpan={2}>
-            <Link
-              href={
-                !isAppchainSide
-                  ? `${
-                      network?.octopus.explorerUrl
-                    }/${appchainId}/accounts/${encodeAddress(data.to)}`
-                  : `${network?.near.explorerUrl}/accounts/${decodeNearAccount(
-                      data.to
-                    )}`
-              }
-              _hover={{ textDecoration: 'underline' }}
-              color="#2468f2"
-              isExternal
-              onClick={(e) => e.stopPropagation()}
-            >
-              <HStack spacing={1}>
-                {!isAppchainSide ? (
-                  <Identicon value={data.to} size={18} />
-                ) : null}
-                <Text
-                  whiteSpace="nowrap"
-                  overflow="hidden"
-                  textOverflow="ellipsis"
-                  className="tx-hash-ellipsis"
+          <GridItem colSpan={4}>
+            <VStack align="start">
+              <HStack>
+                <Text>Account:</Text>
+                <Link
+                  href={
+                    isAppchainSide
+                      ? `${
+                          network?.octopus.explorerUrl
+                        }/${appchainId}/accounts/${encodeAddress(data.from)}`
+                      : `${
+                          network?.near.explorerUrl
+                        }/accounts/${decodeNearAccount(data.from)}`
+                  }
+                  _hover={{ textDecoration: 'underline' }}
+                  color="#2468f2"
+                  isExternal
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  {!isAppchainSide && data.to
-                    ? encodeAddress(data.to)
-                    : decodeNearAccount(data.to)}
-                </Text>
-                <Icon as={ExternalLinkIcon} boxSize={3} color="gray" />
+                  <HStack spacing={1}>
+                    {isAppchainSide ? (
+                      <Identicon value={data.from} size={18} />
+                    ) : null}
+                    <Text
+                      whiteSpace="nowrap"
+                      overflow="hidden"
+                      textOverflow="ellipsis"
+                      className="tx-hash-ellipsis"
+                    >
+                      {isAppchainSide && data.from
+                        ? encodeAddress(data.from)
+                        : decodeNearAccount(data.from)}
+                    </Text>
+                    <Icon as={ExternalLinkIcon} boxSize={3} color="gray" />
+                  </HStack>
+                </Link>
               </HStack>
-            </Link>
+
+              <HStack>
+                <Text>Hash:</Text>
+                <Link
+                  href={
+                    isAppchainSide
+                      ? `${network?.octopus.explorerUrl}/${appchainId}/extrinsics/${data.outHash}`
+                      : `${network?.near.explorerUrl}/transactions/${data.outHash}`
+                  }
+                  _hover={{ textDecoration: 'underline' }}
+                  color="#2468f2"
+                  isExternal
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <HStack spacing={1}>
+                    <Text
+                      whiteSpace="nowrap"
+                      overflow="hidden"
+                      textOverflow="ellipsis"
+                      className="tx-hash-ellipsis"
+                    >
+                      {data.outHash}
+                    </Text>
+                    <Icon as={ExternalLinkIcon} boxSize={3} color="gray" />
+                  </HStack>
+                </Link>
+              </HStack>
+            </VStack>
           </GridItem>
-          <GridItem colSpan={2}>
-            {data.inHashes?.[0] ? (
-              <Link
-                href={
-                  !isAppchainSide
-                    ? `${network?.octopus.explorerUrl}/${appchainId}/extrinsics/${data.inHashes?.[0]}`
-                    : `${network?.near.explorerUrl}/transactions/${data.inHashes?.[0]}`
-                }
-                _hover={{ textDecoration: 'underline' }}
-                color="#2468f2"
-                isExternal
-                onClick={(e) => e.stopPropagation()}
-              >
-                <HStack spacing={1}>
-                  <Text
-                    whiteSpace="nowrap"
-                    overflow="hidden"
-                    textOverflow="ellipsis"
-                    className="tx-hash-ellipsis"
+
+          <GridItem colSpan={4}>
+            <VStack align="start">
+              <HStack>
+                <Text>Account:</Text>
+                <Link
+                  href={
+                    !isAppchainSide
+                      ? `${
+                          network?.octopus.explorerUrl
+                        }/${appchainId}/accounts/${encodeAddress(data.to)}`
+                      : `${
+                          network?.near.explorerUrl
+                        }/accounts/${decodeNearAccount(data.to)}`
+                  }
+                  _hover={{ textDecoration: 'underline' }}
+                  color="#2468f2"
+                  isExternal
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <HStack spacing={1}>
+                    {!isAppchainSide ? (
+                      <Identicon value={data.to} size={18} />
+                    ) : null}
+                    <Text
+                      whiteSpace="nowrap"
+                      overflow="hidden"
+                      textOverflow="ellipsis"
+                      className="tx-hash-ellipsis"
+                    >
+                      {!isAppchainSide && data.to
+                        ? encodeAddress(data.to)
+                        : decodeNearAccount(data.to)}
+                    </Text>
+                    <Icon as={ExternalLinkIcon} boxSize={3} color="gray" />
+                  </HStack>
+                </Link>
+              </HStack>
+
+              <HStack>
+                <Text>Hash:</Text>
+
+                {data.inHashes?.[0] ? (
+                  <Link
+                    href={
+                      !isAppchainSide
+                        ? `${network?.octopus.explorerUrl}/${appchainId}/extrinsics/${data.inHashes?.[0]}`
+                        : `${network?.near.explorerUrl}/transactions/${data.inHashes?.[0]}`
+                    }
+                    _hover={{ textDecoration: 'underline' }}
+                    color="#2468f2"
+                    isExternal
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    {data.inHashes?.[0]}
-                  </Text>
-                  <Icon as={ExternalLinkIcon} boxSize={3} color="gray" />
-                </HStack>
-              </Link>
-            ) : null}
+                    <HStack spacing={1}>
+                      <Text
+                        whiteSpace="nowrap"
+                        overflow="hidden"
+                        textOverflow="ellipsis"
+                        className="tx-hash-ellipsis"
+                      >
+                        {data.inHashes?.[0]}
+                      </Text>
+                      <Icon as={ExternalLinkIcon} boxSize={3} color="gray" />
+                    </HStack>
+                  </Link>
+                ) : null}
+              </HStack>
+            </VStack>
           </GridItem>
+
           <GridItem colSpan={2}>
             <HStack justifyContent="flex-end">
               <Tag size="sm" colorScheme={statusObj[data.status].color}>
@@ -404,19 +424,13 @@ export const Status: React.FC = () => {
           fontSize="sm"
         >
           <GridItem colSpan={2}>
-            <Text>Token</Text>
+            <Text>Event/Token</Text>
           </GridItem>
-          <GridItem colSpan={2}>
-            <Text>From</Text>
+          <GridItem colSpan={4}>
+            <Text>From/Hash</Text>
           </GridItem>
-          <GridItem colSpan={2}>
-            <Text>Out Hash</Text>
-          </GridItem>
-          <GridItem colSpan={2}>
-            <Text>To</Text>
-          </GridItem>
-          <GridItem colSpan={2}>
-            <Text>In Hashes</Text>
+          <GridItem colSpan={4}>
+            <Text>To/Hash</Text>
           </GridItem>
           <GridItem colSpan={2} textAlign="right">
             <Text>Status</Text>
