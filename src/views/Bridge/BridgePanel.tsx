@@ -1,9 +1,12 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react'
 import useSWR from 'swr'
+import axios from 'axios'
 import BN from 'bn.js'
 import { ApiPromise, WsProvider } from '@polkadot/api'
+
 import { PulseLoader } from 'react-spinners'
-import { Account, keyStores, Near } from 'near-api-js'
+import { Account, keyStores, Near, utils } from 'near-api-js'
+import { MerkleTree } from 'merkletreejs';
 
 import {
   Box,
@@ -71,7 +74,7 @@ import {
   Link as RouterLink,
 } from 'react-router-dom'
 import Decimal from 'decimal.js'
-import { ZERO_DECIMAL, DecimalUtil } from 'utils'
+import { ZERO_DECIMAL, DecimalUtil, toNumArray } from 'utils'
 import { useTxnsStore } from 'stores'
 import { useDebounce } from 'use-debounce'
 
@@ -80,6 +83,9 @@ import {
   FAILED_TO_REDIRECT_MESSAGE,
   SIMPLE_CALL_GAS,
 } from 'primitives'
+
+const publicKeyToAddress = require('ethereum-public-key-to-address')
+const keccak256 = require('keccak256')
 
 function toHexAddress(ss58Address: string) {
   if (isHex(ss58Address)) {
@@ -93,6 +99,15 @@ function toHexAddress(ss58Address: string) {
   }
 }
 
+function messageProofWithoutProof(encoded_messages: string) {
+  return {
+    header: [] as number[],
+    encoded_messages: toNumArray(encoded_messages),
+    mmr_leaf: [] as number[],
+    mmr_proof: [] as number[],
+  };
+}
+
 async function getOffchainDataForCommitment(
   appchain: ApiPromise,
   commitment: string
@@ -103,6 +118,28 @@ async function getOffchainDataForCommitment(
     await appchain.rpc.offchain.localStorageGet('PERSISTENT', key)
   ).toString();
   return data;
+}
+
+async function getLastBlockNumberOfAppchain(rpcUrl: string, anchorContractId: string) {
+  
+  const res: any = await axios.post(rpcUrl, {
+    "jsonrpc": "2.0",
+    "id": "dontcare",
+    "method": "query",
+    "params": {
+      "request_type": "call_function",
+      "finality": "final",
+      "account_id": anchorContractId,
+      "method_name": "get_latest_commitment_of_appchain",
+      "args_base64": "e30="
+    }
+  }).then(res => res.data).then(res => res.result.result)
+
+  const lastCommitment = JSON.parse(res.reduce((str: any, chr: any) => str + String.fromCharCode(chr), ''))
+
+  console.log('lastCommitment', lastCommitment)
+
+  return lastCommitment ? lastCommitment.block_number : 0
 }
 
 
@@ -393,8 +430,13 @@ export const BridgePanel: React.FC = () => {
         if (txn.appchainBlockHeight !== undefined) {
           const bh = txn.appchainBlockHeight as number;
           const header = await appchainApi?.rpc.chain.getHeader();
+          
           const headerJSON: any = header?.toJSON();
-          const maxBlockHeight = headerJSON.number > bh + 10 ? bh + 10 : headerJSON.number;
+
+          const latestFinalizedHeight = headerJSON.number;
+          const latestFinalizedBlockHash = await appchainApi?.rpc.chain.getBlockHash(latestFinalizedHeight);
+
+          const maxBlockHeight = headerJSON.number > bh + 10 ? bh + 10 : latestFinalizedHeight;
           const promises = [];
      
           for (let i = bh; i < maxBlockHeight; i++) {
@@ -404,28 +446,110 @@ export const BridgePanel: React.FC = () => {
 
           const headers = await Promise.all(promises);
          
-          let commitment, cHeight;
+          let signedCommitment, commitmentHeight, commitmentHeader;
           for (let i = 0; i < headers.length; i++) {
-            const header: any = headers[i];
-            const headerJSON = header.toJSON();
-            header.digest.logs.forEach((log: any) => {
-            
+            const tmpHeader: any = headers[i];
+            tmpHeader.digest.logs.forEach((log: any) => {
               if (log.isOther) {
-                commitment = log.asOther.toString();
-                cHeight = headerJSON.number;
+                signedCommitment = log.asOther.toString();
+                commitmentHeight = tmpHeader.toJSON().number;
+                commitmentHeader = tmpHeader;
               }
             })
-            if (commitment) {
+            if (signedCommitment) {
               break;
             }
           }
           
-          if (commitment) {
-            console.log('commitment:', commitment);
-            console.log('commitment in block height', cHeight);
-            const offchainData = await getOffchainDataForCommitment(appchainApi as any, commitment);
-            console.log('offchain data', offchainData);
+          if (!signedCommitment || !commitmentHeight || !commitmentHeader) {
+            return;
           }
+
+          const offchainData = await getOffchainDataForCommitment(appchainApi as any, signedCommitment);
+
+          const blockNumberInAnchor = await getLastBlockNumberOfAppchain(global.network?.near.nodeUrl as string, appchain?.appchain_anchor as string);
+
+          const blockHashInAnchor = await appchainApi?.rpc.chain.getBlockHash(
+            blockNumberInAnchor
+          );
+      
+          let headerMMR;
+
+          try {
+            const rawProof = await appchainApi?.rpc.mmr.generateProof(
+              commitmentHeight,
+              blockHashInAnchor
+            );
+
+            console.log('rawProof', rawProof);
+            if (rawProof) {
+              headerMMR = {
+                header: toNumArray((commitmentHeader as any).toHex()),
+                encoded_messages: toNumArray(offchainData),
+                mmr_leaf: toNumArray(rawProof.toJSON().leaf),
+                mmr_proof: toNumArray(rawProof.proof),
+              };
+            } else {
+              headerMMR = messageProofWithoutProof(offchainData);
+            }
+          } catch(err) {
+            headerMMR = messageProofWithoutProof(offchainData);
+          }
+
+          if (headerMMR) {
+
+            const commitmentBlockHash = await appchainApi?.rpc.chain.getBlockHash(commitmentHeight);
+
+            // console.log('block number in anchor', blockNumberInAnchor);
+            // console.log('latest finalized height', latestFinalizedHeight);
+            // console.log('commitment height', commitmentHeight);
+            // console.log('latest block hash', latestFinalizedBlockHash?.toString());
+
+            const currentAuthorities: any = (await appchainApi?.query.beefy.authorities.at(
+              commitmentBlockHash as any
+            ))?.toJSON();
+
+            const validatorAddresses = currentAuthorities.map((a: string) => publicKeyToAddress(a));
+
+            const leaves = validatorAddresses.map((a: string) => keccak256(a));
+            const tree = new MerkleTree(leaves, keccak256);
+
+            const validatorProofs = leaves.map((leaf: any, index: number) => {
+              const proof: string[] = tree.getHexProof(leaf);
+              const u8aProof = proof.map((hash) => toNumArray(hash));
+
+              return {
+                proof: u8aProof,
+                number_of_leaves: leaves.length,
+                leaf_index: index,
+                leaf: toNumArray(validatorAddresses[index])
+              }
+            });
+            
+            const mmrProof = await appchainApi?.rpc.mmr.generateProof(
+              commitmentHeight - 1,
+              latestFinalizedBlockHash
+            );
+            
+            const mmrProofJSON = mmrProof?.toJSON();
+            
+            // console.log('mmr proof json', mmrProofJSON);
+            // console.log('validator proofs', validatorProofs);
+
+            const toSubmitParams = {
+              signed_commitment: toNumArray(signedCommitment),
+              validator_proofs: validatorProofs,
+              mmr_leaf_for_mmr_root: toNumArray(mmrProofJSON?.leaves),
+              mmr_proof_for_mmr_root: toNumArray(mmrProofJSON?.proof),
+              encoded_messages: toNumArray(offchainData),
+              header: headerMMR.header,
+              mmr_leaf_for_header: headerMMR.mmr_leaf,
+              mmr_proof_for_header: headerMMR.mmr_proof
+            }
+
+            console.log('to submit params', toSubmitParams);
+          }
+
 
         }
         return anchorContract
