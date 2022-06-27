@@ -93,6 +93,19 @@ function toHexAddress(ss58Address: string) {
   }
 }
 
+async function getOffchainDataForCommitment(
+  appchain: ApiPromise,
+  commitment: string
+) {
+  const prefixBuffer = Buffer.from('commitment', 'utf8');
+  const key = '0x' + prefixBuffer.toString('hex') + commitment.slice(2);
+  const data = (
+    await appchain.rpc.offchain.localStorageGet('PERSISTENT', key)
+  ).toString();
+  return data;
+}
+
+
 export const BridgePanel: React.FC = () => {
   const bg = useColorModeValue('white', '#15172c')
   const { appchainId } = useParams()
@@ -329,7 +342,7 @@ export const BridgePanel: React.FC = () => {
     if (tokenAsset?.assetId === undefined) {
       return
     }
-    appchainApi?.query.system.account(debouncedTargetAccount).then((res) => {
+    appchainApi?.query.system.account(debouncedTargetAccount).then((res: any) => {
       if (res.providers.toNumber() === 0) {
         setTargetAccountNeedDepositStorage.on()
       }
@@ -375,8 +388,46 @@ export const BridgePanel: React.FC = () => {
 
     isCheckingTxns.current = true
 
-    const promises = pendingTxns.map((txn) => {
+    const promises = pendingTxns.map(async (txn) => {
       if (txn.isAppchainSide) {
+        if (txn.appchainBlockHeight !== undefined) {
+          const bh = txn.appchainBlockHeight as number;
+          const header = await appchainApi?.rpc.chain.getHeader();
+          const headerJSON: any = header?.toJSON();
+          const maxBlockHeight = headerJSON.number > bh + 10 ? bh + 10 : headerJSON.number;
+          const promises = [];
+     
+          for (let i = bh; i < maxBlockHeight; i++) {
+            promises.push(appchainApi?.rpc.chain.getBlockHash(i)
+              .then(hash => appchainApi?.rpc.chain.getHeader(hash)));
+          }
+
+          const headers = await Promise.all(promises);
+         
+          let commitment, cHeight;
+          for (let i = 0; i < headers.length; i++) {
+            const header: any = headers[i];
+            const headerJSON = header.toJSON();
+            header.digest.logs.forEach((log: any) => {
+            
+              if (log.isOther) {
+                commitment = log.asOther.toString();
+                cHeight = headerJSON.number;
+              }
+            })
+            if (commitment) {
+              break;
+            }
+          }
+          
+          if (commitment) {
+            console.log('commitment:', commitment);
+            console.log('commitment in block height', cHeight);
+            const offchainData = await getOffchainDataForCommitment(appchainApi as any, commitment);
+            console.log('offchain data', offchainData);
+          }
+
+        }
         return anchorContract
           ?.get_appchain_message_processing_result_of({ nonce: txn.sequenceId })
           .then((result) => {
@@ -681,14 +732,17 @@ export const BridgePanel: React.FC = () => {
             targetAccountInHex,
             amountInU64.toString()
           )
-
+    
     await tx
-      .signAndSend(fromAccount, ({ events = [] }: any) => {
-        events.forEach(({ event: { data, method, section } }: any) => {
+      .signAndSend(fromAccount, async ({ events = [] }: any) => {
+        for (let i = 0; i < events.length; i++) {
+          const { event: { data, method, section } } = events[i];
           if (
             section === 'octopusAppchain' &&
             (method === 'Locked' || method === 'AssetBurned')
           ) {
+            const header = await appchainApi?.rpc.chain.getHeader();
+            const headerJSON: any = header?.toJSON();
             updateTxn(appchainId || '', {
               isAppchainSide: true,
               appchainId: appchainId || '',
@@ -697,6 +751,7 @@ export const BridgePanel: React.FC = () => {
               amount: amountInU64.toString(),
               status: BridgeHistoryStatus.Pending,
               timestamp: new Date().getTime(),
+              appchainBlockHeight: headerJSON.number - 1,
               fromAccount: fromAccount || '',
               toAccount: targetAccount || '',
               tokenContractId: tokenAsset?.contractId || '',
@@ -704,7 +759,8 @@ export const BridgePanel: React.FC = () => {
             setIsTransferring.off()
             checkBalanceViaRPC?.current()
           }
-        })
+        }
+       
       })
       .catch((err: any) => {
         toast({

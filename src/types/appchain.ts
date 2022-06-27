@@ -152,6 +152,7 @@ export type BridgeHistory = {
   status: BridgeHistoryStatus;
   timestamp: number;
   message?: string;
+  appchainBlockHeight?: number;
   tokenContractId: string;
 }
 

@@ -185,8 +185,8 @@ export const Appchain: React.FC = () => {
 
   useEffect(() => {
     appchainApi?.query?.session?.validators()
-      .then(vs => {
-        setAppchainValidators(vs.map(v => v.toString()));
+      .then((vs: any) => {
+        setAppchainValidators(vs.map((v: any) => v.toString()));
       });
       
     if (validators) {
