@@ -473,7 +473,7 @@ export const BridgePanel: React.FC = () => {
             blockNumberInAnchor
           );
       
-          let headerMMR;
+          let headerProof;
 
           try {
             const rawProof = await appchainApi?.rpc.mmr.generateProof(
@@ -483,73 +483,69 @@ export const BridgePanel: React.FC = () => {
 
             console.log('rawProof', rawProof);
             if (rawProof) {
-              headerMMR = {
+              headerProof = {
                 header: toNumArray((commitmentHeader as any).toHex()),
                 encoded_messages: toNumArray(offchainData),
                 mmr_leaf: toNumArray(rawProof.toJSON().leaf),
                 mmr_proof: toNumArray(rawProof.proof),
               };
             } else {
-              headerMMR = messageProofWithoutProof(offchainData);
+              headerProof = messageProofWithoutProof(offchainData);
             }
           } catch(err) {
-            headerMMR = messageProofWithoutProof(offchainData);
+            headerProof = messageProofWithoutProof(offchainData);
           }
 
-          if (headerMMR) {
+          const commitmentBlockHash = await appchainApi?.rpc.chain.getBlockHash(commitmentHeight);
 
-            const commitmentBlockHash = await appchainApi?.rpc.chain.getBlockHash(commitmentHeight);
+          // console.log('block number in anchor', blockNumberInAnchor);
+          // console.log('latest finalized height', latestFinalizedHeight);
+          // console.log('commitment height', commitmentHeight);
+          // console.log('latest block hash', latestFinalizedBlockHash?.toString());
 
-            // console.log('block number in anchor', blockNumberInAnchor);
-            // console.log('latest finalized height', latestFinalizedHeight);
-            // console.log('commitment height', commitmentHeight);
-            // console.log('latest block hash', latestFinalizedBlockHash?.toString());
+          const currentAuthorities: any = (await appchainApi?.query.beefy.authorities.at(
+            commitmentBlockHash as any
+          ))?.toJSON();
 
-            const currentAuthorities: any = (await appchainApi?.query.beefy.authorities.at(
-              commitmentBlockHash as any
-            ))?.toJSON();
+          const validatorAddresses = currentAuthorities.map((a: string) => publicKeyToAddress(a));
 
-            const validatorAddresses = currentAuthorities.map((a: string) => publicKeyToAddress(a));
+          const leaves = validatorAddresses.map((a: string) => keccak256(a));
+          const tree = new MerkleTree(leaves, keccak256);
 
-            const leaves = validatorAddresses.map((a: string) => keccak256(a));
-            const tree = new MerkleTree(leaves, keccak256);
+          const validatorProofs = leaves.map((leaf: any, index: number) => {
+            const proof: string[] = tree.getHexProof(leaf);
+            const u8aProof = proof.map((hash) => toNumArray(hash));
 
-            const validatorProofs = leaves.map((leaf: any, index: number) => {
-              const proof: string[] = tree.getHexProof(leaf);
-              const u8aProof = proof.map((hash) => toNumArray(hash));
-
-              return {
-                proof: u8aProof,
-                number_of_leaves: leaves.length,
-                leaf_index: index,
-                leaf: toNumArray(validatorAddresses[index])
-              }
-            });
-            
-            const mmrProof = await appchainApi?.rpc.mmr.generateProof(
-              commitmentHeight - 1,
-              latestFinalizedBlockHash
-            );
-            
-            const mmrProofJSON = mmrProof?.toJSON();
-            
-            // console.log('mmr proof json', mmrProofJSON);
-            // console.log('validator proofs', validatorProofs);
-
-            const toSubmitParams = {
-              signed_commitment: toNumArray(signedCommitment),
-              validator_proofs: validatorProofs,
-              mmr_leaf_for_mmr_root: toNumArray(mmrProofJSON?.leaves),
-              mmr_proof_for_mmr_root: toNumArray(mmrProofJSON?.proof),
-              encoded_messages: toNumArray(offchainData),
-              header: headerMMR.header,
-              mmr_leaf_for_header: headerMMR.mmr_leaf,
-              mmr_proof_for_header: headerMMR.mmr_proof
+            return {
+              proof: u8aProof,
+              number_of_leaves: leaves.length,
+              leaf_index: index,
+              leaf: toNumArray(validatorAddresses[index])
             }
+          });
+          
+          const mmrProof = await appchainApi?.rpc.mmr.generateProof(
+            commitmentHeight - 1,
+            latestFinalizedBlockHash
+          );
+          
+          const mmrProofJSON = mmrProof?.toJSON();
+          
+          // console.log('mmr proof json', mmrProofJSON);
+          // console.log('validator proofs', validatorProofs);
 
-            console.log('to submit params', toSubmitParams);
+          const toSubmitParams = {
+            signed_commitment: toNumArray(signedCommitment),
+            validator_proofs: validatorProofs,
+            mmr_leaf_for_mmr_root: toNumArray(mmrProofJSON?.leaves),
+            mmr_proof_for_mmr_root: toNumArray(mmrProofJSON?.proof),
+            encoded_messages: toNumArray(offchainData),
+            header: headerProof.header,
+            mmr_leaf_for_header: headerProof.mmr_leaf,
+            mmr_proof_for_header: headerProof.mmr_proof
           }
 
+          console.log('to submit params', toSubmitParams);
 
         }
         return anchorContract
