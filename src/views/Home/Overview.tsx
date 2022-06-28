@@ -146,7 +146,7 @@ export const Overview: React.FC = () => {
                   </Box>
                   <Box ml={5} flex={1}>
                     <Skeleton isLoaded={!!data}>
-                      <Heading fontSize="4xl">
+                      <Heading fontSize="3xl">
                         {data?.appchainsCount || "loading"}
                       </Heading>
                     </Skeleton>
@@ -156,7 +156,7 @@ export const Overview: React.FC = () => {
                       justifyContent="space-between"
                       position="relative"
                     >
-                      <Text variant="gray" fontSize="2xl">
+                      <Text variant="gray" fontSize="1xl">
                         Total Appchains
                       </Text>
                       <animated.div
@@ -192,7 +192,7 @@ export const Overview: React.FC = () => {
                   </Box>
                   <Box ml={5}>
                     <Skeleton isLoaded={!!data}>
-                      <Heading fontSize="4xl">
+                      <Heading fontSize="3xl">
                         {data
                           ? "$" +
                             DecimalUtil.beautify(
@@ -201,7 +201,7 @@ export const Overview: React.FC = () => {
                           : "loading"}
                       </Heading>
                     </Skeleton>
-                    <Text variant="gray" fontSize="2xl" mt={2}>
+                    <Text variant="gray" fontSize="1xl" mt={2}>
                       Total Annualized Fee
                     </Text>
                   </Box>
