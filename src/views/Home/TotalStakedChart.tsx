@@ -155,7 +155,7 @@ export const TotalStakedChart: React.FC = () => {
         </HStack>
       </Flex>
       <Skeleton isLoaded={klineData.length}>
-        <Box height="172px" mt={4}>
+        <Box height="152px" mt={0}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               width={500}
@@ -183,7 +183,7 @@ export const TotalStakedChart: React.FC = () => {
               <XAxis
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 13 }}
+                tick={{ fontSize: 12 }}
                 dataKey="date"
                 interval="preserveStartEnd"
                 height={20}
