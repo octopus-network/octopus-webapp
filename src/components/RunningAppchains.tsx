@@ -1,7 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import useSWR from 'swr'
-import dayjs from 'dayjs'
-import { ApiPromise, WsProvider } from '@polkadot/api'
+import React, { useMemo } from "react"
+import useSWR from "swr"
 
 import {
   Flex,
@@ -13,21 +11,19 @@ import {
   Link,
   SimpleGrid,
   VStack,
-  CircularProgress,
-  Tooltip,
   useColorModeValue,
   Skeleton,
   SkeletonCircle,
-} from '@chakra-ui/react'
+} from "@chakra-ui/react"
 
-import { useNavigate } from 'react-router-dom'
-import { ChevronRightIcon } from '@chakra-ui/icons'
-import { Link as RouterLink } from 'react-router-dom'
-import { DecimalUtil, ZERO_DECIMAL } from 'utils'
+import { useNavigate } from "react-router-dom"
+import { ChevronRightIcon } from "@chakra-ui/icons"
+import { Link as RouterLink } from "react-router-dom"
+import { DecimalUtil, ZERO_DECIMAL } from "utils"
 
-import { OCT_TOKEN_DECIMALS, EPOCH_DURATION_MS } from 'primitives'
+import { OCT_TOKEN_DECIMALS } from "primitives"
 
-import { AppchainInfo, AppchainSettings, Delegator, Validator } from 'types'
+import { AppchainInfo, AppchainSettings, Delegator, Validator } from "types"
 
 type RunningAppchainsProps = {
   showMore?: boolean
@@ -39,19 +35,15 @@ type RunningItemProps = {
 }
 
 const RunningItem: React.FC<RunningItemProps> = ({ whiteBg = false, data }) => {
-  const bg = useColorModeValue(whiteBg ? 'white' : '#f6f7fa', '#15172c')
-  const iconBg = useColorModeValue('white', 'whiteAlpha.100')
+  const bg = useColorModeValue(whiteBg ? "white" : "#f6f7fa", "#15172c")
+  const iconBg = useColorModeValue("white", "whiteAlpha.100")
 
   const navigate = useNavigate()
 
   const icon = useMemo(
-    () => data.appchain_metadata?.fungible_token_metadata?.icon || '',
+    () => data.appchain_metadata?.fungible_token_metadata?.icon || "",
     [data]
   )
-
-  const [currentEra, setCurrentEra] = useState<number>()
-  const [nextEraTime, setNextEraTime] = useState(0)
-  const [nextEraTimeLeft, setNextEraTimeLeft] = useState(0)
 
   const { data: prices } = useSWR(
     `prices/OCT,${data.appchain_metadata?.fungible_token_metadata?.symbol}`
@@ -65,7 +57,7 @@ const RunningItem: React.FC<RunningItemProps> = ({ whiteBg = false, data }) => {
 
   const { data: delegatorsArr } = useSWR<Delegator[][]>(
     validators?.length
-      ? `${validators.map((v) => v.validator_id).join(',')}/${
+      ? `${validators.map((v) => v.validator_id).join(",")}/${
           data.appchain_id
         }/delegators`
       : null
@@ -90,31 +82,10 @@ const RunningItem: React.FC<RunningItemProps> = ({ whiteBg = false, data }) => {
       .mul(100)
       .div(
         DecimalUtil.fromString(data.total_stake, OCT_TOKEN_DECIMALS).mul(
-          prices['OCT']
+          prices["OCT"]
         )
       )
   }, [prices, data, appchainSettings])
-
-  useEffect(() => {
-    if (appchainSettings?.rpc_endpoint) {
-      new ApiPromise({
-        provider: new WsProvider(appchainSettings.rpc_endpoint),
-      }).isReady.then((api: any) => {
-        api.query.octopusLpos.activeEra().then((era: any) => {
-          const eraJSON: any = era.toJSON()
-          setCurrentEra(eraJSON?.index)
-
-          setNextEraTime(eraJSON ? EPOCH_DURATION_MS + eraJSON.start : 0)
-          setNextEraTimeLeft(
-            eraJSON
-              ? eraJSON.start + EPOCH_DURATION_MS - new Date().getTime()
-              : 0
-          )
-          api.disconnect()
-        })
-      })
-    }
-  }, [appchainSettings])
 
   return (
     <Box
@@ -124,8 +95,8 @@ const RunningItem: React.FC<RunningItemProps> = ({ whiteBg = false, data }) => {
       cursor="pointer"
       transition="all .3s ease"
       _hover={{
-        boxShadow: '0 10px 10px -5px rgba(0,0,12,.06)',
-        transform: 'translateY(-3px) scale(1.01)',
+        boxShadow: "0 10px 10px -5px rgba(0,0,12,.06)",
+        transform: "translateY(-3px) scale(1.01)",
       }}
       onClick={() => navigate(`/appchains/${data?.appchain_id}`)}
     >
@@ -139,27 +110,6 @@ const RunningItem: React.FC<RunningItemProps> = ({ whiteBg = false, data }) => {
           />
           <Heading fontSize="lg">{data.appchain_id}</Heading>
         </HStack>
-        <Tooltip
-          label={`Next Era: ${
-            currentEra !== undefined
-              ? dayjs(nextEraTime).format('YYYY-MM-DD HH:mm:ss')
-              : '-'
-          }`}
-        >
-          <Box>
-            <CircularProgress
-              value={
-                currentEra !== undefined
-                  ? (EPOCH_DURATION_MS - nextEraTimeLeft) /
-                    (EPOCH_DURATION_MS / 100)
-                  : 0
-              }
-              size={5}
-              thickness={16}
-              color="octo-blue.500"
-            />
-          </Box>
-        </Tooltip>
       </Flex>
       <Flex mt={6} justifyContent="space-between">
         <VStack alignItems="flex-start">
@@ -174,7 +124,7 @@ const RunningItem: React.FC<RunningItemProps> = ({ whiteBg = false, data }) => {
           </Text>
           <Skeleton isLoaded={delegatorsCount !== undefined}>
             <Heading fontSize="lg">
-              {delegatorsCount === undefined ? 'loading' : delegatorsCount}
+              {delegatorsCount === undefined ? "loading" : delegatorsCount}
             </Heading>
           </Skeleton>
         </VStack>
@@ -193,7 +143,7 @@ const RunningItem: React.FC<RunningItemProps> = ({ whiteBg = false, data }) => {
             APY
           </Text>
           <Heading fontSize="lg">
-            {apy.gt(ZERO_DECIMAL) ? `${DecimalUtil.beautify(apy, 2)}%` : '-'}
+            {apy.gt(ZERO_DECIMAL) ? `${DecimalUtil.beautify(apy, 2)}%` : "-"}
           </Heading>
         </VStack>
       </Flex>
@@ -201,8 +151,8 @@ const RunningItem: React.FC<RunningItemProps> = ({ whiteBg = false, data }) => {
   )
 }
 
-const BlankItem: React.FC<Omit<RunningItemProps, 'data'>> = ({ whiteBg }) => {
-  const bg = useColorModeValue(whiteBg ? 'white' : '#f6f7fa', '#15172c')
+const BlankItem: React.FC<Omit<RunningItemProps, "data">> = ({ whiteBg }) => {
+  const bg = useColorModeValue(whiteBg ? "white" : "#f6f7fa", "#15172c")
 
   return (
     <Box bg={bg} borderRadius="lg" p={6}>
@@ -263,7 +213,7 @@ const BlankItem: React.FC<Omit<RunningItemProps, 'data'>> = ({ whiteBg }) => {
 export const RunningAppchains: React.FC<RunningAppchainsProps> = ({
   showMore = true,
 }) => {
-  const { data } = useSWR('appchains/running')
+  const { data } = useSWR("appchains/running")
 
   return (
     <>
