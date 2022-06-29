@@ -117,7 +117,12 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
 
   const { global } = useGlobalStore()
 
-  const stats = useChainStats(appchain?.appchain_id)
+  const isSubqEnabled = !!appchainSettings?.subql_endpoint
+
+  const stats = useChainStats(
+    appchain?.appchain_id,
+    appchainSettings?.subql_endpoint
+  )
 
   const [bestBlock, setBestBlock] = useState<number>()
   const [currentEra, setCurrentEra] = useState<number>()
@@ -258,14 +263,18 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
       >
         <DescItem
           title="Addresses"
-          isLoaded={!!stats}
-          value={stats?.accounts.totalCount ?? "loading"}
+          isLoaded={isSubqEnabled ? !!stats : true}
+          value={isSubqEnabled ? stats?.accounts.totalCount ?? "loading" : "-"}
         />
 
         <DescItem
           title="Transfers"
-          isLoaded={!!stats}
-          value={stats?.systemTokenTransfers.totalCount ?? "loading"}
+          isLoaded={isSubqEnabled ? !!stats : true}
+          value={
+            isSubqEnabled
+              ? stats?.systemTokenTransfers.totalCount ?? "loading"
+              : "-"
+          }
         />
 
         <DescItem

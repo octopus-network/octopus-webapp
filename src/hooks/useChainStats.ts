@@ -28,23 +28,23 @@ interface Stats {
   systemTokenTransfers: Count
 }
 
-export default function useChainStats(chainId: string | undefined) {
+export default function useChainStats(
+  chainId: string | undefined,
+  subqEndpoint: string | undefined
+) {
   const [stats, setStats] = useState<Stats | null>(null)
 
   useEffect(() => {
     setStats(null)
 
-    if (chainId) {
-      request(
-        `https://api.subquery.network/sq/octopus-appchains/${chainId}`,
-        GLOBAL_DATA_QUERY
-      )
+    if (chainId && subqEndpoint) {
+      request(subqEndpoint, GLOBAL_DATA_QUERY)
         .then((result) => {
           setStats(result)
         })
         .catch(console.error)
     }
-  }, [chainId])
+  }, [chainId, subqEndpoint])
 
   return stats
 }
