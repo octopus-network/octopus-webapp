@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from "react"
 
-import relativeTime from 'dayjs/plugin/relativeTime'
-import duration from 'dayjs/plugin/duration'
-import dayjs from 'dayjs'
+import relativeTime from "dayjs/plugin/relativeTime"
+import duration from "dayjs/plugin/duration"
+import dayjs from "dayjs"
 
 import {
   Box,
@@ -24,33 +24,35 @@ import {
   useBoolean,
   useClipboard,
   IconButton,
-} from '@chakra-ui/react'
+} from "@chakra-ui/react"
 
-import { useSpring, animated } from 'react-spring'
+import { useSpring, animated } from "react-spring"
 
-import { StateBadge } from 'components'
+import { StateBadge } from "components"
 
 import {
   AppchainInfoWithAnchorStatus,
   AppchainSettings,
   WrappedAppchainToken,
-} from 'types'
+} from "types"
 
-import type { ApiPromise } from '@polkadot/api'
-import { CheckIcon, CopyIcon } from '@chakra-ui/icons'
-import { Link as RouterLink } from 'react-router-dom'
+import type { ApiPromise } from "@polkadot/api"
+import { CheckIcon, CopyIcon } from "@chakra-ui/icons"
+import { Link as RouterLink } from "react-router-dom"
 
-import websiteIcon from 'assets/icons/website.png'
-import explorerIcon from 'assets/icons/explorer.png'
-import bridgeIcon from 'assets/icons/bridge.png'
-import anchorIcon from 'assets/icons/anchor.png'
-import githubIcon from 'assets/icons/github.png'
+import websiteIcon from "assets/icons/website.png"
+import explorerIcon from "assets/icons/explorer.png"
+import bridgeIcon from "assets/icons/bridge.png"
+import anchorIcon from "assets/icons/anchor.png"
+import githubIcon from "assets/icons/github.png"
 
-import { DecimalUtil, toValidUrl } from 'utils'
-import Decimal from 'decimal.js'
-import { EPOCH_DURATION_MS } from 'primitives'
-import { useGlobalStore } from 'stores'
-import { FaUser } from 'react-icons/fa'
+import { DecimalUtil, toValidUrl } from "utils"
+import Decimal from "decimal.js"
+import { EPOCH_DURATION_MS } from "primitives"
+import { useGlobalStore } from "stores"
+import { FaUser } from "react-icons/fa"
+import useChainStats from "hooks/useChainStats"
+import DescItem from "components/common/DescItem"
 
 dayjs.extend(duration)
 dayjs.extend(relativeTime)
@@ -73,7 +75,7 @@ const LinkBox: React.FC<LinkBoxProps> = ({ label, icon }) => {
   const [isHovering, setIsHovering] = useBoolean(false)
 
   const iconHoveringProps = useSpring({
-    transform: isHovering ? 'translateY(-5pxpx)' : 'translateY(0px)',
+    transform: isHovering ? "translateY(-5pxpx)" : "translateY(0px)",
   })
 
   return (
@@ -109,10 +111,13 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
   appchainSettings,
   wrappedAppchainToken,
 }) => {
-  const bg = useColorModeValue('white', '#15172c')
-  const linksBg = useColorModeValue('#f5f7fa', '#1e1f34')
+  const bg = useColorModeValue("white", "#15172c")
+  const linksBg = useColorModeValue("#f5f7fa", "#1e1f34")
+  const borderColor = useColorModeValue("#e3e3e3", "#333")
 
   const { global } = useGlobalStore()
+
+  const stats = useChainStats(appchain?.appchain_id)
 
   const [bestBlock, setBestBlock] = useState<number>()
   const [currentEra, setCurrentEra] = useState<number>()
@@ -122,11 +127,11 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
   const [nextEraTimeLeft, setNextEraTimeLeft] = useState(0)
 
   const { hasCopied: hasRpcEndpointCopied, onCopy: onCopyRpcEndpoint } =
-    useClipboard(appchainSettings?.rpc_endpoint || '')
+    useClipboard(appchainSettings?.rpc_endpoint || "")
 
   const { hasCopied: hasFunctionSpecCopied, onCopy: onCopyFunctionSpec } =
     useClipboard(
-      toValidUrl(appchain?.appchain_metadata?.function_spec_url) || ''
+      toValidUrl(appchain?.appchain_metadata?.function_spec_url) || ""
     )
 
   useEffect(() => {
@@ -154,7 +159,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
       setNextEraTimeLeft(
         eraJSON ? eraJSON.start + EPOCH_DURATION_MS - new Date().getTime() : 0
       )
-      setTotalIssuance(issuance?.toString() || '0')
+      setTotalIssuance(issuance?.toString() || "0")
     })
 
     return () => unsubNewHeads && unsubNewHeads()
@@ -180,7 +185,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
                 href={toValidUrl(appchain?.appchain_metadata?.website_url)}
               >
                 <Heading fontSize="2xl">
-                  {appchain?.appchain_id || 'loading'}
+                  {appchain?.appchain_id || "loading"}
                 </Heading>
               </Link>
             </Skeleton>
@@ -193,14 +198,14 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
           </VStack>
         </HStack>
         <VStack alignItems="flex-end" spacing={0}>
-          <StateBadge state={appchain?.appchain_state || ''} />
+          <StateBadge state={appchain?.appchain_state || ""} />
           <HStack className="octo-gray" fontSize="sm">
             <Text variant="gray">
               {appchain
                 ? dayjs(
                     Math.floor((appchain.registered_time as any) / 1e6)
-                  ).format('YYYY-MM-DD')
-                : '-'}
+                  ).format("YYYY-MM-DD")
+                : "-"}
             </Text>
           </HStack>
         </VStack>
@@ -241,40 +246,117 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
           <LinkBox icon={githubIcon} label="Github" />
         </Link>
       </SimpleGrid>
+
       <SimpleGrid
-        mt={8}
+        mt={5}
         columns={{ base: 2, md: 3 }}
-        spacing={8}
-        display={{ base: 'none', md: 'grid' }}
+        spacing={4}
+        display={{ base: "none", md: "grid" }}
+        borderBottom="1px"
+        borderBottomColor={borderColor}
+        pb={4}
       >
-        <VStack alignItems="flex-start">
-          <Text variant="gray" fontSize="sm">
-            Block Height
-          </Text>
-          <Skeleton isLoaded={!!nextEraTime}>
-            <Heading fontSize="xl">
-              {bestBlock !== undefined
-                ? DecimalUtil.beautify(new Decimal(bestBlock), 0)
-                : 'loading'}
-            </Heading>
-          </Skeleton>
-        </VStack>
-        <VStack alignItems="flex-start">
-          <Text variant="gray" fontSize="sm">
-            Current Era
-          </Text>
-          <Skeleton isLoaded={currentEra !== undefined}>
-            <Heading fontSize="xl">
-              {currentEra !== undefined ? currentEra : 'loading'}
-            </Heading>
-          </Skeleton>
-        </VStack>
-        <VStack alignItems="flex-start">
-          <HStack>
-            <Text variant="gray" fontSize="sm">
-              Next Era
-            </Text>
-            {nextEraTime ? (
+        <DescItem
+          title="Addresses"
+          isLoaded={!!stats}
+          value={stats?.accounts.totalCount ?? "loading"}
+        />
+
+        <DescItem
+          title="Transfers"
+          isLoaded={!!stats}
+          value={stats?.systemTokenTransfers.totalCount ?? "loading"}
+        />
+
+        <DescItem
+          title="Block Height"
+          isLoaded={!!nextEraTime}
+          value={
+            bestBlock !== undefined
+              ? DecimalUtil.beautify(new Decimal(bestBlock), 0)
+              : "loading"
+          }
+        />
+
+        <DescItem
+          title="RPC Endpoint"
+          isLoaded
+          value={
+            appchainSettings?.rpc_endpoint ? (
+              <HStack w="100%">
+                <Heading
+                  fontSize="md"
+                  textOverflow="ellipsis"
+                  overflow="hidden"
+                  whiteSpace="nowrap"
+                  w="calc(100% - 30px)"
+                >
+                  {appchainSettings?.rpc_endpoint || "-"}
+                </Heading>
+                <IconButton
+                  aria-label="copy"
+                  onClick={onCopyRpcEndpoint}
+                  size="xs"
+                >
+                  {hasRpcEndpointCopied ? <CheckIcon /> : <CopyIcon />}
+                </IconButton>
+              </HStack>
+            ) : (
+              "-"
+            )
+          }
+        />
+
+        <DescItem
+          title="Function Spec"
+          isLoaded
+          value={
+            <HStack w="100%">
+              <Heading
+                fontSize="md"
+                textOverflow="ellipsis"
+                overflow="hidden"
+                whiteSpace="nowrap"
+                w="calc(100% - 30px)"
+                title={toValidUrl(
+                  appchain?.appchain_metadata?.function_spec_url
+                )}
+              >
+                {toValidUrl(appchain?.appchain_metadata?.function_spec_url) ||
+                  "-"}
+              </Heading>
+              <IconButton
+                aria-label="copy"
+                onClick={onCopyFunctionSpec}
+                size="xs"
+              >
+                {hasFunctionSpecCopied ? <CheckIcon /> : <CopyIcon />}
+              </IconButton>
+            </HStack>
+          }
+        />
+      </SimpleGrid>
+
+      <SimpleGrid
+        mt={4}
+        columns={{ base: 2, md: 3 }}
+        spacing={4}
+        display={{ base: "none", md: "grid" }}
+        borderBottom="1px"
+        borderBottomColor={borderColor}
+        pb={4}
+      >
+        <DescItem
+          title="Current Era"
+          isLoaded={!!currentEra}
+          value={currentEra !== undefined ? currentEra : "loading"}
+        />
+
+        <DescItem
+          title="Next Era"
+          isLoaded={!!nextEraTime}
+          titleExtra={
+            nextEraTime ? (
               <CircularProgress
                 value={
                   (EPOCH_DURATION_MS - nextEraTimeLeft) /
@@ -284,89 +366,74 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
                 thickness={16}
                 color="octo-blue.500"
               />
-            ) : null}
-          </HStack>
-          <Skeleton isLoaded={!!nextEraTime}>
-            {nextEraTime ? (
-              <Tooltip label={dayjs(nextEraTime).format('YYYY-MM-DD HH:mm:ss')}>
+            ) : null
+          }
+          value={
+            nextEraTime ? (
+              <Tooltip label={dayjs(nextEraTime).format("YYYY-MM-DD HH:mm:ss")}>
                 <Heading fontSize="xl">
                   {dayjs
-                    .duration(Math.floor(nextEraTimeLeft / 1000), 'seconds')
+                    .duration(Math.floor(nextEraTimeLeft / 1000), "seconds")
                     .humanize(true)}
                 </Heading>
               </Tooltip>
             ) : (
               <Heading fontSize="xl">loading</Heading>
-            )}
-          </Skeleton>
-        </VStack>
-        <VStack alignItems="flex-start">
-          <Text variant="gray" fontSize="sm">
-            Token
-          </Text>
-          <Heading fontSize="xl">
-            {appchain?.appchain_metadata?.fungible_token_metadata?.symbol ||
-              '-'}
-          </Heading>
-        </VStack>
-        <VStack alignItems="flex-start">
-          <Text variant="gray" fontSize="sm">
-            Total Supply
-          </Text>
-          <Skeleton isLoaded={!!totalIssuance}>
-            <Heading
-              fontSize="xl"
-              maxW="200px"
-              overflow="hidden"
-              textOverflow="ellipsis"
-              whiteSpace="nowrap"
-            >
-              {totalIssuance && appchain?.appchain_metadata
-                ? DecimalUtil.beautify(
-                    DecimalUtil.fromString(
-                      totalIssuance,
-                      appchain?.appchain_metadata?.fungible_token_metadata
-                        .decimals
-                    ),
-                    0
-                  )
-                : 'loading'}
-            </Heading>
-          </Skeleton>
-        </VStack>
-        <VStack alignItems="flex-start">
-          <Text variant="gray" fontSize="sm">
-            RPC Endpoint
-          </Text>
-          {appchainSettings?.rpc_endpoint ? (
-            <HStack w="100%">
-              <Heading
-                fontSize="md"
-                textOverflow="ellipsis"
-                overflow="hidden"
-                whiteSpace="nowrap"
-                w="calc(100% - 30px)"
-              >
-                {appchainSettings?.rpc_endpoint || '-'}
-              </Heading>
-              <IconButton
-                aria-label="copy"
-                onClick={onCopyRpcEndpoint}
-                size="xs"
-              >
-                {hasRpcEndpointCopied ? <CheckIcon /> : <CopyIcon />}
-              </IconButton>
-            </HStack>
-          ) : (
-            <Heading fontSize="xl">-</Heading>
-          )}
-        </VStack>
-        <VStack alignItems="flex-start">
-          <Text variant="gray" fontSize="sm">
-            IDO Amount
-          </Text>
-          <Heading fontSize="xl">
-            {appchain?.appchain_metadata?.ido_amount_of_wrapped_appchain_token
+            )
+          }
+        />
+
+        <DescItem
+          title="Era Reward"
+          isLoaded
+          value={
+            appchainSettings?.era_reward && wrappedAppchainToken
+              ? DecimalUtil.beautify(
+                  DecimalUtil.fromString(
+                    appchainSettings?.era_reward,
+                    wrappedAppchainToken.metadata.decimals
+                  ),
+                  0
+                )
+              : "-"
+          }
+        />
+      </SimpleGrid>
+
+      <SimpleGrid
+        mt={4}
+        columns={{ base: 2, md: 3 }}
+        spacing={4}
+        display={{ base: "none", md: "grid" }}
+      >
+        <DescItem
+          title="Token"
+          isLoaded
+          value={
+            appchain?.appchain_metadata?.fungible_token_metadata?.symbol || "-"
+          }
+        />
+        <DescItem
+          title="Total Supply"
+          isLoaded={!!totalIssuance}
+          value={
+            totalIssuance && appchain?.appchain_metadata
+              ? DecimalUtil.beautify(
+                  DecimalUtil.fromString(
+                    totalIssuance,
+                    appchain?.appchain_metadata?.fungible_token_metadata
+                      .decimals
+                  ),
+                  0
+                )
+              : "loading"
+          }
+        />
+        <DescItem
+          title="IDO Amount"
+          isLoaded
+          value={
+            appchain?.appchain_metadata?.ido_amount_of_wrapped_appchain_token
               ? DecimalUtil.beautify(
                   DecimalUtil.fromString(
                     appchain?.appchain_metadata
@@ -376,75 +443,9 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
                   ),
                   0
                 )
-              : '-'}
-          </Heading>
-        </VStack>
-
-        {/* <VStack alignItems="flex-start">
-          <Text variant="gray" fontSize="sm" >Total Supply</Text>
-          <Heading fontSize="xl">
-            {
-              wrappedAppchainToken ?
-                DecimalUtil.beautify(
-                  DecimalUtil.fromString(
-                    wrappedAppchainToken.total_supply, 
-                    wrappedAppchainToken.metadata.decimals
-                  ),
-                  0
-                ) : '-'
-            }
-          </Heading>
-        </VStack> */}
-        <VStack alignItems="flex-start">
-          <Text variant="gray" fontSize="sm">
-            Era Reward
-          </Text>
-          <Heading fontSize="xl">
-            {appchainSettings?.era_reward && wrappedAppchainToken
-              ? DecimalUtil.beautify(
-                  DecimalUtil.fromString(
-                    appchainSettings?.era_reward,
-                    wrappedAppchainToken.metadata.decimals
-                  ),
-                  0
-                )
-              : '-'}
-          </Heading>
-        </VStack>
-
-        <VStack alignItems="flex-start">
-          <Text variant="gray" fontSize="sm">
-            Function Spec
-          </Text>
-          <HStack w="100%">
-            <Heading
-              fontSize="md"
-              textOverflow="ellipsis"
-              overflow="hidden"
-              whiteSpace="nowrap"
-              w="calc(100% - 30px)"
-              title={toValidUrl(appchain?.appchain_metadata?.function_spec_url)}
-            >
-              {toValidUrl(appchain?.appchain_metadata?.function_spec_url) ||
-                '-'}
-            </Heading>
-            <IconButton
-              aria-label="copy"
-              onClick={onCopyFunctionSpec}
-              size="xs"
-            >
-              {hasFunctionSpecCopied ? <CheckIcon /> : <CopyIcon />}
-            </IconButton>
-          </HStack>
-          {/* <Heading fontSize="xl">
-            <Link
-              href={toValidUrl(appchain?.appchain_metadata?.function_spec_url)}
-              isExternal
-            >
-              <LinkBox icon={functionSpecIcon} label="Function Spec" />
-            </Link>
-          </Heading> */}
-        </VStack>
+              : "-"
+          }
+        />
       </SimpleGrid>
     </Box>
   )
