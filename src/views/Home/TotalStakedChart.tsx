@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react'
-import { DecimalUtil } from 'utils'
-import useSWR from 'swr'
+import React, { useState, useMemo, useEffect, useCallback } from "react";
+import { DecimalUtil } from "utils";
+import useSWR from "swr";
 
 import {
   AreaChart,
@@ -9,7 +9,8 @@ import {
   Tooltip,
   YAxis,
   ResponsiveContainer,
-} from 'recharts'
+  ReferenceLine,
+} from "recharts";
 
 import {
   Box,
@@ -19,65 +20,62 @@ import {
   HStack,
   Skeleton,
   Text,
-} from '@chakra-ui/react'
+} from "@chakra-ui/react";
 
-import { OCT_TOKEN_DECIMALS } from 'primitives'
-import Decimal from 'decimal.js'
-import dayjs from 'dayjs'
+import { OCT_TOKEN_DECIMALS } from "primitives";
+import Decimal from "decimal.js";
+import dayjs from "dayjs";
 
 const CustomTooltip = ({
   label,
   active,
   payload,
 }: {
-  label?: any
-  active?: boolean
-  payload?: any
+  label?: any;
+  active?: boolean;
+  payload?: any;
 }) => {
   if (active && payload && payload.length) {
     return (
       <Box>
         <Text>{label}</Text>
       </Box>
-    )
+    );
   }
-  return null
-}
+  return null;
+};
 
 function toUIValue(val: number) {
   if (val > 1000000) {
-    return DecimalUtil.beautify(new Decimal(val).div(1000000)) + 'M'
+    return DecimalUtil.beautify(new Decimal(val).div(1000000)) + "M";
   } else if (val > 1000) {
-    return DecimalUtil.beautify(new Decimal(val).div(1000)) + 'K'
+    return DecimalUtil.beautify(new Decimal(val).div(1000)) + "K";
   } else {
-    return DecimalUtil.beautify(new Decimal(val))
+    return DecimalUtil.beautify(new Decimal(val));
   }
 }
 
 export const TotalStakedChart: React.FC = () => {
-  const [days, setDays] = useState(7)
+  const [days, setDays] = useState(7);
 
-  const ticker = days
-  const end = dayjs().format('YYYY-MM-DD')
-  let start = ''
+  const ticker = days;
+  const end = dayjs().format("YYYY-MM-DD");
+  let start = "";
   if (ticker === 7) {
-    start = dayjs().subtract(365, 'day').format('YYYY-MM-DD')
+    start = dayjs().subtract(365, "day").format("YYYY-MM-DD");
   } else {
-    start = dayjs().subtract(31, 'day').format('YYYY-MM-DD')
+    start = dayjs().subtract(31, "day").format("YYYY-MM-DD");
   }
   const { data } = useSWR(
     `total-staked?start=${start}&end=${end}&ticker=${ticker}`
-  )
+  );
 
-  const [currentValue, setCurrentValue] = useState(0)
-  const [lastValue, setLastValue] = useState(0)
-
-  const [changedPercent, setChangedPercent] = useState(0)
+  const [currentValue, setCurrentValue] = useState(0);
 
   const klineData = useMemo(() => {
-    if (!data) return []
+    if (!data) return [];
 
-    console.log(data)
+    console.log(data);
     return data.map(({ date, amount, octPrice }: any) => ({
       date,
       amount,
@@ -85,54 +83,46 @@ export const TotalStakedChart: React.FC = () => {
         DecimalUtil.fromString(amount, OCT_TOKEN_DECIMALS).toNumber()
       ),
       value: DecimalUtil.fromString(amount, OCT_TOKEN_DECIMALS).toNumber(),
-    }))
-  }, [data])
+    }));
+  }, [data]);
 
   const lowestValue = useMemo(
     () =>
       klineData?.length ? Math.min(...klineData.map((k: any) => k.value)) : 0,
     [klineData]
-  )
+  );
 
   const highestValue = useMemo(
     () =>
       klineData?.length ? Math.max(...klineData.map((k: any) => k.value)) : 0,
     [klineData]
-  )
+  );
 
   useEffect(() => {
     if (klineData.length) {
-      setCurrentValue(klineData[klineData.length - 1]?.value)
-      setLastValue(klineData[0]?.value)
+      setCurrentValue(klineData[klineData.length - 1]?.value);
     } else {
-      setCurrentValue(0)
-      setLastValue(0)
+      setCurrentValue(0);
     }
-  }, [klineData])
-
-  useEffect(() => {
-    if (lastValue === 0) {
-      setChangedPercent(0)
-    } else {
-      setChangedPercent(((currentValue - lastValue) * 100) / lastValue)
-    }
-  }, [currentValue, lastValue])
+  }, [klineData]);
 
   const onAreaMouseMove = useCallback(
     ({ isTooltipActive, activePayload }) => {
       if (isTooltipActive) {
         if (activePayload && activePayload.length) {
-          const { value } = activePayload[0].payload
-          setCurrentValue(value)
+          const { value } = activePayload[0].payload;
+          setCurrentValue(value);
         }
       } else if (klineData.length) {
-        setCurrentValue(klineData[klineData.length - 1]?.value)
+        setCurrentValue(klineData[klineData.length - 1]?.value);
       } else {
-        setCurrentValue(0)
+        setCurrentValue(0);
       }
     },
     [klineData]
-  )
+  );
+
+  const offset = (highestValue - lowestValue) / 4;
 
   return (
     <Box>
@@ -147,23 +137,25 @@ export const TotalStakedChart: React.FC = () => {
         </Box>
         <HStack>
           <Button
-            colorScheme={days === 1 ? 'octo-blue' : 'gray'}
+            colorScheme={days === 7 ? "octo-blue" : "gray"}
             size="xs"
-            onClick={() => setDays(1)}
-          >
-            Day
-          </Button>
-          <Button
-            colorScheme={days === 7 ? 'octo-blue' : 'gray'}
-            size="xs"
+            borderRadius={2}
             onClick={() => setDays(7)}
           >
             Week
           </Button>
+          <Button
+            colorScheme={days === 1 ? "octo-blue" : "gray"}
+            size="xs"
+            borderRadius={2}
+            onClick={() => setDays(1)}
+          >
+            Day
+          </Button>
         </HStack>
       </Flex>
       <Skeleton isLoaded={klineData.length}>
-        <Box height="120px" mt={4}>
+        <Box height="152px" mt={0}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               width={500}
@@ -178,16 +170,26 @@ export const TotalStakedChart: React.FC = () => {
                 </linearGradient>
               </defs>
 
+              {[0, 1, 2, 3, 4].map((t) => {
+                return (
+                  <ReferenceLine
+                    key={t}
+                    y={lowestValue + offset * t}
+                    stroke="rgba(0,0,0,0.1)"
+                    strokeDasharray="3 3"
+                  />
+                );
+              })}
               <XAxis
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 13 }}
+                tick={{ fontSize: 12 }}
                 dataKey="date"
                 interval="preserveStartEnd"
                 height={20}
               />
               <YAxis
-                domain={[lowestValue * 0.5, highestValue]}
+                domain={[lowestValue, highestValue]}
                 orientation="right"
                 tickCount={3}
                 padding={{ bottom: 20 }}
@@ -211,5 +213,5 @@ export const TotalStakedChart: React.FC = () => {
         </Box>
       </Skeleton>
     </Box>
-  )
-}
+  );
+};
