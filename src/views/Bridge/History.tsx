@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from "react";
-import dayjs from "dayjs";
+import React, { useMemo, useState } from "react"
+import dayjs from "dayjs"
 
 import {
   DrawerHeader,
@@ -19,45 +19,45 @@ import {
   useColorModeValue,
   VStack,
   Link,
-} from "@chakra-ui/react";
+} from "@chakra-ui/react"
 
 import {
   AppchainInfoWithAnchorStatus,
   BridgeHistory,
   BridgeHistoryStatus,
   TokenAsset,
-} from "types";
+} from "types"
 
-import { encodeAddress } from "@polkadot/util-crypto";
-import { isHex } from "@polkadot/util";
-import { DecimalUtil } from "utils";
-import { Empty } from "components";
-import nearLogo from "assets/near.svg";
-import relativeTime from "dayjs/plugin/relativeTime";
-import { FiArrowRight, FiMoreHorizontal } from "react-icons/fi";
+import { encodeAddress } from "@polkadot/util-crypto"
+import { isHex } from "@polkadot/util"
+import { DecimalUtil } from "utils"
+import { Empty } from "components"
+import nearLogo from "assets/near.svg"
+import relativeTime from "dayjs/plugin/relativeTime"
+import { FiArrowRight, FiMoreHorizontal } from "react-icons/fi"
 
 type HistoryProps = {
-  appchain: AppchainInfoWithAnchorStatus | undefined;
-  histories: BridgeHistory[];
-  tokenAssets: TokenAsset[] | undefined;
-  onDrawerClose: VoidFunction;
-  onClearHistory: VoidFunction;
-};
+  appchain: AppchainInfoWithAnchorStatus | undefined
+  histories: BridgeHistory[]
+  tokenAssets: TokenAsset[] | undefined
+  onDrawerClose: VoidFunction
+  onClearHistory: VoidFunction
+}
 
 type HistoryItemProps = {
-  appchain: AppchainInfoWithAnchorStatus | undefined;
-  history: BridgeHistory;
-  tokenAssets: TokenAsset[] | undefined;
-};
+  appchain: AppchainInfoWithAnchorStatus | undefined
+  history: BridgeHistory
+  tokenAssets: TokenAsset[] | undefined
+}
 
-dayjs.extend(relativeTime);
+dayjs.extend(relativeTime)
 
 const StatusTag = ({
   message,
   status,
 }: {
-  message?: string;
-  status: BridgeHistoryStatus;
+  message?: string
+  status: BridgeHistoryStatus
 }) => {
   return (
     <HStack alignItems="flex-end" justifyContent="center">
@@ -90,29 +90,34 @@ const StatusTag = ({
         </Tag>
       )}
     </HStack>
-  );
-};
+  )
+}
 
 const HistoryItem: React.FC<HistoryItemProps> = ({
   appchain,
   history,
   tokenAssets,
 }) => {
-  const bg = useColorModeValue("#eee", "#333");
-  const [showDetail, setShowDetail] = useState(false);
+  const bg = useColorModeValue("#eee", "#333")
+  const grayBg = useColorModeValue("#f2f4f7", "#1e1f34")
+  const [showDetail, setShowDetail] = useState(false)
 
   const tokenAsset = useMemo(
     () => tokenAssets?.find((t) => t.contractId === history.tokenContractId),
     [tokenAssets, history]
-  );
+  )
 
   return (
     <Box p={3} borderBottomColor="#e3e3e3" borderBottomWidth={1}>
       <Flex alignItems="center" justifyContent="space-between" gap={2}>
         <HStack>
-          <Text variant="gray" fontSize="sm">
-            {dayjs(Math.floor(history.timestamp)).format("MMM DD, YYYY hh:mm")}
-          </Text>
+          <Avatar
+            name={tokenAsset?.metadata.symbol}
+            src={tokenAsset?.metadata.icon as any}
+            boxSize={8}
+            size="sm"
+          />
+
           <Heading fontSize="lg">
             {DecimalUtil.beautify(
               DecimalUtil.fromString(
@@ -154,6 +159,10 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
             }
           />
 
+          <Text variant="gray" fontSize="sm">
+            {dayjs(Math.floor(history.timestamp)).format("MMM DD, YYYY hh:mm")}
+          </Text>
+
           <FiMoreHorizontal
             cursor="pointer"
             style={{ marginLeft: 10 }}
@@ -164,7 +173,7 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
       {showDetail && (
         <VStack
           align="flex-start"
-          bg={bg}
+          bg={grayBg}
           p={3}
           mt={2}
           borderRadius={2}
@@ -204,8 +213,8 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
         </Flex>
       )}
     </Box>
-  );
-};
+  )
+}
 
 export const History: React.FC<HistoryProps> = ({
   appchain,
@@ -249,5 +258,5 @@ export const History: React.FC<HistoryProps> = ({
         )}
       </DrawerBody>
     </>
-  );
-};
+  )
+}
