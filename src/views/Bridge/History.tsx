@@ -42,63 +42,24 @@ type HistoryProps = {
   tokenAssets: TokenAsset[] | undefined
   onDrawerClose: VoidFunction
   onClearHistory: VoidFunction
+  onProcessTx: (history: BridgeHistory) => void
 }
 
 type HistoryItemProps = {
   appchain: AppchainInfoWithAnchorStatus | undefined
   history: BridgeHistory
   tokenAssets: TokenAsset[] | undefined
+  onProcessTx: (history: BridgeHistory) => void
 }
 
 dayjs.extend(relativeTime)
-
-const StatusTag = ({
-  message,
-  status,
-}: {
-  message?: string
-  status: BridgeHistoryStatus
-}) => {
-  return (
-    <HStack alignItems="flex-end" justifyContent="center">
-      {status === BridgeHistoryStatus.Pending ? (
-        <CircularProgress
-          color="octo-blue.400"
-          isIndeterminate
-          size="16px"
-          thickness="16px"
-        />
-      ) : message ? (
-        <Tooltip label={message}>
-          <Tag
-            colorScheme={
-              status === BridgeHistoryStatus.Succeed ? "octo-blue" : "red"
-            }
-            size="sm"
-          >
-            {status === BridgeHistoryStatus.Succeed ? "Succeed" : "Failed"}
-          </Tag>
-        </Tooltip>
-      ) : (
-        <Tag
-          colorScheme={
-            status === BridgeHistoryStatus.Succeed ? "octo-blue" : "red"
-          }
-          size="sm"
-        >
-          {status === BridgeHistoryStatus.Succeed ? "Succeed" : "Failed"}
-        </Tag>
-      )}
-    </HStack>
-  )
-}
 
 const HistoryItem: React.FC<HistoryItemProps> = ({
   appchain,
   history,
   tokenAssets,
+  onProcessTx,
 }) => {
-  const bg = useColorModeValue("#eee", "#333")
   const grayBg = useColorModeValue("#f2f4f7", "#1e1f34")
   const [showDetail, setShowDetail] = useState(false)
 
@@ -203,13 +164,15 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
           </HStack>
         </VStack>
       )}
-      {history.isAppchainSide && (
+      {history.isAppchainSide && !history.processed && (
         <Flex mt={2} alignItems="center" justifyContent="flex-end">
-          <Button size="sm" colorScheme="octo-blue">
+          <Button
+            size="sm"
+            colorScheme="octo-blue"
+            onClick={() => onProcessTx(history)}
+          >
             Finalize
           </Button>
-
-          {/* <StatusTag message={history.message} status={history.status} /> */}
         </Flex>
       )}
     </Box>
@@ -222,6 +185,7 @@ export const History: React.FC<HistoryProps> = ({
   onDrawerClose,
   onClearHistory,
   tokenAssets,
+  onProcessTx,
 }) => {
   return (
     <>
@@ -250,6 +214,7 @@ export const History: React.FC<HistoryProps> = ({
                 history={h}
                 key={h.hash}
                 tokenAssets={tokenAssets}
+                onProcessTx={onProcessTx}
               />
             ))}
           </List>
