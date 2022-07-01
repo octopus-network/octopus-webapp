@@ -23,7 +23,12 @@ import {
   Icon,
   useBoolean,
   useClipboard,
-  IconButton,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  Button,
+  Center,
 } from "@chakra-ui/react"
 
 import { useSpring, animated } from "react-spring"
@@ -37,13 +42,11 @@ import {
 } from "types"
 
 import type { ApiPromise } from "@polkadot/api"
-import { CheckIcon, CopyIcon } from "@chakra-ui/icons"
 import { Link as RouterLink } from "react-router-dom"
 
 import websiteIcon from "assets/icons/website.png"
 import explorerIcon from "assets/icons/explorer.png"
 import bridgeIcon from "assets/icons/bridge.png"
-import anchorIcon from "assets/icons/anchor.png"
 import githubIcon from "assets/icons/github.png"
 
 import { DecimalUtil, toValidUrl } from "utils"
@@ -53,6 +56,8 @@ import { useGlobalStore } from "stores"
 import { FaUser } from "react-icons/fa"
 import useChainStats from "hooks/useChainStats"
 import DescItem from "components/common/DescItem"
+import { BsThreeDots } from "react-icons/bs"
+import { FiCopy, FiExternalLink } from "react-icons/fi"
 
 dayjs.extend(duration)
 dayjs.extend(relativeTime)
@@ -131,13 +136,9 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
   const [nextEraTime, setNextEraTime] = useState(0)
   const [nextEraTimeLeft, setNextEraTimeLeft] = useState(0)
 
-  const { hasCopied: hasRpcEndpointCopied, onCopy: onCopyRpcEndpoint } =
-    useClipboard(appchainSettings?.rpc_endpoint || "")
-
-  const { hasCopied: hasFunctionSpecCopied, onCopy: onCopyFunctionSpec } =
-    useClipboard(
-      toValidUrl(appchain?.appchain_metadata?.function_spec_url) || ""
-    )
+  const { onCopy: onCopyRpcEndpoint } = useClipboard(
+    appchainSettings?.rpc_endpoint || ""
+  )
 
   useEffect(() => {
     if (!appchainApi) {
@@ -223,33 +224,59 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
         bg={linksBg}
         borderRadius="lg"
       >
-        <RouterLink to={`/bridge/near/${appchain?.appchain_id}`}>
-          <LinkBox icon={bridgeIcon} label="Bridge" />
-        </RouterLink>
-        <Link
-          href={`${global?.network?.octopus.explorerUrl}/${appchain?.appchain_id}`}
-          isExternal
-        >
-          <LinkBox icon={explorerIcon} label="Explorer" />
-        </Link>
-        <Link
-          href={`${global?.network?.near.explorerUrl}/accounts/${appchain?.appchain_anchor}`}
-          isExternal
-        >
-          <LinkBox icon={anchorIcon} label="Anchor" />
-        </Link>
         <Link
           href={toValidUrl(appchain?.appchain_metadata?.website_url)}
           isExternal
         >
           <LinkBox icon={websiteIcon} label="Website" />
         </Link>
+
+        <Link
+          href={`${global?.network?.octopus.explorerUrl}/${appchain?.appchain_id}`}
+          isExternal
+        >
+          <LinkBox icon={explorerIcon} label="Explorer" />
+        </Link>
+        <RouterLink to={`/bridge/near/${appchain?.appchain_id}`}>
+          <LinkBox icon={bridgeIcon} label="Bridge" />
+        </RouterLink>
         <Link
           href={toValidUrl(appchain?.appchain_metadata?.github_address)}
           isExternal
         >
           <LinkBox icon={githubIcon} label="Github" />
         </Link>
+        <Menu>
+          <Center>
+            <MenuButton
+              as={Button}
+              colorScheme="octo-blue"
+              variant="ghost"
+              position="relative"
+            >
+              <Icon as={BsThreeDots} boxSize={5} />
+            </MenuButton>
+          </Center>
+          <MenuList>
+            <MenuItem>
+              <Link
+                href={`${global?.network?.near.explorerUrl}/accounts/${appchain?.appchain_anchor}`}
+                isExternal
+              >
+                <HStack gap={2}>
+                  <Text>Anchor</Text>
+                  <FiExternalLink />
+                </HStack>
+              </Link>
+            </MenuItem>
+            <MenuItem>
+              <HStack gap={2} onClick={onCopyRpcEndpoint}>
+                <Text>RPC Endpoint</Text>
+                <FiCopy />
+              </HStack>
+            </MenuItem>
+          </MenuList>
+        </Menu>
       </SimpleGrid>
 
       <SimpleGrid
@@ -284,64 +311,6 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
             bestBlock !== undefined
               ? DecimalUtil.beautify(new Decimal(bestBlock), 0)
               : "loading"
-          }
-        />
-
-        <DescItem
-          title="RPC Endpoint"
-          isLoaded
-          value={
-            appchainSettings?.rpc_endpoint ? (
-              <HStack w="100%">
-                <Heading
-                  fontSize="md"
-                  textOverflow="ellipsis"
-                  overflow="hidden"
-                  whiteSpace="nowrap"
-                  w="calc(100% - 30px)"
-                >
-                  {appchainSettings?.rpc_endpoint || "-"}
-                </Heading>
-                <IconButton
-                  aria-label="copy"
-                  onClick={onCopyRpcEndpoint}
-                  size="xs"
-                >
-                  {hasRpcEndpointCopied ? <CheckIcon /> : <CopyIcon />}
-                </IconButton>
-              </HStack>
-            ) : (
-              "-"
-            )
-          }
-        />
-
-        <DescItem
-          title="Function Spec"
-          isLoaded
-          value={
-            <HStack w="100%">
-              <Heading
-                fontSize="md"
-                textOverflow="ellipsis"
-                overflow="hidden"
-                whiteSpace="nowrap"
-                w="calc(100% - 30px)"
-                title={toValidUrl(
-                  appchain?.appchain_metadata?.function_spec_url
-                )}
-              >
-                {toValidUrl(appchain?.appchain_metadata?.function_spec_url) ||
-                  "-"}
-              </Heading>
-              <IconButton
-                aria-label="copy"
-                onClick={onCopyFunctionSpec}
-                size="xs"
-              >
-                {hasFunctionSpecCopied ? <CheckIcon /> : <CopyIcon />}
-              </IconButton>
-            </HStack>
           }
         />
       </SimpleGrid>
