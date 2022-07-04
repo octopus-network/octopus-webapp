@@ -90,6 +90,7 @@ import {
   getOffchainDataForCommitment,
   getLastBlockNumberOfAppchain,
   decodeSignedCommitment,
+  decodeData,
 } from "utils/bridge"
 
 const publicKeyToAddress = require("ethereum-public-key-to-address")
@@ -435,6 +436,8 @@ export const BridgePanel: React.FC = () => {
             headerJSON.number > bh + 10 ? bh + 10 : latestFinalizedHeight
           const promises = []
 
+          console.log('latestFinalizedHeight', latestFinalizedHeight)
+
           for (let i = bh; i < maxBlockHeight; i++) {
             promises.push(
               appchainApi?.rpc.chain
@@ -445,16 +448,18 @@ export const BridgePanel: React.FC = () => {
 
           const blockWrappers = await Promise.all(promises)
 
-          let commitment, signedCommitment, commitmentHeight, commitmentHeader
+          let commitment, commitmentHeight, commitmentHeader
+          let signedCommitment, signedCommitmentHeight, signedCommitmentHeader
+
           for (let i = 0; i < blockWrappers.length; i++) {
             const blockWrapper = blockWrappers[i]
             if (blockWrapper !== undefined) {
               const {
-                block: { header },
-                justifications,
+                block: { header }, justifications
               } = blockWrapper
+
               const justificationsHuman = justifications.toHuman()
-              // eslint-disable-next-line no-loop-func
+
               header.digest.logs.forEach((log: any) => {
                 if (log.isOther) {
                   commitment = log.asOther.toString()
@@ -462,17 +467,19 @@ export const BridgePanel: React.FC = () => {
                   commitmentHeader = header
                 }
               })
+
               if (justificationsHuman) {
-                ;(justificationsHuman as string[]).forEach(
-                  // eslint-disable-next-line no-loop-func
-                  (justificationHuman) => {
-                    if (justificationHuman[0] === "BEEF") {
-                      signedCommitment = "0x" + justificationHuman[1].slice(4)
-                    }
+                ;(justificationsHuman as string[]).forEach(justificationHuman => {
+                  if (justificationHuman[0] === "BEEF") {
+                    signedCommitment = "0x" + justificationHuman[1].slice(4)
+                    console.log('justificationsHuman', justificationsHuman)
+                    signedCommitmentHeight = header.toJSON().number
+                    signedCommitmentHeader = header
                   }
-                )
+                })
               }
-              if (signedCommitment) {
+
+              if (commitment && signedCommitment) {
                 break
               }
             }
@@ -487,11 +494,45 @@ export const BridgePanel: React.FC = () => {
             return undefined
           }
 
-          const decodedSignedCommitment =
-            decodeSignedCommitment(signedCommitment)
-          const { blockNumber } = decodedSignedCommitment.commitment
+          const signedCommitmentBlockHash = await appchainApi?.rpc.chain.getBlockHash(
+            signedCommitmentHeight
+          )
+          
+          const mmrProof = await appchainApi?.rpc.mmr.generateProof(
+            signedCommitmentHeight as any - 1,
+            latestFinalizedBlockHash
+          )
 
-          const offchainData = await getOffchainDataForCommitment(
+          const mmrProofJSON = mmrProof?.toJSON()
+
+          console.log('mmr proof json', mmrProofJSON)
+
+          const signedCommitmentAuthorities: any = (await appchainApi?.query.beefy.authorities.at(
+            signedCommitmentBlockHash as any
+          ))?.toJSON()
+
+          console.log('signedCommitmentAuthorities', signedCommitmentAuthorities)
+
+          const validatorAddresses = signedCommitmentAuthorities.map((a: string) =>
+            publicKeyToAddress(a)
+          )
+
+          const leaves = validatorAddresses.map((a: string) => keccak256(a))
+          const tree = new MerkleTree(leaves, keccak256)
+   
+          const validatorProofs = leaves.map((leaf: any, index: number) => {
+            const proof: string[] = tree.getHexProof(leaf)
+            const u8aProof = proof.map((hash) => toNumArray(hash))
+
+            return {
+              proof: u8aProof,
+              number_of_leaves: leaves.length,
+              leaf_index: index,
+              leaf: toNumArray(validatorAddresses[index]),
+            }
+          })
+
+          const encodedMessages = await getOffchainDataForCommitment(
             appchainApi as any,
             commitment
           )
@@ -501,6 +542,9 @@ export const BridgePanel: React.FC = () => {
             appchain?.appchain_anchor as string
           )
 
+          console.log('blockNumberInAnchor', blockNumberInAnchor)
+          console.log('commitmentHeight', commitmentHeight)
+
           const blockHashInAnchor = await appchainApi?.rpc.chain.getBlockHash(
             blockNumberInAnchor
           )
@@ -509,79 +553,30 @@ export const BridgePanel: React.FC = () => {
 
           try {
             const rawProof = await appchainApi?.rpc.mmr.generateProof(
-              Number(blockNumber),
+              commitmentHeight,
               blockHashInAnchor
             )
-
-            console.log("###rawProof", txn.hash, rawProof)
 
             if (rawProof) {
               headerProof = {
                 header: toNumArray((commitmentHeader as any).toHex()),
-                encoded_messages: toNumArray(offchainData),
                 mmr_leaf: toNumArray(rawProof.leaf),
                 mmr_proof: toNumArray(rawProof.proof),
               }
             } else {
-              headerProof = messageProofWithoutProof(offchainData)
+              headerProof = messageProofWithoutProof()
             }
           } catch (err) {
             console.log("###err", txn.hash, err)
-            headerProof = messageProofWithoutProof(offchainData)
+            headerProof = messageProofWithoutProof()
           }
-
-          const commitmentBlockHash = await appchainApi?.rpc.chain.getBlockHash(
-            commitmentHeight
-          )
-
-          // console.log('block number in anchor', blockNumberInAnchor);
-          // console.log('latest finalized height', latestFinalizedHeight);
-          // console.log('commitment height', commitmentHeight);
-          // console.log('latest block hash', latestFinalizedBlockHash?.toString());
-
-          const currentAuthorities: any = (
-            await appchainApi?.query.beefy.authorities.at(
-              commitmentBlockHash as any
-            )
-          )?.toJSON()
-
-          const validatorAddresses = currentAuthorities.map((a: string) =>
-            publicKeyToAddress(a)
-          )
-
-          const leaves = validatorAddresses.map((a: string) => keccak256(a))
-          const tree = new MerkleTree(leaves, keccak256)
-          const root = tree.getRoot().toString("hex")
-
-          const validatorProofs = leaves.map((leaf: any, index: number) => {
-            const proof: string[] = tree.getHexProof(leaf)
-            const u8aProof = proof.map((hash) => toNumArray(hash))
-
-            return {
-              root: toNumArray(root),
-              proof: u8aProof,
-              number_of_leaves: leaves.length,
-              leaf_index: index,
-              leaf: toNumArray(validatorAddresses[index]),
-            }
-          })
-
-          const mmrProof = await appchainApi?.rpc.mmr.generateProof(
-            Number(blockNumber),
-            latestFinalizedBlockHash
-          )
-
-          // const decodedMmrProofWrapper = decodeMmrProofWrapper(mmrProof)
-
-          // console.log('mmr proof json', mmrProofJSON);
-          // console.log('validator proofs', validatorProofs);
 
           const toSubmitParams = {
             signed_commitment: toNumArray(signedCommitment),
             validator_proofs: validatorProofs,
-            mmr_leaf_for_mmr_root: toNumArray(mmrProof?.leaf),
-            mmr_proof_for_mmr_root: toNumArray(mmrProof?.proof),
-            encoded_messages: toNumArray(offchainData),
+            mmr_leaf_for_mmr_root: toNumArray(mmrProofJSON?.leaf),
+            mmr_proof_for_mmr_root: toNumArray(mmrProofJSON?.proof),
+            encoded_messages: toNumArray(encodedMessages),
             header: headerProof.header,
             mmr_leaf_for_header: headerProof.mmr_leaf,
             mmr_proof_for_header: headerProof.mmr_proof,

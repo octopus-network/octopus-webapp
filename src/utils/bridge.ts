@@ -18,10 +18,9 @@ export function toHexAddress(ss58Address: string) {
   }
 }
 
-export function messageProofWithoutProof(encoded_messages: string) {
+export function messageProofWithoutProof() {
   return {
     header: [] as number[],
-    encoded_messages: toNumArray(encoded_messages),
     mmr_leaf: [] as number[],
     mmr_proof: [] as number[],
   }
