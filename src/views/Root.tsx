@@ -229,7 +229,9 @@ export const Root: React.FC = () => {
               const reg1 =
                   /Wrapped appchain token burnt in contract '(.+)' by '(.+)' for '(.+)' of appchain. Amount: '(.+)', Crosschain notification index: '(.+)'/,
                 reg2 =
-                  /Received fungible token in contract '(.+)' from '(.+)'. Start transfer to '(.+)' of appchain. Amount: '(.+)', Crosschain notification index: '(.+)'/
+                  /Received fungible token in contract '(.+)' from '(.+)'. Start transfer to '(.+)' of appchain. Amount: '(.+)', Crosschain notification index: '(.+)'/,
+                reg3 =
+                  /Wrapped appchain token minted by '(.+)' of appchain for '(.+)' with amount '(.+)'/
 
               res = reg1.exec(log) ?? reg2.exec(log)
 
@@ -252,6 +254,10 @@ export const Root: React.FC = () => {
                   contractId,
                 })
                 break
+              } else if (reg3.exec(log)?.length) {
+                console.log("minted")
+
+                // updateTxn()
               }
             }
           }

@@ -388,7 +388,40 @@ export const BridgePanel: React.FC = () => {
     const appchainSideTxs = pendingTxns
       .filter((txn) => txn.isAppchainSide)
       .map(async (txn) => {
-        if (!txn.processed && txn.appchainBlockHeight !== undefined) {
+        try {
+          const result =
+            await anchorContract?.get_appchain_message_processing_result_of({
+              nonce: txn.sequenceId,
+            })
+          console.log(
+            "###get_appchain_message_processing_result_of",
+            txn.hash,
+            result
+          )
+
+          if (result?.["Ok"]) {
+            updateTxn(txn.appchainId, {
+              ...txn,
+              status: BridgeHistoryStatus.Succeed,
+              processed: true,
+            })
+            return undefined
+          } else if (result?.["Error"]) {
+            updateTxn(txn.appchainId, {
+              ...txn,
+              status: BridgeHistoryStatus.Failed,
+              message: result["Error"].message || "Unknown error",
+              processed: true,
+            })
+            return undefined
+          }
+        } catch (error) {
+          console.log("###ERR get_appchain_message_processing_result_of", error)
+
+          return undefined
+        }
+
+        if (!txn.processed) {
           const bh = txn.appchainBlockHeight as number
           const header = await appchainApi?.rpc.chain.getHeader()
 
@@ -476,7 +509,7 @@ export const BridgePanel: React.FC = () => {
 
           try {
             const rawProof = await appchainApi?.rpc.mmr.generateProof(
-              commitmentHeight,
+              Number(blockNumber),
               blockHashInAnchor
             )
 
@@ -534,7 +567,7 @@ export const BridgePanel: React.FC = () => {
           })
 
           const mmrProof = await appchainApi?.rpc.mmr.generateProof(
-            commitmentHeight - 1,
+            Number(blockNumber),
             latestFinalizedBlockHash
           )
 
@@ -557,27 +590,6 @@ export const BridgePanel: React.FC = () => {
           console.log("to submit params", toSubmitParams)
           return toSubmitParams
         }
-
-        return anchorContract
-          ?.get_appchain_message_processing_result_of({ nonce: txn.sequenceId })
-          .then((result) => {
-            if (result?.["Ok"]) {
-              updateTxn(txn.appchainId, {
-                ...txn,
-                status: BridgeHistoryStatus.Succeed,
-                processed: true,
-              })
-            } else if (result?.["Error"]) {
-              updateTxn(txn.appchainId, {
-                ...txn,
-                status: BridgeHistoryStatus.Failed,
-                message: result["Error"].message || "Unknown error",
-                processed: false,
-              })
-            }
-
-            return undefined
-          })
       })
 
     const nearSideTxs = pendingTxns
@@ -970,7 +982,6 @@ export const BridgePanel: React.FC = () => {
           status: "error",
         })
       }
-      console.log("anchorContract", anchorContract)
       await anchorContract?.process_appchain_messages_with_all_proofs(
         { ...params, hash: undefined },
         COMPLEX_CALL_GAS

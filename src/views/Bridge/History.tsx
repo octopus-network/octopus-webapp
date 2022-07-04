@@ -168,7 +168,7 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
           </HStack>
         </VStack>
       )}
-      {history.isAppchainSide && !history.processed && (
+      {history.isAppchainSide && history.status !== 1 && !history.processed && (
         <Flex mt={2} alignItems="center" justifyContent="flex-end">
           <Button
             size="sm"
