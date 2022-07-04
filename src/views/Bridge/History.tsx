@@ -25,6 +25,7 @@ import {
   AppchainInfoWithAnchorStatus,
   BridgeHistory,
   BridgeHistoryStatus,
+  BridgeProcessParams,
   TokenAsset,
 } from "types"
 
@@ -43,6 +44,7 @@ type HistoryProps = {
   onDrawerClose: VoidFunction
   onClearHistory: VoidFunction
   onProcessTx: (history: BridgeHistory) => void
+  processParams: (BridgeProcessParams | void)[]
 }
 
 type HistoryItemProps = {
@@ -50,6 +52,7 @@ type HistoryItemProps = {
   history: BridgeHistory
   tokenAssets: TokenAsset[] | undefined
   onProcessTx: (history: BridgeHistory) => void
+  processParam: BridgeProcessParams | void
 }
 
 dayjs.extend(relativeTime)
@@ -59,6 +62,7 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
   history,
   tokenAssets,
   onProcessTx,
+  processParam,
 }) => {
   const grayBg = useColorModeValue("#f2f4f7", "#1e1f34")
   const [showDetail, setShowDetail] = useState(false)
@@ -170,6 +174,7 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
             size="sm"
             colorScheme="octo-blue"
             onClick={() => onProcessTx(history)}
+            isLoading={!processParam}
           >
             Finalize
           </Button>
@@ -186,6 +191,7 @@ export const History: React.FC<HistoryProps> = ({
   onClearHistory,
   tokenAssets,
   onProcessTx,
+  processParams,
 }) => {
   return (
     <>
@@ -215,6 +221,7 @@ export const History: React.FC<HistoryProps> = ({
                 key={h.hash}
                 tokenAssets={tokenAssets}
                 onProcessTx={onProcessTx}
+                processParam={processParams.find((t) => t?.hash === h.hash)}
               />
             ))}
           </List>

@@ -1,11 +1,10 @@
 import React, { useMemo, useState, useEffect, useCallback } from "react"
 import useSWR from "swr"
-import axios from "axios"
 import BN from "bn.js"
 import { ApiPromise, WsProvider } from "@polkadot/api"
 
 import { PulseLoader } from "react-spinners"
-import { Account, keyStores, Near, utils } from "near-api-js"
+import { Account, keyStores, Near } from "near-api-js"
 import { MerkleTree } from "merkletreejs"
 
 import {
@@ -48,8 +47,8 @@ import {
 } from "types"
 
 import { ChevronRightIcon } from "@chakra-ui/icons"
-import { decodeAddress, isAddress } from "@polkadot/util-crypto"
-import { u8aToHex, stringToHex, isHex } from "@polkadot/util"
+import { isAddress } from "@polkadot/util-crypto"
+import { stringToHex, isHex } from "@polkadot/util"
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types"
 
 import {
@@ -85,71 +84,16 @@ import {
   FAILED_TO_REDIRECT_MESSAGE,
   SIMPLE_CALL_GAS,
 } from "primitives"
+import {
+  toHexAddress,
+  messageProofWithoutProof,
+  getOffchainDataForCommitment,
+  getLastBlockNumberOfAppchain,
+  decodeSignedCommitment,
+} from "utils/bridge"
 
 const publicKeyToAddress = require("ethereum-public-key-to-address")
 const keccak256 = require("keccak256")
-
-function toHexAddress(ss58Address: string) {
-  if (isHex(ss58Address)) {
-    return ""
-  }
-  try {
-    const u8a = decodeAddress(ss58Address)
-    return u8aToHex(u8a)
-  } catch (err) {
-    return ""
-  }
-}
-
-function messageProofWithoutProof(encoded_messages: string) {
-  return {
-    header: [] as number[],
-    encoded_messages: toNumArray(encoded_messages),
-    mmr_leaf: [] as number[],
-    mmr_proof: [] as number[],
-  }
-}
-
-async function getOffchainDataForCommitment(
-  appchain: ApiPromise,
-  commitment: string
-) {
-  const prefixBuffer = Buffer.from("commitment", "utf8")
-  const key = "0x" + prefixBuffer.toString("hex") + commitment.slice(2)
-  const data = (
-    await appchain.rpc.offchain.localStorageGet("PERSISTENT", key)
-  ).toString()
-  return data
-}
-
-async function getLastBlockNumberOfAppchain(
-  rpcUrl: string,
-  anchorContractId: string
-) {
-  const res: any = await axios
-    .post(rpcUrl, {
-      jsonrpc: "2.0",
-      id: "dontcare",
-      method: "query",
-      params: {
-        request_type: "call_function",
-        finality: "final",
-        account_id: anchorContractId,
-        method_name: "get_latest_commitment_of_appchain",
-        args_base64: "e30=",
-      },
-    })
-    .then((res) => res.data)
-    .then((res) => res.result.result)
-
-  const lastCommitment = JSON.parse(
-    res.reduce((str: any, chr: any) => str + String.fromCharCode(chr), "")
-  )
-
-  console.log("lastCommitment", lastCommitment)
-
-  return lastCommitment ? lastCommitment.block_number : 0
-}
 
 export const BridgePanel: React.FC = () => {
   const bg = useColorModeValue("white", "#15172c")
@@ -444,7 +388,7 @@ export const BridgePanel: React.FC = () => {
     const appchainSideTxs = pendingTxns
       .filter((txn) => txn.isAppchainSide)
       .map(async (txn) => {
-        if (txn.appchainBlockHeight !== undefined) {
+        if (!txn.processed && txn.appchainBlockHeight !== undefined) {
           const bh = txn.appchainBlockHeight as number
           const header = await appchainApi?.rpc.chain.getHeader()
 
@@ -462,35 +406,61 @@ export const BridgePanel: React.FC = () => {
             promises.push(
               appchainApi?.rpc.chain
                 .getBlockHash(i)
-                .then((hash) => appchainApi?.rpc.chain.getHeader(hash))
+                .then((hash) => appchainApi?.rpc.chain.getBlock(hash))
             )
           }
 
-          const headers = await Promise.all(promises)
+          const blockWrappers = await Promise.all(promises)
 
-          let signedCommitment, commitmentHeight, commitmentHeader
-          for (let i = 0; i < headers.length; i++) {
-            const tmpHeader: any = headers[i]
-            // eslint-disable-next-line no-loop-func
-            tmpHeader.digest.logs.forEach((log: any) => {
-              if (log.isOther) {
-                signedCommitment = log.asOther.toString()
-                commitmentHeight = tmpHeader.toJSON().number
-                commitmentHeader = tmpHeader
+          let commitment, signedCommitment, commitmentHeight, commitmentHeader
+          for (let i = 0; i < blockWrappers.length; i++) {
+            const blockWrapper = blockWrappers[i]
+            if (blockWrapper !== undefined) {
+              const {
+                block: { header },
+                justifications,
+              } = blockWrapper
+              const justificationsHuman = justifications.toHuman()
+              // eslint-disable-next-line no-loop-func
+              header.digest.logs.forEach((log: any) => {
+                if (log.isOther) {
+                  commitment = log.asOther.toString()
+                  commitmentHeight = header.toJSON().number
+                  commitmentHeader = header
+                }
+              })
+              if (justificationsHuman) {
+                ;(justificationsHuman as string[]).forEach(
+                  // eslint-disable-next-line no-loop-func
+                  (justificationHuman) => {
+                    if (justificationHuman[0] === "BEEF") {
+                      signedCommitment = "0x" + justificationHuman[1].slice(4)
+                    }
+                  }
+                )
               }
-            })
-            if (signedCommitment) {
-              break
+              if (signedCommitment) {
+                break
+              }
             }
           }
 
-          if (!signedCommitment || !commitmentHeight || !commitmentHeader) {
-            return
+          if (
+            !commitment ||
+            !signedCommitment ||
+            !commitmentHeight ||
+            !commitmentHeader
+          ) {
+            return undefined
           }
+
+          const decodedSignedCommitment =
+            decodeSignedCommitment(signedCommitment)
+          const { blockNumber } = decodedSignedCommitment.commitment
 
           const offchainData = await getOffchainDataForCommitment(
             appchainApi as any,
-            signedCommitment
+            commitment
           )
 
           const blockNumberInAnchor = await getLastBlockNumberOfAppchain(
@@ -510,18 +480,20 @@ export const BridgePanel: React.FC = () => {
               blockHashInAnchor
             )
 
-            console.log("rawProof", rawProof)
+            console.log("###rawProof", txn.hash, rawProof)
+
             if (rawProof) {
               headerProof = {
                 header: toNumArray((commitmentHeader as any).toHex()),
                 encoded_messages: toNumArray(offchainData),
-                mmr_leaf: toNumArray(rawProof.toJSON().leaf),
+                mmr_leaf: toNumArray(rawProof.leaf),
                 mmr_proof: toNumArray(rawProof.proof),
               }
             } else {
               headerProof = messageProofWithoutProof(offchainData)
             }
           } catch (err) {
+            console.log("###err", txn.hash, err)
             headerProof = messageProofWithoutProof(offchainData)
           }
 
@@ -546,12 +518,14 @@ export const BridgePanel: React.FC = () => {
 
           const leaves = validatorAddresses.map((a: string) => keccak256(a))
           const tree = new MerkleTree(leaves, keccak256)
+          const root = tree.getRoot().toString("hex")
 
           const validatorProofs = leaves.map((leaf: any, index: number) => {
             const proof: string[] = tree.getHexProof(leaf)
             const u8aProof = proof.map((hash) => toNumArray(hash))
 
             return {
+              root: toNumArray(root),
               proof: u8aProof,
               number_of_leaves: leaves.length,
               leaf_index: index,
@@ -564,7 +538,7 @@ export const BridgePanel: React.FC = () => {
             latestFinalizedBlockHash
           )
 
-          const mmrProofJSON = mmrProof?.toJSON()
+          // const decodedMmrProofWrapper = decodeMmrProofWrapper(mmrProof)
 
           // console.log('mmr proof json', mmrProofJSON);
           // console.log('validator proofs', validatorProofs);
@@ -572,8 +546,8 @@ export const BridgePanel: React.FC = () => {
           const toSubmitParams = {
             signed_commitment: toNumArray(signedCommitment),
             validator_proofs: validatorProofs,
-            mmr_leaf_for_mmr_root: toNumArray(mmrProofJSON?.leaves),
-            mmr_proof_for_mmr_root: toNumArray(mmrProofJSON?.proof),
+            mmr_leaf_for_mmr_root: toNumArray(mmrProof?.leaf),
+            mmr_proof_for_mmr_root: toNumArray(mmrProof?.proof),
             encoded_messages: toNumArray(offchainData),
             header: headerProof.header,
             mmr_leaf_for_header: headerProof.mmr_leaf,
@@ -583,6 +557,7 @@ export const BridgePanel: React.FC = () => {
           console.log("to submit params", toSubmitParams)
           return toSubmitParams
         }
+
         return anchorContract
           ?.get_appchain_message_processing_result_of({ nonce: txn.sequenceId })
           .then((result) => {
@@ -590,14 +565,18 @@ export const BridgePanel: React.FC = () => {
               updateTxn(txn.appchainId, {
                 ...txn,
                 status: BridgeHistoryStatus.Succeed,
+                processed: true,
               })
             } else if (result?.["Error"]) {
               updateTxn(txn.appchainId, {
                 ...txn,
                 status: BridgeHistoryStatus.Failed,
                 message: result["Error"].message || "Unknown error",
+                processed: false,
               })
             }
+
+            return undefined
           })
       })
 
@@ -1352,6 +1331,7 @@ export const BridgePanel: React.FC = () => {
             onClearHistory={onClearHistory}
             tokenAssets={filteredTokens}
             onProcessTx={onProcessTx}
+            processParams={processParams}
           />
         </DrawerContent>
       </Drawer>
