@@ -264,7 +264,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
                 isExternal
               >
                 <HStack gap={2}>
-                  <Text>Anchor</Text>
+                  <Text>Anchor Contract</Text>
                   <FiExternalLink />
                 </HStack>
               </Link>
