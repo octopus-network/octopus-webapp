@@ -1,4 +1,4 @@
-import { Flex, Skeleton, Stack } from '@chakra-ui/react'
+import { Flex, SimpleGrid, Skeleton, Stack } from '@chakra-ui/react'
 import { useEffect, useState } from 'react'
 import { AccountId, ConversionPool, FungibleTokenMetadata } from 'types'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
@@ -38,16 +38,18 @@ export default function PoolList({
           <Skeleton height="160px" />
         </Stack>
       )}
-      {pools.map((pool, idx) => {
-        return (
-          <Pool
-            key={pool.id}
-            pool={pool}
-            whitelist={whitelist}
-            onSelect={(p) => navigate(`/converter/pool/${p.id}`)}
-          />
-        )
-      })}
+      <SimpleGrid gap={3} mt={1} columns={{ base: 1, md: 3 }}>
+        {pools.map((pool, idx) => {
+          return (
+            <Pool
+              key={pool.id}
+              pool={pool}
+              whitelist={whitelist}
+              onSelect={(p) => navigate(`/converter/pool/${p.id}`)}
+            />
+          )
+        })}
+      </SimpleGrid>
       <ConvertToken
         pool={selectedPool}
         whitelist={whitelist}

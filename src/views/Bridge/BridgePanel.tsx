@@ -11,11 +11,13 @@ import {
   Box,
   Heading,
   Flex,
+  VStack,
   useColorModeValue,
   Center,
   Skeleton,
   InputRightElement,
   Input,
+  Image,
   HStack,
   Text,
   InputGroup,
@@ -44,11 +46,14 @@ import {
   BridgeConfig,
   BridgeHistory,
   BridgeProcessParams,
+  Collectible,
+  CollectibleContract,
 } from "types"
 
+import failedToLoad from "assets/failed_to_load.svg"
 import { ChevronRightIcon } from "@chakra-ui/icons"
-import { isAddress } from "@polkadot/util-crypto"
-import { stringToHex, isHex } from "@polkadot/util"
+import { decodeAddress, isAddress } from "@polkadot/util-crypto"
+import { u8aToHex, stringToHex, isHex } from "@polkadot/util"
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types"
 
 import {
@@ -128,6 +133,10 @@ export const BridgePanel: React.FC = () => {
     appchainId ? `appchain-settings/${appchainId}` : null
   )
 
+  const { data: collectibleClasses } = useSWR<number[]>(
+    appchainId ? `collectible-classes/${appchainId}` : null
+  )
+
   const { data: tokens } = useSWR<TokenAsset[]>(
     appchainId ? `tokens/${appchainId}` : null
   )
@@ -157,6 +166,7 @@ export const BridgePanel: React.FC = () => {
 
   const [targetAccount, setTargetAccount] = useState("")
   const [tokenAsset, setTokenAsset] = useState<TokenAsset>()
+  const [collectible, setCollectible] = useState<Collectible>()
   const [appchainApi, setAppchainApi] = useState<ApiPromise>()
 
   const [isInvalidTargetAccount, setIsInvalidTargetAccount] = useBoolean()
@@ -191,7 +201,6 @@ export const BridgePanel: React.FC = () => {
     web3Enable("Octopus Network").then((res) => {
       extensionWeb3Accounts().then((accounts) => {
         setWeb3Accounts(accounts)
-        console.log(accounts)
         if (accounts.length) {
           setAppchainAccount(accounts[0])
         }
@@ -232,6 +241,7 @@ export const BridgePanel: React.FC = () => {
     )
 
     setTokenAsset(undefined)
+    setCollectible(undefined)
     setAppchainApi(undefined)
     setIsLoadingBalance.on()
     setAmount("")
@@ -436,7 +446,7 @@ export const BridgePanel: React.FC = () => {
             headerJSON.number > bh + 10 ? bh + 10 : latestFinalizedHeight
           const promises = []
 
-          console.log('latestFinalizedHeight', latestFinalizedHeight)
+          console.log("latestFinalizedHeight", latestFinalizedHeight)
 
           for (let i = bh; i < maxBlockHeight; i++) {
             promises.push(
@@ -455,7 +465,8 @@ export const BridgePanel: React.FC = () => {
             const blockWrapper = blockWrappers[i]
             if (blockWrapper !== undefined) {
               const {
-                block: { header }, justifications
+                block: { header },
+                justifications,
               } = blockWrapper
 
               const justificationsHuman = justifications.toHuman()
@@ -469,14 +480,16 @@ export const BridgePanel: React.FC = () => {
               })
 
               if (justificationsHuman) {
-                ;(justificationsHuman as string[]).forEach(justificationHuman => {
-                  if (justificationHuman[0] === "BEEF") {
-                    signedCommitment = "0x" + justificationHuman[1].slice(4)
-                    console.log('justificationsHuman', justificationsHuman)
-                    signedCommitmentHeight = header.toJSON().number
-                    signedCommitmentHeader = header
+                ;(justificationsHuman as string[]).forEach(
+                  (justificationHuman) => {
+                    if (justificationHuman[0] === "BEEF") {
+                      signedCommitment = "0x" + justificationHuman[1].slice(4)
+                      console.log("justificationsHuman", justificationsHuman)
+                      signedCommitmentHeight = header.toJSON().number
+                      signedCommitmentHeader = header
+                    }
                   }
-                })
+                )
               }
 
               if (commitment && signedCommitment) {
@@ -494,32 +507,36 @@ export const BridgePanel: React.FC = () => {
             return undefined
           }
 
-          const signedCommitmentBlockHash = await appchainApi?.rpc.chain.getBlockHash(
-            signedCommitmentHeight
-          )
-          
+          const signedCommitmentBlockHash =
+            await appchainApi?.rpc.chain.getBlockHash(signedCommitmentHeight)
+
           const mmrProof = await appchainApi?.rpc.mmr.generateProof(
-            signedCommitmentHeight as any - 1,
+            (signedCommitmentHeight as any) - 1,
             latestFinalizedBlockHash
           )
 
           const mmrProofJSON = mmrProof?.toJSON()
 
-          console.log('mmr proof json', mmrProofJSON)
+          console.log("mmr proof json", mmrProofJSON)
 
-          const signedCommitmentAuthorities: any = (await appchainApi?.query.beefy.authorities.at(
-            signedCommitmentBlockHash as any
-          ))?.toJSON()
+          const signedCommitmentAuthorities: any = (
+            await appchainApi?.query.beefy.authorities.at(
+              signedCommitmentBlockHash as any
+            )
+          )?.toJSON()
 
-          console.log('signedCommitmentAuthorities', signedCommitmentAuthorities)
+          console.log(
+            "signedCommitmentAuthorities",
+            signedCommitmentAuthorities
+          )
 
-          const validatorAddresses = signedCommitmentAuthorities.map((a: string) =>
-            publicKeyToAddress(a)
+          const validatorAddresses = signedCommitmentAuthorities.map(
+            (a: string) => publicKeyToAddress(a)
           )
 
           const leaves = validatorAddresses.map((a: string) => keccak256(a))
           const tree = new MerkleTree(leaves, keccak256)
-   
+
           const validatorProofs = leaves.map((leaf: any, index: number) => {
             const proof: string[] = tree.getHexProof(leaf)
             const u8aProof = proof.map((hash) => toNumArray(hash))
@@ -542,8 +559,8 @@ export const BridgePanel: React.FC = () => {
             appchain?.appchain_anchor as string
           )
 
-          console.log('blockNumberInAnchor', blockNumberInAnchor)
-          console.log('commitmentHeight', commitmentHeight)
+          console.log("blockNumberInAnchor", blockNumberInAnchor)
+          console.log("commitmentHeight", commitmentHeight)
 
           const blockHashInAnchor = await appchainApi?.rpc.chain.getBlockHash(
             blockNumberInAnchor
@@ -767,17 +784,26 @@ export const BridgePanel: React.FC = () => {
     setSelectAccountModalOpen.off()
   }
 
-  const onSelectToken = (token: TokenAsset) => {
-    setTokenAsset(token)
+  const onSelectToken = (
+    token: TokenAsset | Collectible,
+    isCollectible = false
+  ) => {
+    if (isCollectible) {
+      setCollectible(token as Collectible)
+    } else {
+      setCollectible(undefined)
+      setTokenAsset(token as TokenAsset)
+      setTimeout(() => {
+        amountInputRef.current?.focus()
+      }, 300)
+      window.localStorage.setItem(
+        "OCTOPUS_BRIDGE_TOKEN_CONTRACT_ID",
+        (token as TokenAsset).contractId
+      )
+    }
+
     setAmount("")
     setSelectTokenModalOpen.off()
-    setTimeout(() => {
-      amountInputRef.current?.focus()
-    }, 300)
-    window.localStorage.setItem(
-      "OCTOPUS_BRIDGE_TOKEN_CONTRACT_ID",
-      token.contractId
-    )
   }
 
   const onSetMax = () => {
@@ -790,7 +816,7 @@ export const BridgePanel: React.FC = () => {
     }
   }
 
-  const onBurn = () => {
+  const burnToken = () => {
     setIsTransferring.on()
 
     const amountInU64 = DecimalUtil.toU64(
@@ -841,11 +867,53 @@ export const BridgePanel: React.FC = () => {
     }
   }
 
-  const onRedeem = async () => {
-    await web3Enable("Octopus Network")
-    const injected = await web3FromSource(appchainAccount?.meta.source || "")
-    appchainApi?.setSigner(injected.signer)
+  const burnCollectible = () => {
+    setIsTransferring.on()
+    try {
+      let targetAccountInHex = toHexAddress(targetAccount || "")
 
+      if (!targetAccountInHex) {
+        throw new Error("Invalid target account")
+      }
+
+      const anchor_id = `${appchainId}.${global.registry?.contractId}`
+
+      const contract = new CollectibleContract(
+        global.wallet?.account() as any,
+        `${collectible?.class}.${anchor_id}`,
+        {
+          viewMethods: [],
+          changeMethods: ["nft_transfer_call"],
+        }
+      )
+
+      contract.nft_transfer_call(
+        {
+          receiver_id: anchor_id,
+          token_id: collectible?.id || "",
+          msg: JSON.stringify({
+            BridgeToAppchain: {
+              receiver_id_in_appchain: targetAccountInHex,
+            },
+          }),
+        },
+        COMPLEX_CALL_GAS,
+        1
+      )
+    } catch (err: any) {
+      setIsTransferring.off()
+      if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
+        return
+      }
+      toast({
+        position: "top-right",
+        description: err.toString(),
+        status: "error",
+      })
+    }
+  }
+
+  const redeemToken = async () => {
     setIsTransferring.on()
 
     const targetAccountInHex = stringToHex(targetAccount)
@@ -907,6 +975,56 @@ export const BridgePanel: React.FC = () => {
         })
         setIsTransferring.off()
       })
+  }
+
+  const redeemCollectible = async () => {
+    setIsTransferring.on()
+
+    const targetAccountInHex = stringToHex(targetAccount)
+
+    const tx: any = appchainApi?.tx.octopusAppchain.lockNft(
+      collectible?.class,
+      collectible?.id,
+      targetAccountInHex
+    )
+
+    await tx
+      .signAndSend(fromAccount, ({ events = [] }: any) => {
+        events.forEach(({ event: { data, method, section } }: any) => {
+          if (section === "octopusAppchain" && method === "NftLocked") {
+            setIsTransferring.off()
+            setCollectible(undefined)
+          }
+        })
+      })
+      .catch((err: any) => {
+        toast({
+          position: "top-right",
+          description: err.toString(),
+          status: "error",
+        })
+        setIsTransferring.off()
+      })
+  }
+
+  const onBurn = () => {
+    if (!collectible) {
+      burnToken()
+    } else {
+      burnCollectible()
+    }
+  }
+
+  const onRedeem = async () => {
+    await web3Enable("Octopus Network")
+    const injected = await web3FromSource(appchainAccount?.meta.source || "")
+    appchainApi?.setSigner(injected.signer)
+
+    if (!collectible) {
+      redeemToken()
+    } else {
+      redeemCollectible()
+    }
   }
 
   const onClearHistory = () => {
@@ -1209,7 +1327,7 @@ export const BridgePanel: React.FC = () => {
                 <Heading fontSize="md" className="octo-gray">
                   Bridge Asset
                 </Heading>
-                {fromAccount ? (
+                {fromAccount && !collectible ? (
                   <Skeleton
                     isLoaded={
                       !isLoadingBalance &&
@@ -1235,39 +1353,75 @@ export const BridgePanel: React.FC = () => {
                   </Skeleton>
                 ) : null}
               </Flex>
-              <Flex mt={3} alignItems="center">
-                <AmountInput
-                  autoFocus
-                  placeholder="0.00"
-                  fontSize="xl"
-                  fontWeight={700}
-                  unstyled
-                  value={amount}
-                  onChange={setAmount}
-                  refObj={amountInputRef}
-                  onFocus={setIsAmountInputFocused.on}
-                  onBlur={setIsAmountInputFocused.off}
-                />
-                <Button
-                  ml={3}
-                  size="sm"
-                  variant="ghost"
-                  onClick={setSelectTokenModalOpen.on}
+              {collectible ? (
+                <Flex
+                  mt={3}
+                  borderWidth={1}
+                  p={2}
+                  borderColor="octo-blue.500"
+                  borderRadius="lg"
+                  overflow="hidden"
+                  position="relative"
                 >
-                  <HStack>
-                    <Avatar
-                      name={tokenAsset?.metadata?.symbol}
-                      src={tokenAsset?.metadata?.icon as any}
-                      boxSize={5}
-                      size="sm"
-                    />
+                  <Box w="20%">
+                    <Image src={failedToLoad} w="100%" />
+                  </Box>
+                  <VStack alignItems="flex-start" ml={3}>
                     <Heading fontSize="md">
-                      {tokenAsset?.metadata?.symbol}
+                      {collectible.metadata.title}
                     </Heading>
-                    <Icon as={ChevronDownIcon} />
-                  </HStack>
-                </Button>
-              </Flex>
+                    <Heading fontSize="md">#{collectible.id}</Heading>
+                  </VStack>
+                  <Box position="absolute" top={1} right={1}>
+                    <IconButton
+                      aria-label="clear"
+                      size="sm"
+                      isRound
+                      onClick={() => setCollectible(undefined)}
+                    >
+                      <Icon
+                        as={AiFillCloseCircle}
+                        boxSize={5}
+                        className="octo-gray"
+                      />
+                    </IconButton>
+                  </Box>
+                </Flex>
+              ) : (
+                <Flex mt={3} alignItems="center">
+                  <AmountInput
+                    autoFocus
+                    placeholder="0.00"
+                    fontSize="xl"
+                    fontWeight={700}
+                    unstyled
+                    value={amount}
+                    onChange={setAmount}
+                    refObj={amountInputRef}
+                    onFocus={setIsAmountInputFocused.on}
+                    onBlur={setIsAmountInputFocused.off}
+                  />
+                  <Button
+                    ml={3}
+                    size="sm"
+                    variant="ghost"
+                    onClick={setSelectTokenModalOpen.on}
+                  >
+                    <HStack>
+                      <Avatar
+                        name={tokenAsset?.metadata?.symbol}
+                        src={tokenAsset?.metadata?.icon as any}
+                        boxSize={5}
+                        size="sm"
+                      />
+                      <Heading fontSize="md">
+                        {tokenAsset?.metadata?.symbol}
+                      </Heading>
+                      <Icon as={ChevronDownIcon} />
+                    </HStack>
+                  </Button>
+                </Flex>
+              )}
             </Box>
             <Box mt={8}>
               <Button
@@ -1278,8 +1432,7 @@ export const BridgePanel: React.FC = () => {
                   !fromAccount ||
                   isLoadingBalance ||
                   !targetAccount ||
-                  !amount ||
-                  balance?.lt(amount) ||
+                  (!collectible && (!amount || balance?.lt(amount))) ||
                   isTransferring ||
                   isInvalidTargetAccount ||
                   targetAccountNeedDepositStorage
@@ -1318,6 +1471,11 @@ export const BridgePanel: React.FC = () => {
         isOpen={selectTokenModalOpen}
         onClose={setSelectTokenModalOpen.off}
         tokens={filteredTokens}
+        isReverse={isReverse}
+        appchainApi={appchainApi}
+        appchainId={appchainId}
+        fromAccount={fromAccount}
+        collectibleClasses={collectibleClasses}
         onSelectToken={onSelectToken}
         selectedToken={tokenAsset?.metadata?.symbol}
       />

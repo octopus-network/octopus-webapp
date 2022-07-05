@@ -133,6 +133,16 @@ export type TokenAsset = {
   }
 }
 
+export type Collectible = {
+  id: string;
+  class: string;
+  owner: string;
+  metadata: {
+    title: string;
+    uri: string;
+  }
+}
+
 export enum BridgeHistoryStatus {
   Pending,
   Succeed,
