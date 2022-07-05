@@ -1,4 +1,4 @@
-import { Button, Flex, useColorModeValue } from '@chakra-ui/react'
+import { Flex, useColorModeValue } from '@chakra-ui/react'
 import { ConversionPool, FungibleTokenMetadata } from 'types'
 import { isMobile } from 'react-device-detect'
 import PoolInfo from './PoolInfo'
@@ -14,6 +14,8 @@ export default function Pool({
 }) {
   const bg = useColorModeValue('white', '#25263c')
 
+  const hoverBg = useColorModeValue('#e3e3e3', '#333')
+
   return (
     <Flex
       direction={isMobile ? 'column' : 'row'}
@@ -22,17 +24,12 @@ export default function Pool({
       gap={isMobile ? 2 : 0}
       align="center"
       justify="space-between"
-      mb={2}
+      onClick={() => onSelect(pool)}
+      style={{ cursor: 'pointer' }}
+      _hover={{ backgroundColor: hoverBg }}
+      borderRadius={10}
     >
       <PoolInfo pool={pool} whitelist={whitelist} />
-      <Button
-        variant="octo-linear"
-        alignSelf="flex-end"
-        size="sm"
-        onClick={() => onSelect(pool)}
-      >
-        Select
-      </Button>
     </Flex>
   )
 }

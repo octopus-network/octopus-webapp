@@ -226,23 +226,27 @@ export const Root: React.FC = () => {
               const log = outcome.logs[j]
               console.log("###log", log)
 
+              console.log(log)
+
               const reg1 =
                   /Wrapped appchain token burnt in contract '(.+)' by '(.+)' for '(.+)' of appchain. Amount: '(.+)', Crosschain notification index: '(.+)'/,
                 reg2 =
                   /Received fungible token in contract '(.+)' from '(.+)'. Start transfer to '(.+)' of appchain. Amount: '(.+)', Crosschain notification index: '(.+)'/,
                 reg3 =
-                  /Wrapped appchain token minted by '(.+)' of appchain for '(.+)' with amount '(.+)'/
+                  /Received NFT in contract '(.+)' from '(.+)'. Start transfer to '(.+)' of appchain. Crosschain notification index: '(.+)'./
 
-              res = reg1.exec(log) ?? reg2.exec(log)
+              res = reg1.exec(log) ?? reg2.exec(log) ?? reg3.exec(log)
 
               if (res?.length) {
+                const isNFT = res.length === 5
+
                 const appchainId = (outcome as any).executor_id.split(".")?.[0]
 
                 const contractId = res[1],
                   nearAccount = res[2],
                   appchainAccount = res[3],
-                  amount = res[4],
-                  notificationIndex = res[5]
+                  amount = isNFT ? "1" : res[4],
+                  notificationIndex = isNFT ? res[4] : res[5]
 
                 onAppchainTokenBurnt({
                   hash: status.transaction.hash,
@@ -267,7 +271,9 @@ export const Root: React.FC = () => {
         if (message) {
           throw new Error(message)
         }
-        if (/bridge/.test(location.pathname)) {
+        if (/register/.test(location.pathname)) {
+          window.location.replace("/appchains")
+        } else if (/bridge/.test(location.pathname)) {
           toast.close(toastIdRef.current)
         } else if (toastIdRef.current) {
           if (/bridge/.test(location.pathname)) {

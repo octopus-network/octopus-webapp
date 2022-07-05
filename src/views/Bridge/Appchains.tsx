@@ -91,7 +91,7 @@ export const Appchains: React.FC = () => {
   const isReverse = useMemo(() => !appchainId || new RegExp(`^/bridge/near/`).test(pathname), [pathname]);
 
   return (
-    <Box bg={bg} pt={6} pb={6} borderRadius="lg">
+    <Box bg={bg} pt={6} pb={6} borderRadius="lg" h="100%">
       <Box pl={6} pr={6}>
         <Heading fontSize="xl">Appchains</Heading>
       </Box>

@@ -6,9 +6,12 @@ import {
   DrawerOverlay,
   DrawerContent,
   Box,
+  SimpleGrid,
+  Image,
+  Link,
 } from '@chakra-ui/react'
 
-import { JoinBanner, RunningAppchains } from 'components'
+import { RunningAppchains } from 'components'
 
 import { Statistics } from './Statistics'
 import { Booting } from './Booting'
@@ -17,6 +20,10 @@ import { Established } from './Established'
 
 import { Overview } from './Overview'
 import { useParams, useNavigate } from 'react-router-dom'
+import JOIN_DISCORD from '../../assets/join-discord.png'
+import JOIN_ACCELERATOR from '../../assets/join-accelerator.png'
+import JOIN_OCTOPUS from '../../assets/join-octopus.png'
+import { useGlobalStore } from 'stores'
 
 export const Appchains: React.FC = () => {
   const { appchainId } = useParams()
@@ -38,11 +45,31 @@ export const Appchains: React.FC = () => {
     navigate(`/appchains`)
   }
 
+  const { global } = useGlobalStore()
+  const isMainnet = global?.network?.near.networkId === 'mainnet'
+
   return (
     <>
       <Container>
         <Box mt={10} display={{ base: 'none', md: 'block' }}>
-          <JoinBanner />
+          <SimpleGrid gap={3} mt={1} columns={{ base: 1, md: 3 }}>
+            <Link href="/register">
+              <Image src={JOIN_OCTOPUS} borderRadius={10} />
+            </Link>
+            <Link
+              href={
+                isMainnet
+                  ? 'https://discord.gg/uVKUBSssxm'
+                  : 'https://discord.gg/zgcdhu5BzT'
+              }
+              target="_blank"
+            >
+              <Image src={JOIN_DISCORD} borderRadius={10} />
+            </Link>
+            <Link href="https://accelerator.oct.network/" target="_blank">
+              <Image src={JOIN_ACCELERATOR} borderRadius={10} />
+            </Link>
+          </SimpleGrid>
         </Box>
         <Box mt={10}>
           <RunningAppchains showMore={false} />
