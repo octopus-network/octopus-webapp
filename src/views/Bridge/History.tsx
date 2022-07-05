@@ -8,14 +8,11 @@ import {
   CloseButton,
   DrawerBody,
   List,
-  Tooltip,
   Text,
   Box,
   Button,
   HStack,
   Avatar,
-  Tag,
-  CircularProgress,
   useColorModeValue,
   VStack,
   Link,
@@ -24,8 +21,8 @@ import {
 import {
   AppchainInfoWithAnchorStatus,
   BridgeHistory,
-  BridgeHistoryStatus,
   BridgeProcessParams,
+  NetworkConfig,
   TokenAsset,
 } from "types"
 
@@ -36,6 +33,7 @@ import { Empty } from "components"
 import nearLogo from "assets/near.svg"
 import relativeTime from "dayjs/plugin/relativeTime"
 import { FiArrowRight, FiMoreHorizontal } from "react-icons/fi"
+import { useGlobalStore } from "stores"
 
 type HistoryProps = {
   appchain: AppchainInfoWithAnchorStatus | undefined
@@ -53,6 +51,7 @@ type HistoryItemProps = {
   tokenAssets: TokenAsset[] | undefined
   onProcessTx: (history: BridgeHistory) => void
   processParam: BridgeProcessParams | void
+  network: NetworkConfig | null
 }
 
 dayjs.extend(relativeTime)
@@ -63,6 +62,7 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
   tokenAssets,
   onProcessTx,
   processParam,
+  network,
 }) => {
   const grayBg = useColorModeValue("#f2f4f7", "#1e1f34")
   const [showDetail, setShowDetail] = useState(false)
@@ -71,6 +71,22 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
     () => tokenAssets?.find((t) => t.contractId === history.tokenContractId),
     [tokenAssets, history]
   )
+
+  const fromAccountUrl = `${
+    history.isAppchainSide
+      ? network?.octopus.explorerUrl
+      : network?.near.explorerUrl
+  }${history.isAppchainSide ? `/${appchain?.appchain_id}` : ``}/accounts/${
+    history.fromAccount
+  }`
+
+  const toAccountUrl = `${
+    !history.isAppchainSide
+      ? network?.octopus.explorerUrl
+      : network?.near.explorerUrl
+  }${history.isAppchainSide ? `/${appchain?.appchain_id}` : ``}/accounts/${
+    history.toAccount
+  }`
 
   return (
     <Box p={3} borderBottomColor="#e3e3e3" borderBottomWidth={1}>
@@ -124,10 +140,6 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
             }
           />
 
-          <Text variant="gray" fontSize="sm">
-            {dayjs(Math.floor(history.timestamp)).format("MMM DD, YYYY hh:mm")}
-          </Text>
-
           <FiMoreHorizontal
             cursor="pointer"
             style={{ marginLeft: 10 }}
@@ -145,22 +157,24 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
           gap={1}
         >
           <HStack align="flex-start">
-            <Text fontSize="sm">Hash:</Text>
-            <Link href="#" fontSize="sm">
-              {history.hash}
-            </Link>
+            <Text fontSize="sm">Time:</Text>
+            <Text fontSize="sm">
+              {dayjs(Math.floor(history.timestamp)).format(
+                "MMM DD, YYYY HH:mm"
+              )}
+            </Text>
           </HStack>
 
           <HStack align="flex-start" style={{ marginTop: 0 }}>
             <Text fontSize="sm">From:</Text>
-            <Link href="#" fontSize="sm">
+            <Link href={fromAccountUrl} fontSize="sm" target="_blank">
               {history.fromAccount}
             </Link>
           </HStack>
 
           <HStack style={{ marginTop: 0 }}>
             <Text fontSize="sm">To:</Text>
-            <Link href="#" fontSize="sm">
+            <Link href={toAccountUrl} fontSize="sm" target="_blank">
               {!history.isAppchainSide && isHex(history.toAccount)
                 ? encodeAddress(history.toAccount)
                 : history.toAccount}
@@ -175,6 +189,7 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
             colorScheme="octo-blue"
             onClick={() => onProcessTx(history)}
             isLoading={!processParam}
+            borderRadius="sm"
           >
             Finalize
           </Button>
@@ -193,6 +208,20 @@ export const History: React.FC<HistoryProps> = ({
   onProcessTx,
   processParams,
 }) => {
+  const historyGroup: {
+    [key: string]: BridgeHistory[]
+  } = {}
+  histories.forEach((h) => {
+    const day = dayjs(h.timestamp).format("MMM DD, YYYY")
+    if (historyGroup[day]) {
+      historyGroup[day].push(h)
+    } else {
+      historyGroup[day] = [h]
+    }
+  })
+
+  const { global } = useGlobalStore()
+
   return (
     <>
       <DrawerHeader borderBottomWidth="0">
@@ -214,16 +243,28 @@ export const History: React.FC<HistoryProps> = ({
       <DrawerBody pb={6}>
         {histories.length ? (
           <List spacing={0}>
-            {histories.map((h) => (
-              <HistoryItem
-                appchain={appchain}
-                history={h}
-                key={h.hash}
-                tokenAssets={tokenAssets}
-                onProcessTx={onProcessTx}
-                processParam={processParams.find((t) => t?.hash === h.hash)}
-              />
-            ))}
+            {Object.keys(historyGroup).map((key) => {
+              return (
+                <Box key={key} pt={3}>
+                  <Heading fontSize="large" pb={2} opacity={0.7}>
+                    {key}
+                  </Heading>
+                  {historyGroup[key].map((h) => (
+                    <HistoryItem
+                      appchain={appchain}
+                      history={h}
+                      key={h.hash}
+                      tokenAssets={tokenAssets}
+                      onProcessTx={onProcessTx}
+                      processParam={processParams.find(
+                        (t) => t?.hash === h.hash
+                      )}
+                      network={global.network}
+                    />
+                  ))}
+                </Box>
+              )
+            })}
           </List>
         ) : (
           <Empty minH="320px" />
