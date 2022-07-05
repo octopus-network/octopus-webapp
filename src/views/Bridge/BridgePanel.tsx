@@ -369,7 +369,7 @@ export const BridgePanel: React.FC = () => {
               viewMethods: ["get_appchain_message_processing_result_of"],
               changeMethods: [
                 "burn_wrapped_appchain_token",
-                "process_appchain_messages_with_all_proofs",
+                "process_appchain_messages_with_all_proofs"
               ],
             }
           )
@@ -429,14 +429,13 @@ export const BridgePanel: React.FC = () => {
           const headerJSON: any = header?.toJSON()
 
           const latestFinalizedHeight = headerJSON.number
+
           const latestFinalizedBlockHash =
             await appchainApi?.rpc.chain.getBlockHash(latestFinalizedHeight)
 
           const maxBlockHeight =
             headerJSON.number > bh + 10 ? bh + 10 : latestFinalizedHeight
           const promises = []
-
-          console.log('latestFinalizedHeight', latestFinalizedHeight)
 
           for (let i = bh; i < maxBlockHeight; i++) {
             promises.push(
@@ -448,8 +447,10 @@ export const BridgePanel: React.FC = () => {
 
           const blockWrappers = await Promise.all(promises)
 
+          console.log('latestFinalizedHeight', latestFinalizedHeight)
+
           let commitment, commitmentHeight, commitmentHeader
-          let signedCommitment, signedCommitmentHeight, signedCommitmentHeader
+          let signedCommitment, signedCommitmentHeight
 
           for (let i = 0; i < blockWrappers.length; i++) {
             const blockWrapper = blockWrappers[i]
@@ -472,9 +473,7 @@ export const BridgePanel: React.FC = () => {
                 ;(justificationsHuman as string[]).forEach(justificationHuman => {
                   if (justificationHuman[0] === "BEEF") {
                     signedCommitment = "0x" + justificationHuman[1].slice(4)
-                    console.log('justificationsHuman', justificationsHuman)
                     signedCommitmentHeight = header.toJSON().number
-                    signedCommitmentHeader = header
                   }
                 })
               }
@@ -488,11 +487,19 @@ export const BridgePanel: React.FC = () => {
           if (
             !commitment ||
             !signedCommitment ||
-            !commitmentHeight ||
+            !commitmentHeight || 
             !commitmentHeader
           ) {
             return undefined
           }
+
+          const decodedSignedCommitment = decodeSignedCommitment(signedCommitment)
+
+          console.log('decodedSignedCommitment', decodedSignedCommitment.toJSON())
+
+          const { blockNumber } = decodedSignedCommitment.commitment
+
+          console.log('blockNumber', blockNumber.toJSON(), signedCommitmentHeight)
 
           const signedCommitmentBlockHash = await appchainApi?.rpc.chain.getBlockHash(
             signedCommitmentHeight
@@ -500,7 +507,7 @@ export const BridgePanel: React.FC = () => {
           
           const mmrProof = await appchainApi?.rpc.mmr.generateProof(
             signedCommitmentHeight as any - 1,
-            latestFinalizedBlockHash
+            signedCommitmentBlockHash
           )
 
           const mmrProofJSON = mmrProof?.toJSON()
@@ -519,12 +526,14 @@ export const BridgePanel: React.FC = () => {
 
           const leaves = validatorAddresses.map((a: string) => keccak256(a))
           const tree = new MerkleTree(leaves, keccak256)
-   
+          const root = tree.getRoot().toString("hex")
+
           const validatorProofs = leaves.map((leaf: any, index: number) => {
             const proof: string[] = tree.getHexProof(leaf)
             const u8aProof = proof.map((hash) => toNumArray(hash))
 
             return {
+              root: toNumArray(root),
               proof: u8aProof,
               number_of_leaves: leaves.length,
               leaf_index: index,
@@ -532,36 +541,29 @@ export const BridgePanel: React.FC = () => {
             }
           })
 
+          console.log('validator proofs', validatorProofs)
+
           const encodedMessages = await getOffchainDataForCommitment(
             appchainApi as any,
             commitment
           )
 
-          const blockNumberInAnchor = await getLastBlockNumberOfAppchain(
-            global.network?.near.nodeUrl as string,
-            appchain?.appchain_anchor as string
-          )
-
-          console.log('blockNumberInAnchor', blockNumberInAnchor)
-          console.log('commitmentHeight', commitmentHeight)
-
-          const blockHashInAnchor = await appchainApi?.rpc.chain.getBlockHash(
-            blockNumberInAnchor
-          )
-
           let headerProof
-
+          
           try {
+
             const rawProof = await appchainApi?.rpc.mmr.generateProof(
               commitmentHeight,
-              blockHashInAnchor
+              signedCommitmentBlockHash
             )
+
+            const rawProofJSON = rawProof?.toJSON();
 
             if (rawProof) {
               headerProof = {
                 header: toNumArray((commitmentHeader as any).toHex()),
-                mmr_leaf: toNumArray(rawProof.leaf),
-                mmr_proof: toNumArray(rawProof.proof),
+                mmr_leaf: toNumArray(rawProofJSON?.leaf),
+                mmr_proof: toNumArray(rawProofJSON?.proof),
               }
             } else {
               headerProof = messageProofWithoutProof()
@@ -582,7 +584,8 @@ export const BridgePanel: React.FC = () => {
             mmr_proof_for_header: headerProof.mmr_proof,
             hash: txn.hash,
           }
-          console.log("to submit params", toSubmitParams)
+
+          console.log('toSubmitParams', toSubmitParams)
           return toSubmitParams
         }
       })
@@ -612,7 +615,7 @@ export const BridgePanel: React.FC = () => {
     try {
       await Promise.all(nearSideTxs)
       const appchainProcessParams = await Promise.all(appchainSideTxs)
-      setProcessParams(appchainProcessParams)
+      setProcessParams(appchainProcessParams as any)
     } catch (err) {
       console.log(err)
     }
@@ -981,6 +984,7 @@ export const BridgePanel: React.FC = () => {
         { ...params, hash: undefined },
         COMPLEX_CALL_GAS
       )
+      
     } catch (error) {}
   }
 
