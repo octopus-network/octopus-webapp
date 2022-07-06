@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React from "react"
 
 import relativeTime from "dayjs/plugin/relativeTime"
 import duration from "dayjs/plugin/duration"
@@ -9,7 +9,6 @@ import {
   Flex,
   HStack,
   Avatar,
-  Image,
   VStack,
   Link,
   Text,
@@ -21,7 +20,6 @@ import {
   CircularProgress,
   Skeleton,
   Icon,
-  useBoolean,
   useClipboard,
   Menu,
   MenuButton,
@@ -30,8 +28,6 @@ import {
   Button,
   Center,
 } from "@chakra-ui/react"
-
-import { useSpring, animated } from "react-spring"
 
 import { StateBadge } from "components"
 
@@ -54,10 +50,12 @@ import Decimal from "decimal.js"
 import { EPOCH_DURATION_MS } from "primitives"
 import { useGlobalStore } from "stores"
 import { FaUser } from "react-icons/fa"
-import useChainStats from "hooks/useChainStats"
+import useChainData from "hooks/useChainData"
 import DescItem from "components/common/DescItem"
 import { BsThreeDots } from "react-icons/bs"
 import { FiCopy, FiExternalLink } from "react-icons/fi"
+import LinkBox from "components/common/LinkBox"
+import useChainState from "hooks/useChainState"
 
 dayjs.extend(duration)
 dayjs.extend(relativeTime)
@@ -67,47 +65,6 @@ type DescriptionsProps = {
   appchainSettings: AppchainSettings | undefined
   wrappedAppchainToken: WrappedAppchainToken | undefined
   appchainApi: ApiPromise | undefined
-}
-
-type LinkBoxProps = {
-  label: string
-  icon: any
-  to?: string
-  href?: string
-}
-
-const LinkBox: React.FC<LinkBoxProps> = ({ label, icon }) => {
-  const [isHovering, setIsHovering] = useBoolean(false)
-
-  const iconHoveringProps = useSpring({
-    transform: isHovering ? "translateY(-5pxpx)" : "translateY(0px)",
-  })
-
-  return (
-    <Box
-      p={2}
-      cursor="pointer"
-      onMouseEnter={setIsHovering.on}
-      onMouseLeave={setIsHovering.off}
-    >
-      <VStack spacing={1}>
-        <animated.div style={iconHoveringProps}>
-          <Box boxSize={8}>
-            <Image src={icon} w="100%" />
-          </Box>
-        </animated.div>
-        <Text
-          fontSize="sm"
-          whiteSpace="nowrap"
-          textOverflow="ellipsis"
-          overflow="hidden"
-          maxW="100%"
-        >
-          {label}
-        </Text>
-      </VStack>
-    </Box>
-  )
 }
 
 export const Descriptions: React.FC<DescriptionsProps> = ({
@@ -124,52 +81,17 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
 
   const isSubqEnabled = !!appchainSettings?.subql_endpoint
 
-  const stats = useChainStats(
+  const chainData = useChainData(
     appchain?.appchain_id,
     appchainSettings?.subql_endpoint
   )
-
-  const [bestBlock, setBestBlock] = useState<number>()
-  const [currentEra, setCurrentEra] = useState<number>()
-  const [totalIssuance, setTotalIssuance] = useState<string>()
-
-  const [nextEraTime, setNextEraTime] = useState(0)
-  const [nextEraTimeLeft, setNextEraTimeLeft] = useState(0)
 
   const { onCopy: onCopyRpcEndpoint } = useClipboard(
     appchainSettings?.rpc_endpoint || ""
   )
 
-  useEffect(() => {
-    if (!appchainApi) {
-      return
-    }
-
-    // subscribe new head
-    let unsubNewHeads: any
-    appchainApi.rpc.chain
-      .subscribeNewHeads((lastHeader) =>
-        setBestBlock(lastHeader.number.toNumber())
-      )
-      .then((unsub) => (unsubNewHeads = unsub))
-
-    Promise.all([
-      appchainApi.query.octopusLpos.activeEra(),
-      appchainApi.query.balances?.totalIssuance(),
-    ]).then(([era, issuance]) => {
-      const eraJSON: any = era.toJSON()
-
-      setCurrentEra(eraJSON?.index)
-
-      setNextEraTime(eraJSON ? EPOCH_DURATION_MS + eraJSON.start : 0)
-      setNextEraTimeLeft(
-        eraJSON ? eraJSON.start + EPOCH_DURATION_MS - new Date().getTime() : 0
-      )
-      setTotalIssuance(issuance?.toString() || "0")
-    })
-
-    return () => unsubNewHeads && unsubNewHeads()
-  }, [appchainApi])
+  const { bestBlock, currentEra, totalIssuance, nextEraTime, nextEraTimeLeft } =
+    useChainState(appchainApi)
 
   return (
     <Box bg={bg} p={6} borderRadius="lg">
@@ -290,16 +212,18 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
       >
         <DescItem
           title="Addresses"
-          isLoaded={isSubqEnabled ? !!stats : true}
-          value={isSubqEnabled ? stats?.accounts.totalCount ?? "loading" : "-"}
+          isLoaded={isSubqEnabled ? !!chainData : true}
+          value={
+            isSubqEnabled ? chainData?.accounts.totalCount ?? "loading" : "-"
+          }
         />
 
         <DescItem
           title="Transfers"
-          isLoaded={isSubqEnabled ? !!stats : true}
+          isLoaded={isSubqEnabled ? !!chainData : true}
           value={
             isSubqEnabled
-              ? stats?.systemTokenTransfers.totalCount ?? "loading"
+              ? chainData?.systemTokenTransfers.totalCount ?? "loading"
               : "-"
           }
         />

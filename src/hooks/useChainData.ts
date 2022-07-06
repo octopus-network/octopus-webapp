@@ -28,7 +28,7 @@ interface Stats {
   systemTokenTransfers: Count
 }
 
-export default function useChainStats(
+export default function useChainData(
   chainId: string | undefined,
   subqEndpoint: string | undefined
 ) {
