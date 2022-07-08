@@ -90,8 +90,13 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
     appchainSettings?.rpc_endpoint || ""
   )
 
-  const { bestBlock, currentEra, totalIssuance, nextEraTime, nextEraTimeLeft } =
-    useChainState(appchainApi)
+  const {
+    totalAsset,
+    currentEra,
+    totalIssuance,
+    nextEraTime,
+    nextEraTimeLeft,
+  } = useChainState(appchainApi)
 
   return (
     <Box bg={bg} p={6} borderRadius="lg">
@@ -229,13 +234,9 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
         />
 
         <DescItem
-          title="Block Height"
+          title="Foreign Asset Cap"
           isLoaded={!!nextEraTime}
-          value={
-            bestBlock !== undefined
-              ? DecimalUtil.beautify(new Decimal(bestBlock), 0)
-              : "loading"
-          }
+          value={totalAsset}
         />
       </SimpleGrid>
 
