@@ -16,11 +16,15 @@ import {
   useColorModeValue,
   VStack,
   Link,
+  CircularProgress,
+  Tooltip,
+  Tag,
 } from "@chakra-ui/react"
 
 import {
   AppchainInfoWithAnchorStatus,
   BridgeHistory,
+  BridgeHistoryStatus,
   BridgeProcessParams,
   NetworkConfig,
   TokenAsset,
@@ -92,13 +96,20 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
     <Box p={3} borderBottomColor="#e3e3e3" borderBottomWidth={1}>
       <Flex alignItems="center" justifyContent="space-between" gap={2}>
         <HStack>
+          {history.status === BridgeHistoryStatus.Pending && (
+            <CircularProgress
+              color="octo-blue.400"
+              isIndeterminate
+              size="16px"
+              thickness="16px"
+            />
+          )}
           <Avatar
             name={tokenAsset?.metadata.symbol}
             src={tokenAsset?.metadata.icon as any}
             boxSize={8}
             size="sm"
           />
-
           <Heading fontSize="lg">
             {DecimalUtil.beautify(
               DecimalUtil.fromString(
@@ -182,19 +193,29 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
           </HStack>
         </VStack>
       )}
-      {history.isAppchainSide && history.status !== 1 && !history.processed && (
-        <Flex mt={2} alignItems="center" justifyContent="flex-end">
-          <Button
-            size="sm"
-            colorScheme="octo-blue"
-            onClick={() => onProcessTx(history)}
-            isLoading={!processParam}
-            borderRadius="sm"
-          >
-            Finalize
-          </Button>
-        </Flex>
-      )}
+      {history.isAppchainSide &&
+        history.status !== BridgeHistoryStatus.Succeed && (
+          <Flex mt={2} alignItems="center" justifyContent="flex-end">
+            {history.status === BridgeHistoryStatus.Failed && (
+              <Tooltip label={history.message}>
+                <Tag colorScheme="red" size="sm">
+                  Failed
+                </Tag>
+              </Tooltip>
+            )}
+            {!history.processed && (
+              <Button
+                size="sm"
+                colorScheme="octo-blue"
+                onClick={() => onProcessTx(history)}
+                isLoading={!processParam}
+                borderRadius="sm"
+              >
+                Finalize
+              </Button>
+            )}
+          </Flex>
+        )}
     </Box>
   )
 }
