@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import dayjs from 'dayjs';
+import React, { useMemo, useState } from "react"
+import dayjs from "dayjs"
 
 import {
   DrawerHeader,
@@ -8,108 +8,240 @@ import {
   CloseButton,
   DrawerBody,
   List,
-  Tooltip,
   Text,
   Box,
   Button,
   HStack,
   Avatar,
-  Tag,
+  useColorModeValue,
+  VStack,
+  Link,
   CircularProgress,
-  useColorModeValue
-} from '@chakra-ui/react';
+  Tooltip,
+  Tag,
+} from "@chakra-ui/react"
 
 import {
   AppchainInfoWithAnchorStatus,
   BridgeHistory,
   BridgeHistoryStatus,
-  TokenAsset
-} from 'types';
+  BridgeProcessParams,
+  NetworkConfig,
+  TokenAsset,
+} from "types"
 
-import { encodeAddress } from '@polkadot/util-crypto';
-import { isHex } from '@polkadot/util';
-import { DecimalUtil } from 'utils';
-import { Empty } from 'components';
-import nearLogo from 'assets/near.svg';
-import relativeTime from 'dayjs/plugin/relativeTime';
+import { encodeAddress } from "@polkadot/util-crypto"
+import { isHex } from "@polkadot/util"
+import { DecimalUtil } from "utils"
+import { Empty } from "components"
+import nearLogo from "assets/near.svg"
+import relativeTime from "dayjs/plugin/relativeTime"
+import { FiArrowRight, FiMoreHorizontal } from "react-icons/fi"
+import { useGlobalStore } from "stores"
 
 type HistoryProps = {
-  appchain: AppchainInfoWithAnchorStatus | undefined;
-  histories: BridgeHistory[];
-  tokenAssets: TokenAsset[] | undefined;
-  onDrawerClose: VoidFunction;
-  onClearHistory: VoidFunction;
+  appchain: AppchainInfoWithAnchorStatus | undefined
+  histories: BridgeHistory[]
+  tokenAssets: TokenAsset[] | undefined
+  onDrawerClose: VoidFunction
+  onClearHistory: VoidFunction
+  onProcessTx: (history: BridgeHistory) => void
+  processParams: (BridgeProcessParams | void)[]
 }
 
 type HistoryItemProps = {
-  appchain: AppchainInfoWithAnchorStatus | undefined;
-  history: BridgeHistory;
-  tokenAssets: TokenAsset[] | undefined;
+  appchain: AppchainInfoWithAnchorStatus | undefined
+  history: BridgeHistory
+  tokenAssets: TokenAsset[] | undefined
+  onProcessTx: (history: BridgeHistory) => void
+  processParam: BridgeProcessParams | void
+  network: NetworkConfig | null
 }
 
-dayjs.extend(relativeTime);
+dayjs.extend(relativeTime)
 
-const HistoryItem: React.FC<HistoryItemProps> = ({ appchain, history, tokenAssets }) => {
-  const bg = useColorModeValue('#f6f7fa', '#15172c');
+const HistoryItem: React.FC<HistoryItemProps> = ({
+  appchain,
+  history,
+  tokenAssets,
+  onProcessTx,
+  processParam,
+  network,
+}) => {
+  const grayBg = useColorModeValue("#f2f4f7", "#1e1f34")
+  const [showDetail, setShowDetail] = useState(false)
 
-  const tokenAsset = useMemo(() => tokenAssets?.find(t => t.contractId === history.tokenContractId), [tokenAssets, history]);
+  const tokenAsset = useMemo(
+    () => tokenAssets?.find((t) => t.contractId === history.tokenContractId),
+    [tokenAssets, history]
+  )
+
+  const fromAccountUrl = `${
+    history.isAppchainSide
+      ? network?.octopus.explorerUrl
+      : network?.near.explorerUrl
+  }${history.isAppchainSide ? `/${appchain?.appchain_id}` : ``}/accounts/${
+    history.fromAccount
+  }`
+
+  const toAccountUrl = `${
+    !history.isAppchainSide
+      ? network?.octopus.explorerUrl
+      : network?.near.explorerUrl
+  }${history.isAppchainSide ? `/${appchain?.appchain_id}` : ``}/accounts/${
+    history.toAccount
+  }`
 
   return (
-    <Box p={3} bg={bg} borderRadius="lg">
-      <Flex justifyContent="space-between" alignItems="center">
-        <HStack maxW="50%">
-          <Text variant="gray" fontSize="sm">From</Text>
-          <Avatar boxSize={5} name={history.fromAccount} src={history.isAppchainSide ? appchain?.appchain_metadata?.fungible_token_metadata?.icon as any : nearLogo} />
-          <Heading fontSize="md" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">{history.fromAccount}</Heading>
-        </HStack>
-        <HStack alignItems="flex-end" justifyContent="center">
+    <Box p={3} borderBottomColor="#e3e3e3" borderBottomWidth={1}>
+      <Flex alignItems="center" justifyContent="space-between" gap={2}>
+        <HStack>
+          {history.status === BridgeHistoryStatus.Pending && (
+            <CircularProgress
+              color="octo-blue.400"
+              isIndeterminate
+              size="16px"
+              thickness="16px"
+            />
+          )}
+          <Avatar
+            name={tokenAsset?.metadata.symbol}
+            src={tokenAsset?.metadata.icon as any}
+            boxSize={8}
+            size="sm"
+          />
           <Heading fontSize="lg">
-            {
-              DecimalUtil.beautify(
-                DecimalUtil.fromString(
-                  history.amount, 
-                  Array.isArray(tokenAsset?.metadata?.decimals) ?
-                  tokenAsset?.metadata?.decimals[
-                    history.isAppchainSide ? 0 : 0
-                  ] :
-                  tokenAsset?.metadata?.decimals
-                )
+            {DecimalUtil.beautify(
+              DecimalUtil.fromString(
+                history.amount,
+                Array.isArray(tokenAsset?.metadata?.decimals)
+                  ? tokenAsset?.metadata?.decimals[
+                      history.isAppchainSide ? 0 : 0
+                    ]
+                  : tokenAsset?.metadata?.decimals
               )
-            }
+            )}
           </Heading>
-          <Heading fontSize="lg">
+          <Text variant="gray" fontSize="sm">
             {tokenAsset?.metadata?.symbol}
-          </Heading>
-          {
-            history.status === BridgeHistoryStatus.Pending ?
-              <CircularProgress color="octo-blue.400" isIndeterminate size="16px" thickness="16px" /> :
-              history.message ?
-                <Tooltip label={history.message}>
-                  <Tag colorScheme={history.status === BridgeHistoryStatus.Succeed ? 'octo-blue' : 'red'} size="sm">
-                    {history.status === BridgeHistoryStatus.Succeed ? 'Succeed' : 'Failed'}
-                  </Tag>
-                </Tooltip> :
-                <Tag colorScheme={history.status === BridgeHistoryStatus.Succeed ? 'octo-blue' : 'red'} size="sm">
-                  {history.status === BridgeHistoryStatus.Succeed ? 'Succeed' : 'Failed'}
-                </Tag>
-          }
-        </HStack>
-      </Flex>
-      <Flex mt={2} alignItems="center" justifyContent="space-between">
-        <HStack maxW="50%">
-          <Text fontSize="md" variant="gray">to</Text>
-          <Avatar boxSize={4} name={history.toAccount} src={!history.isAppchainSide ? appchain?.appchain_metadata?.fungible_token_metadata?.icon as any : nearLogo} />
-          <Text fontSize="md" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
-            {!history.isAppchainSide && isHex(history.toAccount) ? encodeAddress(history.toAccount) : history.toAccount}
           </Text>
         </HStack>
-        <Text variant="gray">{dayjs(Math.floor(history.timestamp)).fromNow()}</Text>
+        <HStack>
+          <Avatar
+            boxSize={7}
+            name={history.fromAccount}
+            borderRadius={4}
+            src={
+              history.isAppchainSide
+                ? (appchain?.appchain_metadata?.fungible_token_metadata
+                    ?.icon as any)
+                : nearLogo
+            }
+          />
+          <FiArrowRight />
+          <Avatar
+            boxSize={7}
+            name={history.toAccount}
+            borderRadius={4}
+            src={
+              !history.isAppchainSide
+                ? (appchain?.appchain_metadata?.fungible_token_metadata
+                    ?.icon as any)
+                : nearLogo
+            }
+          />
+
+          <FiMoreHorizontal
+            cursor="pointer"
+            style={{ marginLeft: 10 }}
+            onClick={() => setShowDetail(!showDetail)}
+          />
+        </HStack>
       </Flex>
+      {showDetail && (
+        <VStack
+          align="flex-start"
+          bg={grayBg}
+          p={3}
+          mt={2}
+          borderRadius={2}
+          gap={1}
+        >
+          <HStack align="flex-start">
+            <Text fontSize="sm">Time:</Text>
+            <Text fontSize="sm">
+              {dayjs(Math.floor(history.timestamp)).format(
+                "MMM DD, YYYY HH:mm"
+              )}
+            </Text>
+          </HStack>
+
+          <HStack align="flex-start" style={{ marginTop: 0 }}>
+            <Text fontSize="sm">From:</Text>
+            <Link href={fromAccountUrl} fontSize="sm" target="_blank">
+              {history.fromAccount}
+            </Link>
+          </HStack>
+
+          <HStack style={{ marginTop: 0 }}>
+            <Text fontSize="sm">To:</Text>
+            <Link href={toAccountUrl} fontSize="sm" target="_blank">
+              {!history.isAppchainSide && isHex(history.toAccount)
+                ? encodeAddress(history.toAccount)
+                : history.toAccount}
+            </Link>
+          </HStack>
+        </VStack>
+      )}
+      {history.isAppchainSide &&
+        history.status !== BridgeHistoryStatus.Succeed && (
+          <Flex mt={2} alignItems="center" justifyContent="flex-end">
+            {history.status === BridgeHistoryStatus.Failed && (
+              <Tooltip label={history.message}>
+                <Tag colorScheme="red" size="sm">
+                  Failed
+                </Tag>
+              </Tooltip>
+            )}
+            {!history.processed && (
+              <Button
+                size="sm"
+                colorScheme="octo-blue"
+                onClick={() => onProcessTx(history)}
+                isLoading={!processParam}
+                borderRadius="sm"
+              >
+                Finalize
+              </Button>
+            )}
+          </Flex>
+        )}
     </Box>
-  );
+  )
 }
 
-export const History: React.FC<HistoryProps> = ({ appchain, histories, onDrawerClose, onClearHistory, tokenAssets }) => {
+export const History: React.FC<HistoryProps> = ({
+  appchain,
+  histories,
+  onDrawerClose,
+  onClearHistory,
+  tokenAssets,
+  onProcessTx,
+  processParams,
+}) => {
+  const historyGroup: {
+    [key: string]: BridgeHistory[]
+  } = {}
+  histories.forEach((h) => {
+    const day = dayjs(h.timestamp).format("MMM DD, YYYY")
+    if (historyGroup[day]) {
+      historyGroup[day].push(h)
+    } else {
+      historyGroup[day] = [h]
+    }
+  })
+
+  const { global } = useGlobalStore()
 
   return (
     <>
@@ -117,24 +249,48 @@ export const History: React.FC<HistoryProps> = ({ appchain, histories, onDrawerC
         <Flex justifyContent="space-between" alignItems="center">
           <HStack>
             <Heading fontSize="lg">History</Heading>
-            <Button size="sm" onClick={onClearHistory} colorScheme="octo-blue" variant="ghost">Clear</Button>
+            <Button
+              size="sm"
+              onClick={onClearHistory}
+              colorScheme="octo-blue"
+              variant="ghost"
+            >
+              Clear
+            </Button>
           </HStack>
           <CloseButton onClick={onDrawerClose} />
         </Flex>
       </DrawerHeader>
       <DrawerBody pb={6}>
-        {
-          histories.length ?
-            <List spacing={6}>
-              {
-                histories.map(h => (
-                  <HistoryItem appchain={appchain} history={h} key={h.hash} tokenAssets={tokenAssets} />
-                ))
-              }
-            </List> :
-            <Empty minH="320px" />
-        }
+        {histories.length ? (
+          <List spacing={0}>
+            {Object.keys(historyGroup).map((key) => {
+              return (
+                <Box key={key} pt={3}>
+                  <Heading fontSize="large" pb={2} opacity={0.7}>
+                    {key}
+                  </Heading>
+                  {historyGroup[key].map((h) => (
+                    <HistoryItem
+                      appchain={appchain}
+                      history={h}
+                      key={h.hash}
+                      tokenAssets={tokenAssets}
+                      onProcessTx={onProcessTx}
+                      processParam={processParams.find(
+                        (t) => t?.hash === h.hash
+                      )}
+                      network={global.network}
+                    />
+                  ))}
+                </Box>
+              )
+            })}
+          </List>
+        ) : (
+          <Empty minH="320px" />
+        )}
       </DrawerBody>
     </>
-  );
+  )
 }

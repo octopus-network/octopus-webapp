@@ -206,8 +206,8 @@ export const Appchain: React.FC = () => {
   }, [appchainSettings])
 
   useEffect(() => {
-    appchainApi?.query?.session?.validators().then((vs) => {
-      setAppchainValidators(vs.map((v) => v.toString()))
+    appchainApi?.query?.session?.validators().then((vs: any) => {
+      setAppchainValidators(vs.map((v: any) => v.toString()))
     })
 
     if (validators) {

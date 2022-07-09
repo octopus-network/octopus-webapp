@@ -19,7 +19,7 @@ export type BridgeConfig = {
   tokenPallet: {
     section: string
     method: string
-    paramsType: 'Tuple' | 'Array'
+    paramsType: "Tuple" | "Array"
     valueKey: string
   }
   whitelist: Record<string, string[]>
@@ -30,11 +30,23 @@ type ConverterItemConfig = {
 }
 
 export enum NetworkType {
-  MAINNET = 'mainnet',
-  TESTNET = 'testnet',
+  MAINNET = "mainnet",
+  TESTNET = "testnet",
 }
 
 export type ConverterConfig = {
   [NetworkType.TESTNET]: ConverterItemConfig
   [NetworkType.MAINNET]: ConverterItemConfig
+}
+
+export type BridgeProcessParams = {
+  signed_commitment: number[]
+  validator_proofs: any
+  mmr_leaf_for_mmr_root: number[]
+  mmr_proof_for_mmr_root: number[]
+  encoded_messages: number[]
+  header: number[]
+  mmr_leaf_for_header: number[]
+  mmr_proof_for_header: number[]
+  hash?: string
 }

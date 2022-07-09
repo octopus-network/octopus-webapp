@@ -1,5 +1,6 @@
 import { isHex, hexToString } from '@polkadot/util';
- 
+import { DetectCodec } from '@polkadot/types/types';
+
 export const toShortAddress = (address: string, maxLength = 24) => {
   const tmpArr = address.split('.');
   const halfLength = Math.floor(maxLength / 2);
@@ -41,4 +42,17 @@ export function decodeNearAccount(address: string) {
   } else {
     return address;
   }
+}
+
+export function toNumArray(data: DetectCodec<any, any>): number[] {
+  if (typeof data === 'string') {
+    return hexStringToNumArray(data);
+  } else {
+    return hexStringToNumArray(data.toString());
+  }
+}
+
+function hexStringToNumArray(hex: string): number[] {
+  const hexString = hex.slice(0, 2) === "0x" ? hex.slice(2) : hex;
+  return Array.from(Buffer.from(hexString, "hex"));
 }

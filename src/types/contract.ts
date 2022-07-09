@@ -1,4 +1,4 @@
-import { Contract } from 'near-api-js'
+import { Contract } from "near-api-js"
 
 import {
   StorageDeposit,
@@ -7,8 +7,9 @@ import {
   RewardHistory,
   UnbondedHistory,
   StakingHistory,
-} from 'types'
-import { ProtocolSettings } from './appchain'
+  BridgeProcessParams,
+} from "types"
+import { ProtocolSettings } from "./appchain"
 
 type FtBalanceOfArgs = {
   account_id: string
@@ -208,6 +209,13 @@ export class AnchorContract extends Contract {
     gas: string
   ): Promise<void> {
     return this.burn_wrapped_appchain_token(args, gas)
+  }
+
+  process_appchain_messages_with_all_proofs(
+    args: BridgeProcessParams,
+    gas: string
+  ): Promise<void> {
+    return this.process_appchain_messages_with_all_proofs(args, gas)
   }
 
   get_appchain_message_processing_result_of(args: {
