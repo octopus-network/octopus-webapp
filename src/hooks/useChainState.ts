@@ -1,11 +1,12 @@
 import { ApiPromise } from "@polkadot/api"
 import { u8aToBuffer } from "@polkadot/util"
+import axios from "axios"
 import Decimal from "decimal.js"
 import { EPOCH_DURATION_MS } from "primitives"
 import { useEffect, useState } from "react"
 
 export default function useChainState(appchainApi: ApiPromise | undefined) {
-  const [totalAsset, setTotalAsset] = useState("0")
+  const [totalAsset, setTotalAsset] = useState("$0")
   const [currentEra, setCurrentEra] = useState<number>()
   const [totalIssuance, setTotalIssuance] = useState<string>()
 
@@ -42,7 +43,7 @@ export default function useChainState(appchainApi: ApiPromise | undefined) {
 
         const assets = await appchainApi?.rpc.state.queryStorageAt(keys!)
 
-        Promise.all(
+        const result = await Promise.all(
           (assets as any).map(async (t: any) => {
             try {
               const assetId = u8aToBuffer(t.toU8a(true))
@@ -76,10 +77,29 @@ export default function useChainState(appchainApi: ApiPromise | undefined) {
             }
           })
         )
-          .then((results) => {
-            console.log("results", results)
-          })
-          .catch(console.error)
+
+        if (result.filter((t) => t).length !== 0) {
+          const listPrices = await axios.get(
+            "https://indexer.ref.finance/list-token-price"
+          )
+          const listedTokens = Object.values(listPrices.data)
+
+          const total = result
+            .filter((t) => t)
+            .reduce((sum, t) => {
+              const token: any = listedTokens.find(
+                (lt: any) => lt.symbol === t.symbol
+              )
+              if (token) {
+                return new Decimal(t.supply)
+                  .mul(new Decimal(token.price))
+                  .div(10 ** token.decimal)
+                  .add(sum)
+              }
+              return sum
+            }, new Decimal(0))
+          setTotalAsset(`$${total.toFixed(2)}`)
+        }
       } catch (error) {
         console.log("error", error)
       }
