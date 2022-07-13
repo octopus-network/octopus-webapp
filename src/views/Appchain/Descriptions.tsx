@@ -102,13 +102,13 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
     <Box bg={bg} p={6} borderRadius="lg">
       <Flex alignItems="center" justifyContent="space-between" minH="68px">
         <HStack spacing={4}>
-          <SkeletonCircle size="12" isLoaded={!!appchain}>
+          <SkeletonCircle size="16" isLoaded={!!appchain}>
             <Avatar
               src={
                 appchain?.appchain_metadata?.fungible_token_metadata.icon as any
               }
               name={appchain?.appchain_id}
-              boxSize={12}
+              boxSize={16}
             />
           </SkeletonCircle>
           <VStack alignItems="flex-start" spacing={0}>
@@ -128,6 +128,9 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
                 <Text>{appchain?.appchain_owner}</Text>
               </HStack>
             ) : null}
+            <Text fontSize="sm" className="octo-gray">
+              {appchain?.appchain_metadata.description}
+            </Text>
           </VStack>
         </HStack>
         <VStack alignItems="flex-end" spacing={0}>
