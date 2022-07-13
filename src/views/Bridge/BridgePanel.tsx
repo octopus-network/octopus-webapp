@@ -1,3 +1,4 @@
+/* eslint-disable no-loop-func */
 import React, { useMemo, useState, useEffect, useCallback } from "react"
 import useSWR from "swr"
 import BN from "bn.js"
@@ -379,7 +380,7 @@ export const BridgePanel: React.FC = () => {
               viewMethods: ["get_appchain_message_processing_result_of"],
               changeMethods: [
                 "burn_wrapped_appchain_token",
-                "process_appchain_messages_with_all_proofs"
+                "process_appchain_messages_with_all_proofs",
               ],
             }
           )
@@ -457,7 +458,7 @@ export const BridgePanel: React.FC = () => {
 
           const blockWrappers = await Promise.all(promises)
 
-          console.log('latestFinalizedHeight', latestFinalizedHeight)
+          console.log("latestFinalizedHeight", latestFinalizedHeight)
 
           let commitment, commitmentHeight, commitmentHeader
           let signedCommitment, signedCommitmentHeight
@@ -497,21 +498,27 @@ export const BridgePanel: React.FC = () => {
             }
           }
 
+          console.log("###", {
+            commitment,
+            signedCommitment,
+            commitmentHeight,
+            commitmentHeader,
+          })
+
           if (
             !commitment ||
             !signedCommitment ||
-            !commitmentHeight || 
+            !commitmentHeight ||
             !commitmentHeader
           ) {
             return undefined
           }
 
-          const signedCommitmentBlockHash = await appchainApi?.rpc.chain.getBlockHash(
-            signedCommitmentHeight
-          )
-          
+          const signedCommitmentBlockHash =
+            await appchainApi?.rpc.chain.getBlockHash(signedCommitmentHeight)
+
           const mmrProof = await appchainApi?.rpc.mmr.generateProof(
-            signedCommitmentHeight as any - 1,
+            (signedCommitmentHeight as any) - 1,
             signedCommitmentBlockHash
           )
 
@@ -551,7 +558,7 @@ export const BridgePanel: React.FC = () => {
             }
           })
 
-          console.log('validator proofs', validatorProofs)
+          console.log("validator proofs", validatorProofs)
 
           const encodedMessages = await getOffchainDataForCommitment(
             appchainApi as any,
@@ -559,15 +566,14 @@ export const BridgePanel: React.FC = () => {
           )
 
           let headerProof
-          
-          try {
 
+          try {
             const rawProof = await appchainApi?.rpc.mmr.generateProof(
               commitmentHeight,
               signedCommitmentBlockHash
             )
 
-            const rawProofJSON = rawProof?.toJSON();
+            const rawProofJSON = rawProof?.toJSON()
 
             if (rawProof) {
               headerProof = {
@@ -595,7 +601,7 @@ export const BridgePanel: React.FC = () => {
             hash: txn.hash,
           }
 
-          console.log('toSubmitParams', toSubmitParams)
+          console.log("toSubmitParams", toSubmitParams)
           return toSubmitParams
         }
       })
@@ -1095,7 +1101,6 @@ export const BridgePanel: React.FC = () => {
         { ...params, hash: undefined },
         COMPLEX_CALL_GAS
       )
-      
     } catch (error) {}
   }
 
