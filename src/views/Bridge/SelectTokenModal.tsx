@@ -107,19 +107,18 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
       if (!appchainApi?.isReady) {
         return
       }
+
       const promises = collectibleClasses.map((classId) => {
         return appchainApi.query.octopusUniques.class(classId).then((info) => {
           const { instances } = (info?.toJSON() as any) || {}
 
           const tmpPromises = []
 
-          for (let i = 1; i <= instances; i++) {
+          for (let i = 0; i <= instances; i++) {
             tmpPromises.push(
               appchainApi.query.octopusUniques
                 .asset(classId, i)
                 .then(async (res) => {
-                  console.log("res.toJSON()", res.toJSON())
-
                   try {
                     if (res) {
                       const _res =
@@ -137,7 +136,9 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                         metadata: data,
                       }
                     }
-                  } catch (error) {}
+                  } catch (error) {
+                    console.error(error)
+                  }
 
                   return null
                 })
