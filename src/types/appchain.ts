@@ -139,8 +139,8 @@ export type Collectible = {
   class: string
   owner: string
   metadata: {
-    title: string
-    uri: string
+    name: string
+    mediaUri: string
   }
 }
 

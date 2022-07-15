@@ -95,8 +95,8 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
               class: item.class,
               owner: item.owner_id,
               metadata: {
-                title: item.metadata?.title,
-                uri: item.metadata?.media,
+                name: item.metadata?.title,
+                mediaUri: item.metadata?.media,
               },
             }))
           : []
@@ -115,16 +115,32 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
 
           for (let i = 1; i <= instances; i++) {
             tmpPromises.push(
-              appchainApi.query.octopusUniques.asset(classId, i).then((res) =>
-                res && res.toJSON()
-                  ? {
-                      ...(res.toJSON() as any),
-                      id: i,
-                      class: classId,
-                      metadata: {},
+              appchainApi.query.octopusUniques
+                .asset(classId, i)
+                .then(async (res) => {
+                  console.log("res.toJSON()", res.toJSON())
+
+                  try {
+                    if (res) {
+                      const _res =
+                        await appchainApi.query.octopusUniques.instanceMetadataOf(
+                          classId,
+                          i
+                        )
+
+                      const data = JSON.parse((_res.toHuman() as any).data)
+
+                      return {
+                        ...(res.toJSON() as any),
+                        id: i,
+                        class: classId,
+                        metadata: data,
+                      }
                     }
-                  : null
-              )
+                  } catch (error) {}
+
+                  return null
+                })
             )
           }
 
@@ -136,15 +152,16 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
 
       Promise.all(promises).then((res) => {
         const tmpArr: any[] = res?.length
-          ? res.flat(Infinity).map((item: any) => ({
-              id: item.id,
-              class: item.class,
-              owner: item.owner,
-              metadata: {
-                title: item.metadata?.title || "Unknown",
-                uri: item.metadata?.media,
-              },
-            }))
+          ? res.flat(Infinity).map((item: any) => {
+              console.log("item", item)
+
+              return {
+                id: item.id,
+                class: item.class,
+                owner: item.owner,
+                metadata: item.metadata,
+              }
+            })
           : []
 
         setCollectibles(tmpArr)
@@ -235,10 +252,10 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                   onClick={() => onSelectToken(c, true)}
                 >
                   <Box bg={bg} borderRadius="lg" overflow="hidden">
-                    <Image src={failedToLoad} />
+                    <Image src={c.metadata?.mediaUri ?? failedToLoad} />
                   </Box>
                   <Heading fontSize="md" mt={2} textAlign="center">
-                    {c.metadata.title} #{c.id}
+                    {c.metadata.name}
                   </Heading>
                 </Box>
               ))}
