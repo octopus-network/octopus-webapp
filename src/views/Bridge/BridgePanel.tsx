@@ -1145,11 +1145,10 @@ export const BridgePanel: React.FC = () => {
                   position="relative"
                 >
                   <Box w="20%">
-                    <Image src={failedToLoad} w="100%" />
+                    <Image src={collectible.metadata.mediaUri} w="100%" />
                   </Box>
                   <VStack alignItems="flex-start" ml={3}>
                     <Heading fontSize="md">{collectible.metadata.name}</Heading>
-                    <Heading fontSize="md">#{collectible.id}</Heading>
                   </VStack>
                   <Box position="absolute" top={1} right={1}>
                     <IconButton
