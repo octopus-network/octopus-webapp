@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react'
-import useSWR from 'swr'
-import Decimal from 'decimal.js'
+import React, { useState, useEffect, useMemo } from "react"
+import useSWR from "swr"
+import Decimal from "decimal.js"
 
 import {
   DrawerHeader,
@@ -27,7 +27,7 @@ import {
   IconButton,
   DrawerFooter,
   Divider,
-} from '@chakra-ui/react'
+} from "@chakra-ui/react"
 
 import {
   ValidatorSessionKey,
@@ -38,30 +38,30 @@ import {
   RewardHistory,
   TokenContract,
   AppchainInfoWithAnchorStatus,
-} from 'types'
+} from "types"
 
 import {
   COMPLEX_CALL_GAS,
   FAILED_TO_REDIRECT_MESSAGE,
   OCT_TOKEN_DECIMALS,
-} from 'primitives'
+} from "primitives"
 
-import { CheckIcon, CopyIcon, AddIcon, MinusIcon } from '@chakra-ui/icons'
-import { BiDoorOpen, BiLogOut } from 'react-icons/bi'
-import { Empty, Alert } from 'components'
-import { AiOutlineCloseCircle } from 'react-icons/ai'
-import { StateBadge, LoginButton } from 'components'
-import { encodeAddress } from '@polkadot/util-crypto'
-import Identicon from '@polkadot/react-identicon'
+import { CheckIcon, CopyIcon, AddIcon, MinusIcon } from "@chakra-ui/icons"
+import { BiDoorOpen, BiLogOut } from "react-icons/bi"
+import { Empty, Alert } from "components"
+import { AiOutlineCloseCircle } from "react-icons/ai"
+import { StateBadge, LoginButton } from "components"
+import { encodeAddress } from "@polkadot/util-crypto"
+import Identicon from "@polkadot/react-identicon"
 
-import { DelegatorsTable } from './DelegatorsTable'
-import { StakingPopover } from '../StakingPopover'
-import { DelegateModal } from './DelegateModal'
-import { RewardsModal } from '../RewardsModal'
-import { useGlobalStore } from 'stores'
-import { DecimalUtil, toShortAddress, ZERO_DECIMAL } from 'utils'
+import { DelegatorsTable } from "./DelegatorsTable"
+import { StakingPopover } from "../StakingPopover"
+import { DelegateModal } from "./DelegateModal"
+import { RewardsModal } from "../RewardsModal"
+import { useGlobalStore } from "stores"
+import { DecimalUtil, toShortAddress, ZERO_DECIMAL } from "utils"
 
-import octoAvatar from 'assets/icons/avatar.png'
+import octoAvatar from "assets/icons/avatar.png"
 
 type ValidatorProfileProps = {
   wrappedAppchainTokenContract?: TokenContract
@@ -89,8 +89,8 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
     [validators, validatorId]
   )
 
-  const bg = useColorModeValue('#f6f7fa', '#15172c')
-  const footerBg = useColorModeValue('#f6f7fa', '#15172c')
+  const bg = useColorModeValue("#f6f7fa", "#15172c")
+  const footerBg = useColorModeValue("#f6f7fa", "#15172c")
 
   const [validatorProfile, setValidatorProfile] =
     useState<ValidatorProfileType>()
@@ -138,7 +138,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
     anchor
       ?.get_delegator_deposit_of({
         delegator_id: global.accountId,
-        validator_id: validator?.validator_id || '',
+        validator_id: validator?.validator_id || "",
       })
       .then((deposit) => {
         setDelegatedDeposits(
@@ -177,14 +177,17 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
   }, [validator])
 
   const ss58Address = useMemo(() => {
-    let address = 'loading'
+    let address = "loading"
+
     if (!validator) {
       return address
     }
 
     try {
       address = encodeAddress(validator.validator_id_in_appchain)
-    } catch (err) {}
+    } catch (err) {
+      address = validator.validator_id_in_appchain
+    }
 
     return address
   }, [validator])
@@ -193,7 +196,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
     useClipboard(ss58Address)
 
   const { hasCopied: hasEmailCopied, onCopy: onEmailCopy } = useClipboard(
-    validatorProfile?.profile?.email ?? ''
+    validatorProfile?.profile?.email ?? ""
   )
 
   const isMyself = useMemo(
@@ -208,27 +211,27 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
       !validatorSessionKeys ||
       !ss58Address
     ) {
-      return 'Unknown'
+      return "Unknown"
     }
 
     const sessionKey = validatorSessionKeys[validator.validator_id]
     if (validator?.is_unbonding) {
-      return 'Unbonding'
+      return "Unbonding"
     } else if (
       appchainValidators.some((s) => s === ss58Address) &&
       sessionKey
     ) {
-      return 'Validating'
+      return "Validating"
     } else if (
       appchainValidators.some((s) => s === ss58Address) &&
       !sessionKey
     ) {
-      return 'Need Keys'
+      return "Need Keys"
     } else if (!appchainValidators.some((s) => s === ss58Address)) {
-      return 'Registered'
+      return "Registered"
     }
 
-    return 'Unknown'
+    return "Unknown"
   }, [validator, appchainValidators, validatorSessionKeys, ss58Address])
 
   const toggleDelegation = () => {
@@ -243,10 +246,10 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
         return
       }
       toast({
-        position: 'top-right',
-        title: 'Error',
+        position: "top-right",
+        title: "Error",
         description: err.toString(),
-        status: 'error',
+        status: "error",
       })
       setIsTogglingDelegation.off()
     })
@@ -259,10 +262,10 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
         return
       }
       toast({
-        position: 'top-right',
-        title: 'Error',
+        position: "top-right",
+        title: "Error",
         description: err.toString(),
-        status: 'error',
+        status: "error",
       })
       setIsUnbonding.off()
     })
@@ -272,7 +275,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
     setIsUnbondingDelegation.on()
     anchor
       ?.unbond_delegation(
-        { validator_id: validator?.validator_id || '' },
+        { validator_id: validator?.validator_id || "" },
         COMPLEX_CALL_GAS
       )
       .catch((err) => {
@@ -281,10 +284,10 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
           return
         }
         toast({
-          position: 'top-right',
-          title: 'Error',
+          position: "top-right",
+          title: "Error",
           description: err.toString(),
-          status: 'error',
+          status: "error",
         })
       })
   }
@@ -300,7 +303,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
         </DrawerHeader>
         <DrawerBody>
           <Box p={4} bg={bg} borderRadius="lg">
-            <Skeleton isLoaded={validatorState !== 'Unknown'}>
+            <Skeleton isLoaded={validatorState !== "Unknown"}>
               <Flex justifyContent="space-between" alignItems="center">
                 <HStack maxW="calc(100% - 120px)">
                   <Identicon size={32} value={ss58Address} />
@@ -361,7 +364,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
               <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
                 <Button
                   colorScheme={
-                    validator?.can_be_delegated_to ? 'gray' : 'octo-blue'
+                    validator?.can_be_delegated_to ? "gray" : "octo-blue"
                   }
                   onClick={toggleDelegation}
                   isLoading={isTogglingDelegation}
@@ -376,8 +379,8 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                     mr={2}
                   />
                   {validator?.can_be_delegated_to
-                    ? 'Disable Delegation'
-                    : 'Enable Delegation'}
+                    ? "Disable Delegation"
+                    : "Enable Delegation"}
                 </Button>
                 <Button colorScheme="red" onClick={setUnbondAlertOpen.on}>
                   <Icon as={BiLogOut} mr={2} /> Unbond Validator
@@ -466,11 +469,11 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                   onClick={setDelegateModalOpen.on}
                   isDisabled={
                     !validator?.can_be_delegated_to ||
-                    validatorState !== 'Validating'
+                    validatorState !== "Validating"
                   }
                 >
                   {validator && !validator.can_be_delegated_to ? (
-                    'Delegation Disabled'
+                    "Delegation Disabled"
                   ) : (
                     <>
                       <Icon as={AddIcon} mr={2} boxSize={3} />
@@ -507,7 +510,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                   <Avatar
                     boxSize={8}
                     src={octoAvatar}
-                    display={{ base: 'none', md: 'block' }}
+                    display={{ base: "none", md: "block" }}
                   />
                   <Heading fontSize="lg">{global.accountId}</Heading>
                 </HStack>
@@ -519,7 +522,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                   <HStack>
                     <Text
                       variant="gray"
-                      display={{ base: 'none', md: 'block' }}
+                      display={{ base: "none", md: "block" }}
                     >
                       Balance:
                     </Text>
@@ -531,7 +534,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                               ?.symbol as any
                           ] || 0
                         )
-                      )}{' '}
+                      )}{" "}
                       {
                         appchain?.appchain_metadata?.fungible_token_metadata
                           ?.symbol
@@ -539,7 +542,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                     </Heading>
                   </HStack>
                   <Text fontSize="sm" className="octo-gray">
-                    {DecimalUtil.beautify(new Decimal(balances?.['OCT'] || 0))}{' '}
+                    {DecimalUtil.beautify(new Decimal(balances?.["OCT"] || 0))}{" "}
                     OCT
                   </Text>
                 </VStack>
@@ -574,7 +577,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
         isOpen={delegateModalOpen}
         anchor={anchor}
         onClose={setDelegateModalOpen.off}
-        validatorId={validator?.validator_id || ''}
+        validatorId={validator?.validator_id || ""}
       />
 
       <RewardsModal
