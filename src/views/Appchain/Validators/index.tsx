@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react'
-import { encodeAddress } from '@polkadot/util-crypto'
+import React, { useState, useMemo } from "react"
+import { encodeAddress } from "@polkadot/util-crypto"
 
 import {
   Flex,
@@ -19,9 +19,9 @@ import {
   VStack,
   Image,
   Link,
-} from '@chakra-ui/react'
+} from "@chakra-ui/react"
 
-import { TriangleUpIcon, TriangleDownIcon } from '@chakra-ui/icons'
+import { TriangleUpIcon, TriangleDownIcon } from "@chakra-ui/icons"
 
 import {
   Validator,
@@ -30,16 +30,16 @@ import {
   ValidatorSessionKey,
   RewardHistory,
   TokenContract,
-} from 'types'
+} from "types"
 
-import { ValidatorRow } from './ValidatorRow'
-import { UnbondedValidatorRow } from './UnbondedValidatorRow'
-import { RewardsModal } from '../RewardsModal'
-import { DecimalUtil } from 'utils'
-import { OCT_TOKEN_DECIMALS } from 'primitives'
-import { Empty } from 'components'
-import OTTO from '../../../assets/otto.png'
-import { useGlobalStore } from 'stores'
+import { ValidatorRow } from "./ValidatorRow"
+import { UnbondedValidatorRow } from "./UnbondedValidatorRow"
+import { RewardsModal } from "../RewardsModal"
+import { DecimalUtil } from "utils"
+import { OCT_TOKEN_DECIMALS } from "primitives"
+import { Empty } from "components"
+import OTTO from "../../../assets/otto.png"
+import { useGlobalStore } from "stores"
 
 type ValidatorsProps = {
   appchain: AppchainInfoWithAnchorStatus | undefined
@@ -109,26 +109,26 @@ export const Validators: React.FC<ValidatorsProps> = ({
   appchainValidators,
   validatorSessionKeys,
 }) => {
-  const bg = useColorModeValue('white', '#15172c')
+  const bg = useColorModeValue("white", "#15172c")
 
-  const [showType, setShowType] = useState('all')
+  const [showType, setShowType] = useState("all")
   const [sortIdx, setSortIdx] = useState(1)
 
   const [claimRewardsModalOpen, setClaimRewardsModalOpen] = useBoolean()
   const [unbondedDelegatorRewards, setUnbondedDelegatorRewards] =
     useState<RewardHistory[]>()
   const [unbondedRewardsValidatorId, setUnbondedRewardsValidatorId] =
-    useState('')
+    useState("")
 
   const filteredValidators = useMemo(() => {
     if (
-      showType === 'all' ||
+      showType === "all" ||
       !validators ||
       !appchainValidators ||
       !validatorSessionKeys
     ) {
       return validators
-    } else if (showType === 'validating') {
+    } else if (showType === "validating") {
       return validators.filter(
         (v) =>
           !v.is_unbonding &&
@@ -137,7 +137,7 @@ export const Validators: React.FC<ValidatorsProps> = ({
           ) &&
           validatorSessionKeys[v.validator_id]
       )
-    } else if (showType === 'needKeys') {
+    } else if (showType === "needKeys") {
       return validators.filter(
         (v) =>
           !v.is_unbonding &&
@@ -146,7 +146,7 @@ export const Validators: React.FC<ValidatorsProps> = ({
           ) &&
           !validatorSessionKeys[v.validator_id]
       )
-    } else if (showType === 'registered') {
+    } else if (showType === "registered") {
       return validators.filter(
         (v) =>
           !v.is_unbonding &&
@@ -154,7 +154,7 @@ export const Validators: React.FC<ValidatorsProps> = ({
             (s) => s === encodeAddress(v.validator_id_in_appchain)
           )
       )
-    } else if (showType === 'unbonding') {
+    } else if (showType === "unbonding") {
       return validators.filter((v) => v.is_unbonding)
     }
   }, [validators, showType, appchainValidators, validatorSessionKeys])
@@ -217,7 +217,7 @@ export const Validators: React.FC<ValidatorsProps> = ({
   }
 
   const { global } = useGlobalStore()
-  const isMainnet = global?.network?.near.networkId === 'mainnet'
+  const isMainnet = global?.network?.near.networkId === "mainnet"
 
   return (
     <>
@@ -227,11 +227,11 @@ export const Validators: React.FC<ValidatorsProps> = ({
           <Link
             href={
               isMainnet
-                ? 'https://discord.gg/uVKUBSssxm'
-                : 'https://discord.gg/zgcdhu5BzT'
+                ? "https://discord.gg/uVKUBSssxm"
+                : "https://discord.gg/zgcdhu5BzT"
             }
             target="_blank"
-            display={{ base: 'none', md: 'block' }}
+            display={{ base: "none", md: "block" }}
           >
             <HStack
               bg="#8ecafc"
@@ -245,7 +245,7 @@ export const Validators: React.FC<ValidatorsProps> = ({
               <Image
                 src={OTTO}
                 style={{
-                  position: 'absolute',
+                  position: "absolute",
                   width: 50,
                   height: 50,
                   left: 4,
@@ -258,40 +258,40 @@ export const Validators: React.FC<ValidatorsProps> = ({
             </HStack>
           </Link>
         </HStack>
-        <Box display={{ base: 'none', md: 'block' }}>
+        <Box display={{ base: "none", md: "block" }}>
           <HStack>
             <Button
-              variant={showType === 'registered' ? 'octo-blue' : 'octo-white'}
+              variant={showType === "registered" ? "octo-blue" : "octo-white"}
               size="sm"
-              onClick={() => setShowType('registered')}
+              onClick={() => setShowType("registered")}
             >
               Registered
             </Button>
             <Button
-              variant={showType === 'needKeys' ? 'octo-blue' : 'octo-white'}
+              variant={showType === "needKeys" ? "octo-blue" : "octo-white"}
               size="sm"
-              onClick={() => setShowType('needKeys')}
+              onClick={() => setShowType("needKeys")}
             >
               Need Keys
             </Button>
             <Button
-              variant={showType === 'validating' ? 'octo-blue' : 'octo-white'}
+              variant={showType === "validating" ? "octo-blue" : "octo-white"}
               size="sm"
-              onClick={() => setShowType('validating')}
+              onClick={() => setShowType("validating")}
             >
               Validating
             </Button>
             <Button
-              variant={showType === 'unbonding' ? 'octo-blue' : 'octo-white'}
+              variant={showType === "unbonding" ? "octo-blue" : "octo-white"}
               size="sm"
-              onClick={() => setShowType('unbonding')}
+              onClick={() => setShowType("unbonding")}
             >
               Unbonding
             </Button>
             <Button
-              variant={showType === 'all' ? 'octo-blue' : 'octo-white'}
+              variant={showType === "all" ? "octo-blue" : "octo-white"}
               size="sm"
-              onClick={() => setShowType('all')}
+              onClick={() => setShowType("all")}
             >
               All
             </Button>
@@ -302,9 +302,9 @@ export const Validators: React.FC<ValidatorsProps> = ({
         <Box p={6}>
           <Grid
             templateColumns={{
-              base: 'repeat(5, 1fr)',
-              md: 'repeat(8, 1fr)',
-              lg: 'repeat(10, 1fr)',
+              base: "repeat(5, 1fr)",
+              md: "repeat(8, 1fr)",
+              lg: "repeat(10, 1fr)",
             }}
             gap={2}
           >
@@ -313,7 +313,7 @@ export const Validators: React.FC<ValidatorsProps> = ({
             </GridItem>
             <GridItem
               colSpan={2}
-              display={{ base: 'none', md: 'table-cell' }}
+              display={{ base: "none", md: "table-cell" }}
               textAlign="center"
             >
               <Text variant="gray">Status</Text>
@@ -328,7 +328,7 @@ export const Validators: React.FC<ValidatorsProps> = ({
             </GridItem>
             <GridItem
               colSpan={2}
-              display={{ base: 'none', lg: 'table-cell' }}
+              display={{ base: "none", lg: "table-cell" }}
               textAlign="center"
             >
               <SortButton
@@ -340,7 +340,7 @@ export const Validators: React.FC<ValidatorsProps> = ({
             </GridItem>
             <GridItem
               colSpan={1}
-              display={{ base: 'none', md: 'table-cell' }}
+              display={{ base: "none", md: "table-cell" }}
               textAlign="center"
             >
               <SortButton
@@ -383,11 +383,11 @@ export const Validators: React.FC<ValidatorsProps> = ({
               try {
                 ss58Address = encodeAddress(v.validator_id_in_appchain)
               } catch (err) {
-                ss58Address = ''
+                ss58Address = v.validator_id_in_appchain
               }
 
               const isInAppchain = !!appchainValidators?.some(
-                (s) => s === ss58Address
+                (s) => s.toLowerCase() === ss58Address.toLowerCase()
               )
               const haveSessionKey = !!validatorSessionKeys?.[v.validator_id]
 

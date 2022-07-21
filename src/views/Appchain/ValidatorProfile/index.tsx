@@ -218,16 +218,24 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
     if (validator?.is_unbonding) {
       return "Unbonding"
     } else if (
-      appchainValidators.some((s) => s === ss58Address) &&
+      appchainValidators.some(
+        (s) => s.toLowerCase() === ss58Address.toLowerCase()
+      ) &&
       sessionKey
     ) {
       return "Validating"
     } else if (
-      appchainValidators.some((s) => s === ss58Address) &&
+      appchainValidators.some(
+        (s) => s.toLowerCase() === ss58Address.toLowerCase()
+      ) &&
       !sessionKey
     ) {
       return "Need Keys"
-    } else if (!appchainValidators.some((s) => s === ss58Address)) {
+    } else if (
+      !appchainValidators.some(
+        (s) => s.toLowerCase() === ss58Address.toLowerCase()
+      )
+    ) {
       return "Registered"
     }
 
