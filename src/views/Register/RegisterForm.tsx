@@ -27,6 +27,9 @@ import {
   useToast,
   Textarea,
   GridItem,
+  RadioGroup,
+  Radio,
+  Stack,
 } from "@chakra-ui/react"
 
 import { EditIcon } from "@chakra-ui/icons"
@@ -134,6 +137,7 @@ export const RegisterForm: React.FC = () => {
       idoAmount,
       eraReward,
       description,
+      templateType,
     } = values
 
     if (!tokenInfo.tokenName || !tokenInfo.tokenSymbol) {
@@ -166,6 +170,7 @@ export const RegisterForm: React.FC = () => {
               github_release: githubRelease,
               contact_email: email,
               function_spec_url: functionSpec,
+              template_type: templateType,
               premined_wrapped_appchain_token_beneficiary: preminedBeneficiary,
               premined_wrapped_appchain_token: DecimalUtil.toU64(
                 DecimalUtil.fromString(preminedAmount),
@@ -512,7 +517,20 @@ export const RegisterForm: React.FC = () => {
                 )}
               </Field>
 
-              <GridItem colSpan={2}>
+              <Field name="templateType">
+                {({ field, form }: any) => (
+                  <FormControl isRequired>
+                    <FormLabel htmlFor="templateType">Template Type</FormLabel>
+                    <RadioGroup {...field} defaultValue="Barnacle">
+                      <Stack>
+                        <Radio value="Barnacle">Barnacle</Radio>
+                        <Radio value="BarnacleEvm">BarnacleEvm</Radio>
+                      </Stack>
+                    </RadioGroup>
+                  </FormControl>
+                )}
+              </Field>
+              <GridItem>
                 <Field name="description">
                   {({ field, form }: any) => (
                     <FormControl
