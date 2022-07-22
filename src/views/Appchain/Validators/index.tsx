@@ -1,5 +1,4 @@
 import React, { useState, useMemo } from "react"
-import { encodeAddress } from "@polkadot/util-crypto"
 
 import {
   Flex,
@@ -40,6 +39,7 @@ import { OCT_TOKEN_DECIMALS } from "primitives"
 import { Empty } from "components"
 import OTTO from "../../../assets/otto.png"
 import { useGlobalStore } from "stores"
+import { formatAppChainAddress } from "utils/format"
 
 type ValidatorsProps = {
   appchain: AppchainInfoWithAnchorStatus | undefined
@@ -121,43 +121,41 @@ export const Validators: React.FC<ValidatorsProps> = ({
     useState("")
 
   const filteredValidators = useMemo(() => {
-    if (
-      showType === "all" ||
-      !validators ||
-      !appchainValidators ||
-      !validatorSessionKeys
-    ) {
-      return validators
-    } else if (showType === "validating") {
-      return validators.filter(
-        (v) =>
+    return (validators ?? []).filter((v) => {
+      const formatedAddr = formatAppChainAddress(
+        v.validator_id_in_appchain,
+        appchain
+      ).toLowerCase()
+      if (
+        showType === "all" ||
+        !validators ||
+        !appchainValidators ||
+        !validatorSessionKeys
+      ) {
+        return true
+      } else if (showType === "validating") {
+        return (
           !v.is_unbonding &&
-          appchainValidators.some(
-            (s) => s === encodeAddress(v.validator_id_in_appchain)
-          ) &&
+          appchainValidators.some((s) => s.toLowerCase() === formatedAddr) &&
           validatorSessionKeys[v.validator_id]
-      )
-    } else if (showType === "needKeys") {
-      return validators.filter(
-        (v) =>
+        )
+      } else if (showType === "needKeys") {
+        return (
           !v.is_unbonding &&
-          appchainValidators.some(
-            (s) => s === encodeAddress(v.validator_id_in_appchain)
-          ) &&
+          appchainValidators.some((s) => s.toLowerCase() === formatedAddr) &&
           !validatorSessionKeys[v.validator_id]
-      )
-    } else if (showType === "registered") {
-      return validators.filter(
-        (v) =>
+        )
+      } else if (showType === "registered") {
+        return (
           !v.is_unbonding &&
-          !appchainValidators.some(
-            (s) => s === encodeAddress(v.validator_id_in_appchain)
-          )
-      )
-    } else if (showType === "unbonding") {
-      return validators.filter((v) => v.is_unbonding)
-    }
-  }, [validators, showType, appchainValidators, validatorSessionKeys])
+          !appchainValidators.some((s) => s.toLowerCase() === formatedAddr)
+        )
+      } else if (showType === "unbonding") {
+        return v.is_unbonding
+      }
+      return false
+    })
+  }, [validators, showType, appchainValidators, validatorSessionKeys, appchain])
 
   const sortedValidators = useMemo(() => {
     if (!sortIdx || !filteredValidators?.length) {
@@ -379,12 +377,10 @@ export const Validators: React.FC<ValidatorsProps> = ({
               />
             ))}
             {sortedValidators?.map((v, idx) => {
-              let ss58Address: string
-              try {
-                ss58Address = encodeAddress(v.validator_id_in_appchain)
-              } catch (err) {
-                ss58Address = v.validator_id_in_appchain
-              }
+              const ss58Address = formatAppChainAddress(
+                v.validator_id_in_appchain,
+                appchain
+              )
 
               const isInAppchain = !!appchainValidators?.some(
                 (s) => s.toLowerCase() === ss58Address.toLowerCase()
@@ -410,6 +406,7 @@ export const Validators: React.FC<ValidatorsProps> = ({
                       ?.index_range_of_validator_set_history?.end_index
                   }
                   showType={showType}
+                  appchain={appchain}
                 />
               )
             })}

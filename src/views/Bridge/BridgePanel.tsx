@@ -46,7 +46,6 @@ import {
   CollectibleContract,
 } from "types"
 
-import failedToLoad from "assets/failed_to_load.svg"
 import { ChevronRightIcon } from "@chakra-ui/icons"
 import { decodeAddress, isAddress } from "@polkadot/util-crypto"
 import { u8aToHex, stringToHex, isHex } from "@polkadot/util"
@@ -85,6 +84,7 @@ import {
   FAILED_TO_REDIRECT_MESSAGE,
   SIMPLE_CALL_GAS,
 } from "primitives"
+import useEthAccounts from "hooks/useEthAccounts"
 
 function toHexAddress(ss58Address: string) {
   if (isHex(ss58Address)) {
@@ -137,6 +137,8 @@ export const BridgePanel: React.FC = () => {
   const { data: bridgeConfig } = useSWR<BridgeConfig>(
     appchainId ? `bridge-config/${appchainId}` : null
   )
+
+  const isEvm = appchain?.appchain_metadata.template_type === "BarnacleEvm"
 
   const { pathname } = useLocation()
   const [amount, setAmount] = useState("")
@@ -255,10 +257,16 @@ export const BridgePanel: React.FC = () => {
     }
   }, [filteredTokens, lastTokenContractId])
 
-  const fromAccount = useMemo(
-    () => (isReverse ? global.accountId : appchainAccount?.address),
-    [isReverse, global, appchainAccount, appchainId]
-  )
+  // const ethAccounts = useEthAccounts()
+  const fromAccount = useMemo(() => {
+    if (isReverse) {
+      return global.accountId
+      // } else if (appchainId?.includes("evm")) {
+      //   return ethAccounts[0]
+    }
+
+    return appchainAccount?.address
+  }, [isReverse, global, appchainAccount])
   const initialTargetAccount = useMemo(
     () => (!isReverse ? global.accountId : appchainAccount?.address),
     [isReverse, global, appchainAccount]
@@ -395,11 +403,6 @@ export const BridgePanel: React.FC = () => {
                 ...txn,
                 status: BridgeHistoryStatus.Succeed,
               })
-              // toast({
-              //   status: 'success',
-              //   title: 'Transaction Confirmed',
-              //   position: 'top-right'
-              // });
             } else if (result?.["Error"]) {
               updateTxn(txn.appchainId, {
                 ...txn,
@@ -722,6 +725,8 @@ export const BridgePanel: React.FC = () => {
   const redeemToken = async () => {
     setIsTransferring.on()
 
+    console.log("redeemToken")
+
     const targetAccountInHex = stringToHex(targetAccount)
     const amountInU64 = DecimalUtil.toU64(
       DecimalUtil.fromString(amount),
@@ -729,6 +734,8 @@ export const BridgePanel: React.FC = () => {
         ? tokenAsset?.metadata.decimals[0]
         : tokenAsset?.metadata.decimals
     )
+
+    console.log("targetAccountInHex", targetAccountInHex)
 
     const tx: any =
       tokenAsset?.assetId === undefined
@@ -742,38 +749,45 @@ export const BridgePanel: React.FC = () => {
             amountInU64.toString()
           )
 
-    await tx
-      .signAndSend(fromAccount, ({ events = [] }: any) => {
-        events.forEach(({ event: { data, method, section } }: any) => {
-          if (
-            section === "octopusAppchain" &&
-            (method === "Locked" || method === "AssetBurned")
-          ) {
-            updateTxn(appchainId || "", {
-              isAppchainSide: true,
-              appchainId: appchainId || "",
-              hash: tx.hash.toString(),
-              sequenceId: data[method === "Locked" ? 3 : 4].toNumber(),
-              amount: amountInU64.toString(),
-              status: BridgeHistoryStatus.Pending,
-              timestamp: new Date().getTime(),
-              fromAccount: fromAccount || "",
-              toAccount: targetAccount || "",
-              tokenContractId: tokenAsset?.contractId || "",
-            })
-            setIsTransferring.off()
-            checkBalanceViaRPC?.current()
-          }
+    if (isEvm) {
+    } else {
+      await tx
+        .signAndSend(fromAccount, ({ events = [] }: any) => {
+          events.forEach(({ event: { data, method, section } }: any) => {
+            console.log("event", { data, method, section })
+
+            if (
+              section === "octopusAppchain" &&
+              (method === "Locked" || method === "AssetBurned")
+            ) {
+              updateTxn(appchainId || "", {
+                isAppchainSide: true,
+                appchainId: appchainId || "",
+                hash: tx.hash.toString(),
+                sequenceId: data[method === "Locked" ? 3 : 4].toNumber(),
+                amount: amountInU64.toString(),
+                status: BridgeHistoryStatus.Pending,
+                timestamp: new Date().getTime(),
+                fromAccount: fromAccount || "",
+                toAccount: targetAccount || "",
+                tokenContractId: tokenAsset?.contractId || "",
+              })
+              setIsTransferring.off()
+              checkBalanceViaRPC?.current()
+            }
+          })
         })
-      })
-      .catch((err: any) => {
-        toast({
-          position: "top-right",
-          description: err.toString(),
-          status: "error",
+        .catch((err: any) => {
+          console.log("err", err)
+
+          toast({
+            position: "top-right",
+            description: err.toString(),
+            status: "error",
+          })
+          setIsTransferring.off()
         })
-        setIsTransferring.off()
-      })
+    }
   }
 
   const redeemCollectible = async () => {
@@ -815,9 +829,15 @@ export const BridgePanel: React.FC = () => {
   }
 
   const onRedeem = async () => {
-    await web3Enable("Octopus Network")
-    const injected = await web3FromSource(appchainAccount?.meta.source || "")
-    appchainApi?.setSigner(injected.signer)
+    console.log("onRedeem", appchainAccount?.meta.source)
+
+    // eth
+    if (isEvm) {
+    } else {
+      await web3Enable("Octopus Network")
+      const injected = await web3FromSource(appchainAccount?.meta.source || "")
+      appchainApi?.setSigner(injected.signer)
+    }
 
     if (!collectible) {
       redeemToken()
@@ -973,7 +993,25 @@ export const BridgePanel: React.FC = () => {
                   ) : (
                     <Button
                       colorScheme="octo-blue"
-                      onClick={setSelectAccountModalOpen.on}
+                      onClick={async () => {
+                        // eth
+                        if (isEvm) {
+                          if (typeof window.ethereum !== "undefined") {
+                            console.log("MetaMask is installed!")
+                            window.ethereum
+                              .request({
+                                method: "eth_requestAccounts",
+                              })
+                              .then((res: any) => {
+                                console.log("res", res)
+                              })
+                              .catch(console.error)
+                          }
+                        } else {
+                          // polkadot
+                          setSelectAccountModalOpen.on()
+                        }
+                      }}
                       size="sm"
                     >
                       Connect

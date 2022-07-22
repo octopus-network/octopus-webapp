@@ -236,7 +236,7 @@ export const Appchain: React.FC = () => {
         .erasRewardPoints(eraJSON.index)
         .then((points) => {
           const pointsJSON: any = points.toJSON()
-          console.log(pointsJSON)
+          console.log("pointsJSON", pointsJSON)
         })
     })
   }, [appchainApi])
@@ -305,6 +305,8 @@ export const Appchain: React.FC = () => {
         })
       })
   }
+
+  console.log("appchain", appchain)
 
   return (
     <>

@@ -51,8 +51,6 @@ import { BiDoorOpen, BiLogOut } from "react-icons/bi"
 import { Empty, Alert } from "components"
 import { AiOutlineCloseCircle } from "react-icons/ai"
 import { StateBadge, LoginButton } from "components"
-import { encodeAddress } from "@polkadot/util-crypto"
-import Identicon from "@polkadot/react-identicon"
 
 import { DelegatorsTable } from "./DelegatorsTable"
 import { StakingPopover } from "../StakingPopover"
@@ -62,6 +60,8 @@ import { useGlobalStore } from "stores"
 import { DecimalUtil, toShortAddress, ZERO_DECIMAL } from "utils"
 
 import octoAvatar from "assets/icons/avatar.png"
+import { formatAppChainAddress } from "utils/format"
+import OctIdenticon from "components/common/OctIdenticon"
 
 type ValidatorProfileProps = {
   wrappedAppchainTokenContract?: TokenContract
@@ -176,21 +176,10 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
       })
   }, [validator])
 
-  const ss58Address = useMemo(() => {
-    let address = "loading"
-
-    if (!validator) {
-      return address
-    }
-
-    try {
-      address = encodeAddress(validator.validator_id_in_appchain)
-    } catch (err) {
-      address = validator.validator_id_in_appchain
-    }
-
-    return address
-  }, [validator])
+  const ss58Address = formatAppChainAddress(
+    validator?.validator_id_in_appchain,
+    appchain
+  )
 
   const { hasCopied: hasSS58AddressCopied, onCopy: onSS58AddressCopy } =
     useClipboard(ss58Address)
@@ -314,7 +303,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
             <Skeleton isLoaded={validatorState !== "Unknown"}>
               <Flex justifyContent="space-between" alignItems="center">
                 <HStack maxW="calc(100% - 120px)">
-                  <Identicon size={32} value={ss58Address} />
+                  <OctIdenticon size={32} value={ss58Address} />
                   <Heading
                     whiteSpace="nowrap"
                     overflow="hidden"

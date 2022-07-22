@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from "react"
 
 import {
   Input,
@@ -17,21 +17,21 @@ import {
   useToast,
   useBoolean,
   Button,
-} from '@chakra-ui/react'
+} from "@chakra-ui/react"
 
-import type { ApiPromise } from '@polkadot/api'
-import { isHex } from '@polkadot/util'
-import { ChevronRightIcon } from '@chakra-ui/icons'
-import type { InjectedAccountWithMeta } from '@polkadot/extension-inject/types'
+import type { ApiPromise } from "@polkadot/api"
+import { isHex } from "@polkadot/util"
+import { ChevronRightIcon } from "@chakra-ui/icons"
+import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types"
 import {
   web3FromSource,
   web3Enable,
   web3Accounts,
-} from '@polkadot/extension-dapp'
-import Identicon from '@polkadot/react-identicon'
-import { Empty } from 'components'
+} from "@polkadot/extension-dapp"
+import { Empty } from "components"
 
-import { BaseModal } from 'components'
+import { BaseModal } from "components"
+import OctIdenticon from "components/common/OctIdenticon"
 
 type SetSessionKeyModalProps = {
   isOpen: boolean
@@ -46,11 +46,11 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
 }) => {
   const toast = useToast()
 
-  const bg = useColorModeValue('#f6f7fa', '#15172c')
+  const bg = useColorModeValue("#f6f7fa", "#15172c")
   const [currentAccount, setCurrentAccount] =
     useState<InjectedAccountWithMeta>()
   const [accounts, setAccounts] = useState<InjectedAccountWithMeta[]>()
-  const [key, setKey] = useState('')
+  const [key, setKey] = useState("")
   const [isSubmitting, setIsSubmitting] = useBoolean(false)
 
   const [isInAccountsPage, setIsInAccountsPage] = useBoolean()
@@ -63,7 +63,7 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      web3Enable('Octopus Network').then((res) => {
+      web3Enable("Octopus Network").then((res) => {
         web3Accounts().then((accounts) => {
           setAccounts(accounts)
           if (accounts.length) {
@@ -83,16 +83,16 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
     if (isHex(key) && key.length === 324) {
       setKey(key)
     } else {
-      setKey('')
+      setKey("")
     }
   }
 
   const onSubmit = async () => {
     setIsSubmitting.on()
-    const injected = await web3FromSource(currentAccount?.meta.source || '')
+    const injected = await web3FromSource(currentAccount?.meta.source || "")
     appchainApi?.setSigner(injected.signer)
 
-    const tx = appchainApi?.tx.session.setKeys(key, '0x00')
+    const tx = appchainApi?.tx.session.setKeys(key, "0x00")
     if (!tx) {
       setIsSubmitting.off()
       return
@@ -103,9 +103,9 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
         .signAndSend(currentAccount?.address as any, (res: any) => {
           if (res.isInBlock) {
             toast({
-              title: 'Set session keys success',
-              status: 'success',
-              position: 'top-right',
+              title: "Set session keys success",
+              status: "success",
+              position: "top-right",
             })
 
             setTimeout(() => {
@@ -121,8 +121,8 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
       setIsSubmitting.off()
       toast({
         title: err.toString(),
-        status: 'error',
-        position: 'top-right',
+        status: "error",
+        position: "top-right",
       })
     }
   }
@@ -131,7 +131,7 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
-      title={isInAccountsPage ? 'Choose Account' : 'Set Session Key'}
+      title={isInAccountsPage ? "Choose Account" : "Set Session Key"}
       maxW="520px"
     >
       {isInAccountsPage ? (
@@ -150,10 +150,10 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
                   onClick={() => onChooseAccount(account)}
                 >
                   <HStack w="calc(100% - 100px)">
-                    <Identicon value={account.address} size={32} />
+                    <OctIdenticon value={account.address} size={32} />
                     <VStack spacing={0} alignItems="flex-start" w="100%">
                       <Heading fontSize="md">
-                        {account.meta?.name || 'No Name'}
+                        {account.meta?.name || "No Name"}
                       </Heading>
                       <Text
                         variant="gray"
@@ -189,10 +189,10 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
               ) : (
                 <>
                   <HStack w="calc(100% - 100px)">
-                    <Identicon value={currentAccount.address} size={40} />
+                    <OctIdenticon value={currentAccount.address} size={40} />
                     <VStack spacing={1} alignItems="flex-start" w="100%">
                       <Heading fontSize="lg">
-                        {currentAccount.meta?.name || 'No Name'}
+                        {currentAccount.meta?.name || "No Name"}
                       </Heading>
                       <Text
                         variant="gray"
