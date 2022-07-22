@@ -8,7 +8,8 @@ export const formatAppChainAddress = (
   if (!addr || !appchain) {
     return ""
   }
-  if (appchain.appchain_metadata.template_type === "BarnacleEvm") {
+
+  if (appchain?.appchain_metadata?.template_type === "BarnacleEvm") {
     return addr
   }
   try {
