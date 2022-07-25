@@ -306,8 +306,6 @@ export const Appchain: React.FC = () => {
       })
   }
 
-  console.log("appchain", appchain)
-
   return (
     <>
       <Container>
@@ -391,6 +389,7 @@ export const Appchain: React.FC = () => {
 
             <Box mt={5}>
               <MyNode
+                appchain={appchain}
                 appchainId={id}
                 needKeys={needKeys}
                 appchainApi={appchainApi}

@@ -31,25 +31,28 @@ import {
 import { Empty } from "components"
 
 import { BaseModal } from "components"
-import OctIdenticon from "components/common/OctIdenticon"
+import { AppchainInfo } from "types"
+import AccountItem from "components/common/AccountItem"
+import detectEthereumProvider from "@metamask/detect-provider"
+import useAccounts from "hooks/useAccounts"
 
 type SetSessionKeyModalProps = {
   isOpen: boolean
   onClose: () => void
-  appchainApi: ApiPromise | undefined
+  appchainApi?: ApiPromise
+  appchain?: AppchainInfo
 }
 
 export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
   isOpen,
   onClose,
   appchainApi,
+  appchain,
 }) => {
   const toast = useToast()
 
   const bg = useColorModeValue("#f6f7fa", "#15172c")
-  const [currentAccount, setCurrentAccount] =
-    useState<InjectedAccountWithMeta>()
-  const [accounts, setAccounts] = useState<InjectedAccountWithMeta[]>()
+
   const [key, setKey] = useState("")
   const [isSubmitting, setIsSubmitting] = useBoolean(false)
 
@@ -61,18 +64,11 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
     }
   }, [isOpen])
 
-  useEffect(() => {
-    if (isOpen) {
-      web3Enable("Octopus Network").then((res) => {
-        web3Accounts().then((accounts) => {
-          setAccounts(accounts)
-          if (accounts.length) {
-            setCurrentAccount(accounts[0])
-          }
-        })
-      })
-    }
-  }, [isOpen])
+  const isEvm = appchain?.appchain_metadata.template_type === "BarnacleEvm"
+  const { accounts, currentAccount, setCurrentAccount } = useAccounts(
+    isEvm,
+    isOpen
+  )
 
   const onChooseAccount = (account: InjectedAccountWithMeta) => {
     setCurrentAccount(account)
@@ -127,6 +123,21 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
     }
   }
 
+  const onConnect = async () => {
+    if (!isEvm) {
+      return
+    }
+
+    try {
+      const provider = await detectEthereumProvider({ mustBeMetaMask: true })
+      await (provider as any)?.request({
+        method: "eth_requestAccounts",
+      })
+    } catch (error) {
+      console.log("error", error)
+    }
+  }
+
   return (
     <BaseModal
       isOpen={isOpen}
@@ -149,24 +160,7 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
                   cursor="pointer"
                   onClick={() => onChooseAccount(account)}
                 >
-                  <HStack w="calc(100% - 100px)">
-                    <OctIdenticon value={account.address} size={32} />
-                    <VStack spacing={0} alignItems="flex-start" w="100%">
-                      <Heading fontSize="md">
-                        {account.meta?.name || "No Name"}
-                      </Heading>
-                      <Text
-                        variant="gray"
-                        fontSize="xs"
-                        w="100%"
-                        whiteSpace="nowrap"
-                        overflow="hidden"
-                        textOverflow="ellipsis"
-                      >
-                        {account.address}
-                      </Text>
-                    </VStack>
-                  </HStack>
+                  <AccountItem account={account} />
                 </Box>
               ))}
             </List>
@@ -182,31 +176,22 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
               cursor="pointer"
               justifyContent="space-between"
               alignItems="center"
-              onClick={setIsInAccountsPage.on}
+              onClick={() => {
+                if (isEvm && !currentAccount) {
+                  onConnect()
+                } else {
+                  setIsInAccountsPage.on()
+                }
+              }}
             >
               {!currentAccount ? (
-                <Text variant="gray">Please Install Wallet Extension</Text>
+                <Text variant="gray">
+                  {isEvm
+                    ? "Please Connect Wallet"
+                    : "Please Install Wallet Extension"}
+                </Text>
               ) : (
-                <>
-                  <HStack w="calc(100% - 100px)">
-                    <OctIdenticon value={currentAccount.address} size={40} />
-                    <VStack spacing={1} alignItems="flex-start" w="100%">
-                      <Heading fontSize="lg">
-                        {currentAccount.meta?.name || "No Name"}
-                      </Heading>
-                      <Text
-                        variant="gray"
-                        fontSize="sm"
-                        w="100%"
-                        whiteSpace="nowrap"
-                        overflow="hidden"
-                        textOverflow="ellipsis"
-                      >
-                        {currentAccount.address}
-                      </Text>
-                    </VStack>
-                  </HStack>
-                </>
+                <AccountItem account={currentAccount} />
               )}
               <Icon as={ChevronRightIcon} boxSize={6} />
             </Flex>

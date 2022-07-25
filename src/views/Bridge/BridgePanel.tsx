@@ -4,6 +4,7 @@ import BN from "bn.js"
 import { ApiPromise, WsProvider } from "@polkadot/api"
 import { PulseLoader } from "react-spinners"
 import { Account, keyStores, Near } from "near-api-js"
+import web3 from "web3"
 
 import {
   Box,
@@ -54,7 +55,6 @@ import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types"
 import {
   web3FromSource,
   web3Enable,
-  web3Accounts as extensionWeb3Accounts,
   isWeb3Injected,
 } from "@polkadot/extension-dapp"
 
@@ -84,7 +84,7 @@ import {
   FAILED_TO_REDIRECT_MESSAGE,
   SIMPLE_CALL_GAS,
 } from "primitives"
-import useEthAccounts from "hooks/useEthAccounts"
+import useAccounts from "hooks/useAccounts"
 
 function toHexAddress(ss58Address: string) {
   if (isHex(ss58Address)) {
@@ -156,9 +156,10 @@ export const BridgePanel: React.FC = () => {
     [isReverse, appchainId]
   )
 
-  const [appchainAccount, setAppchainAccount] =
-    useState<InjectedAccountWithMeta>()
-  const [web3Accounts, setWeb3Accounts] = useState<InjectedAccountWithMeta[]>()
+  const { accounts, currentAccount, setCurrentAccount } = useAccounts(
+    isEvm,
+    isEvm
+  )
 
   const [targetAccount, setTargetAccount] = useState("")
   const [tokenAsset, setTokenAsset] = useState<TokenAsset>()
@@ -192,17 +193,6 @@ export const BridgePanel: React.FC = () => {
             .includes(global?.accountId))
     )
   }, [tokens, bridgeConfig, global])
-
-  useEffect(() => {
-    web3Enable("Octopus Network").then((res) => {
-      extensionWeb3Accounts().then((accounts) => {
-        setWeb3Accounts(accounts)
-        if (accounts.length) {
-          setAppchainAccount(accounts[0])
-        }
-      })
-    })
-  }, [isWeb3Injected])
 
   useEffect(() => {
     if (isHistoryDrawerOpen) {
@@ -257,7 +247,6 @@ export const BridgePanel: React.FC = () => {
     }
   }, [filteredTokens, lastTokenContractId])
 
-  // const ethAccounts = useEthAccounts()
   const fromAccount = useMemo(() => {
     if (isReverse) {
       return global.accountId
@@ -265,11 +254,11 @@ export const BridgePanel: React.FC = () => {
       //   return ethAccounts[0]
     }
 
-    return appchainAccount?.address
-  }, [isReverse, global, appchainAccount])
+    return currentAccount?.address
+  }, [isReverse, global, currentAccount])
   const initialTargetAccount = useMemo(
-    () => (!isReverse ? global.accountId : appchainAccount?.address),
-    [isReverse, global, appchainAccount]
+    () => (!isReverse ? global.accountId : currentAccount?.address),
+    [isReverse, global, currentAccount]
   )
 
   const appchainTxns = useMemo(
@@ -340,7 +329,12 @@ export const BridgePanel: React.FC = () => {
     if (!appchainApi || !debouncedTargetAccount) {
       return
     }
-    if (isHex(debouncedTargetAccount) || !isAddress(debouncedTargetAccount)) {
+    if (
+      (!isEvm &&
+        (isHex(debouncedTargetAccount) ||
+          !isAddress(debouncedTargetAccount))) ||
+      (isEvm && web3.utils.isAddress(debouncedTargetAccount))
+    ) {
       setIsInvalidTargetAccount.on()
       return
     }
@@ -589,7 +583,7 @@ export const BridgePanel: React.FC = () => {
   }
 
   const onSelectAccount = (account: InjectedAccountWithMeta) => {
-    setAppchainAccount(account)
+    setCurrentAccount(account)
     setSelectAccountModalOpen.off()
   }
 
@@ -829,13 +823,13 @@ export const BridgePanel: React.FC = () => {
   }
 
   const onRedeem = async () => {
-    console.log("onRedeem", appchainAccount?.meta.source)
+    console.log("onRedeem", currentAccount?.meta.source)
 
     // eth
     if (isEvm) {
     } else {
       await web3Enable("Octopus Network")
-      const injected = await web3FromSource(appchainAccount?.meta.source || "")
+      const injected = await web3FromSource(currentAccount?.meta.source || "")
       appchainApi?.setSigner(injected.signer)
     }
 
@@ -852,11 +846,11 @@ export const BridgePanel: React.FC = () => {
 
   const onDepositStorage = async () => {
     if (isReverse) {
-      if (!appchainApi || !appchainAccount) {
+      if (!appchainApi || !currentAccount) {
         return
       }
       await web3Enable("Octopus Network")
-      const injected = await web3FromSource(appchainAccount.meta.source || "")
+      const injected = await web3FromSource(currentAccount.meta.source || "")
       appchainApi.setSigner(injected.signer)
 
       setIsDepositingStorage.on()
@@ -869,7 +863,7 @@ export const BridgePanel: React.FC = () => {
         ).toString()
       )
 
-      tx.signAndSend(appchainAccount.address, (res) => {
+      tx.signAndSend(currentAccount.address, (res) => {
         if (res.isInBlock) {
           setIsDepositingStorage.off()
           setTargetAccountNeedDepositStorage.off()
@@ -1280,7 +1274,7 @@ export const BridgePanel: React.FC = () => {
       <SelectWeb3AccountModal
         isOpen={selectAccountModalOpen}
         onClose={setSelectAccountModalOpen.off}
-        accounts={web3Accounts}
+        accounts={accounts}
         onChooseAccount={onSelectAccount}
         selectedAccount={fromAccount}
       />

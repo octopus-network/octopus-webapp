@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
-import axios from 'axios'
-import useSWR from 'swr'
+import React, { useState, useEffect } from "react"
+import axios from "axios"
+import useSWR from "swr"
 
 import {
   Box,
@@ -27,7 +27,7 @@ import {
   useColorModeValue,
   useBoolean,
   Skeleton,
-} from '@chakra-ui/react'
+} from "@chakra-ui/react"
 
 import {
   DownloadIcon,
@@ -35,57 +35,61 @@ import {
   CheckIcon,
   CopyIcon,
   RepeatIcon,
-} from '@chakra-ui/icons'
+} from "@chakra-ui/icons"
 
-import { CloseIcon } from '@chakra-ui/icons'
-import { BsFillTerminalFill } from 'react-icons/bs'
-import { HiUpload } from 'react-icons/hi'
-import { TiKey } from 'react-icons/ti'
-import { BsThreeDots } from 'react-icons/bs'
-import { API_HOST } from 'config'
-import { Alert } from 'components'
-import { useGlobalStore } from 'stores'
-import { SetSessionKeyModal } from './SetSessionKeyModal'
-import type { ApiPromise } from '@polkadot/api'
-import { FcGoogle } from 'react-icons/fc'
+import { CloseIcon } from "@chakra-ui/icons"
+import { BsFillTerminalFill } from "react-icons/bs"
+import { HiUpload } from "react-icons/hi"
+import { TiKey } from "react-icons/ti"
+import { BsThreeDots } from "react-icons/bs"
+import { API_HOST } from "config"
+import { Alert } from "components"
+import { useGlobalStore } from "stores"
+import { SetSessionKeyModal } from "./SetSessionKeyModal"
+import type { ApiPromise } from "@polkadot/api"
+import { FcGoogle } from "react-icons/fc"
 
-import { InstanceInfoModal } from './InstanceInfoModal'
+import { InstanceInfoModal } from "./InstanceInfoModal"
+import { AppchainInfo } from "types"
 
 type MyNodeProps = {
   appchainId: string | undefined
   appchainApi: ApiPromise | undefined
   needKeys: boolean
+  appchain?: AppchainInfo
 }
 
 const cloudVendorInLocalStorage =
-  window.localStorage.getItem('OCTOPUS_DEPLOYER_CLOUD_VENDOR') || ''
+  window.localStorage.getItem("OCTOPUS_DEPLOYER_CLOUD_VENDOR") || ""
 const accessKeyInLocalStorage =
-  window.localStorage.getItem('OCTOPUS_DEPLOYER_ACCESS_KEY') ||
-  window.localStorage.getItem('accessKey') ||
-  ''
+  window.localStorage.getItem("OCTOPUS_DEPLOYER_ACCESS_KEY") ||
+  window.localStorage.getItem("accessKey") ||
+  ""
 
 const statesRecord: any = {
-  '0': { label: 'Init', color: 'blue', state: 0 },
-  '10': { label: 'Applying', color: 'teal', state: 10 },
-  '11': { label: 'Apply Failed', color: 'red', state: 11 },
-  '12': { label: 'Running', color: 'octo-blue', state: 12 },
-  '20': { label: 'Destroying', color: 'teal', state: 20 },
-  '21': { label: 'Destroy Failed', color: 'orange', state: 21 },
-  '22': { label: 'Destroyed', color: 'gray', state: 22 },
-  '30': { label: 'Upgrading', color: 'green', state: 30 },
+  "0": { label: "Init", color: "blue", state: 0 },
+  "10": { label: "Applying", color: "teal", state: 10 },
+  "11": { label: "Apply Failed", color: "red", state: 11 },
+  "12": { label: "Running", color: "octo-blue", state: 12 },
+  "20": { label: "Destroying", color: "teal", state: 20 },
+  "21": { label: "Destroy Failed", color: "orange", state: 21 },
+  "22": { label: "Destroyed", color: "gray", state: 22 },
+  "30": { label: "Upgrading", color: "green", state: 30 },
 }
 
-const OAUTH_SCOPE = 'https://www.googleapis.com/auth/cloud-platform.read-only https://www.googleapis.com/auth/compute'
+const OAUTH_SCOPE =
+  "https://www.googleapis.com/auth/cloud-platform.read-only https://www.googleapis.com/auth/compute"
 
 export const MyNode: React.FC<MyNodeProps> = ({
   appchainId,
   needKeys,
   appchainApi,
+  appchain,
 }) => {
-  const bg = useColorModeValue('white', '#15172c')
+  const bg = useColorModeValue("white", "#15172c")
 
   const [cloudVendor, setCloudVendor] = useState<string>(
-    cloudVendorInLocalStorage || 'AWS'
+    cloudVendorInLocalStorage || "AWS"
   )
   const [accessKey, setAccessKey] = useState<string>(accessKeyInLocalStorage)
   const [node, setNode] = useState<any>()
@@ -111,56 +115,59 @@ export const MyNode: React.FC<MyNodeProps> = ({
   const [authClient, setAuthClient] = useState<any>()
   const [projects, setProjects] = useState<any[]>()
   const [projectId, setProjectId] = useState<string>()
-  const [deployRegion, setDeployRegion] = useState<string>('')
+  const [deployRegion, setDeployRegion] = useState<string>("")
 
-  const [inputAccessKey, setInputAccessKey] = useState('')
+  const [inputAccessKey, setInputAccessKey] = useState("")
 
-  const inputBg = useColorModeValue('#f5f7fa', 'whiteAlpha.100')
+  const inputBg = useColorModeValue("#f5f7fa", "whiteAlpha.100")
 
-  const { data: deployConfig } = useSWR('deploy-config')
+  const { data: deployConfig } = useSWR("deploy-config")
 
   const { global } = useGlobalStore()
   const { hasCopied: hasInstanceCopied, onCopy: onCopyInstance } = useClipboard(
-    node?.instance ? `${node.instance.user}@${node.instance.ip}` : ''
+    node?.instance ? `${node.instance.user}@${node.instance.ip}` : ""
   )
 
   const { hasCopied: hasNodeIdCopied, onCopy: onCopyNodeId } = useClipboard(
-    node?.uuid || ''
+    node?.uuid || ""
   )
 
   useEffect(() => {
-    window.gapi.load('client', () => {
-      window.gapi.client.init({
-        'apiKey': 'AIzaSyCXBs_7uR9X7wNIWgNuD5D7nvTniKsfjGU',
-        'clientId': '398338012986-f9ge03gubuvksee6rsmtorrpgtrsppf2.apps.googleusercontent.com',
-        'scope': OAUTH_SCOPE,
-        'discoveryDocs': [
-          'https://www.googleapis.com/discovery/v1/apis/compute/v1/rest',
-          'https://cloudresourcemanager.googleapis.com/$discovery/rest?version=v1'
-        ]
-      }).then(() => {
-        const client = window.gapi.auth2.getAuthInstance();
-        setAuthClient(client);
-      });
-    });
-  }, []);
- 
+    window.gapi.load("client", () => {
+      window.gapi.client
+        .init({
+          apiKey: "AIzaSyCXBs_7uR9X7wNIWgNuD5D7nvTniKsfjGU",
+          clientId:
+            "398338012986-f9ge03gubuvksee6rsmtorrpgtrsppf2.apps.googleusercontent.com",
+          scope: OAUTH_SCOPE,
+          discoveryDocs: [
+            "https://www.googleapis.com/discovery/v1/apis/compute/v1/rest",
+            "https://cloudresourcemanager.googleapis.com/$discovery/rest?version=v1",
+          ],
+        })
+        .then(() => {
+          const client = window.gapi.auth2.getAuthInstance()
+          setAuthClient(client)
+        })
+    })
+  }, [])
+
   useEffect(() => {
     if (!authClient) {
-      return;
+      return
     }
 
     const checkStatus = () => {
       const user = authClient.currentUser.get()
-     
+
       const authorized = user.hasGrantedScopes(OAUTH_SCOPE)
       setIsAuthorized(authorized)
       if (authorized) {
         setOAuthUser(user)
 
         const request = window.gapi.client.request({
-          'method': 'GET',
-          'path': 'https://cloudresourcemanager.googleapis.com/v1/projects'
+          method: "GET",
+          path: "https://cloudresourcemanager.googleapis.com/v1/projects",
         })
 
         request.execute((res: any) => {
@@ -175,7 +182,6 @@ export const MyNode: React.FC<MyNodeProps> = ({
     }
 
     authClient.isSignedIn.listen(checkStatus)
-    
   }, [authClient])
 
   useEffect(() => {
@@ -208,7 +214,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
       return
     }
 
-    if (global.accountId && node?.state === '12') {
+    if (global.accountId && node?.state === "12") {
       axios
         .get(
           `
@@ -235,13 +241,15 @@ export const MyNode: React.FC<MyNodeProps> = ({
   }, [node, deployConfig, appchainId, global])
 
   const onNextStep = () => {
-    
     setIsLoadingNode.on()
- 
-    const key = cloudVendor === 'AWS' ? inputAccessKey : oauthUser.getBasicProfile().getEmail()
 
-    window.localStorage.setItem('OCTOPUS_DEPLOYER_CLOUD_VENDOR', cloudVendor)
-    window.localStorage.setItem('OCTOPUS_DEPLOYER_ACCESS_KEY', key)
+    const key =
+      cloudVendor === "AWS"
+        ? inputAccessKey
+        : oauthUser.getBasicProfile().getEmail()
+
+    window.localStorage.setItem("OCTOPUS_DEPLOYER_CLOUD_VENDOR", cloudVendor)
+    window.localStorage.setItem("OCTOPUS_DEPLOYER_ACCESS_KEY", key)
 
     axios
       .get(
@@ -260,17 +268,14 @@ export const MyNode: React.FC<MyNodeProps> = ({
   const onDeploy = () => {
     setIsDeploying.on()
     axios
-      .post(
-        `${API_HOST}/deploy-node`,
-        {
-          appchain: appchainId,
-          cloudVendor,
-          accessKey,
-          accountId: global.accountId,
-          region: deployRegion,
-          project: projectId
-        }
-      )
+      .post(`${API_HOST}/deploy-node`, {
+        appchain: appchainId,
+        cloudVendor,
+        accessKey,
+        accountId: global.accountId,
+        region: deployRegion,
+        project: projectId,
+      })
       .then((res) => res.data)
       .then((res) => {
         if (res) {
@@ -297,22 +302,21 @@ export const MyNode: React.FC<MyNodeProps> = ({
   }
 
   const onClearCache = () => {
-    window.localStorage.removeItem('OCTOPUS_DEPLOYER_CLOUD_VENDOR')
-    window.localStorage.removeItem('OCTOPUS_DEPLOYER_ACCESS_KEY')
-    window.localStorage.removeItem('accessKey')
+    window.localStorage.removeItem("OCTOPUS_DEPLOYER_CLOUD_VENDOR")
+    window.localStorage.removeItem("OCTOPUS_DEPLOYER_ACCESS_KEY")
+    window.localStorage.removeItem("accessKey")
     window.location.reload()
   }
 
   const onApplyNode = () => {
+    let secretKey
 
-    let secretKey;
-
-    if (cloudVendor === 'AWS') {
+    if (cloudVendor === "AWS") {
       secretKey = window.prompt(
-        'Please enter the secret key of your server',
-        ''
+        "Please enter the secret key of your server",
+        ""
       )
-  
+
       if (!secretKey) {
         return
       }
@@ -320,13 +324,13 @@ export const MyNode: React.FC<MyNodeProps> = ({
       const { access_token } = oauthUser.getAuthResponse()
       secretKey = access_token
     }
-    
+
     setIsApplying.on()
     axios
       .put(
         `${deployConfig.deployApiHost}/tasks/${node?.uuid}`,
         {
-          action: 'apply',
+          action: "apply",
           secret_key: secretKey,
         },
         {
@@ -343,14 +347,14 @@ export const MyNode: React.FC<MyNodeProps> = ({
       return
     }
 
-    let secretKey;
+    let secretKey
 
-    if (cloudVendor === 'AWS') {
+    if (cloudVendor === "AWS") {
       secretKey = window.prompt(
-        'Please enter the secret key of your server',
-        ''
+        "Please enter the secret key of your server",
+        ""
       )
-  
+
       if (!secretKey) {
         return
       }
@@ -364,7 +368,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
       .put(
         `${deployConfig.deployApiHost}/tasks/${node?.uuid}`,
         {
-          action: 'update',
+          action: "update",
           secret_key: secretKey,
           base_image: deployConfig.baseImages[appchainId]?.image,
         },
@@ -378,14 +382,14 @@ export const MyNode: React.FC<MyNodeProps> = ({
   }
 
   const onDestroyNode = () => {
-    let secretKey;
+    let secretKey
 
-    if (cloudVendor === 'AWS') {
+    if (cloudVendor === "AWS") {
       secretKey = window.prompt(
-        'Please enter the secret key of your server',
-        ''
+        "Please enter the secret key of your server",
+        ""
       )
-  
+
       if (!secretKey) {
         return
       }
@@ -399,7 +403,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
       .put(
         `${deployConfig.deployApiHost}/tasks/${node?.uuid}`,
         {
-          action: 'destroy',
+          action: "destroy",
           secret_key: secretKey,
         },
         {
@@ -423,7 +427,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
   }
 
   const onOAuth = () => {
-    authClient?.signIn();
+    authClient?.signIn()
   }
 
   return (
@@ -584,12 +588,12 @@ export const MyNode: React.FC<MyNodeProps> = ({
                     </IconButton>
                   </HStack>
                 ) : (
-                  '-'
+                  "-"
                 )}
               </Flex>
             </List>
             <Box mt={3}>
-              {node?.state === '0' ? (
+              {node?.state === "0" ? (
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                   <Button
                     colorScheme="octo-blue"
@@ -607,7 +611,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
                     <Icon as={DeleteIcon} mr={2} boxSize={3} /> Delete
                   </Button>
                 </SimpleGrid>
-              ) : node?.state === '10' || node?.state === '20' ? (
+              ) : node?.state === "10" || node?.state === "20" ? (
                 <SimpleGrid columns={1}>
                   <Button
                     onClick={onRefresh}
@@ -617,7 +621,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
                     <RepeatIcon mr={1} /> Refresh
                   </Button>
                 </SimpleGrid>
-              ) : node?.state === '11' || node?.state === '21' ? (
+              ) : node?.state === "11" || node?.state === "21" ? (
                 <SimpleGrid columns={1}>
                   <Button
                     colorScheme="red"
@@ -628,7 +632,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
                     <Icon as={DeleteIcon} mr={2} boxSize={3} /> Destroy
                   </Button>
                 </SimpleGrid>
-              ) : node?.state === '12' ? (
+              ) : node?.state === "12" ? (
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                   <Button as={Link} isExternal href={node.instance.ssh_key}>
                     <Icon as={DownloadIcon} mr={2} boxSize={3} /> RSA
@@ -642,7 +646,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
                     <Icon as={DeleteIcon} mr={2} boxSize={3} /> Destroy
                   </Button>
                 </SimpleGrid>
-              ) : node?.state === '22' ? (
+              ) : node?.state === "22" ? (
                 <SimpleGrid columns={1}>
                   <Button
                     onClick={onDeleteNode}
@@ -652,7 +656,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
                     <Icon as={DeleteIcon} mr={2} boxSize={3} /> Delete
                   </Button>
                 </SimpleGrid>
-              ) : node?.state === '30' ? (
+              ) : node?.state === "30" ? (
                 <SimpleGrid columns={1}>
                   <Button as={Link} isExternal href={node.instance.ssh_key}>
                     <Icon as={DownloadIcon} mr={2} boxSize={3} /> RSA
@@ -664,9 +668,14 @@ export const MyNode: React.FC<MyNodeProps> = ({
         ) : accessKey ? (
           <>
             <Flex minH="120px" justifyContent="center" flexDirection="column">
-              {
-                cloudVendor === 'GCP' ?
-                <Flex bg={inputBg} p={1} borderRadius="lg" alignItems="center" mb={2}>
+              {cloudVendor === "GCP" ? (
+                <Flex
+                  bg={inputBg}
+                  p={1}
+                  borderRadius="lg"
+                  alignItems="center"
+                  mb={2}
+                >
                   <Box p={2}>
                     <Text variant="gray">Projects</Text>
                   </Box>
@@ -679,14 +688,17 @@ export const MyNode: React.FC<MyNodeProps> = ({
                       textAlign="right"
                     >
                       {projects?.map((project: any, idx: number) => (
-                        <option value={project.projectId} key={`project-${idx}`}>
+                        <option
+                          value={project.projectId}
+                          key={`project-${idx}`}
+                        >
                           {project.name}
                         </option>
                       ))}
                     </Select>
                   </Box>
-                </Flex> : null
-              }
+                </Flex>
+              ) : null}
               <Flex bg={inputBg} p={1} borderRadius="lg" alignItems="center">
                 <Box p={2}>
                   <Text variant="gray">Deploy region</Text>
@@ -713,7 +725,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
               width="100%"
               onClick={onDeploy}
               isLoading={isDeploying}
-              isDisabled={isDeploying || (cloudVendor === 'GCP' && !projectId)}
+              isDisabled={isDeploying || (cloudVendor === "GCP" && !projectId)}
             >
               Deploy
             </Button>
@@ -734,36 +746,50 @@ export const MyNode: React.FC<MyNodeProps> = ({
                   </Select>
                 </Box>
                 <Flex flex={1} alignItems="center">
-                  {
-                    cloudVendor === 'AWS' ?
+                  {cloudVendor === "AWS" ? (
                     <Input
                       variant="unstyled"
                       placeholder="Access Key"
                       w="100%"
                       p={2}
                       onChange={(e) => setInputAccessKey(e.target.value)}
-                    /> :
-                    isAuthorized ?
+                    />
+                  ) : isAuthorized ? (
                     <HStack>
-                      <Heading fontSize="md">{oauthUser?.getBasicProfile()?.getEmail()}</Heading>
-                      <IconButton size="xs" aria-label="logout" isRound onClick={authClient?.signOut} 
-                        disabled={!authClient} icon={<CloseIcon boxSize="10px" />} />
-                    </HStack> :
-                    <Button size="sm" onClick={onOAuth} disabled={!authClient} variant="ghost" colorScheme="octo-blue">
+                      <Heading fontSize="md">
+                        {oauthUser?.getBasicProfile()?.getEmail()}
+                      </Heading>
+                      <IconButton
+                        size="xs"
+                        aria-label="logout"
+                        isRound
+                        onClick={authClient?.signOut}
+                        disabled={!authClient}
+                        icon={<CloseIcon boxSize="10px" />}
+                      />
+                    </HStack>
+                  ) : (
+                    <Button
+                      size="sm"
+                      onClick={onOAuth}
+                      disabled={!authClient}
+                      variant="ghost"
+                      colorScheme="octo-blue"
+                    >
                       <Icon as={FcGoogle} mr={1} /> Sign in with Google
                     </Button>
-                  }
+                  )}
                 </Flex>
               </Flex>
             </Flex>
             <Button
               colorScheme="octo-blue"
               width="100%"
-              isDisabled={!cloudVendor || isLoadingNode || (
-                cloudVendor === 'AWS' ? 
-                !inputAccessKey :
-                !isAuthorized
-              )}
+              isDisabled={
+                !cloudVendor ||
+                isLoadingNode ||
+                (cloudVendor === "AWS" ? !inputAccessKey : !isAuthorized)
+              }
               onClick={onNextStep}
               isLoading={isLoadingNode}
             >
@@ -773,6 +799,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
         )}
       </Box>
       <SetSessionKeyModal
+        appchain={appchain}
         appchainApi={appchainApi}
         isOpen={setSessionKeyModalOpen}
         onClose={setSetSessionKeyModalOpen.off}

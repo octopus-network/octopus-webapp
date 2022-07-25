@@ -13,28 +13,28 @@ import {
   Icon,
   useColorModeValue,
   Avatar,
-} from '@chakra-ui/react'
-import { BN } from '@polkadot/util'
-import Decimal from 'decimal.js'
+} from "@chakra-ui/react"
+import BN from "bn.js"
+import Decimal from "decimal.js"
 import {
   useConvertorContract,
   useTokenBalance,
-} from 'hooks/useConvertorContract'
+} from "hooks/useConvertorContract"
 import {
   COMPLEX_CALL_GAS,
   FT_MINIMUM_STORAGE_BALANCE,
   SIMPLE_CALL_GAS,
-} from 'primitives'
-import { useState } from 'react'
-import { MdArrowDownward, MdSwapVert } from 'react-icons/md'
-import { useGlobalStore } from 'stores'
-import { AccountId, ConversionPool, FungibleTokenMetadata } from 'types'
-import { DecimalUtil } from 'utils'
-import { isValidNumber } from 'utils/validate'
-import { createTransaction, functionCall } from 'near-api-js/lib/transaction'
-import { baseDecode } from 'borsh'
-import { PublicKey } from 'near-api-js/lib/utils'
-import NEP141 from 'assets/icons/nep141-token.png'
+} from "primitives"
+import { useState } from "react"
+import { MdArrowDownward, MdSwapVert } from "react-icons/md"
+import { useGlobalStore } from "stores"
+import { AccountId, ConversionPool, FungibleTokenMetadata } from "types"
+import { DecimalUtil } from "utils"
+import { isValidNumber } from "utils/validate"
+import { createTransaction, functionCall } from "near-api-js/lib/transaction"
+import { baseDecode } from "borsh"
+import { PublicKey } from "near-api-js/lib/utils"
+import NEP141 from "assets/icons/nep141-token.png"
 
 const TokenInput = ({
   value,
@@ -57,7 +57,7 @@ const TokenInput = ({
   const balance = DecimalUtil.fromString(tokenBlance, token?.decimals).toFixed(
     2
   )
-  const inputBg = useColorModeValue('#f5f7fa', 'whiteAlpha.100')
+  const inputBg = useColorModeValue("#f5f7fa", "whiteAlpha.100")
 
   return (
     <Flex direction="row" align="flex-end" gap={4}>
@@ -75,7 +75,7 @@ const TokenInput = ({
           value={value}
           disabled={inputDisabled}
           autoFocus={autoFocus}
-          onFocus={() => onValueChange('')}
+          onFocus={() => onValueChange("")}
           onChange={(e) => onValueChange(e.target.value)}
         />
       </Flex>
@@ -98,8 +98,8 @@ export default function ConvertToken({
   onClose: () => void
   contractId: AccountId
 }) {
-  const [inTokenValue, setInTokenValue] = useState<string | number>('')
-  const [outTokenValue, setOutTokenValue] = useState<string | number>('')
+  const [inTokenValue, setInTokenValue] = useState<string | number>("")
+  const [outTokenValue, setOutTokenValue] = useState<string | number>("")
   const [isReversed, setIsReversed] = useState(false)
   const { global } = useGlobalStore()
 
@@ -107,7 +107,7 @@ export default function ConvertToken({
     global.wallet?.account() as any,
     contractId
   )
-  const bg = useColorModeValue('white', '#15172c')
+  const bg = useColorModeValue("white", "#15172c")
 
   const inToken = whitelist.find((t) => t.token_id === pool?.in_token)
   const outToken = whitelist.find((t) => t.token_id === pool?.out_token)
@@ -143,7 +143,7 @@ export default function ConvertToken({
     )
 
   const onTokenValueChange = (value: string, _isReversed: boolean) => {
-    if (value.trim() !== '') {
+    if (value.trim() !== "") {
       if (_isReversed) {
         setOutTokenValue(value)
         setInTokenValue(
@@ -164,8 +164,8 @@ export default function ConvertToken({
         )
       }
     } else {
-      setOutTokenValue('')
-      setInTokenValue('')
+      setOutTokenValue("")
+      setInTokenValue("")
     }
   }
 
@@ -173,19 +173,19 @@ export default function ConvertToken({
     try {
       const account = global.wallet?.account()
       if (!account) {
-        throw new Error('No account')
+        throw new Error("No account")
       }
       const actions = []
       const storageFee = await contract?.get_storage_fee_gap_of({
         account_id: global.accountId,
       })
 
-      if (String(storageFee) !== '0') {
+      if (String(storageFee) !== "0") {
         actions.push({
           receiverId: contractId,
           actions: [
             functionCall(
-              'storage_deposit',
+              "storage_deposit",
               {
                 account_id: account?.accountId,
               },
@@ -199,16 +199,16 @@ export default function ConvertToken({
       const receiveTokenId = !isReversed ? pool.out_token : pool.in_token
       const storageBalance = await account?.viewFunction(
         receiveTokenId,
-        'storage_balance_of',
+        "storage_balance_of",
         { account_id: account.accountId }
       )
 
-      if (!storageBalance || storageBalance === '0') {
+      if (!storageBalance || storageBalance === "0") {
         actions.push({
           receiverId: receiveTokenId,
           actions: [
             functionCall(
-              'storage_deposit',
+              "storage_deposit",
               {
                 registration_only: true,
                 account_id: account?.accountId,
@@ -238,7 +238,7 @@ export default function ConvertToken({
         receiverId: tokenContractId,
         actions: [
           functionCall(
-            'ft_transfer_call',
+            "ft_transfer_call",
             {
               receiver_id: contractId,
               amount: _amount,
@@ -266,7 +266,7 @@ export default function ConvertToken({
           )
 
           const block = await account?.connection.provider.block({
-            finality: 'final',
+            finality: "final",
           })
           const blockHash = baseDecode(block.header.hash)
 
@@ -295,8 +295,8 @@ export default function ConvertToken({
       isOpen
       onClose={() => {
         onClose()
-        setInTokenValue('')
-        setOutTokenValue('')
+        setInTokenValue("")
+        setOutTokenValue("")
       }}
       size="md"
     >
@@ -329,8 +329,8 @@ export default function ConvertToken({
               disabled={!pool.reversible}
               onClick={() => {
                 setIsReversed(!isReversed)
-                setInTokenValue('')
-                setOutTokenValue('')
+                setInTokenValue("")
+                setOutTokenValue("")
               }}
             >
               <Icon

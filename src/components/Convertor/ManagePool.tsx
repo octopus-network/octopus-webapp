@@ -18,23 +18,23 @@ import {
   TabPanel,
   Link,
   Avatar,
-} from '@chakra-ui/react'
-import { BN } from '@polkadot/util'
-import { baseDecode } from 'borsh'
-import Decimal from 'decimal.js'
+} from "@chakra-ui/react"
+import BN from "bn.js"
+import { baseDecode } from "borsh"
+import Decimal from "decimal.js"
 import {
   useConvertorContract,
   useTokenBalance,
-} from 'hooks/useConvertorContract'
-import { createTransaction, functionCall } from 'near-api-js/lib/transaction'
-import { PublicKey } from 'near-api-js/lib/utils'
-import { SIMPLE_CALL_GAS } from 'primitives'
-import { useState } from 'react'
-import { useGlobalStore } from 'stores'
-import { AccountId, ConversionPool, FungibleTokenMetadata } from 'types'
-import { DecimalUtil } from 'utils'
-import { isValidNumber } from 'utils/validate'
-import NEP141 from 'assets/icons/nep141-token.png'
+} from "hooks/useConvertorContract"
+import { createTransaction, functionCall } from "near-api-js/lib/transaction"
+import { PublicKey } from "near-api-js/lib/utils"
+import { SIMPLE_CALL_GAS } from "primitives"
+import { useState } from "react"
+import { useGlobalStore } from "stores"
+import { AccountId, ConversionPool, FungibleTokenMetadata } from "types"
+import { DecimalUtil } from "utils"
+import { isValidNumber } from "utils/validate"
+import NEP141 from "assets/icons/nep141-token.png"
 
 function TokenInput({
   token,
@@ -47,9 +47,9 @@ function TokenInput({
   onSubmit: (value: string, token: FungibleTokenMetadata) => void
   isWithdraw?: boolean
 }) {
-  const [value, setValue] = useState('')
+  const [value, setValue] = useState("")
   const balance = useTokenBalance(token?.token_id)
-  const inputBg = useColorModeValue('#f5f7fa', 'whiteAlpha.100')
+  const inputBg = useColorModeValue("#f5f7fa", "whiteAlpha.100")
   const tokenLiq = DecimalUtil.fromString(liquidity, token?.decimals)
     .toFixed(2)
     .toString()
@@ -94,7 +94,7 @@ function TokenInput({
             }
             onClick={() => onSubmit(value, token!)}
           >
-            {isWithdraw ? 'Withdraw' : 'Deposit'}
+            {isWithdraw ? "Withdraw" : "Deposit"}
           </Button>
         </Flex>
       </Flex>
@@ -134,7 +134,7 @@ export default function ManagePool({
     try {
       global.wallet?.account().functionCall({
         contractId: token.token_id!,
-        methodName: 'ft_transfer_call',
+        methodName: "ft_transfer_call",
         args: {
           receiver_id: contractId,
           amount: DecimalUtil.toU64(
@@ -158,7 +158,7 @@ export default function ManagePool({
     try {
       global.wallet?.account().functionCall({
         contractId: contractId,
-        methodName: 'withdraw_token_in_pool',
+        methodName: "withdraw_token_in_pool",
         args: {
           pool_id: pool.id,
           token_id: token.token_id,
@@ -177,7 +177,7 @@ export default function ManagePool({
     try {
       const account = global.wallet?.account()
       if (!account) {
-        throw new Error('No account')
+        throw new Error("No account")
       }
 
       const actions = []
@@ -185,12 +185,12 @@ export default function ManagePool({
         account_id: global.accountId,
       })
 
-      if (String(storageFee) !== '0') {
+      if (String(storageFee) !== "0") {
         actions.push({
           receiverId: contractId,
           actions: [
             functionCall(
-              'storage_deposit',
+              "storage_deposit",
               {
                 account_id: account?.accountId,
               },
@@ -200,12 +200,12 @@ export default function ManagePool({
           ],
         })
       }
-      if (pool.in_token_balance !== '0') {
+      if (pool.in_token_balance !== "0") {
         actions.push({
           receiverId: contractId,
           actions: [
             functionCall(
-              'withdraw_token_in_pool',
+              "withdraw_token_in_pool",
               {
                 pool_id: pool.id,
                 token_id: pool.in_token,
@@ -218,12 +218,12 @@ export default function ManagePool({
         })
       }
 
-      if (pool.out_token_balance !== '0') {
+      if (pool.out_token_balance !== "0") {
         actions.push({
           receiverId: contractId,
           actions: [
             functionCall(
-              'withdraw_token_in_pool',
+              "withdraw_token_in_pool",
               {
                 pool_id: pool.id,
                 token_id: pool.out_token,
@@ -240,7 +240,7 @@ export default function ManagePool({
         receiverId: contractId,
         actions: [
           functionCall(
-            'delete_pool',
+            "delete_pool",
             { pool_id: pool.id },
             new BN(SIMPLE_CALL_GAS),
             new BN(1)
@@ -262,7 +262,7 @@ export default function ManagePool({
           )
 
           const block = await account?.connection.provider.block({
-            finality: 'final',
+            finality: "final",
           })
           const blockHash = baseDecode(block.header.hash)
 
