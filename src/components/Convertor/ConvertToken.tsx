@@ -35,6 +35,7 @@ import { createTransaction, functionCall } from "near-api-js/lib/transaction"
 import { baseDecode } from "borsh"
 import { PublicKey } from "near-api-js/lib/utils"
 import NEP141 from "assets/icons/nep141-token.png"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 const TokenInput = ({
   value,
@@ -102,6 +103,7 @@ export default function ConvertToken({
   const [outTokenValue, setOutTokenValue] = useState<string | number>("")
   const [isReversed, setIsReversed] = useState(false)
   const { global } = useGlobalStore()
+  const { accountId } = useWalletSelector()
 
   const contract = useConvertorContract(
     global.wallet?.account() as any,
@@ -172,12 +174,12 @@ export default function ConvertToken({
   const onConvert = async () => {
     try {
       const account = global.wallet?.account()
-      if (!account) {
+      if (!account || !accountId) {
         throw new Error("No account")
       }
       const actions = []
       const storageFee = await contract?.get_storage_fee_gap_of({
-        account_id: global.accountId,
+        account_id: accountId!,
       })
 
       if (String(storageFee) !== "0") {

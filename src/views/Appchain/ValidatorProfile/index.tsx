@@ -56,12 +56,12 @@ import { DelegatorsTable } from "./DelegatorsTable"
 import { StakingPopover } from "../StakingPopover"
 import { DelegateModal } from "./DelegateModal"
 import { RewardsModal } from "../RewardsModal"
-import { useGlobalStore } from "stores"
 import { DecimalUtil, toShortAddress, ZERO_DECIMAL } from "utils"
 
 import octoAvatar from "assets/icons/avatar.png"
 import { formatAppChainAddress } from "utils/format"
 import OctIdenticon from "components/common/OctIdenticon"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 type ValidatorProfileProps = {
   wrappedAppchainTokenContract?: TokenContract
@@ -105,7 +105,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
   const [isUnbondingDelegation, setIsUnbondingDelegation] = useBoolean()
   const [delegateModalOpen, setDelegateModalOpen] = useBoolean()
 
-  const { global } = useGlobalStore()
+  const { accountId } = useWalletSelector()
   const toast = useToast()
 
   const { data: delegators } = useSWR<Delegator[]>(
@@ -115,29 +115,25 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
   )
 
   const isDelegated = useMemo(
-    () =>
-      global?.accountId &&
-      !!delegators?.find((d) => d.delegator_id === global.accountId),
-    [delegators, global]
+    () => accountId && !!delegators?.find((d) => d.delegator_id === accountId),
+    [delegators, accountId]
   )
 
   const { data: delegatorRewards } = useSWR<RewardHistory[]>(
     isDelegated && appchain?.anchor_status
-      ? `rewards/${validator?.validator_id}/${appchain?.appchain_id}/${global?.accountId}/${appchain?.anchor_status?.index_range_of_validator_set_history?.end_index}`
+      ? `rewards/${validator?.validator_id}/${appchain?.appchain_id}/${accountId}/${appchain?.anchor_status?.index_range_of_validator_set_history?.end_index}`
       : null
   )
 
-  const { data: balances } = useSWR(
-    global.accountId ? `balances/${global.accountId}` : null
-  )
+  const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null)
 
   useEffect(() => {
-    if (!anchor || !appchain) {
+    if (!anchor || !appchain || !accountId) {
       return
     }
     anchor
       ?.get_delegator_deposit_of({
-        delegator_id: global.accountId,
+        delegator_id: accountId,
         validator_id: validator?.validator_id || "",
       })
       .then((deposit) => {
@@ -145,7 +141,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
           DecimalUtil.fromString(deposit, OCT_TOKEN_DECIMALS)
         )
       })
-  }, [anchor, global, validator, appchain])
+  }, [anchor, accountId, validator, appchain])
 
   const unwithdrawnDelegatorRewards = useMemo(() => {
     if (!delegatorRewards?.length) {
@@ -162,7 +158,10 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
         ),
       ZERO_DECIMAL
     )
-  }, [delegatorRewards])
+  }, [
+    appchain?.appchain_metadata?.fungible_token_metadata.decimals,
+    delegatorRewards,
+  ])
 
   useEffect(() => {
     if (!validator || !anchor) {
@@ -174,7 +173,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
       .then((profile) => {
         setValidatorProfile(profile)
       })
-  }, [validator])
+  }, [anchor, validator])
 
   const ss58Address = formatAppChainAddress(
     validator?.validator_id_in_appchain,
@@ -189,8 +188,8 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
   )
 
   const isMyself = useMemo(
-    () => global && validator && global.accountId === validator.validator_id,
-    [global, validator]
+    () => validator && accountId === validator.validator_id,
+    [accountId, validator]
   )
 
   const validatorState = useMemo(() => {
@@ -459,7 +458,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
           <Box mt={4} p={4} borderWidth={1} borderRadius="lg">
             <Flex alignItems="center" justifyContent="space-between">
               <Heading fontSize="md">Delegators</Heading>
-              {global.accountId && validator && !isDelegated ? (
+              {accountId && validator && !isDelegated ? (
                 <Button
                   colorScheme="octo-blue"
                   size="sm"
@@ -502,19 +501,19 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
         <DrawerFooter justifyContent="flex-start">
           <Box bg={footerBg} p={4} borderRadius="lg" w="100%">
             <Flex justifyContent="space-between" alignItems="center">
-              {global.accountId ? (
+              {accountId ? (
                 <HStack>
                   <Avatar
                     boxSize={8}
                     src={octoAvatar}
                     display={{ base: "none", md: "block" }}
                   />
-                  <Heading fontSize="lg">{global.accountId}</Heading>
+                  <Heading fontSize="lg">{accountId}</Heading>
                 </HStack>
               ) : (
                 <LoginButton />
               )}
-              {global.accountId ? (
+              {accountId ? (
                 <VStack alignItems="flex-end" spacing={0}>
                   <HStack>
                     <Text

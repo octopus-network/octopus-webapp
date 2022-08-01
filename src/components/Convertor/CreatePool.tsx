@@ -23,7 +23,6 @@ import BN from "bn.js"
 import { Select, chakraComponents } from "chakra-react-select"
 import { SIMPLE_CALL_GAS } from "primitives"
 import { useState } from "react"
-import { useGlobalStore } from "stores"
 import { AccountId, FungibleTokenMetadata } from "types"
 import {
   MdOutlineSwapVert,
@@ -31,6 +30,7 @@ import {
   MdOutlineAdd,
 } from "react-icons/md"
 import NEP141 from "assets/icons/nep141-token.png"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 const customComponents = {
   Option: ({ children, ...props }: any) => {
@@ -91,12 +91,11 @@ export default function CreatePool({
   const { isOpen, onOpen, onClose } = useDisclosure()
   const [pool, setPool] = useState<PoolProps>(DEFAULT_POOL)
 
-  const { global } = useGlobalStore()
+  const { selector, accountId, near } = useWalletSelector()
   const toast = useToast()
   const onCreate = async () => {
     try {
-      const account = global.wallet?.account()
-      if (!account?.accountId) {
+      if (!accountId) {
         toast({
           position: "top-right",
           title: "Error",
@@ -106,23 +105,41 @@ export default function CreatePool({
         return
       }
 
-      const attachedDeposit = await account.viewFunction(
+      const account = await near?.account("dontcare")
+      const attachedDeposit = await account?.viewFunction(
         contractId,
         "get_deposit_amount_of_pool_creation"
       )
 
-      await account?.functionCall({
-        contractId: contractId,
-        methodName: "create_pool",
-        args: {
-          in_token: pool.in_token,
-          out_token: pool.out_token,
-          in_token_rate: Number(pool.in_token_rate),
-          out_token_rate: Number(pool.out_token_rate),
-          is_reversible: pool.is_reversible,
-        },
-        gas: new BN(SIMPLE_CALL_GAS),
-        attachedDeposit: new BN(attachedDeposit),
+      const wallet = await selector.wallet()
+      await wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: contractId,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: "create_pool",
+              args: {
+                in_token: pool.in_token,
+                out_token: pool.out_token,
+                in_token_rate: Number(pool.in_token_rate),
+                out_token_rate: Number(pool.out_token_rate),
+                is_reversible: pool.is_reversible,
+              },
+              gas: SIMPLE_CALL_GAS,
+              deposit: (attachedDeposit as BN)!.toString(),
+            },
+          },
+        ],
+      })
+
+      onClose()
+      toast({
+        position: "top-right",
+        title: "Success",
+        description: "Created!",
+        status: "success",
       })
     } catch (error) {
       console.error(error)

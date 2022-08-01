@@ -26,13 +26,12 @@ import {
 
 import { OCT_TOKEN_DECIMALS } from "primitives"
 import { RippleDot } from "components"
-
-import { useGlobalStore } from "stores"
 import { ChevronRightIcon } from "@chakra-ui/icons"
 import { StateBadge } from "components"
 import { useNavigate } from "react-router-dom"
 import { formatAppChainAddress } from "utils/format"
 import OctIdenticon from "components/common/OctIdenticon"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 type ValidatorRowProps = {
   validator: Validator
@@ -57,13 +56,13 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
   appchainId,
   validatorSetHistoryEndIndex,
 }) => {
-  const { global } = useGlobalStore()
+  const { accountId } = useWalletSelector()
 
   const navigate = useNavigate()
 
   const isMyself = useMemo(
-    () => global && validator && global.accountId === validator.validator_id,
-    [global, validator]
+    () => validator && accountId === validator.validator_id,
+    [accountId, validator]
   )
 
   const { data: rewards } = useSWR<RewardHistory[]>(
@@ -79,15 +78,13 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
   )
 
   const isDelegated = useMemo(
-    () =>
-      global.accountId &&
-      !!delegators?.find((d) => d.delegator_id === global.accountId),
-    [delegators, global]
+    () => accountId && !!delegators?.find((d) => d.delegator_id === accountId),
+    [delegators, accountId]
   )
 
   const { data: delegatorRewards } = useSWR<RewardHistory[]>(
     isDelegated && appchainId && validatorSetHistoryEndIndex
-      ? `rewards/${validator.validator_id}/${appchainId}/${global?.accountId}/${validatorSetHistoryEndIndex}`
+      ? `rewards/${validator.validator_id}/${appchainId}/${accountId}/${validatorSetHistoryEndIndex}`
       : null
   )
 

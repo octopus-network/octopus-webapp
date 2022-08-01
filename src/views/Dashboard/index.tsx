@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react"
 
 import {
   Container,
@@ -12,25 +12,30 @@ import {
   HStack,
   IconButton,
   useColorModeValue,
-  useClipboard
-} from '@chakra-ui/react';
+  useClipboard,
+} from "@chakra-ui/react"
 
-import { CheckIcon, CopyIcon } from '@chakra-ui/icons';
-import octoAvatar from 'assets/icons/avatar.png';
-import { useGlobalStore } from 'stores';
-import { Assets } from './Assets';
-import { Activity } from './Activity';
-import { Airdrops } from './Airdrops';
+import { CheckIcon, CopyIcon } from "@chakra-ui/icons"
+import octoAvatar from "assets/icons/avatar.png"
+import { Assets } from "./Assets"
+import { Activity } from "./Activity"
+import { Airdrops } from "./Airdrops"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 export const Dashboard: React.FC = () => {
-  const bg = useColorModeValue('white', '#15172c');
-  const { global } = useGlobalStore();
+  const bg = useColorModeValue("white", "#15172c")
+  const { accountId } = useWalletSelector()
 
-  const { hasCopied: hasAccountIdCopied, onCopy: onCopyAccountId } = useClipboard(global.accountId || '');
+  const { hasCopied: hasAccountIdCopied, onCopy: onCopyAccountId } =
+    useClipboard(accountId || "")
 
   return (
     <Container>
-      <Grid templateColumns={{ base: 'repeat(4, 1fr)', lg: 'repeat(7, 1fr)' }} mt={10} gap={6}>
+      <Grid
+        templateColumns={{ base: "repeat(4, 1fr)", lg: "repeat(7, 1fr)" }}
+        mt={10}
+        gap={6}
+      >
         <GridItem colSpan={{ base: 4, lg: 3 }}>
           <Box p={6} borderRadius="lg" bg={bg} h="100%">
             <VStack spacing={5} pt={6} pb={6}>
@@ -38,10 +43,20 @@ export const Dashboard: React.FC = () => {
                 <Image src={octoAvatar} w="100%" />
               </Box>
               <HStack w="80%" justifyContent="center">
-                <Heading fontSize="xl" maxW="calc(100% - 40px)" textOverflow="ellipsis" overflow="hidden" whiteSpace="nowrap">
-                  {global.accountId}
+                <Heading
+                  fontSize="xl"
+                  maxW="calc(100% - 40px)"
+                  textOverflow="ellipsis"
+                  overflow="hidden"
+                  whiteSpace="nowrap"
+                >
+                  {accountId}
                 </Heading>
-                <IconButton aria-label="copy" size="xs" onClick={onCopyAccountId}>
+                <IconButton
+                  aria-label="copy"
+                  size="xs"
+                  onClick={onCopyAccountId}
+                >
                   {hasAccountIdCopied ? <CheckIcon /> : <CopyIcon />}
                 </IconButton>
               </HStack>
@@ -59,5 +74,5 @@ export const Dashboard: React.FC = () => {
         </GridItem>
       </Grid>
     </Container>
-  );
+  )
 }

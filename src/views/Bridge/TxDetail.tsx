@@ -24,7 +24,6 @@ import { DecimalUtil, decodeNearAccount } from "utils"
 import nearLogo from "assets/near.svg"
 import { CopyIcon, CheckIcon, ExternalLinkIcon } from "@chakra-ui/icons"
 import useSWR from "swr"
-import { useGlobalStore } from "stores"
 import { useParams } from "react-router-dom"
 import { AiOutlineArrowRight } from "react-icons/ai"
 import { Link as RouterLink } from "react-router-dom"
@@ -33,6 +32,7 @@ import { ProcessFromAppchain } from "./ProcessFromAppchain"
 import { ProcessFromNear } from "./ProcessFromNear"
 import { formatAppChainAddress } from "utils/format"
 import OctIdenticon from "components/common/OctIdenticon"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 type TxDetailProps = {
   onDrawerClose: VoidFunction
@@ -40,7 +40,7 @@ type TxDetailProps = {
 
 export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
   const { txId } = useParams()
-  const { global } = useGlobalStore()
+  const { networkConfig } = useWalletSelector()
 
   const grayBg = useColorModeValue("#f2f4f7", "#1e1f34")
 
@@ -57,11 +57,11 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
     () => [
       transaction?.summary.direction === "appchain_to_near",
       transaction?.summary.appchain_name.replace(
-        `${global.network?.near.networkId}-`,
+        `${networkConfig?.near.networkId}-`,
         ""
       ),
     ],
-    [transaction]
+    [transaction, networkConfig]
   )
 
   const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(
@@ -219,8 +219,8 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
               maxW="70%"
               href={
                 isAppchainSide
-                  ? `${global.network?.octopus.explorerUrl}/${appchain?.appchain_id}/accounts/${transaction?.summary.from}`
-                  : `${global.network?.near.explorerUrl}/accounts/${transaction?.summary.from}`
+                  ? `${networkConfig?.octopus.explorerUrl}/${appchain?.appchain_id}/accounts/${transaction?.summary.from}`
+                  : `${networkConfig?.near.explorerUrl}/accounts/${transaction?.summary.from}`
               }
               _hover={{ textDecoration: "underline" }}
               color="#2468f2"
@@ -255,8 +255,8 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
               maxW="70%"
               href={
                 !isAppchainSide
-                  ? `${global.network?.octopus.explorerUrl}/${appchain?.appchain_id}/accounts/${transaction?.summary.to}`
-                  : `${global.network?.near.explorerUrl}/accounts/${transaction?.summary.to}`
+                  ? `${networkConfig?.octopus.explorerUrl}/${appchain?.appchain_id}/accounts/${transaction?.summary.to}`
+                  : `${networkConfig?.near.explorerUrl}/accounts/${transaction?.summary.to}`
               }
               _hover={{ textDecoration: "underline" }}
               color="#2468f2"
@@ -288,12 +288,9 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
         <SlideFade in={!!transaction}>
           <Box mt={6}>
             {isAppchainSide ? (
-              <ProcessFromAppchain
-                data={transaction}
-                network={global.network}
-              />
+              <ProcessFromAppchain data={transaction} network={networkConfig} />
             ) : (
-              <ProcessFromNear data={transaction} network={global.network} />
+              <ProcessFromNear data={transaction} network={networkConfig} />
             )}
           </Box>
         </SlideFade>

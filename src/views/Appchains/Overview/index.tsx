@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import useSWR from 'swr';
-import dayjs from 'dayjs';
-import Decimal from 'decimal.js';
+import React, { useState, useEffect } from "react"
+import useSWR from "swr"
+import dayjs from "dayjs"
+import Decimal from "decimal.js"
 
 import {
   DrawerHeader,
@@ -16,42 +16,44 @@ import {
   HStack,
   DrawerFooter,
   VStack,
-  useColorModeValue
-} from '@chakra-ui/react';
+  useColorModeValue,
+} from "@chakra-ui/react"
 
-import { AppchainInfo } from 'types';
-import { StateBadge, LoginButton } from 'components';
-import { FaUser } from 'react-icons/fa';
+import { AppchainInfo } from "types"
+import { StateBadge, LoginButton } from "components"
+import { FaUser } from "react-icons/fa"
 
-import { Links } from './Links';
-import { Descriptions } from './Descriptions';
-import { UserPanel } from './UserPanel';
-import { AdminPanel } from './AdminPanel';
-import { useGlobalStore } from 'stores';
-import { DecimalUtil } from 'utils';
+import { Links } from "./Links"
+import { Descriptions } from "./Descriptions"
+import { UserPanel } from "./UserPanel"
+import { AdminPanel } from "./AdminPanel"
+import { DecimalUtil } from "utils"
 
-import octoAvatar from 'assets/icons/avatar.png';
+import octoAvatar from "assets/icons/avatar.png"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 type OverviewProps = {
-  appchainId: string | undefined;
-  onDrawerClose: VoidFunction;
+  appchainId: string | undefined
+  onDrawerClose: VoidFunction
 }
 
-export const Overview: React.FC<OverviewProps> = ({ appchainId, onDrawerClose }) => {
+export const Overview: React.FC<OverviewProps> = ({
+  appchainId,
+  onDrawerClose,
+}) => {
+  const { registry, accountId } = useWalletSelector()
+  const [isAdmin, setIsAdmin] = useState(false)
 
-  const { global } = useGlobalStore();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { data: appchain } = useSWR<AppchainInfo>(`appchain/${appchainId}`)
+  const footerBg = useColorModeValue("#f6f7fa", "#15172c")
 
-  const { data: appchain } = useSWR<AppchainInfo>(`appchain/${appchainId}`);
-  const footerBg = useColorModeValue('#f6f7fa', '#15172c');
-
-  const { data: balances } = useSWR(global.accountId ? `balances/${global.accountId}` : null);
+  const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null)
 
   useEffect(() => {
-    global.registry?.get_owner().then(owner => {
-      setIsAdmin(owner === global.accountId);
-    });
-  }, [global]);
+    registry?.get_owner().then((owner) => {
+      setIsAdmin(owner === accountId)
+    })
+  }, [accountId, registry])
 
   return (
     <>
@@ -64,23 +66,31 @@ export const Overview: React.FC<OverviewProps> = ({ appchainId, onDrawerClose })
       <DrawerBody>
         <Flex alignItems="center" justifyContent="space-between">
           <HStack>
-            <Avatar src={appchain?.appchain_metadata?.fungible_token_metadata.icon as any} 
-              name={appchainId} boxSize={10} />
+            <Avatar
+              src={
+                appchain?.appchain_metadata?.fungible_token_metadata.icon as any
+              }
+              name={appchainId}
+              boxSize={10}
+            />
             <VStack alignItems="flex-start" spacing={0}>
               <Heading fontSize="xl">{appchainId}</Heading>
-              {
-                appchain ?
+              {appchain ? (
                 <HStack className="octo-gray" fontSize="sm">
                   <Icon as={FaUser} boxSize={3} />
                   <Text>{appchain?.appchain_owner}</Text>
-                </HStack> : null
-              }
+                </HStack>
+              ) : null}
             </VStack>
           </HStack>
           <VStack alignItems="flex-end" spacing={0}>
-            <StateBadge state={appchain?.appchain_state || ''} />
+            <StateBadge state={appchain?.appchain_state || ""} />
             <Text variant="gray" fontSize="sm">
-              {appchain ? dayjs(Math.floor(appchain.registered_time as any/1e6)).format('YYYY-MM-DD') : '-'}
+              {appchain
+                ? dayjs(
+                    Math.floor((appchain.registered_time as any) / 1e6)
+                  ).format("YYYY-MM-DD")
+                : "-"}
             </Text>
           </VStack>
         </Flex>
@@ -91,38 +101,42 @@ export const Overview: React.FC<OverviewProps> = ({ appchainId, onDrawerClose })
           <Descriptions data={appchain} />
         </Box>
         <Box mt={6}>
-          {
-            isAdmin ?
-            <AdminPanel data={appchain} /> :
-            global.accountId ?
-            <UserPanel data={appchain} /> : null
-          }
-          
+          {isAdmin ? (
+            <AdminPanel data={appchain} />
+          ) : accountId ? (
+            <UserPanel data={appchain} />
+          ) : null}
         </Box>
       </DrawerBody>
       <DrawerFooter justifyContent="flex-start">
         <Box bg={footerBg} p={4} borderRadius="lg" w="100%">
           <Flex justifyContent="space-between">
-            {
-              global.accountId ?
+            {accountId ? (
               <HStack>
-                <Avatar boxSize={6} src={octoAvatar} display={{ base: 'none', md: 'block' }} />
-                <Heading fontSize="sm">{global.accountId}</Heading>
-              </HStack> : 
+                <Avatar
+                  boxSize={6}
+                  src={octoAvatar}
+                  display={{ base: "none", md: "block" }}
+                />
+                <Heading fontSize="sm">{accountId}</Heading>
+              </HStack>
+            ) : (
               <LoginButton />
-            }
-            {
-              global.accountId ?
+            )}
+            {accountId ? (
               <HStack>
-                <Text variant="gray" display={{ base: 'none', md: 'block' }}>Balance:</Text>
+                <Text variant="gray" display={{ base: "none", md: "block" }}>
+                  Balance:
+                </Text>
                 <Heading fontSize="md" color="octo-blue.500">
-                  {DecimalUtil.beautify(new Decimal(balances?.['OCT'] || 0))} OCT
+                  {DecimalUtil.beautify(new Decimal(balances?.["OCT"] || 0))}{" "}
+                  OCT
                 </Heading>
-              </HStack> : null
-            }
+              </HStack>
+            ) : null}
           </Flex>
         </Box>
       </DrawerFooter>
     </>
-  );
+  )
 }

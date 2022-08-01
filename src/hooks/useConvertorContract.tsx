@@ -1,15 +1,16 @@
-import axios from 'axios'
-import { API_HOST } from 'config'
-import { Account, keyStores, Near } from 'near-api-js'
-import { useEffect, useState } from 'react'
-import { useGlobalStore } from 'stores'
+import axios from "axios"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { API_HOST } from "config"
+import { Account, keyStores, Near } from "near-api-js"
+import { useEffect, useState } from "react"
+import { useGlobalStore } from "stores"
 import {
   ConversionPool,
   ConvertorContract,
   FungibleTokenMetadata,
   NetworkConfig,
   TokenContract,
-} from 'types'
+} from "types"
 
 export const useNear = () => {
   const [near, setNear] = useState<Near | null>()
@@ -38,7 +39,7 @@ export const useConvertorContract = (account: Account, contractId: string) => {
   useEffect(() => {
     if (contractId) {
       const _contract = new ConvertorContract(account, contractId, {
-        viewMethods: ['get_whitelist', 'get_pools', 'get_storage_fee_gap_of'],
+        viewMethods: ["get_whitelist", "get_pools", "get_storage_fee_gap_of"],
         changeMethods: [],
       })
       setContract(_contract)
@@ -100,11 +101,11 @@ export const useWhitelist = (contract: ConvertorContract | null) => {
       if (contract && near) {
         try {
           const _whitelist = await contract.get_whitelist()
-          const viewAccount = new Account(near.connection, 'dontcare')
+          const viewAccount = new Account(near.connection, "dontcare")
           const metas = await Promise.all(
             _whitelist.map((t) => {
               return viewAccount
-                .viewFunction(t.token_id, 'ft_metadata')
+                .viewFunction(t.token_id, "ft_metadata")
                 .then((meta) => ({ ...meta, token_id: t.token_id }))
                 .catch(() => null)
             })
@@ -122,25 +123,26 @@ export const useWhitelist = (contract: ConvertorContract | null) => {
 }
 
 export const useTokenBalance = (contractId: string | undefined) => {
-  const [balance, setBalance] = useState('0')
+  const [balance, setBalance] = useState("0")
   const { global } = useGlobalStore()
+  const { accountId } = useWalletSelector()
   useEffect(() => {
-    if (global && global.wallet && global.accountId && contractId) {
+    if (global && global.wallet && accountId && contractId) {
       const contract = new TokenContract(
         global?.wallet?.account(),
         contractId,
         {
-          viewMethods: ['ft_balance_of', 'storage_balance_of'],
-          changeMethods: ['ft_transfer_call'],
+          viewMethods: ["ft_balance_of", "storage_balance_of"],
+          changeMethods: ["ft_transfer_call"],
         }
       )
       contract
-        .ft_balance_of({ account_id: global.accountId })
+        .ft_balance_of({ account_id: accountId })
         .then((balance) => {
           setBalance(balance)
         })
         .catch(console.error)
     }
-  }, [global, contractId])
+  }, [global, contractId, accountId])
   return balance
 }

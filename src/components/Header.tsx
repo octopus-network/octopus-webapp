@@ -1,4 +1,4 @@
-import React from 'react'
+import React from "react"
 
 import {
   Container,
@@ -22,18 +22,18 @@ import {
   DrawerCloseButton,
   DrawerBody,
   VStack,
-} from '@chakra-ui/react'
+} from "@chakra-ui/react"
 
-import { ColorModeSwitcher, LoginButton } from 'components'
+import { ColorModeSwitcher, LoginButton } from "components"
 
-import { AiOutlinePoweroff, AiOutlineDashboard } from 'react-icons/ai'
+import { AiOutlinePoweroff, AiOutlineDashboard } from "react-icons/ai"
 
-import { Link as RouterLink, useLocation } from 'react-router-dom'
-import logo from 'assets/logo.png'
-import octoAvatar from 'assets/icons/avatar.png'
+import { Link as RouterLink, useLocation } from "react-router-dom"
+import logo from "assets/logo.png"
+import octoAvatar from "assets/icons/avatar.png"
 
-import { useGlobalStore } from 'stores'
-import { MdMenu } from 'react-icons/md'
+import { MdMenu } from "react-icons/md"
+import { useWalletSelector } from "./WalletSelectorContextProvider"
 
 type NavLinkProps = {
   path: string
@@ -45,7 +45,7 @@ type NavLinkProps = {
 const NavLink: React.FC<NavLinkProps> = ({
   path,
   label,
-  fontSize = 'sm',
+  fontSize = "sm",
   onClick,
 }) => {
   const location = useLocation()
@@ -66,7 +66,7 @@ const NavLink: React.FC<NavLinkProps> = ({
 }
 
 export const Header: React.FC = () => {
-  const { global } = useGlobalStore()
+  const { accountId, selector } = useWalletSelector()
 
   const {
     isOpen: isMenuOpen,
@@ -76,9 +76,11 @@ export const Header: React.FC = () => {
 
   const { isOpen, onOpen, onClose } = useDisclosure()
 
-  const onLogout = () => {
-    global.wallet?.signOut()
-    window.location.replace(window.location.origin + window.location.pathname)
+  const onLogout = async () => {
+    const wallet = await selector.wallet()
+    wallet.signOut().catch((err) => {
+      console.error(err)
+    })
   }
 
   return (
@@ -88,7 +90,7 @@ export const Header: React.FC = () => {
           <Image src={logo} w="90px" />
         </RouterLink>
         <HStack spacing={6}>
-          <HStack spacing={8} display={{ base: 'none', md: 'flex' }}>
+          <HStack spacing={8} display={{ base: "none", md: "flex" }}>
             <NavLink path="/home" label="Home" />
             <NavLink path="/appchains" label="Appchains" />
             <NavLink path="/bridge" label="Bridge" />
@@ -101,7 +103,7 @@ export const Header: React.FC = () => {
             <ColorModeSwitcher />
           </HStack>
 
-          {global.accountId ? (
+          {accountId ? (
             <Menu isOpen={isMenuOpen} placement="top-end">
               <MenuButton
                 as={Box}
@@ -115,7 +117,7 @@ export const Header: React.FC = () => {
                 onMouseLeave={onMenuClose}
                 mt={-1}
               >
-                <MenuGroup title={global.accountId}>
+                <MenuGroup title={accountId}>
                   <RouterLink to="/dashboard">
                     <MenuItem icon={<AiOutlineDashboard />}>Dashboard</MenuItem>
                   </RouterLink>
@@ -129,7 +131,7 @@ export const Header: React.FC = () => {
           ) : (
             <LoginButton />
           )}
-          <HStack spacing={2} display={{ base: 'flex', md: 'none' }}>
+          <HStack spacing={2} display={{ base: "flex", md: "none" }}>
             <MdMenu size={30} onClick={onOpen} />
             <Drawer isOpen={isOpen} placement="right" onClose={onClose}>
               <DrawerOverlay />
@@ -139,7 +141,7 @@ export const Header: React.FC = () => {
                 <DrawerBody>
                   <VStack
                     spacing={8}
-                    display={{ base: 'flex', md: 'none' }}
+                    display={{ base: "flex", md: "none" }}
                     alignItems="flex-end"
                     pt={16}
                   >

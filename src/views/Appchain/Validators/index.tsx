@@ -38,8 +38,8 @@ import { DecimalUtil } from "utils"
 import { OCT_TOKEN_DECIMALS } from "primitives"
 import { Empty } from "components"
 import OTTO from "../../../assets/otto.png"
-import { useGlobalStore } from "stores"
 import { formatAppChainAddress } from "utils/format"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 type ValidatorsProps = {
   appchain: AppchainInfoWithAnchorStatus | undefined
@@ -214,8 +214,8 @@ export const Validators: React.FC<ValidatorsProps> = ({
     setClaimRewardsModalOpen.on()
   }
 
-  const { global } = useGlobalStore()
-  const isMainnet = global?.network?.near.networkId === "mainnet"
+  const { networkConfig } = useWalletSelector()
+  const isMainnet = networkConfig?.near.networkId === "mainnet"
 
   return (
     <>

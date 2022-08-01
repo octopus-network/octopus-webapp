@@ -1,7 +1,7 @@
-import React, { useRef, useState, useEffect, useMemo } from 'react'
-import Decimal from 'decimal.js'
-import useSWR from 'swr'
-import axios from 'axios'
+import React, { useRef, useState, useEffect, useMemo } from "react"
+import Decimal from "decimal.js"
+import useSWR from "swr"
+import axios from "axios"
 
 import {
   SimpleGrid,
@@ -18,25 +18,25 @@ import {
   Stack,
   useBoolean,
   useToast,
-} from '@chakra-ui/react'
+} from "@chakra-ui/react"
 
-import { useSpring, animated } from 'react-spring'
+import { useSpring, animated } from "react-spring"
 
-import { useGlobalStore } from 'stores'
-import { DecimalUtil, ZERO_DECIMAL } from 'utils'
-import { AmountInput } from 'components'
-import { IoMdThumbsUp, IoMdThumbsDown } from 'react-icons/io'
-import { AppchainInfo, UserVotes } from 'types'
-import { API_HOST } from 'config'
+import { DecimalUtil, ZERO_DECIMAL } from "utils"
+import { AmountInput } from "components"
+import { IoMdThumbsUp, IoMdThumbsDown } from "react-icons/io"
+import { AppchainInfo, UserVotes } from "types"
+import { API_HOST } from "config"
 
 import {
   OCT_TOKEN_DECIMALS,
   SIMPLE_CALL_GAS,
   COMPLEX_CALL_GAS,
   FAILED_TO_REDIRECT_MESSAGE,
-} from 'primitives'
+} from "primitives"
 
-import { ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons'
+import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 type VoteActionsProps = {
   data: AppchainInfo
@@ -45,7 +45,7 @@ type VoteActionsProps = {
 type VotePopoverProps = {
   isOpen: boolean
   appchainId: string
-  voteType: 'upvote' | 'downvote'
+  voteType: "upvote" | "downvote"
   voted: Decimal
   onClose: () => void
 }
@@ -57,10 +57,10 @@ const VotePopover: React.FC<VotePopoverProps> = ({
   voted,
   onClose,
 }) => {
-  const { global } = useGlobalStore()
+  const { accountId, octToken, networkConfig, registry } = useWalletSelector()
   const toast = useToast()
 
-  const bg = useColorModeValue('white', '#25263c')
+  const bg = useColorModeValue("white", "#25263c")
   const ref = useRef<any>()
 
   const inputRef = useRef<any>()
@@ -71,26 +71,24 @@ const VotePopover: React.FC<VotePopoverProps> = ({
 
   const [withdrawPanel, setWithdrawPanel] = useBoolean(false)
 
-  const { data: balances } = useSWR(
-    global.accountId ? `balances/${global.accountId}` : null
-  )
+  const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null)
 
   const [popoverProps, popoverApi] = useSpring(() => ({
     opacity: 0,
-    transform: 'translateY(10px)',
+    transform: "translateY(10px)",
   }))
 
   const [depositPanelProps, depositPanelApi] = useSpring(() => ({
     opacity: 1,
-    transform: 'translateX(0px)',
+    transform: "translateX(0px)",
   }))
 
   const [withdrawPanelProps, withdrawPanelApi] = useSpring(() => ({
     opacity: 0,
-    transform: 'translateX(100%)',
+    transform: "translateX(100%)",
   }))
 
-  const [amount, setAmount] = useState('')
+  const [amount, setAmount] = useState("")
 
   useOutsideClick({
     ref: ref,
@@ -99,30 +97,30 @@ const VotePopover: React.FC<VotePopoverProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      popoverApi.start({ opacity: 1, transform: 'translateY(0px)' })
+      popoverApi.start({ opacity: 1, transform: "translateY(0px)" })
       setTimeout(() => {
         inputRef?.current.focus()
       }, 300)
     } else {
-      popoverApi.start({ opacity: 0, transform: 'translateY(10px)' })
+      popoverApi.start({ opacity: 0, transform: "translateY(10px)" })
     }
 
     if (!isOpen) {
-      setAmount('')
+      setAmount("")
       setWithdrawPanel.off()
     }
   }, [isOpen])
 
   useEffect(() => {
     if (withdrawPanel) {
-      depositPanelApi.start({ opacity: 0, transform: 'translateX(-100%)' })
-      withdrawPanelApi.start({ opacity: 1, transform: 'translateX(0px)' })
+      depositPanelApi.start({ opacity: 0, transform: "translateX(-100%)" })
+      withdrawPanelApi.start({ opacity: 1, transform: "translateX(0px)" })
       setTimeout(() => {
         inputRef2?.current.focus()
       }, 300)
     } else {
-      depositPanelApi.start({ opacity: 1, transform: 'translateX(0px)' })
-      withdrawPanelApi.start({ opacity: 0, transform: 'translateX(100%)' })
+      depositPanelApi.start({ opacity: 1, transform: "translateX(0px)" })
+      withdrawPanelApi.start({ opacity: 0, transform: "translateX(100%)" })
       setTimeout(() => {
         inputRef?.current.focus()
       }, 300)
@@ -135,10 +133,10 @@ const VotePopover: React.FC<VotePopoverProps> = ({
 
   const onDepositVotes = () => {
     setIsDepositing.on()
-    global.octToken
+    octToken
       ?.ft_transfer_call(
         {
-          receiver_id: global.network?.octopus.registryContractId || '',
+          receiver_id: networkConfig?.octopus.registryContractId || "",
           amount: DecimalUtil.toU64(
             DecimalUtil.fromString(amount),
             OCT_TOKEN_DECIMALS
@@ -159,10 +157,10 @@ const VotePopover: React.FC<VotePopoverProps> = ({
           return
         }
         toast({
-          position: 'top-right',
-          title: 'Error',
+          position: "top-right",
+          title: "Error",
           description: err.toString(),
-          status: 'error',
+          status: "error",
         })
         setIsDepositing.off()
       })
@@ -170,9 +168,9 @@ const VotePopover: React.FC<VotePopoverProps> = ({
 
   const onWithdrawVotes = () => {
     const method =
-      voteType === 'upvote'
-        ? global.registry?.withdraw_upvote_deposit_of
-        : global.registry?.withdraw_downvote_deposit_of
+      voteType === "upvote"
+        ? registry?.withdraw_upvote_deposit_of
+        : registry?.withdraw_downvote_deposit_of
 
     setIsWithdrawing.on()
 
@@ -197,10 +195,10 @@ const VotePopover: React.FC<VotePopoverProps> = ({
           return
         }
         toast({
-          position: 'top-right',
-          title: 'Error',
+          position: "top-right",
+          title: "Error",
           description: err.toString(),
-          status: 'error',
+          status: "error",
         })
       })
   }
@@ -263,7 +261,7 @@ const VotePopover: React.FC<VotePopoverProps> = ({
             ) : null}
             <Box mt={4}>
               <Button
-                colorScheme={voteType === 'downvote' ? 'teal' : 'octo-blue'}
+                colorScheme={voteType === "downvote" ? "teal" : "octo-blue"}
                 disabled={
                   !amount ||
                   isWithdrawing ||
@@ -274,8 +272,8 @@ const VotePopover: React.FC<VotePopoverProps> = ({
                 width="100%"
               >
                 {DecimalUtil.fromString(amount).gt(voted)
-                  ? 'Insufficient Votes'
-                  : 'Withdraw'}
+                  ? "Insufficient Votes"
+                  : "Withdraw"}
               </Button>
             </Box>
           </Box>
@@ -284,7 +282,7 @@ const VotePopover: React.FC<VotePopoverProps> = ({
           <Box position="relative">
             <Flex alignItems="center" justifyContent="space-between">
               <Heading fontSize="lg">
-                {voteType === 'upvote' ? 'Upvote' : 'Downvote'}
+                {voteType === "upvote" ? "Upvote" : "Downvote"}
               </Heading>
               <CloseButton onClick={onClose} color="gray" />
             </Flex>
@@ -315,12 +313,12 @@ const VotePopover: React.FC<VotePopoverProps> = ({
             ) : null}
             <Box mt={4}>
               <Button
-                colorScheme={voteType === 'downvote' ? 'teal' : 'octo-blue'}
+                colorScheme={voteType === "downvote" ? "teal" : "octo-blue"}
                 disabled={
                   !amount ||
                   isDepositing ||
                   DecimalUtil.fromString(amount).gt(
-                    DecimalUtil.fromString(balances?.['OCT'])
+                    DecimalUtil.fromString(balances?.["OCT"])
                   )
                 }
                 isLoading={isDepositing}
@@ -328,16 +326,16 @@ const VotePopover: React.FC<VotePopoverProps> = ({
                 width="100%"
               >
                 <Icon
-                  as={voteType === 'upvote' ? IoMdThumbsUp : IoMdThumbsDown}
+                  as={voteType === "upvote" ? IoMdThumbsUp : IoMdThumbsDown}
                   mr={1}
                 />
                 {DecimalUtil.fromString(amount).gt(
-                  DecimalUtil.fromString(balances?.['OCT'])
+                  DecimalUtil.fromString(balances?.["OCT"])
                 )
-                  ? 'Insufficient Balance'
-                  : voteType === 'upvote'
-                  ? 'Upvote'
-                  : 'Downvote'}
+                  ? "Insufficient Balance"
+                  : voteType === "upvote"
+                  ? "Upvote"
+                  : "Downvote"}
               </Button>
             </Box>
           </Box>
@@ -348,15 +346,15 @@ const VotePopover: React.FC<VotePopoverProps> = ({
 }
 
 export const VoteActions: React.FC<VoteActionsProps> = ({ data }) => {
-  const { global } = useGlobalStore()
-  const bg = useColorModeValue('#f6f7fa', '#15172c')
+  const { accountId, registry } = useWalletSelector()
+  const bg = useColorModeValue("#f6f7fa", "#15172c")
 
   const [upvotePopoverOpen, setUpvotePopoverOpen] = useBoolean(false)
   const [downvotePopoverOpen, setDownvotePopoverOpen] = useBoolean(false)
   const toast = useToast()
 
   const { data: userVotes } = useSWR<UserVotes>(
-    global.accountId ? `votes/${global.accountId}/${data.appchain_id}` : null
+    accountId ? `votes/${accountId}/${data.appchain_id}` : null
   )
 
   const userDownvotes = useMemo(
@@ -371,13 +369,13 @@ export const VoteActions: React.FC<VoteActionsProps> = ({ data }) => {
   const [isWithdrawingUpvotes, setIsWithdrawingUpvotes] = useBoolean()
   const [isWithdrawingDownvotes, setIsWithdrawingDownvotes] = useBoolean()
 
-  const onWithdrawVotes = (voteType: 'upvote' | 'downvote') => {
+  const onWithdrawVotes = (voteType: "upvote" | "downvote") => {
     const method =
-      voteType === 'upvote'
-        ? global.registry?.withdraw_upvote_deposit_of
-        : global.registry?.withdraw_downvote_deposit_of
+      voteType === "upvote"
+        ? registry?.withdraw_upvote_deposit_of
+        : registry?.withdraw_downvote_deposit_of
 
-    ;(voteType === 'upvote'
+    ;(voteType === "upvote"
       ? setIsWithdrawingUpvotes
       : setIsWithdrawingDownvotes
     ).on()
@@ -386,8 +384,8 @@ export const VoteActions: React.FC<VoteActionsProps> = ({ data }) => {
       {
         appchain_id: data.appchain_id,
         amount:
-          (voteType === 'upvote' ? userVotes?.upvotes : userVotes?.downvotes) ||
-          '0',
+          (voteType === "upvote" ? userVotes?.upvotes : userVotes?.downvotes) ||
+          "0",
       },
       COMPLEX_CALL_GAS
     )
@@ -401,10 +399,10 @@ export const VoteActions: React.FC<VoteActionsProps> = ({ data }) => {
           return
         }
         toast({
-          position: 'top-right',
-          title: 'Error',
+          position: "top-right",
+          title: "Error",
           description: err.toString(),
-          status: 'error',
+          status: "error",
         })
       })
   }
@@ -422,14 +420,14 @@ export const VoteActions: React.FC<VoteActionsProps> = ({ data }) => {
           zIndex={upvotePopoverOpen || downvotePopoverOpen ? 0 : 2}
         >
           <Text variant="gray">Your votes:</Text>
-          <Stack direction={{ base: 'column', md: 'row' }} ml={3}>
+          <Stack direction={{ base: "column", md: "row" }} ml={3}>
             {userUpvotes.gt(ZERO_DECIMAL) ? (
               <HStack>
                 <Icon as={IoMdThumbsUp} />
                 <Heading fontSize="md">
                   {DecimalUtil.beautify(userUpvotes)}
                 </Heading>
-                {data?.appchain_state !== 'InQueue' ? (
+                {data?.appchain_state !== "InQueue" ? (
                   <Button
                     size="xs"
                     colorScheme="octo-blue"
@@ -437,7 +435,7 @@ export const VoteActions: React.FC<VoteActionsProps> = ({ data }) => {
                     position="relative"
                     isDisabled={isWithdrawingUpvotes}
                     isLoading={isWithdrawingUpvotes}
-                    onClick={() => onWithdrawVotes('upvote')}
+                    onClick={() => onWithdrawVotes("upvote")}
                   >
                     Withdraw
                     <Box
@@ -461,12 +459,12 @@ export const VoteActions: React.FC<VoteActionsProps> = ({ data }) => {
                 <Heading fontSize="md">
                   {DecimalUtil.beautify(userDownvotes)}
                 </Heading>
-                {data?.appchain_state !== 'InQueue' ? (
+                {data?.appchain_state !== "InQueue" ? (
                   <Button
                     size="xs"
                     colorScheme="octo-blue"
                     variant="ghost"
-                    onClick={() => onWithdrawVotes('downvote')}
+                    onClick={() => onWithdrawVotes("downvote")}
                     position="relative"
                     isDisabled={isWithdrawingDownvotes}
                     isLoading={isWithdrawingDownvotes}
@@ -487,7 +485,7 @@ export const VoteActions: React.FC<VoteActionsProps> = ({ data }) => {
           </Stack>
         </Flex>
       ) : null}
-      {data?.appchain_state === 'InQueue' ? (
+      {data?.appchain_state === "InQueue" ? (
         <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
           <Box position="relative">
             <Button
@@ -499,8 +497,8 @@ export const VoteActions: React.FC<VoteActionsProps> = ({ data }) => {
               style={{
                 opacity: upvotePopoverOpen ? 0 : 1,
                 transform: upvotePopoverOpen
-                  ? 'scale(.9) translateY(-10px)'
-                  : 'scale(1) translateY(0px)',
+                  ? "scale(.9) translateY(-10px)"
+                  : "scale(1) translateY(0px)",
               }}
               width="100%"
             >
@@ -528,8 +526,8 @@ export const VoteActions: React.FC<VoteActionsProps> = ({ data }) => {
               style={{
                 opacity: downvotePopoverOpen ? 0 : 1,
                 transform: downvotePopoverOpen
-                  ? 'scale(.9) translateY(-10px)'
-                  : 'scale(1) translateY(0px)',
+                  ? "scale(.9) translateY(-10px)"
+                  : "scale(1) translateY(0px)",
               }}
               width="100%"
             >

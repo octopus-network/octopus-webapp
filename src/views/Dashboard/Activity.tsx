@@ -1,5 +1,5 @@
-import React from 'react'
-import useSWR from 'swr'
+import React from "react"
+import useSWR from "swr"
 
 import {
   Heading,
@@ -13,15 +13,15 @@ import {
   Link,
   Center,
   Flex,
-} from '@chakra-ui/react'
+} from "@chakra-ui/react"
 
-import { Empty } from 'components'
-import { useGlobalStore } from 'stores'
-import dayjs from 'dayjs'
-import relativeTime from 'dayjs/plugin/relativeTime'
-import { ExternalLinkIcon } from '@chakra-ui/icons'
+import { Empty } from "components"
+import dayjs from "dayjs"
+import relativeTime from "dayjs/plugin/relativeTime"
+import { ExternalLinkIcon } from "@chakra-ui/icons"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
-type Activity = {
+type ActivityType = {
   action_kind: string
   block_timestamp: string
   hash: string
@@ -30,10 +30,10 @@ type Activity = {
 }
 
 class ActivityTranslator {
-  private data: Activity
+  private data: ActivityType
   private account: string
 
-  constructor(data: Activity, account: string) {
+  constructor(data: ActivityType, account: string) {
     this.data = data
     this.account = account
   }
@@ -43,23 +43,23 @@ class ActivityTranslator {
       {
         TRANSFER:
           this.data.receiver_id === this.account
-            ? 'Received NEAR'
-            : 'Sent NEAR',
-        CREATE_ACCOUNT: 'New account created',
-        ADD_KEY: 'Access Key added',
-        FUNCTION_CALL: 'Method called',
-      }[this.data.action_kind] || 'Unknown'
+            ? "Received NEAR"
+            : "Sent NEAR",
+        CREATE_ACCOUNT: "New account created",
+        ADD_KEY: "Access Key added",
+        FUNCTION_CALL: "Method called",
+      }[this.data.action_kind] || "Unknown"
     )
   }
 
   getActionConnect() {
     return (
       {
-        TRANSFER: this.data.receiver_id === this.account ? 'from' : 'to',
-        CREATE_ACCOUNT: 'account',
-        ADD_KEY: 'for',
+        TRANSFER: this.data.receiver_id === this.account ? "from" : "to",
+        CREATE_ACCOUNT: "account",
+        ADD_KEY: "for",
         FUNCTION_CALL: `${this.data.args?.method_name} in `,
-      }[this.data.action_kind] || 'Unknown'
+      }[this.data.action_kind] || "Unknown"
     )
   }
 
@@ -67,14 +67,14 @@ class ActivityTranslator {
     const { receiver_id, args, action_kind } = this.data
 
     switch (action_kind) {
-      case 'TRANSFER':
-      case 'CREATE_ACCOUNT':
+      case "TRANSFER":
+      case "CREATE_ACCOUNT":
         return receiver_id
-      case 'ADD_KEY':
-        return args.access_key.permission.permission_kind === 'FULL_ACCESS'
+      case "ADD_KEY":
+        return args.access_key.permission.permission_kind === "FULL_ACCESS"
           ? receiver_id
           : args.access_key.permission.permission_details.receiver_id
-      case 'FUNCTION_CALL':
+      case "FUNCTION_CALL":
         return args.args_json.receiver_id || receiver_id
     }
   }
@@ -83,14 +83,11 @@ class ActivityTranslator {
 dayjs.extend(relativeTime)
 
 const ActivityItem: React.FC<{
-  activity: Activity
+  activity: ActivityType
 }> = ({ activity }) => {
-  const { global } = useGlobalStore()
+  const { accountId, networkConfig } = useWalletSelector()
 
-  const activityTranslator = new ActivityTranslator(
-    activity,
-    global.accountId || ''
-  )
+  const activityTranslator = new ActivityTranslator(activity, accountId || "")
 
   return (
     <Box>
@@ -112,7 +109,7 @@ const ActivityItem: React.FC<{
             <Link
               isExternal
               href={`${
-                global.network?.near.explorerUrl
+                networkConfig?.near.explorerUrl
               }/accounts/${activityTranslator.getActionTarget()}`}
             >
               <Text
@@ -132,11 +129,11 @@ const ActivityItem: React.FC<{
           </Text>
         </VStack>
         <Link
-          href={`${global.network?.near.explorerUrl}/transactions/${activity.hash}`}
+          href={`${networkConfig?.near.explorerUrl}/transactions/${activity.hash}`}
           isExternal
         >
           <Button size="sm" variant="ghost" colorScheme="octo-blue">
-            {' '}
+            {" "}
             View <ExternalLinkIcon ml={1} />
           </Button>
         </Link>
@@ -146,9 +143,9 @@ const ActivityItem: React.FC<{
 }
 
 export const Activity: React.FC = () => {
-  const { global } = useGlobalStore()
+  const { accountId } = useWalletSelector()
   const { data: activity, error: activityError } = useSWR<any[]>(
-    global.accountId ? `${global.accountId}/activity` : null
+    accountId ? `${accountId}/activity` : null
   )
 
   return (

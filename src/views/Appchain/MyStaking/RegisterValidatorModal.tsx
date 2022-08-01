@@ -27,9 +27,9 @@ import {
 import { decodeAddress } from "@polkadot/util-crypto"
 import { u8aToHex, isHex } from "@polkadot/util"
 import { BaseModal } from "components"
-import { useGlobalStore } from "stores"
 import { AnchorContract, AppchainInfoWithAnchorStatus } from "types"
 import { DecimalUtil, ZERO_DECIMAL } from "utils"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 type RegisterValidatorModalProps = {
   appchain: AppchainInfoWithAnchorStatus | undefined
@@ -47,7 +47,7 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
   const [amount, setAmount] = useState("")
   const [appchainAccount, setAppchainAccount] = useState("")
 
-  const { global } = useGlobalStore()
+  const { accountId, octToken } = useWalletSelector()
   const toast = useToast()
   const [email, setEmail] = useState("")
   const [socialMediaHandle, setSocialMediaHandle] = useState("")
@@ -56,9 +56,7 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
   const [minimumDeposit, setMinimumDeposit] = useState(ZERO_DECIMAL)
 
   const [isSubmitting, setIsSubmitting] = useBoolean()
-  const { data: balances } = useSWR(
-    global.accountId ? `balances/${global.accountId}` : null
-  )
+  const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null)
 
   const amountInDecimal = useMemo(
     () => DecimalUtil.fromString(amount),
@@ -100,7 +98,7 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
 
     setIsSubmitting.on()
 
-    global.octToken
+    octToken
       ?.ft_transfer_call(
         {
           receiver_id: anchor?.contractId || "",

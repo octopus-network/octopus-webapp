@@ -52,11 +52,7 @@ import { decodeAddress, isAddress } from "@polkadot/util-crypto"
 import { u8aToHex, stringToHex, isHex } from "@polkadot/util"
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types"
 
-import {
-  web3FromSource,
-  web3Enable,
-  isWeb3Injected,
-} from "@polkadot/extension-dapp"
+import { web3FromSource, web3Enable } from "@polkadot/extension-dapp"
 
 import { Empty } from "components"
 import nearLogo from "assets/near.svg"
@@ -85,6 +81,7 @@ import {
   SIMPLE_CALL_GAS,
 } from "primitives"
 import useAccounts from "hooks/useAccounts"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 function toHexAddress(ss58Address: string) {
   if (isHex(ss58Address)) {
@@ -118,6 +115,7 @@ export const BridgePanel: React.FC = () => {
   const [lastTokenContractId, setLastTokenContractId] = useState("")
 
   const { global } = useGlobalStore()
+  const { accountId, registry, networkConfig, selector } = useWalletSelector()
   const { txns, updateTxn, clearTxnsOfAppchain } = useTxnsStore()
   const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(
     appchainId ? `appchain/${appchainId}` : null,
@@ -187,12 +185,12 @@ export const BridgePanel: React.FC = () => {
       (t) =>
         !Object.keys(bridgeConfig.whitelist).includes(t.contractId) ||
         (Object.keys(bridgeConfig.whitelist).includes(t.contractId) &&
-          global?.accountId &&
+          accountId &&
           Object.values(bridgeConfig.whitelist)
             .flat(Infinity)
-            .includes(global?.accountId))
+            .includes(accountId))
     )
-  }, [tokens, bridgeConfig, global])
+  }, [tokens, bridgeConfig, accountId])
 
   useEffect(() => {
     if (isHistoryDrawerOpen) {
@@ -249,16 +247,16 @@ export const BridgePanel: React.FC = () => {
 
   const fromAccount = useMemo(() => {
     if (isReverse) {
-      return global.accountId
+      return accountId
       // } else if (appchainId?.includes("evm")) {
       //   return ethAccounts[0]
     }
 
     return currentAccount?.address
-  }, [isReverse, global, currentAccount])
+  }, [isReverse, accountId, currentAccount])
   const initialTargetAccount = useMemo(
-    () => (!isReverse ? global.accountId : currentAccount?.address),
-    [isReverse, global, currentAccount]
+    () => (!isReverse ? accountId : currentAccount?.address),
+    [isReverse, accountId, currentAccount]
   )
 
   const appchainTxns = useMemo(
@@ -268,11 +266,11 @@ export const BridgePanel: React.FC = () => {
           (t) =>
             t.fromAccount === fromAccount ||
             t.toAccount === fromAccount ||
-            t.fromAccount === global.accountId ||
-            t.toAccount === global.accountId
+            t.fromAccount === accountId ||
+            t.toAccount === accountId
         )
         .sort((a, b) => b.timestamp - a.timestamp),
-    [appchainId, txns, global, fromAccount]
+    [appchainId, txns, accountId, fromAccount]
   )
 
   const pendingTxns = useMemo(
@@ -293,14 +291,14 @@ export const BridgePanel: React.FC = () => {
   )
 
   const checkNearAccount = useCallback(() => {
-    if (!global.network || !debouncedTargetAccount || !tokenContract) {
+    if (!networkConfig || !debouncedTargetAccount || !tokenContract) {
       return
     }
 
     const near = new Near({
       keyStore: new keyStores.BrowserLocalStorageKeyStore(),
       headers: {},
-      ...global.network.near,
+      ...networkConfig.near,
     })
 
     // check is valid near account or not
@@ -323,7 +321,7 @@ export const BridgePanel: React.FC = () => {
       .catch((_) => {
         setIsInvalidTargetAccount.on()
       })
-  }, [global, debouncedTargetAccount, tokenContract])
+  }, [networkConfig, debouncedTargetAccount, tokenContract])
 
   const checkAppchainAccount = useCallback(() => {
     if (!appchainApi || !debouncedTargetAccount) {
@@ -449,29 +447,27 @@ export const BridgePanel: React.FC = () => {
     if (
       !isReverse ||
       !tokenAsset ||
-      !global.wallet ||
       !fromAccount ||
-      !tokenContract
+      !tokenContract ||
+      !accountId
     ) {
       return
     }
 
     setIsLoadingBalance.on()
 
-    tokenContract
-      .ft_balance_of({ account_id: global.accountId })
-      .then((res) => {
-        setBalance(
-          DecimalUtil.fromString(
-            res,
-            Array.isArray(tokenAsset?.metadata.decimals)
-              ? tokenAsset?.metadata.decimals[0]
-              : tokenAsset?.metadata.decimals
-          )
+    tokenContract.ft_balance_of({ account_id: accountId }).then((res) => {
+      setBalance(
+        DecimalUtil.fromString(
+          res,
+          Array.isArray(tokenAsset?.metadata.decimals)
+            ? tokenAsset?.metadata.decimals[0]
+            : tokenAsset?.metadata.decimals
         )
-        setIsLoadingBalance.off()
-      })
-  }, [isReverse, global, fromAccount, tokenAsset, tokenContract])
+      )
+      setIsLoadingBalance.off()
+    })
+  }, [isReverse, fromAccount, tokenAsset, tokenContract, accountId])
 
   const checkBalanceViaRPC = React.useRef<any>()
   checkBalanceViaRPC.current = async () => {
@@ -522,7 +518,7 @@ export const BridgePanel: React.FC = () => {
     if (
       isReverse ||
       !tokenAsset ||
-      !global.wallet ||
+      !accountId ||
       !appchainApi ||
       !fromAccount ||
       !bridgeConfig
@@ -531,7 +527,7 @@ export const BridgePanel: React.FC = () => {
     }
 
     checkBalanceViaRPC?.current()
-  }, [isReverse, appchainApi, global, fromAccount, tokenAsset, bridgeConfig])
+  }, [isReverse, appchainApi, accountId, fromAccount, tokenAsset, bridgeConfig])
 
   useEffect(() => {
     if (!fromAccount) {
@@ -569,16 +565,18 @@ export const BridgePanel: React.FC = () => {
     }
   }
 
-  const onLogin = (e: any) => {
+  const onLogin = async (e: any) => {
     setIsLogging.on()
-    global.wallet?.requestSignIn(
-      global.network?.octopus.registryContractId,
-      "Octopus Webapp"
-    )
+    const wallet = await selector.wallet()
+    wallet.signIn({
+      contractId: networkConfig?.octopus?.registryContractId!,
+      methods: [],
+    } as any)
   }
 
-  const onLogout = () => {
-    global.wallet?.signOut()
+  const onLogout = async () => {
+    const wallet = await selector.wallet()
+    wallet.signOut()
     window.location.replace(window.location.origin + window.location.pathname)
   }
 
@@ -679,7 +677,7 @@ export const BridgePanel: React.FC = () => {
         throw new Error("Invalid target account")
       }
 
-      const anchor_id = `${appchainId}.${global.registry?.contractId}`
+      const anchor_id = `${appchainId}.${registry?.contractId}`
 
       const contract = new CollectibleContract(
         global.wallet?.account() as any,
@@ -924,9 +922,9 @@ export const BridgePanel: React.FC = () => {
                 <Text>History</Text>
               </HStack>
             </Button>
-          ) : global?.network &&
+          ) : networkConfig &&
             !appchainId &&
-            global?.network?.near.networkId !== "mainnet" ? (
+            networkConfig?.near.networkId !== "mainnet" ? (
             <RouterLink to="/bridge/txs">
               <Button variant="link" color="#2468f2" size="sm">
                 Recent Transactions
@@ -1070,11 +1068,11 @@ export const BridgePanel: React.FC = () => {
                       colorScheme="octo-blue"
                       variant="ghost"
                       size="xs"
-                      isDisabled={isDepositingStorage || !global.accountId}
+                      isDisabled={isDepositingStorage || !accountId}
                       isLoading={isDepositingStorage}
                       onClick={onDepositStorage}
                     >
-                      {global.accountId ? "Setup" : "Please Login"}
+                      {accountId ? "Setup" : "Please Login"}
                     </Button>
                   </HStack>
                 ) : null}

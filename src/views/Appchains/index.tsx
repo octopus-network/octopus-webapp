@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from 'react'
+import React, { useMemo, useEffect } from "react"
 
 import {
   Container,
@@ -9,21 +9,21 @@ import {
   SimpleGrid,
   Image,
   Link,
-} from '@chakra-ui/react'
+} from "@chakra-ui/react"
 
-import { RunningAppchains } from 'components'
+import { RunningAppchains } from "components"
 
-import { Statistics } from './Statistics'
-import { Booting } from './Booting'
-import { Voting } from './Voting'
-import { Established } from './Established'
+import { Statistics } from "./Statistics"
+import { Booting } from "./Booting"
+import { Voting } from "./Voting"
+import { Established } from "./Established"
 
-import { Overview } from './Overview'
-import { useParams, useNavigate } from 'react-router-dom'
-import JOIN_DISCORD from '../../assets/join-discord.png'
-import JOIN_ACCELERATOR from '../../assets/join-accelerator.png'
-import JOIN_OCTOPUS from '../../assets/join-octopus.png'
-import { useGlobalStore } from 'stores'
+import { Overview } from "./Overview"
+import { useParams, useNavigate } from "react-router-dom"
+import JOIN_DISCORD from "../../assets/join-discord.png"
+import JOIN_ACCELERATOR from "../../assets/join-accelerator.png"
+import JOIN_OCTOPUS from "../../assets/join-octopus.png"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 export const Appchains: React.FC = () => {
   const { appchainId } = useParams()
@@ -33,11 +33,11 @@ export const Appchains: React.FC = () => {
 
   useEffect(() => {
     if (drawerIOpen) {
-      ;(document.getElementById('root') as any).style =
-        'transition: all .3s ease-in-out; transform: translateX(-15%)'
+      ;(document.getElementById("root") as any).style =
+        "transition: all .3s ease-in-out; transform: translateX(-15%)"
     } else {
-      ;(document.getElementById('root') as any).style =
-        'transition: all .15s ease-in-out; transform: translateX(0)'
+      ;(document.getElementById("root") as any).style =
+        "transition: all .15s ease-in-out; transform: translateX(0)"
     }
   }, [drawerIOpen])
 
@@ -45,13 +45,13 @@ export const Appchains: React.FC = () => {
     navigate(`/appchains`)
   }
 
-  const { global } = useGlobalStore()
-  const isMainnet = global?.network?.near.networkId === 'mainnet'
+  const { networkConfig } = useWalletSelector()
+  const isMainnet = networkConfig?.near.networkId === "mainnet"
 
   return (
     <>
       <Container>
-        <Box mt={10} display={{ base: 'none', md: 'block' }}>
+        <Box mt={10} display={{ base: "none", md: "block" }}>
           <SimpleGrid gap={3} mt={1} columns={{ base: 1, md: 3 }}>
             <Link href="/register">
               <Image src={JOIN_OCTOPUS} borderRadius={10} />
@@ -59,8 +59,8 @@ export const Appchains: React.FC = () => {
             <Link
               href={
                 isMainnet
-                  ? 'https://discord.gg/uVKUBSssxm'
-                  : 'https://discord.gg/zgcdhu5BzT'
+                  ? "https://discord.gg/uVKUBSssxm"
+                  : "https://discord.gg/zgcdhu5BzT"
               }
               target="_blank"
             >

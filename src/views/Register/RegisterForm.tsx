@@ -35,13 +35,13 @@ import {
 import { EditIcon } from "@chakra-ui/icons"
 import { DecimalUtil, ZERO_DECIMAL } from "utils"
 import { Formik, Form, Field } from "formik"
-import { useGlobalStore } from "stores"
 import {
   OCT_TOKEN_DECIMALS,
   COMPLEX_CALL_GAS,
   FAILED_TO_REDIRECT_MESSAGE,
 } from "primitives"
 import Decimal from "decimal.js"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 export const RegisterForm: React.FC = () => {
   const bg = useColorModeValue("white", "#15172c")
@@ -60,11 +60,9 @@ export const RegisterForm: React.FC = () => {
     icon: "",
     decimals: 18,
   })
-  const { global } = useGlobalStore()
+  const { accountId, registry, octToken, networkConfig } = useWalletSelector()
 
-  const { data: balances } = useSWR(
-    global.accountId ? `balances/${global.accountId}` : null
-  )
+  const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null)
 
   const octBalance = useMemo(
     () => DecimalUtil.fromString(balances?.["OCT"]),
@@ -75,7 +73,7 @@ export const RegisterForm: React.FC = () => {
   const toast = useToast()
 
   useEffect(() => {
-    global.registry?.get_registry_settings().then((settings) => {
+    registry?.get_registry_settings().then((settings) => {
       setAuditingFee(
         DecimalUtil.fromString(
           settings.minimum_register_deposit,
@@ -83,7 +81,7 @@ export const RegisterForm: React.FC = () => {
         )
       )
     })
-  }, [global])
+  }, [registry])
 
   const validateAppchainId = (value: string) => {
     const reg = /^[a-z]([-a-z0-9]*[a-z0-9])?$/
@@ -153,10 +151,10 @@ export const RegisterForm: React.FC = () => {
       return
     }
 
-    global.octToken
+    octToken
       ?.ft_transfer_call(
         {
-          receiver_id: global.network?.octopus.registryContractId || "",
+          receiver_id: networkConfig?.octopus.registryContractId || "",
           amount: DecimalUtil.toU64(
             auditingFee || ZERO_DECIMAL,
             OCT_TOKEN_DECIMALS
@@ -571,7 +569,7 @@ export const RegisterForm: React.FC = () => {
                   </Skeleton>
                   <Heading fontSize="md">OCT</Heading>
                 </HStack>
-                {global.accountId ? (
+                {accountId ? (
                   <Skeleton isLoaded={!!balances}>
                     <Text variant="gray" fontSize="sm">
                       Balance:{" "}
@@ -590,12 +588,12 @@ export const RegisterForm: React.FC = () => {
                   type="submit"
                   disabled={
                     props.isSubmitting ||
-                    !global.accountId ||
+                    !accountId ||
                     !auditingFee ||
                     octBalance.lt(auditingFee)
                   }
                 >
-                  {!global.accountId
+                  {!accountId
                     ? "Please Login"
                     : auditingFee && balances && octBalance.lt(auditingFee)
                     ? "Insufficient Balance"

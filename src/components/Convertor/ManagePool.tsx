@@ -35,6 +35,7 @@ import { AccountId, ConversionPool, FungibleTokenMetadata } from "types"
 import { DecimalUtil } from "utils"
 import { isValidNumber } from "utils/validate"
 import NEP141 from "assets/icons/nep141-token.png"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 function TokenInput({
   token,
@@ -117,6 +118,7 @@ export default function ManagePool({
   const outToken = whitelist.find((t) => t.token_id === pool?.out_token)
 
   const { global } = useGlobalStore()
+  const { accountId } = useWalletSelector()
 
   const contract = useConvertorContract(
     global.wallet?.account() as any,
@@ -176,13 +178,13 @@ export default function ManagePool({
   const onDeletePool = async () => {
     try {
       const account = global.wallet?.account()
-      if (!account) {
+      if (!accountId || !account) {
         throw new Error("No account")
       }
 
       const actions = []
       const storageFee = await contract?.get_storage_fee_gap_of({
-        account_id: global.accountId,
+        account_id: accountId!,
       })
 
       if (String(storageFee) !== "0") {

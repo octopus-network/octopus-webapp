@@ -40,6 +40,7 @@ import {
   FAILED_TO_REDIRECT_MESSAGE,
   COMPLEX_CALL_GAS,
 } from "primitives"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 type RewardsModalProps = {
   rewards: RewardHistory[] | undefined
@@ -64,6 +65,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
 
   const toast = useToast()
   const { global } = useGlobalStore()
+  const { accountId } = useWalletSelector()
 
   const [isClaiming, setIsClaiming] = useBoolean(false)
   const [isClaimRewardsPaused, setIsClaimRewardsPaused] = useState(false)
@@ -91,11 +93,11 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
   }, [anchor])
 
   useEffect(() => {
-    if (!wrappedAppchainTokenContract) {
+    if (!wrappedAppchainTokenContract || !accountId) {
       return
     }
     wrappedAppchainTokenContract
-      .storage_balance_of({ account_id: global.accountId })
+      .storage_balance_of({ account_id: accountId })
       .then((storage) => {
         setWrappedAppchainTokenStorageBalance(
           storage?.total
@@ -103,7 +105,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
             : ZERO_DECIMAL
         )
       })
-  }, [wrappedAppchainTokenContract, global])
+  }, [wrappedAppchainTokenContract, global, accountId])
 
   const unwithdrawnRewards = useMemo(() => {
     if (!rewards?.length) {
@@ -122,7 +124,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
         ),
       ZERO_DECIMAL
     )
-  }, [rewards])
+  }, [appchain?.appchain_metadata?.fungible_token_metadata.decimals, rewards])
 
   const totalRewards = useMemo(
     () =>
@@ -138,7 +140,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
             ZERO_DECIMAL
           )
         : ZERO_DECIMAL,
-    [rewards]
+    [appchain?.appchain_metadata?.fungible_token_metadata?.decimals, rewards]
   )
 
   const onClaimRewards = () => {
@@ -159,9 +161,9 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
     const params: any = validatorId
       ? {
           validator_id: validatorId,
-          delegator_id: global.accountId || "",
+          delegator_id: accountId || "",
         }
-      : { validator_id: global.accountId }
+      : { validator_id: accountId }
 
     method(params, COMPLEX_CALL_GAS).catch((err) => {
       if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
@@ -185,7 +187,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
       .functionCall({
         contractId: wrappedAppchainTokenContract?.contractId || "",
         methodName: "storage_deposit",
-        args: { account_id: global.accountId },
+        args: { account_id: accountId },
         gas: new BN(SIMPLE_CALL_GAS),
         attachedDeposit: new BN("1250000000000000000000"),
       })

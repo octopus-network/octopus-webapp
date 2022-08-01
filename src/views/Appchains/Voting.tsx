@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react'
-import useSWR from 'swr'
+import React, { useMemo } from "react"
+import useSWR from "swr"
 
 import {
   Flex,
@@ -18,23 +18,23 @@ import {
   GridItem,
   Progress,
   Box,
-} from '@chakra-ui/react'
+} from "@chakra-ui/react"
 
-import { QuestionOutlineIcon, ChevronRightIcon } from '@chakra-ui/icons'
+import { QuestionOutlineIcon, ChevronRightIcon } from "@chakra-ui/icons"
 
-import { IoMdThumbsUp, IoMdThumbsDown } from 'react-icons/io'
-import { AppchainInfo } from 'types'
+import { IoMdThumbsUp, IoMdThumbsDown } from "react-icons/io"
+import { AppchainInfo } from "types"
 
-import Decimal from 'decimal.js'
-import rank1Icon from 'assets/icons/rank1.png'
-import rank2Icon from 'assets/icons/rank2.png'
-import rank3Icon from 'assets/icons/rank3.png'
+import Decimal from "decimal.js"
+import rank1Icon from "assets/icons/rank1.png"
+import rank2Icon from "assets/icons/rank2.png"
+import rank3Icon from "assets/icons/rank3.png"
 
-import { useNavigate } from 'react-router-dom'
-import { DecimalUtil, ZERO_DECIMAL } from 'utils'
-import { OCT_TOKEN_DECIMALS } from 'primitives'
-import { Empty } from 'components'
-import { useGlobalStore } from 'stores'
+import { useNavigate } from "react-router-dom"
+import { DecimalUtil, ZERO_DECIMAL } from "utils"
+import { OCT_TOKEN_DECIMALS } from "primitives"
+import { Empty } from "components"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 type VotingItemProps = {
   rank: number
@@ -49,12 +49,12 @@ const VotingItem: React.FC<VotingItemProps> = ({
   data,
   highestVotes,
 }) => {
-  const hoverBg = useColorModeValue('gray.100', 'whiteAlpha.100')
-  const rankBg = useColorModeValue('gray.300', 'whiteAlpha.300')
+  const hoverBg = useColorModeValue("gray.100", "whiteAlpha.100")
+  const rankBg = useColorModeValue("gray.300", "whiteAlpha.300")
 
-  const red = useColorModeValue('#ff5959', '#ff5959')
-  const green = useColorModeValue('#12cd76', '#12cd76')
-  const { global } = useGlobalStore()
+  const red = useColorModeValue("#ff5959", "#ff5959")
+  const green = useColorModeValue("#12cd76", "#12cd76")
+  const { accountId } = useWalletSelector()
 
   const navigate = useNavigate()
 
@@ -78,7 +78,7 @@ const VotingItem: React.FC<VotingItemProps> = ({
   )
 
   const { data: userVotes } = useSWR(
-    global.accountId ? `votes/${global.accountId}/${data.appchain_id}` : null
+    accountId ? `votes/${accountId}/${data.appchain_id}` : null
   )
 
   const userDownvotes = useMemo(
@@ -99,16 +99,16 @@ const VotingItem: React.FC<VotingItemProps> = ({
       backgroundColor="transparent"
       _hover={{
         backgroundColor: hoverBg,
-        transform: 'scale(1.01)',
+        transform: "scale(1.01)",
       }}
       onClick={() => navigate(`/appchains/overview/${data.appchain_id}`)}
     >
       <Grid
-        templateColumns={{ base: 'repeat(6, 1fr)', md: 'repeat(11, 1fr)' }}
+        templateColumns={{ base: "repeat(6, 1fr)", md: "repeat(11, 1fr)" }}
         alignItems="center"
         gap={6}
       >
-        <GridItem colSpan={1} display={{ base: 'none', md: 'table-cell' }}>
+        <GridItem colSpan={1} display={{ base: "none", md: "table-cell" }}>
           <Box boxSize="28px" borderRadius="full" overflow="hidden">
             {rank <= 3 ? (
               <Image src={rankIcons[rank - 1]} w="100%" />
@@ -145,7 +145,7 @@ const VotingItem: React.FC<VotingItemProps> = ({
             </Heading>
           </HStack>
         </GridItem>
-        <GridItem colSpan={4} display={{ base: 'none', md: 'table-cell' }}>
+        <GridItem colSpan={4} display={{ base: "none", md: "table-cell" }}>
           <SimpleGrid columns={2} gap={6}>
             <VStack alignItems="flex-start" spacing={1}>
               <HStack className="octo-gray" spacing={1}>
@@ -191,8 +191,8 @@ const VotingItem: React.FC<VotingItemProps> = ({
               position="absolute"
               bg={
                 pendingScore.lt(ZERO_DECIMAL)
-                  ? 'rgba(229, 62, 62, .1)'
-                  : 'rgba(56, 161, 105, .1)'
+                  ? "rgba(229, 62, 62, .1)"
+                  : "rgba(56, 161, 105, .1)"
               }
               borderRadius="2xl"
               transform="translateX(100%) scale(.8)"
@@ -205,7 +205,7 @@ const VotingItem: React.FC<VotingItemProps> = ({
                 textOverflow="ellipsis"
                 maxW="120px"
               >
-                {pendingScore.lt(ZERO_DECIMAL) ? '-' : '+'}{' '}
+                {pendingScore.lt(ZERO_DECIMAL) ? "-" : "+"}{" "}
                 {DecimalUtil.beautify(pendingScore.abs(), 2)}
               </Heading>
             </Box>
@@ -232,9 +232,9 @@ const VotingItem: React.FC<VotingItemProps> = ({
 }
 
 export const Voting: React.FC = () => {
-  const bg = useColorModeValue('white', '#25263c')
+  const bg = useColorModeValue("white", "#25263c")
 
-  const { data: appchains } = useSWR('appchains/voting')
+  const { data: appchains } = useSWR("appchains/voting")
 
   const highestVotes = useMemo(() => {
     if (!appchains?.length) {
@@ -290,22 +290,22 @@ export const Voting: React.FC = () => {
             <Box p={4}>
               <Grid
                 templateColumns={{
-                  base: 'repeat(6, 1fr)',
-                  md: 'repeat(11, 1fr)',
+                  base: "repeat(6, 1fr)",
+                  md: "repeat(11, 1fr)",
                 }}
                 className="octo-gray"
                 gap={6}
               >
                 <GridItem
                   colSpan={1}
-                  display={{ base: 'none', md: 'table-cell' }}
+                  display={{ base: "none", md: "table-cell" }}
                 >
                   Rank
                 </GridItem>
                 <GridItem colSpan={3}>ID</GridItem>
                 <GridItem
                   colSpan={4}
-                  display={{ base: 'none', md: 'table-cell' }}
+                  display={{ base: "none", md: "table-cell" }}
                 >
                   Votes
                 </GridItem>
