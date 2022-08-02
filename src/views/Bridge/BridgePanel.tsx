@@ -855,12 +855,30 @@ export const BridgePanel: React.FC = () => {
 
       setIsDepositingStorage.on()
 
+      const res = await appchainApi?.query.system.account(fromAccount)
+      const resJSON: any = res?.toJSON()
+      const balance = DecimalUtil.fromString(
+        resJSON?.data?.free,
+        Array.isArray(tokenAsset?.metadata.decimals)
+          ? tokenAsset?.metadata.decimals[1]
+          : tokenAsset?.metadata.decimals
+      )
+      const toDepositAmount = DecimalUtil.toU64(
+        new Decimal(0.01),
+        appchain?.appchain_metadata?.fungible_token_metadata?.decimals
+      ).toString()
+
+      if (!balance.gte(toDepositAmount)) {
+        return toast({
+          position: "top-right",
+          title: "Error",
+          description: "Balance not enough",
+          status: "error",
+        })
+      }
       const tx = appchainApi.tx.balances.transfer(
         targetAccount,
-        DecimalUtil.toU64(
-          new Decimal(0.01),
-          appchain?.appchain_metadata?.fungible_token_metadata?.decimals
-        ).toString()
+        toDepositAmount
       )
 
       tx.signAndSend(currentAccount.address, (res) => {
@@ -1064,7 +1082,7 @@ export const BridgePanel: React.FC = () => {
                   <HStack>
                     <WarningIcon color="red" boxSize={3} />
                     <Text fontSize="xs" color="red">
-                      This account isn't setup yet
+                      This account hasn't been setup yet
                     </Text>
                     <Button
                       colorScheme="octo-blue"

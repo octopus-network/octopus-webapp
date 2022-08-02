@@ -76,6 +76,7 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
   }
 
   const onKeyChange = (key: string) => {
+    // TODO: isEvm
     if (isHex(key) && key.length === 324) {
       setKey(key)
     } else {
