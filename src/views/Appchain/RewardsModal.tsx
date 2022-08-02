@@ -32,7 +32,6 @@ import {
 
 import { BaseModal, Empty } from "components"
 import { DecimalUtil, ZERO_DECIMAL } from "utils"
-import { useGlobalStore } from "stores"
 import { WarningTwoIcon } from "@chakra-ui/icons"
 
 import {
@@ -64,8 +63,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
   const bg = useColorModeValue("#f6f7fa", "#15172c")
 
   const toast = useToast()
-  const { global } = useGlobalStore()
-  const { accountId } = useWalletSelector()
+  const { accountId, selector } = useWalletSelector()
 
   const [isClaiming, setIsClaiming] = useBoolean(false)
   const [isClaimRewardsPaused, setIsClaimRewardsPaused] = useState(false)
@@ -105,7 +103,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
             : ZERO_DECIMAL
         )
       })
-  }, [wrappedAppchainTokenContract, global, accountId])
+  }, [wrappedAppchainTokenContract, accountId])
 
   const unwithdrawnRewards = useMemo(() => {
     if (!rewards?.length) {
@@ -180,30 +178,42 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
     })
   }
 
-  const onDepositStorage = () => {
-    setIsDepositingStorage.on()
-    global.wallet
-      ?.account()
-      .functionCall({
-        contractId: wrappedAppchainTokenContract?.contractId || "",
-        methodName: "storage_deposit",
-        args: { account_id: accountId },
-        gas: new BN(SIMPLE_CALL_GAS),
-        attachedDeposit: new BN("1250000000000000000000"),
+  const onDepositStorage = async () => {
+    try {
+      setIsDepositingStorage.on()
+
+      const wallet = await selector.wallet()
+      await wallet.signAndSendTransaction({
+        signerId: wallet.id,
+        receiverId: wrappedAppchainTokenContract?.contractId,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: "storage_deposit",
+              args: { account_id: accountId },
+              gas: SIMPLE_CALL_GAS,
+              deposit: "1250000000000000000000",
+            },
+          },
+        ],
       })
-      .catch((err) => {
-        setIsDepositingStorage.off()
-        if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
+      setIsDepositingStorage.off()
+    } catch (error) {
+      setIsDepositingStorage.off()
+      if (error instanceof Error) {
+        if (error.message === FAILED_TO_REDIRECT_MESSAGE) {
           return
         }
 
         toast({
           position: "top-right",
           title: "Error",
-          description: err.toString(),
+          description: error.toString(),
           status: "error",
         })
-      })
+      }
+    }
   }
 
   return (

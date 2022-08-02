@@ -3,7 +3,6 @@ import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { API_HOST } from "config"
 import { Account, keyStores, Near } from "near-api-js"
 import { useEffect, useState } from "react"
-import { useGlobalStore } from "stores"
 import {
   ConversionPool,
   ConvertorContract,
@@ -124,18 +123,13 @@ export const useWhitelist = (contract: ConvertorContract | null) => {
 
 export const useTokenBalance = (contractId: string | undefined) => {
   const [balance, setBalance] = useState("0")
-  const { global } = useGlobalStore()
-  const { accountId } = useWalletSelector()
+  const { accountId, nearAccount } = useWalletSelector()
   useEffect(() => {
-    if (global && global.wallet && accountId && contractId) {
-      const contract = new TokenContract(
-        global?.wallet?.account(),
-        contractId,
-        {
-          viewMethods: ["ft_balance_of", "storage_balance_of"],
-          changeMethods: ["ft_transfer_call"],
-        }
-      )
+    if (global && accountId && contractId) {
+      const contract = new TokenContract(nearAccount, contractId, {
+        viewMethods: ["ft_balance_of", "storage_balance_of"],
+        changeMethods: ["ft_transfer_call"],
+      })
       contract
         .ft_balance_of({ account_id: accountId })
         .then((balance) => {
@@ -143,6 +137,6 @@ export const useTokenBalance = (contractId: string | undefined) => {
         })
         .catch(console.error)
     }
-  }, [global, contractId, accountId])
+  }, [nearAccount, contractId, accountId])
   return balance
 }

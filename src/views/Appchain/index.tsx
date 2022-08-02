@@ -48,15 +48,14 @@ import { ValidatorProfile } from "./ValidatorProfile"
 import { MyNode } from "./MyNode"
 
 import { Validators } from "./Validators"
-import { useGlobalStore } from "stores"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 export const Appchain: React.FC = () => {
   const { id = "", validatorId = "" } = useParams()
 
   const toast = useToast()
-  const { global } = useGlobalStore()
-  const { accountId, networkConfig, registry } = useWalletSelector()
+  const { accountId, networkConfig, registry, nearAccount } =
+    useWalletSelector()
   const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(
     id ? `appchain/${id}` : null
   )
@@ -115,7 +114,7 @@ export const Appchain: React.FC = () => {
     }
 
     const anchorContract = new AnchorContract(
-      global.wallet?.account() as any,
+      nearAccount,
       appchain.appchain_anchor,
       {
         viewMethods: [
@@ -168,7 +167,7 @@ export const Appchain: React.FC = () => {
           setUnbondedValidators(Array.from(new Set(tmpArr)))
         })
     }
-  }, [appchain, global, networkConfig?.near])
+  }, [appchain, networkConfig?.near])
 
   useEffect(() => {
     if (!anchor) {
@@ -185,16 +184,12 @@ export const Appchain: React.FC = () => {
     }
 
     setWrappedAppchainTokenContract(
-      new TokenContract(
-        global.wallet?.account() as any,
-        wrappedAppchainToken.contract_account,
-        {
-          viewMethods: ["storage_balance_of", "ft_balance_of"],
-          changeMethods: [],
-        }
-      )
+      new TokenContract(nearAccount, wrappedAppchainToken.contract_account, {
+        viewMethods: ["storage_balance_of", "ft_balance_of"],
+        changeMethods: [],
+      })
     )
-  }, [wrappedAppchainToken, global, accountId])
+  }, [wrappedAppchainToken, accountId])
 
   useEffect(() => {
     if (!appchainSettings) {

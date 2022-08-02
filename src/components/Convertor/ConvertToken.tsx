@@ -14,7 +14,6 @@ import {
   useColorModeValue,
   Avatar,
 } from "@chakra-ui/react"
-import BN from "bn.js"
 import Decimal from "decimal.js"
 import {
   useConvertorContract,
@@ -27,15 +26,12 @@ import {
 } from "primitives"
 import { useState } from "react"
 import { MdArrowDownward, MdSwapVert } from "react-icons/md"
-import { useGlobalStore } from "stores"
 import { AccountId, ConversionPool, FungibleTokenMetadata } from "types"
 import { DecimalUtil } from "utils"
 import { isValidNumber } from "utils/validate"
-import { createTransaction, functionCall } from "near-api-js/lib/transaction"
-import { baseDecode } from "borsh"
-import { PublicKey } from "near-api-js/lib/utils"
 import NEP141 from "assets/icons/nep141-token.png"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { Transaction } from "@near-wallet-selector/core"
 
 const TokenInput = ({
   value,
@@ -102,13 +98,9 @@ export default function ConvertToken({
   const [inTokenValue, setInTokenValue] = useState<string | number>("")
   const [outTokenValue, setOutTokenValue] = useState<string | number>("")
   const [isReversed, setIsReversed] = useState(false)
-  const { global } = useGlobalStore()
-  const { accountId } = useWalletSelector()
+  const { accountId, selector, near, nearAccount } = useWalletSelector()
 
-  const contract = useConvertorContract(
-    global.wallet?.account() as any,
-    contractId
-  )
+  const contract = useConvertorContract(nearAccount, contractId)
   const bg = useColorModeValue("white", "#15172c")
 
   const inToken = whitelist.find((t) => t.token_id === pool?.in_token)
@@ -173,51 +165,61 @@ export default function ConvertToken({
 
   const onConvert = async () => {
     try {
-      const account = global.wallet?.account()
-      if (!account || !accountId) {
+      if (!accountId) {
         throw new Error("No account")
       }
-      const actions = []
+      const wallet = await selector.wallet()
+      const txs: Transaction[] = []
+
       const storageFee = await contract?.get_storage_fee_gap_of({
         account_id: accountId!,
       })
 
       if (String(storageFee) !== "0") {
-        actions.push({
+        txs.push({
+          signerId: accountId,
           receiverId: contractId,
           actions: [
-            functionCall(
-              "storage_deposit",
-              {
-                account_id: account?.accountId,
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "storage_deposit",
+                args: {
+                  account_id: accountId,
+                },
+                gas: SIMPLE_CALL_GAS,
+                deposit: String(storageFee),
               },
-              new BN(SIMPLE_CALL_GAS),
-              new BN(storageFee!)
-            ),
+            },
           ],
         })
       }
 
       const receiveTokenId = !isReversed ? pool.out_token : pool.in_token
+      const account = await near?.account("dontcare")
       const storageBalance = await account?.viewFunction(
         receiveTokenId,
         "storage_balance_of",
-        { account_id: account.accountId }
+        { account_id: accountId }
       )
 
       if (!storageBalance || storageBalance === "0") {
-        actions.push({
+        txs.push({
+          signerId: accountId,
           receiverId: receiveTokenId,
           actions: [
-            functionCall(
-              "storage_deposit",
-              {
-                registration_only: true,
-                account_id: account?.accountId,
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "storage_deposit",
+                args: {
+                  registration_only: true,
+                  account_id: accountId,
+                },
+                gas: SIMPLE_CALL_GAS,
+                deposit: FT_MINIMUM_STORAGE_BALANCE!,
               },
-              new BN(SIMPLE_CALL_GAS),
-              new BN(FT_MINIMUM_STORAGE_BALANCE!)
-            ),
+            },
           ],
         })
       }
@@ -236,56 +238,29 @@ export default function ConvertToken({
         pool_id: pool.id,
       }
 
-      actions.push({
+      txs.push({
+        signerId: accountId,
         receiverId: tokenContractId,
         actions: [
-          functionCall(
-            "ft_transfer_call",
-            {
-              receiver_id: contractId,
-              amount: _amount,
-              msg: JSON.stringify({
-                Convert: { convert_action: convertAction },
-              }),
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: "ft_transfer_call",
+              args: {
+                receiver_id: contractId,
+                amount: _amount,
+                msg: JSON.stringify({
+                  Convert: { convert_action: convertAction },
+                }),
+              },
+              gas: COMPLEX_CALL_GAS,
+              deposit: "1",
             },
-            new BN(COMPLEX_CALL_GAS),
-            new BN(1)
-          ),
+          },
         ],
       })
 
-      let localKey = await account?.connection.signer.getPublicKey(
-        account.accountId,
-        account.connection.networkId
-      )
-
-      const transactions = await Promise.all(
-        actions.map(async (t) => {
-          let accessKey = await account.accessKeyForTransaction(
-            t.receiverId,
-            t.actions,
-            localKey
-          )
-
-          const block = await account?.connection.provider.block({
-            finality: "final",
-          })
-          const blockHash = baseDecode(block.header.hash)
-
-          const publicKey = PublicKey.from(accessKey.public_key)
-          const nonce = accessKey.access_key.nonce + 1
-
-          return createTransaction(
-            account?.accountId!,
-            publicKey,
-            t.receiverId,
-            nonce,
-            t.actions,
-            blockHash
-          )
-        })
-      )
-      await account.walletConnection.requestSignTransactions({ transactions })
+      await wallet.signAndSendTransactions(txs)
     } catch (error) {
       console.error(error)
     }

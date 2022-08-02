@@ -19,23 +19,19 @@ import {
   Link,
   Avatar,
 } from "@chakra-ui/react"
-import BN from "bn.js"
-import { baseDecode } from "borsh"
 import Decimal from "decimal.js"
 import {
   useConvertorContract,
   useTokenBalance,
 } from "hooks/useConvertorContract"
-import { createTransaction, functionCall } from "near-api-js/lib/transaction"
-import { PublicKey } from "near-api-js/lib/utils"
 import { SIMPLE_CALL_GAS } from "primitives"
 import { useState } from "react"
-import { useGlobalStore } from "stores"
 import { AccountId, ConversionPool, FungibleTokenMetadata } from "types"
 import { DecimalUtil } from "utils"
 import { isValidNumber } from "utils/validate"
 import NEP141 from "assets/icons/nep141-token.png"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { Transaction } from "@near-wallet-selector/core"
 
 function TokenInput({
   token,
@@ -117,13 +113,10 @@ export default function ManagePool({
   const inToken = whitelist.find((t) => t.token_id === pool?.in_token)
   const outToken = whitelist.find((t) => t.token_id === pool?.out_token)
 
-  const { global } = useGlobalStore()
-  const { accountId } = useWalletSelector()
+  const { accountId, selector, networkConfig, nearAccount } =
+    useWalletSelector()
 
-  const contract = useConvertorContract(
-    global.wallet?.account() as any,
-    contractId
-  )
+  const contract = useConvertorContract(nearAccount, contractId)
 
   if (!pool) {
     return null
@@ -134,19 +127,28 @@ export default function ManagePool({
     token: FungibleTokenMetadata
   ) => {
     try {
-      global.wallet?.account().functionCall({
-        contractId: token.token_id!,
-        methodName: "ft_transfer_call",
-        args: {
-          receiver_id: contractId,
-          amount: DecimalUtil.toU64(
-            new Decimal(amount),
-            token.decimals
-          ).toString(),
-          msg: JSON.stringify({ AddLiquidity: { pool_id: pool.id } }),
-        },
-        gas: new BN(SIMPLE_CALL_GAS),
-        attachedDeposit: new BN(1),
+      const wallet = await selector.wallet()
+      await wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: token.token_id,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: "ft_transfer_call",
+              args: {
+                receiver_id: contractId,
+                amount: DecimalUtil.toU64(
+                  new Decimal(amount),
+                  token.decimals
+                ).toString(),
+                msg: JSON.stringify({ AddLiquidity: { pool_id: pool.id } }),
+              },
+              gas: SIMPLE_CALL_GAS,
+              deposit: "1",
+            },
+          },
+        ],
       })
     } catch (error) {
       console.error(error)
@@ -158,130 +160,105 @@ export default function ManagePool({
     token: FungibleTokenMetadata
   ) => {
     try {
-      global.wallet?.account().functionCall({
-        contractId: contractId,
-        methodName: "withdraw_token_in_pool",
-        args: {
-          pool_id: pool.id,
-          token_id: token.token_id,
-          amount: DecimalUtil.toU64(
-            new Decimal(amount),
-            token.decimals
-          ).toString(),
-        },
-        gas: new BN(SIMPLE_CALL_GAS),
-        attachedDeposit: new BN(1),
+      const wallet = await selector.wallet()
+      await wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: contractId,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: "withdraw_token_in_pool",
+              args: {
+                pool_id: pool.id,
+                token_id: token.token_id,
+                amount: DecimalUtil.toU64(
+                  new Decimal(amount),
+                  token.decimals
+                ).toString(),
+              },
+              gas: SIMPLE_CALL_GAS,
+              deposit: "1",
+            },
+          },
+        ],
       })
     } catch (error) {}
   }
 
   const onDeletePool = async () => {
     try {
-      const account = global.wallet?.account()
-      if (!accountId || !account) {
+      if (!accountId) {
         throw new Error("No account")
       }
 
-      const actions = []
+      const wallet = await selector.wallet()
+
+      const tx: Transaction = {
+        signerId: accountId,
+        receiverId: contractId,
+        actions: [],
+      }
       const storageFee = await contract?.get_storage_fee_gap_of({
         account_id: accountId!,
       })
 
       if (String(storageFee) !== "0") {
-        actions.push({
-          receiverId: contractId,
-          actions: [
-            functionCall(
-              "storage_deposit",
-              {
-                account_id: account?.accountId,
-              },
-              new BN(SIMPLE_CALL_GAS),
-              new BN(storageFee!)
-            ),
-          ],
+        tx.actions.push({
+          type: "FunctionCall",
+          params: {
+            methodName: "storage_deposit",
+            args: {
+              account_id: account?.accountId,
+            },
+            gas: SIMPLE_CALL_GAS,
+            deposit: String(storageFee),
+          },
         })
       }
       if (pool.in_token_balance !== "0") {
-        actions.push({
-          receiverId: contractId,
-          actions: [
-            functionCall(
-              "withdraw_token_in_pool",
-              {
-                pool_id: pool.id,
-                token_id: pool.in_token,
-                amount: pool.in_token_balance,
-              },
-              new BN(SIMPLE_CALL_GAS),
-              new BN(1)
-            ),
-          ],
+        tx.actions.push({
+          type: "FunctionCall",
+          params: {
+            methodName: "withdraw_token_in_pool",
+            args: {
+              pool_id: pool.id,
+              token_id: pool.in_token,
+              amount: pool.in_token_balance,
+            },
+            gas: SIMPLE_CALL_GAS,
+            deposit: String(1),
+          },
         })
       }
 
       if (pool.out_token_balance !== "0") {
-        actions.push({
-          receiverId: contractId,
-          actions: [
-            functionCall(
-              "withdraw_token_in_pool",
-              {
-                pool_id: pool.id,
-                token_id: pool.out_token,
-                amount: pool.out_token_balance,
-              },
-              new BN(SIMPLE_CALL_GAS),
-              new BN(1)
-            ),
-          ],
+        tx.actions.push({
+          type: "FunctionCall",
+          params: {
+            methodName: "withdraw_token_in_pool",
+            args: {
+              pool_id: pool.id,
+              token_id: pool.out_token,
+              amount: pool.out_token_balance,
+            },
+            gas: SIMPLE_CALL_GAS,
+            deposit: String(1),
+          },
         })
       }
 
-      actions.push({
-        receiverId: contractId,
-        actions: [
-          functionCall(
-            "delete_pool",
-            { pool_id: pool.id },
-            new BN(SIMPLE_CALL_GAS),
-            new BN(1)
-          ),
-        ],
+      tx.actions.push({
+        type: "FunctionCall",
+        params: {
+          methodName: "delete_pool",
+          args: { pool_id: pool.id },
+          gas: SIMPLE_CALL_GAS,
+          deposit: String(1),
+        },
       })
 
-      let localKey = await account?.connection.signer.getPublicKey(
-        account.accountId,
-        account.connection.networkId
-      )
-
-      const transactions = await Promise.all(
-        actions.map(async (t) => {
-          let accessKey = await account.accessKeyForTransaction(
-            t.receiverId,
-            t.actions,
-            localKey
-          )
-
-          const block = await account?.connection.provider.block({
-            finality: "final",
-          })
-          const blockHash = baseDecode(block.header.hash)
-
-          const publicKey = PublicKey.from(accessKey.public_key)
-          const nonce = accessKey.access_key.nonce + 1
-
-          return createTransaction(
-            account?.accountId!,
-            publicKey,
-            t.receiverId,
-            nonce,
-            t.actions,
-            blockHash
-          )
-        })
-      )
-      await account.walletConnection.requestSignTransactions({ transactions })
+      await wallet.signAndSendTransaction(tx)
     } catch (error) {}
   }
 
@@ -299,7 +276,7 @@ export default function ManagePool({
           <Text color="#008cd5">
             {`#${pool.id} Owner: `}
             <Link
-              href={`${global.network?.near.explorerUrl}/accounts/${pool.creator}`}
+              href={`${networkConfig?.near.explorerUrl}/accounts/${pool.creator}`}
             >
               {pool.creator}
             </Link>

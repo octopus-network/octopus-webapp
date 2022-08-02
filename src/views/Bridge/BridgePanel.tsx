@@ -1,6 +1,5 @@
 import React, { useMemo, useState, useEffect, useCallback } from "react"
 import useSWR from "swr"
-import BN from "bn.js"
 import { ApiPromise, WsProvider } from "@polkadot/api"
 import { PulseLoader } from "react-spinners"
 import { Account, keyStores, Near } from "near-api-js"
@@ -58,7 +57,6 @@ import { Empty } from "components"
 import nearLogo from "assets/near.svg"
 import { ChevronDownIcon, WarningIcon } from "@chakra-ui/icons"
 import { MdSwapVert } from "react-icons/md"
-import { useGlobalStore } from "stores"
 import { AiFillCloseCircle } from "react-icons/ai"
 import { SelectWeb3AccountModal } from "./SelectWeb3AccountModal"
 import { SelectTokenModal } from "./SelectTokenModal"
@@ -114,8 +112,8 @@ export const BridgePanel: React.FC = () => {
 
   const [lastTokenContractId, setLastTokenContractId] = useState("")
 
-  const { global } = useGlobalStore()
-  const { accountId, registry, networkConfig, selector } = useWalletSelector()
+  const { accountId, registry, networkConfig, selector, nearAccount } =
+    useWalletSelector()
   const { txns, updateTxn, clearTxnsOfAppchain } = useTxnsStore()
   const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(
     appchainId ? `appchain/${appchainId}` : null,
@@ -281,13 +279,13 @@ export const BridgePanel: React.FC = () => {
 
   const tokenContract = useMemo(
     () =>
-      tokenAsset && global.wallet
-        ? new TokenContract(global.wallet.account(), tokenAsset.contractId, {
+      tokenAsset && nearAccount
+        ? new TokenContract(nearAccount, tokenAsset.contractId, {
             viewMethods: ["ft_balance_of", "storage_balance_of"],
             changeMethods: ["ft_transfer_call"],
           })
         : undefined,
-    [tokenAsset, global]
+    [tokenAsset, nearAccount]
   )
 
   const checkNearAccount = useCallback(() => {
@@ -363,17 +361,13 @@ export const BridgePanel: React.FC = () => {
 
   const anchorContract = useMemo(
     () =>
-      appchain && global.wallet
-        ? new AnchorContract(
-            global.wallet.account(),
-            appchain.appchain_anchor,
-            {
-              viewMethods: ["get_appchain_message_processing_result_of"],
-              changeMethods: ["burn_wrapped_appchain_token"],
-            }
-          )
+      appchain && nearAccount
+        ? new AnchorContract(nearAccount, appchain.appchain_anchor, {
+            viewMethods: ["get_appchain_message_processing_result_of"],
+            changeMethods: ["burn_wrapped_appchain_token"],
+          })
         : undefined,
-    [appchain, global]
+    [appchain, nearAccount]
   )
 
   const pendingTxnsChecker = React.useRef<any>()
@@ -680,7 +674,7 @@ export const BridgePanel: React.FC = () => {
       const anchor_id = `${appchainId}.${registry?.contractId}`
 
       const contract = new CollectibleContract(
-        global.wallet?.account() as any,
+        nearAccount,
         `${collectible?.class}.${anchor_id}`,
         {
           viewMethods: [],
@@ -871,18 +865,29 @@ export const BridgePanel: React.FC = () => {
       return
     }
 
-    setIsDepositingStorage.on()
-    global.wallet
-      ?.account()
-      .functionCall({
-        contractId: tokenContract?.contractId || "",
-        methodName: "storage_deposit",
-        args: { account_id: targetAccount },
-        gas: new BN(SIMPLE_CALL_GAS),
-        attachedDeposit: new BN("1250000000000000000000"),
+    try {
+      setIsDepositingStorage.on()
+      const wallet = await selector.wallet()
+
+      await wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: tokenContract?.contractId || "",
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: "storage_deposit",
+              args: { account_id: targetAccount },
+              gas: SIMPLE_CALL_GAS,
+              deposit: "1250000000000000000000",
+            },
+          },
+        ],
       })
-      .catch((err) => {
-        setIsDepositingStorage.off()
+      setIsDepositingStorage.off()
+    } catch (err) {
+      setIsDepositingStorage.off()
+      if (err instanceof Error) {
         if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
           return
         }
@@ -892,7 +897,8 @@ export const BridgePanel: React.FC = () => {
           description: err.toString(),
           status: "error",
         })
-      })
+      }
+    }
   }
 
   return (

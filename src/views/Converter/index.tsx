@@ -8,23 +8,18 @@ import {
   usePools,
   useWhitelist,
 } from "hooks/useConvertorContract"
-import { useGlobalStore } from "stores"
 import useSWR from "swr"
 import { ConverterConfig, NetworkType } from "types"
 
 export function Converter() {
-  const { accountId, networkConfig } = useWalletSelector()
-  const { global } = useGlobalStore()
+  const { accountId, networkConfig, nearAccount } = useWalletSelector()
   const { data } = useSWR<ConverterConfig>(`converter-config`)
 
   const contractId = data
     ? data[networkConfig?.near.networkId ?? NetworkType.TESTNET].contractId
     : ""
 
-  const contract = useConvertorContract(
-    global.wallet?.account() as any,
-    contractId
-  )
+  const contract = useConvertorContract(nearAccount, contractId)
   const { whitelist, isLoading: isLoadingWhitelist } = useWhitelist(contract)
 
   const { pools, isLoading: isLoadingPools } = usePools(contract, 0, 10)

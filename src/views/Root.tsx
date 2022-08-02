@@ -29,6 +29,7 @@ import { useMatchMutate } from "hooks"
 import { useGlobalStore, useTxnsStore } from "stores"
 
 import { API_HOST } from "config"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 const LoadingSpinner = () => {
   return (
@@ -59,7 +60,8 @@ export const Root: React.FC = () => {
     []
   )
 
-  const { updateGlobal, global } = useGlobalStore()
+  const { updateGlobal } = useGlobalStore()
+  const { accountId, networkConfig } = useWalletSelector()
   const { updateTxn } = useTxnsStore()
 
   const matchMutate = useMatchMutate()
@@ -182,7 +184,7 @@ export const Root: React.FC = () => {
 
   // check tx status
   useEffect(() => {
-    if (!global?.accountId) {
+    if (!accountId) {
       return
     }
 
@@ -210,13 +212,13 @@ export const Root: React.FC = () => {
     }
 
     const provider = new providers.JsonRpcProvider(
-      global.network?.near.archivalUrl
+      networkConfig?.near.archivalUrl
     )
 
     const txHashes = transactionHashes.split(",")
     const lastTxHash = txHashes[txHashes.length - 1]
     provider
-      .txStatus(lastTxHash, global.accountId)
+      .txStatus(lastTxHash, accountId)
       .then((status) => {
         const { receipts_outcome } = status
         let message = ""
@@ -287,7 +289,7 @@ export const Root: React.FC = () => {
               description: (
                 <Link
                   variant="octo-linear"
-                  href={`${global.network?.near.explorerUrl}/transactions/${lastTxHash}`}
+                  href={`${networkConfig?.near.explorerUrl}/transactions/${lastTxHash}`}
                   className="success-tx-link"
                 >
                   Click to check transaction detail
@@ -311,7 +313,7 @@ export const Root: React.FC = () => {
       })
 
     clearMessageAndHashes()
-  }, [global, urlParams])
+  }, [urlParams])
 
   const clearMessageAndHashes = useCallback(() => {
     const { protocol, host, pathname, hash } = window.location

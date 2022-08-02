@@ -9,7 +9,7 @@ import { setupLedger } from "@near-wallet-selector/ledger"
 import { setupWalletConnect } from "@near-wallet-selector/wallet-connect"
 import axios from "axios"
 import { API_HOST } from "config"
-import { keyStores, Near, WalletConnection } from "near-api-js"
+import { Account, keyStores, Near, WalletConnection } from "near-api-js"
 import { NetworkConfig, RegistryContract, TokenContract } from "types"
 import { setupSender } from "@near-wallet-selector/sender"
 
@@ -30,6 +30,7 @@ interface WalletSelectorContextValue {
   registry: RegistryContract | null
   networkConfig: NetworkConfig | null
   octToken: TokenContract | null
+  nearAccount: Account
 }
 
 const WalletSelectorContext =
@@ -48,6 +49,7 @@ export const WalletSelectorContextProvider = ({
   const [registry, setRegistry] = useState<RegistryContract | null>(null)
   const [networkConfig, setNetworkConfig] = useState<NetworkConfig | null>(null)
   const [octToken, setOctToken] = useState<TokenContract | null>(null)
+  const [nearAccount, setNearAccount] = useState<Account>()
 
   const syncAccountState = (
     currentAccountId: string | undefined,
@@ -114,8 +116,10 @@ export const WalletSelectorContextProvider = ({
 
     const wallet = new WalletConnection(near, config.octopus.registryContractId)
 
+    const nearAccount = wallet.account()
+    setNearAccount(nearAccount)
     const registry = new RegistryContract(
-      wallet.account(),
+      nearAccount,
       config.octopus.registryContractId,
       {
         viewMethods: [
@@ -134,7 +138,7 @@ export const WalletSelectorContextProvider = ({
     setRegistry(registry)
 
     const octToken = new TokenContract(
-      wallet.account(),
+      nearAccount,
       config.octopus.octTokenContractId,
       {
         viewMethods: ["ft_balance_of", "ft_total_supply"],
@@ -214,6 +218,7 @@ export const WalletSelectorContextProvider = ({
         near,
         octToken,
         networkConfig,
+        nearAccount,
       }}
     >
       {children}
