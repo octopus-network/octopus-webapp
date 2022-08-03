@@ -86,9 +86,9 @@ export const RegisterForm: React.FC = () => {
   }, [global])
 
   const validateAppchainId = (value: string) => {
-    const reg = /^[a-z]([-a-z0-9]*[a-z0-9])?$/
+    const reg = /^[a-z]([-a-z0-9]*[a-z0-9]){1,20}$/
     if (!reg.test(value)) {
-      return "Consists of [a-z|0-9] or `-`"
+      return "Consists of [a-z|0-9] or `-`, and max length is 20"
     }
   }
 
@@ -313,6 +313,7 @@ export const RegisterForm: React.FC = () => {
                       {...field}
                       id="appchainId"
                       placeholder="Appchain ID"
+                      maxLength={20}
                     />
                     <FormErrorMessage>
                       {form.errors.appchainId}
