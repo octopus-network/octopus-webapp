@@ -1,16 +1,9 @@
-import {
-  Button,
-  Flex,
-  SimpleGrid,
-  Text,
-  useColorModeValue,
-} from '@chakra-ui/react'
-import { useEffect, useState } from 'react'
-import { useParams, useNavigate, useLocation } from 'react-router-dom'
-import { AccountId, ConversionPool, FungibleTokenMetadata } from 'types'
-import ManagePool from './ManagePool'
-import Pool from './Pool'
-import PoolInfo from './PoolInfo'
+import { Flex, SimpleGrid, Text } from "@chakra-ui/react"
+import { useEffect, useState } from "react"
+import { useParams, useNavigate, useLocation } from "react-router-dom"
+import { AccountId, ConversionPool, FungibleTokenMetadata } from "types"
+import ManagePool from "./ManagePool"
+import Pool from "./Pool"
 
 export default function MyPool({
   pools,
@@ -21,7 +14,6 @@ export default function MyPool({
   whitelist: FungibleTokenMetadata[]
   contractId: AccountId
 }) {
-  const bg = useColorModeValue('white', '#25263c')
   const [selectedPool, setSelectedPool] = useState<ConversionPool | null>(null)
   const { poolId } = useParams()
   const navigate = useNavigate()
@@ -64,7 +56,7 @@ export default function MyPool({
         whitelist={whitelist}
         contractId={contractId}
         onClose={() => {
-          navigate('/converter')
+          navigate("/converter")
         }}
       />
     </Flex>

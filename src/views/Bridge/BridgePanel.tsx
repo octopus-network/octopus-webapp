@@ -605,7 +605,7 @@ export const BridgePanel: React.FC = () => {
     }
   }
 
-  const burnToken = () => {
+  const burnToken = async () => {
     setIsTransferring.on()
 
     const amountInU64 = DecimalUtil.toU64(
@@ -622,27 +622,54 @@ export const BridgePanel: React.FC = () => {
         throw new Error("Invalid target account")
       }
 
+      const wallet = await selector.wallet()
+
       if (tokenAsset?.assetId === undefined) {
-        anchorContract?.burn_wrapped_appchain_token(
-          { receiver_id: targetAccountInHex, amount: amountInU64.toString() },
-          COMPLEX_CALL_GAS
-        )
+        await wallet.signAndSendTransaction({
+          signerId: accountId,
+          receiverId: anchorContract?.contractId,
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "burn_wrapped_appchain_token",
+                args: {
+                  receiver_id: targetAccountInHex,
+                  amount: amountInU64.toString(),
+                },
+                gas: COMPLEX_CALL_GAS,
+                deposit: "0",
+              },
+            },
+          ],
+        })
+        Toast.success("Transaction has been sent")
         return
       }
 
-      tokenContract?.ft_transfer_call(
-        {
-          receiver_id: appchain?.appchain_anchor || "",
-          amount: amountInU64.toString(),
-          msg: JSON.stringify({
-            BridgeToAppchain: {
-              receiver_id_in_appchain: targetAccountInHex,
+      wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: tokenContract?.contractId,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: "ft_transfer_call",
+              args: {
+                receiver_id: appchain?.appchain_anchor || "",
+                amount: amountInU64.toString(),
+                msg: JSON.stringify({
+                  BridgeToAppchain: {
+                    receiver_id_in_appchain: targetAccountInHex,
+                  },
+                }),
+              },
+              gas: COMPLEX_CALL_GAS,
+              deposit: "1",
             },
-          }),
-        },
-        COMPLEX_CALL_GAS,
-        1
-      )
+          },
+        ],
+      })
     } catch (err: any) {
       setIsTransferring.off()
       if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
@@ -841,6 +868,8 @@ export const BridgePanel: React.FC = () => {
 
       return
     }
+
+    console.log("accountId", targetAccount, accountId)
 
     try {
       setIsDepositingStorage.on()

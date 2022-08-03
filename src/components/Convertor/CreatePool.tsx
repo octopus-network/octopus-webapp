@@ -126,6 +126,7 @@ export default function CreatePool({
             },
           },
         ],
+        callbackUrl: window.location.href,
       })
 
       onClose()

@@ -186,7 +186,11 @@ export default function ManagePool({
           },
         ],
       })
-    } catch (error) {}
+      onClose()
+      Toast.success("Withdrawed")
+    } catch (error) {
+      Toast.error(error)
+    }
   }
 
   const onDeletePool = async () => {
