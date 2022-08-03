@@ -2560,12 +2560,24 @@
     react-dom "^17.0.2"
     rxjs "~7.4.0"
 
-"@near-wallet-selector/my-near-wallet@^5.0.1":
+"@near-wallet-selector/my-near-wallet@5.0.1", "@near-wallet-selector/my-near-wallet@^5.0.1":
   version "5.0.1"
   resolved "https://registry.npmjs.org/@near-wallet-selector/my-near-wallet/-/my-near-wallet-5.0.1.tgz#d082973790c164162a311f726261f2a263bc0629"
   integrity sha512-+MB2g1/y0UedIK/sx+Ka1kq5Cc3yhOPSAJo66omWTrb3YJIWrq0e7Vl5fFAeFbm7reBgqVkZ7mSLwy9lXlS5Vw==
   dependencies:
     "@near-wallet-selector/core" "5.0.1"
+    "@near-wallet-selector/wallet-utils" "5.0.1"
+    bn.js "^5.2.0"
+    near-api-js "0.44.2"
+    rxjs "~7.4.0"
+
+"@near-wallet-selector/near-wallet@^5.0.1":
+  version "5.0.1"
+  resolved "https://registry.npmjs.org/@near-wallet-selector/near-wallet/-/near-wallet-5.0.1.tgz#5818ad0f3c194194b2910d977c6d7880aeaaa642"
+  integrity sha512-cTFROJ6RCiZ3UAN0UnIfAQ7Q7/dSYssTKJZsXjRoMpsFH6UCFgQwR01z3I2uz+jjLf+iYfleyLA0bm8hZSFCLg==
+  dependencies:
+    "@near-wallet-selector/core" "5.0.1"
+    "@near-wallet-selector/my-near-wallet" "5.0.1"
     "@near-wallet-selector/wallet-utils" "5.0.1"
     bn.js "^5.2.0"
     near-api-js "0.44.2"

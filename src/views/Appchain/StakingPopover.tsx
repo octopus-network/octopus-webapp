@@ -11,17 +11,12 @@ import {
   PopoverTrigger,
   PopoverContent,
   PopoverBody,
-  useToast,
   Flex,
 } from "@chakra-ui/react"
 
 import { AnchorContract, AppchainInfoWithAnchorStatus, Validator } from "types"
 
-import {
-  COMPLEX_CALL_GAS,
-  OCT_TOKEN_DECIMALS,
-  FAILED_TO_REDIRECT_MESSAGE,
-} from "primitives"
+import { COMPLEX_CALL_GAS, OCT_TOKEN_DECIMALS } from "primitives"
 
 import { AmountInput } from "components"
 import { DecimalUtil, ZERO_DECIMAL } from "utils"

@@ -276,7 +276,7 @@ export default function ConvertToken({
         transactions: txs,
       })
       onClose()
-      Toast.success("Converted")
+      // Toast.success("Converted")
     } catch (error) {
       Toast.error(error)
     }

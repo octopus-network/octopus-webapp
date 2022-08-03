@@ -13,20 +13,14 @@ import {
 
 import { Header, Footer } from "components"
 
-import { Near, keyStores, WalletConnection, providers } from "near-api-js"
+import { providers } from "near-api-js"
 
-import {
-  RegistryContract,
-  TokenContract,
-  NetworkConfig,
-  BridgeHistory,
-  BridgeHistoryStatus,
-} from "types"
+import { BridgeHistory, BridgeHistoryStatus } from "types"
 
 import { Outlet } from "react-router-dom"
 import { useLocation, useNavigate } from "react-router-dom"
 import { useMatchMutate } from "hooks"
-import { useGlobalStore, useTxnsStore } from "stores"
+import { useTxnsStore } from "stores"
 
 import { API_HOST } from "config"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
@@ -60,65 +54,10 @@ export const Root: React.FC = () => {
     []
   )
 
-  const { updateGlobal } = useGlobalStore()
   const { accountId, networkConfig } = useWalletSelector()
   const { updateTxn } = useTxnsStore()
 
   const matchMutate = useMatchMutate()
-
-  // initialize
-  useEffect(() => {
-    axios
-      .get(`${API_HOST}/network-config`)
-      .then((res) => res.data)
-      .then((network: NetworkConfig) => {
-        const near = new Near({
-          keyStore: new keyStores.BrowserLocalStorageKeyStore(),
-          headers: {},
-          ...network.near,
-        })
-
-        const wallet = new WalletConnection(
-          near,
-          network.octopus.registryContractId
-        )
-
-        const registry = new RegistryContract(
-          wallet.account(),
-          network.octopus.registryContractId,
-          {
-            viewMethods: [
-              "get_owner",
-              "get_upvote_deposit_for",
-              "get_downvote_deposit_for",
-              "get_registry_settings",
-              "get_protocol_settings",
-            ],
-            changeMethods: [
-              "withdraw_upvote_deposit_of",
-              "withdraw_downvote_deposit_of",
-            ],
-          }
-        )
-
-        const octToken = new TokenContract(
-          wallet.account(),
-          network.octopus.octTokenContractId,
-          {
-            viewMethods: ["ft_balance_of", "ft_total_supply"],
-            changeMethods: ["ft_transfer_call"],
-          }
-        )
-
-        updateGlobal({
-          accountId: wallet.getAccountId(),
-          wallet,
-          registry,
-          octToken,
-          network,
-        })
-      })
-  }, [])
 
   // change body bg in different page
   useEffect(() => {

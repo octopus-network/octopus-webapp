@@ -12,6 +12,7 @@ import { API_HOST } from "config"
 import { Account, keyStores, Near, WalletConnection } from "near-api-js"
 import { NetworkConfig, RegistryContract, TokenContract } from "types"
 import { setupSender } from "@near-wallet-selector/sender"
+import { setupNearWallet } from "@near-wallet-selector/near-wallet"
 
 declare global {
   interface Window {
@@ -76,37 +77,39 @@ export const WalletSelectorContextProvider = ({
   }
 
   const init = useCallback(async () => {
-    const _selector = await setupWalletSelector({
-      network: "testnet",
-      debug: true,
-      modules: [
-        setupMyNearWallet({
-          iconUrl: "/assets/my-near-wallet-icon.png",
-        }),
-        setupLedger({
-          iconUrl: "/assets/ledger-icon.png",
-        }),
-        setupSender({
-          iconUrl: "/assets/sender-icon.png",
-        }),
-        setupWalletConnect({
-          iconUrl: "/assets/wallet-connect-icon.png",
-          projectId: "1799b9adf32c8cef373a6a41699fe8bf",
-          metadata: {
-            name: "OCT DApp",
-            description: "",
-            url: "https://mainnet.oct.network",
-            icons: ["https://near-vesting.netlify.app/oct.png"],
-          },
-        }),
-      ],
-    })
-
     const config = await axios
       .get(`${API_HOST}/network-config`)
       .then((res) => res.data)
     setNetworkConfig(config)
 
+    const _selector = await setupWalletSelector({
+      network: config?.near.networkId,
+      debug: true,
+      modules: [
+        setupNearWallet({
+          iconUrl: "/assets/near-wallet-icon.png",
+        }),
+        setupMyNearWallet({
+          iconUrl: "/assets/my-near-wallet-icon.png",
+        }),
+        // setupLedger({
+        //   iconUrl: "/assets/ledger-icon.png",
+        // }),
+        setupSender({
+          iconUrl: "/assets/sender-icon.png",
+        }),
+        // setupWalletConnect({
+        //   iconUrl: "/assets/wallet-connect-icon.png",
+        //   projectId: "1799b9adf32c8cef373a6a41699fe8bf",
+        //   metadata: {
+        //     name: "OCT DApp",
+        //     description: "",
+        //     url: "https://mainnet.oct.network",
+        //     icons: ["https://near-vesting.netlify.app/oct.png"],
+        //   },
+        // }),
+      ],
+    })
     const near = new Near({
       keyStore: new keyStores.BrowserLocalStorageKeyStore(),
       headers: {},

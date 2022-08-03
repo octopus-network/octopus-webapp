@@ -287,16 +287,22 @@ export const BridgePanel: React.FC = () => {
         request_type: "call_function",
         account_id: tokenAsset.contractId,
         method_name: "storage_balance_of",
-        args_base64: "",
+        args_base64: btoa(
+          JSON.stringify({ account_id: debouncedTargetAccount })
+        ),
         finality: "optimistic",
       })
       const storage = JSON.parse(Buffer.from(res.result).toString())
+      console.log("storage", storage)
+
       if (storage === null) {
         setTargetAccountNeedDepositStorage.on()
       } else {
         setTargetAccountNeedDepositStorage.off()
       }
     } catch (error) {
+      console.log("error", error)
+
       setIsInvalidTargetAccount.on()
       Toast.error(error)
     }
