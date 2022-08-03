@@ -18,7 +18,6 @@ import {
   DrawerOverlay,
   DrawerContent,
   useBoolean,
-  useToast,
 } from "@chakra-ui/react"
 
 import {
@@ -49,11 +48,11 @@ import { MyNode } from "./MyNode"
 
 import { Validators } from "./Validators"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { Toast } from "components/common/toast"
 
 export const Appchain: React.FC = () => {
   const { id = "", validatorId = "" } = useParams()
 
-  const toast = useToast()
   const { accountId, networkConfig, registry, nearAccount } =
     useWalletSelector()
   const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(
@@ -114,7 +113,7 @@ export const Appchain: React.FC = () => {
     }
 
     const anchorContract = new AnchorContract(
-      nearAccount,
+      nearAccount!,
       appchain.appchain_anchor,
       {
         viewMethods: [
@@ -184,7 +183,7 @@ export const Appchain: React.FC = () => {
     }
 
     setWrappedAppchainTokenContract(
-      new TokenContract(nearAccount, wrappedAppchainToken.contract_account, {
+      new TokenContract(nearAccount!, wrappedAppchainToken.contract_account, {
         viewMethods: ["storage_balance_of", "ft_balance_of"],
         changeMethods: [],
       })
@@ -293,12 +292,7 @@ export const Appchain: React.FC = () => {
         if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
           return
         }
-        toast({
-          position: "top-right",
-          title: "Error",
-          description: err.toString(),
-          status: "error",
-        })
+        Toast.error(err)
       })
   }
 

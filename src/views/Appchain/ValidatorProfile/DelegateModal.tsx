@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react"
 import useSWR from "swr"
 
-import { Text, Button, Box, Flex, useBoolean, useToast } from "@chakra-ui/react"
+import { Text, Button, Box, Flex, useBoolean } from "@chakra-ui/react"
 
 import { BaseModal, AmountInput } from "components"
 
@@ -14,6 +14,7 @@ import {
 import { AnchorContract } from "types"
 import { ZERO_DECIMAL, DecimalUtil } from "utils"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { Toast } from "components/common/toast"
 
 type DelegateModalProps = {
   isOpen: boolean
@@ -31,7 +32,6 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
   const [amount, setAmount] = useState("")
 
   const { accountId, octToken } = useWalletSelector()
-  const toast = useToast()
 
   const [isDepositing, setIsDepositing] = useBoolean(false)
   const [minimumDeposit, setMinimumDeposit] = useState(ZERO_DECIMAL)
@@ -88,12 +88,7 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
         if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
           return
         }
-        toast({
-          position: "top-right",
-          title: "Error",
-          description: err.toString(),
-          status: "error",
-        })
+        Toast.error(err)
       })
   }
 

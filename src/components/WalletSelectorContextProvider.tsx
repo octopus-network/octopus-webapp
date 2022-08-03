@@ -30,7 +30,7 @@ interface WalletSelectorContextValue {
   registry: RegistryContract | null
   networkConfig: NetworkConfig | null
   octToken: TokenContract | null
-  nearAccount: Account
+  nearAccount: Account | undefined
 }
 
 const WalletSelectorContext =
@@ -49,7 +49,7 @@ export const WalletSelectorContextProvider = ({
   const [registry, setRegistry] = useState<RegistryContract | null>(null)
   const [networkConfig, setNetworkConfig] = useState<NetworkConfig | null>(null)
   const [octToken, setOctToken] = useState<TokenContract | null>(null)
-  const [nearAccount, setNearAccount] = useState<Account>()
+  const [nearAccount, setNearAccount] = useState<Account | undefined>(undefined)
 
   const syncAccountState = (
     currentAccountId: string | undefined,

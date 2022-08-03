@@ -32,6 +32,7 @@ import { isValidNumber } from "utils/validate"
 import NEP141 from "assets/icons/nep141-token.png"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Transaction } from "@near-wallet-selector/core"
+import { Toast } from "components/common/toast"
 
 const TokenInput = ({
   value,
@@ -100,7 +101,7 @@ export default function ConvertToken({
   const [isReversed, setIsReversed] = useState(false)
   const { accountId, selector, near, nearAccount } = useWalletSelector()
 
-  const contract = useConvertorContract(nearAccount, contractId)
+  const contract = useConvertorContract(nearAccount!, contractId)
   const bg = useColorModeValue("white", "#15172c")
 
   const inToken = whitelist.find((t) => t.token_id === pool?.in_token)
@@ -260,9 +261,13 @@ export default function ConvertToken({
         ],
       })
 
-      await wallet.signAndSendTransactions(txs)
+      await wallet.signAndSendTransactions({
+        transactions: txs,
+      })
+      onClose()
+      Toast.success("Converted")
     } catch (error) {
-      console.error(error)
+      Toast.error(error)
     }
   }
 

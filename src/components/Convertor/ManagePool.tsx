@@ -32,6 +32,7 @@ import { isValidNumber } from "utils/validate"
 import NEP141 from "assets/icons/nep141-token.png"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Transaction } from "@near-wallet-selector/core"
+import { Toast } from "components/common/toast"
 
 function TokenInput({
   token,
@@ -116,7 +117,7 @@ export default function ManagePool({
   const { accountId, selector, networkConfig, nearAccount } =
     useWalletSelector()
 
-  const contract = useConvertorContract(nearAccount, contractId)
+  const contract = useConvertorContract(nearAccount!, contractId)
 
   if (!pool) {
     return null
@@ -150,8 +151,10 @@ export default function ManagePool({
           },
         ],
       })
+      onClose()
+      Toast.success("Deposited")
     } catch (error) {
-      console.error(error)
+      Toast.error(error)
     }
   }
 
@@ -209,7 +212,7 @@ export default function ManagePool({
           params: {
             methodName: "storage_deposit",
             args: {
-              account_id: account?.accountId,
+              account_id: accountId,
             },
             gas: SIMPLE_CALL_GAS,
             deposit: String(storageFee),
@@ -259,7 +262,11 @@ export default function ManagePool({
       })
 
       await wallet.signAndSendTransaction(tx)
-    } catch (error) {}
+      onClose()
+      Toast.success("Deleted")
+    } catch (error) {
+      Toast.error(error)
+    }
   }
 
   return (

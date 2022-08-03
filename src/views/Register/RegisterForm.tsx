@@ -24,7 +24,6 @@ import {
   PopoverContent,
   PopoverArrow,
   PopoverCloseButton,
-  useToast,
   Textarea,
   GridItem,
   RadioGroup,
@@ -42,6 +41,7 @@ import {
 } from "primitives"
 import Decimal from "decimal.js"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { Toast } from "components/common/toast"
 
 export const RegisterForm: React.FC = () => {
   const bg = useColorModeValue("white", "#15172c")
@@ -70,7 +70,6 @@ export const RegisterForm: React.FC = () => {
   )
 
   const initialFieldRef = React.useRef(null)
-  const toast = useToast()
 
   useEffect(() => {
     registry?.get_registry_settings().then((settings) => {
@@ -139,12 +138,7 @@ export const RegisterForm: React.FC = () => {
     } = values
 
     if (!tokenInfo.tokenName || !tokenInfo.tokenSymbol) {
-      toast({
-        position: "top-right",
-        title: "Error",
-        description: "Please input the token info",
-        status: "error",
-      })
+      Toast.error("Please input the token info")
       setTimeout(() => {
         actions.setSubmitting(false)
       }, 300)
@@ -207,12 +201,7 @@ export const RegisterForm: React.FC = () => {
         if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
           return
         }
-        toast({
-          position: "top-right",
-          title: "Error",
-          description: err.toString(),
-          status: "error",
-        })
+        Toast.error(err)
       })
   }
 

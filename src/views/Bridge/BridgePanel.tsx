@@ -27,7 +27,6 @@ import {
   CircularProgressLabel,
   Button,
   useBoolean,
-  useToast,
   Drawer,
   DrawerOverlay,
   DrawerContent,
@@ -80,6 +79,7 @@ import {
 } from "primitives"
 import useAccounts from "hooks/useAccounts"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { Toast } from "components/common/toast"
 
 function toHexAddress(ss58Address: string) {
   if (isHex(ss58Address)) {
@@ -97,7 +97,6 @@ export const BridgePanel: React.FC = () => {
   const bg = useColorModeValue("white", "#15172c")
   const { appchainId } = useParams()
   const navigate = useNavigate()
-  const toast = useToast()
 
   const grayBg = useColorModeValue("#f2f4f7", "#1e1f34")
   const [isLogging, setIsLogging] = useBoolean()
@@ -280,7 +279,7 @@ export const BridgePanel: React.FC = () => {
   const tokenContract = useMemo(
     () =>
       tokenAsset && nearAccount
-        ? new TokenContract(nearAccount, tokenAsset.contractId, {
+        ? new TokenContract(nearAccount!, tokenAsset.contractId, {
             viewMethods: ["ft_balance_of", "storage_balance_of"],
             changeMethods: ["ft_transfer_call"],
           })
@@ -362,7 +361,7 @@ export const BridgePanel: React.FC = () => {
   const anchorContract = useMemo(
     () =>
       appchain && nearAccount
-        ? new AnchorContract(nearAccount, appchain.appchain_anchor, {
+        ? new AnchorContract(nearAccount!, appchain.appchain_anchor, {
             viewMethods: ["get_appchain_message_processing_result_of"],
             changeMethods: ["burn_wrapped_appchain_token"],
           })
@@ -408,11 +407,6 @@ export const BridgePanel: React.FC = () => {
                 ...txn,
                 status: BridgeHistoryStatus.Succeed,
               })
-              // toast({
-              //   status: 'success',
-              //   title: 'Transaction Confirmed',
-              //   position: 'top-right'
-              // });
             } else if (jsonRes !== null) {
               updateTxn(txn.appchainId, {
                 ...txn,
@@ -654,11 +648,7 @@ export const BridgePanel: React.FC = () => {
       if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
         return
       }
-      toast({
-        position: "top-right",
-        description: err.toString(),
-        status: "error",
-      })
+      Toast.error(err)
     }
   }
 
@@ -674,7 +664,7 @@ export const BridgePanel: React.FC = () => {
       const anchor_id = `${appchainId}.${registry?.contractId}`
 
       const contract = new CollectibleContract(
-        nearAccount,
+        nearAccount!,
         `${collectible?.class}.${anchor_id}`,
         {
           viewMethods: [],
@@ -700,11 +690,7 @@ export const BridgePanel: React.FC = () => {
       if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
         return
       }
-      toast({
-        position: "top-right",
-        description: err.toString(),
-        status: "error",
-      })
+      Toast.error(err)
     }
   }
 
@@ -765,12 +751,7 @@ export const BridgePanel: React.FC = () => {
         })
         .catch((err: any) => {
           console.log("err", err)
-
-          toast({
-            position: "top-right",
-            description: err.toString(),
-            status: "error",
-          })
+          Toast.error(err)
           setIsTransferring.off()
         })
     }
@@ -797,11 +778,7 @@ export const BridgePanel: React.FC = () => {
         })
       })
       .catch((err: any) => {
-        toast({
-          position: "top-right",
-          description: err.toString(),
-          status: "error",
-        })
+        Toast.error(err)
         setIsTransferring.off()
       })
   }
@@ -891,12 +868,7 @@ export const BridgePanel: React.FC = () => {
         if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
           return
         }
-        toast({
-          position: "top-right",
-          title: "Error",
-          description: err.toString(),
-          status: "error",
-        })
+        Toast.error(err)
       }
     }
   }

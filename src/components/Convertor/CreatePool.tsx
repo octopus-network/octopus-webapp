@@ -17,7 +17,6 @@ import {
   Link,
   UnorderedList,
   ListItem,
-  useToast,
 } from "@chakra-ui/react"
 import BN from "bn.js"
 import { Select, chakraComponents } from "chakra-react-select"
@@ -31,6 +30,7 @@ import {
 } from "react-icons/md"
 import NEP141 from "assets/icons/nep141-token.png"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { Toast } from "components/common/toast"
 
 const customComponents = {
   Option: ({ children, ...props }: any) => {
@@ -92,16 +92,10 @@ export default function CreatePool({
   const [pool, setPool] = useState<PoolProps>(DEFAULT_POOL)
 
   const { selector, accountId, near } = useWalletSelector()
-  const toast = useToast()
   const onCreate = async () => {
     try {
       if (!accountId) {
-        toast({
-          position: "top-right",
-          title: "Error",
-          description: "Please login first",
-          status: "error",
-        })
+        Toast.error("Please login first")
         return
       }
 
@@ -135,14 +129,10 @@ export default function CreatePool({
       })
 
       onClose()
-      toast({
-        position: "top-right",
-        title: "Success",
-        description: "Created!",
-        status: "success",
-      })
+      Toast.success("Created!")
     } catch (error) {
       console.error(error)
+      Toast.error(error)
     }
   }
 

@@ -13,7 +13,6 @@ import {
   Switch,
   FormHelperText,
   Button,
-  useToast,
   Box,
   useBoolean,
 } from "@chakra-ui/react"
@@ -30,6 +29,7 @@ import { BaseModal } from "components"
 import { AnchorContract, AppchainInfoWithAnchorStatus } from "types"
 import { DecimalUtil, ZERO_DECIMAL } from "utils"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { Toast } from "components/common/toast"
 
 type RegisterValidatorModalProps = {
   appchain: AppchainInfoWithAnchorStatus | undefined
@@ -48,7 +48,6 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
   const [appchainAccount, setAppchainAccount] = useState("")
 
   const { accountId, octToken } = useWalletSelector()
-  const toast = useToast()
   const [email, setEmail] = useState("")
   const [socialMediaHandle, setSocialMediaHandle] = useState("")
   const [canBeDelegatedTo, setCanBeDelegatedTo] = useState(false)
@@ -87,12 +86,7 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
       const u8a = decodeAddress(appchainAccount)
       hexId = u8aToHex(u8a)
     } catch (err) {
-      toast({
-        position: "top-right",
-        title: "Error",
-        description: "Invalid SS58 address",
-        status: "error",
-      })
+      Toast.error(err)
       return
     }
 
@@ -126,12 +120,7 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
           return
         }
 
-        toast({
-          position: "top-right",
-          title: "Error",
-          description: err.toString(),
-          status: "error",
-        })
+        Toast.error(err)
       })
   }
 

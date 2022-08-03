@@ -28,6 +28,7 @@ import { DecimalUtil, ZERO_DECIMAL } from "utils"
 import Decimal from "decimal.js"
 import { validateValidatorStake } from "utils/validate"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { Toast } from "components/common/toast"
 
 type StakingPopoverProps = {
   type: "increase" | "decrease"
@@ -58,7 +59,6 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
   const [isSubmitting, setIsSubmitting] = useBoolean(false)
 
   const { accountId, octToken } = useWalletSelector()
-  const toast = useToast()
 
   const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null)
   const octBalance = useMemo(
@@ -138,13 +138,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
         setIsSubmitting.off()
         return
       }
-
-      toast({
-        position: "top-right",
-        title: "Error",
-        description: err.toString(),
-        status: "error",
-      })
+      Toast.error(err)
     }
 
     setIsSubmitting.off()

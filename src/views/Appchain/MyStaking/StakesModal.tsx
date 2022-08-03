@@ -15,7 +15,6 @@ import {
   Td,
   Box,
   useColorModeValue,
-  useToast,
 } from "@chakra-ui/react"
 
 import { AnchorContract, UnbondedHistory } from "types"
@@ -31,6 +30,7 @@ import {
   OCT_TOKEN_DECIMALS,
 } from "primitives"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { Toast } from "components/common/toast"
 
 type RewardsModalProps = {
   stakes: UnbondedHistory[] | undefined
@@ -49,7 +49,6 @@ export const StakesModal: React.FC<RewardsModalProps> = ({
 }) => {
   const bg = useColorModeValue("#f6f7fa", "#15172c")
 
-  const toast = useToast()
   const { accountId } = useWalletSelector()
 
   const [isWithdrawing, setIsWithdrawing] = useBoolean(false)
@@ -93,13 +92,7 @@ export const StakesModal: React.FC<RewardsModalProps> = ({
         if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
           return
         }
-
-        toast({
-          position: "top-right",
-          title: "Error",
-          description: err.toString(),
-          status: "error",
-        })
+        Toast.error(err)
       })
   }
 

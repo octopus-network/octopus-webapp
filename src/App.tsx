@@ -19,6 +19,7 @@ import {
   Converter,
 } from "views"
 import { WalletSelectorContextProvider } from "components/WalletSelectorContextProvider"
+import { ToastContainer } from "components/common/toast"
 
 export const App = () => (
   <WalletSelectorContextProvider>
@@ -54,6 +55,7 @@ export const App = () => (
           </Route>
         </Routes>
       </Router>
+      <ToastContainer />
     </ChakraProvider>
   </WalletSelectorContextProvider>
 )

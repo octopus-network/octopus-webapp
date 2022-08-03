@@ -23,7 +23,6 @@ import {
   useBoolean,
   SimpleGrid,
   useColorModeValue,
-  useToast,
   IconButton,
   DrawerFooter,
   Divider,
@@ -62,6 +61,7 @@ import octoAvatar from "assets/icons/avatar.png"
 import { formatAppChainAddress } from "utils/format"
 import OctIdenticon from "components/common/OctIdenticon"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { Toast } from "components/common/toast"
 
 type ValidatorProfileProps = {
   wrappedAppchainTokenContract?: TokenContract
@@ -106,7 +106,6 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
   const [delegateModalOpen, setDelegateModalOpen] = useBoolean()
 
   const { accountId } = useWalletSelector()
-  const toast = useToast()
 
   const { data: delegators } = useSWR<Delegator[]>(
     appchain && validatorId
@@ -241,12 +240,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
       if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
         return
       }
-      toast({
-        position: "top-right",
-        title: "Error",
-        description: err.toString(),
-        status: "error",
-      })
+      Toast.error(err)
       setIsTogglingDelegation.off()
     })
   }
@@ -257,12 +251,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
       if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
         return
       }
-      toast({
-        position: "top-right",
-        title: "Error",
-        description: err.toString(),
-        status: "error",
-      })
+      Toast.error(err)
       setIsUnbonding.off()
     })
   }
@@ -279,12 +268,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
         if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
           return
         }
-        toast({
-          position: "top-right",
-          title: "Error",
-          description: err.toString(),
-          status: "error",
-        })
+        Toast.error(err)
       })
   }
 

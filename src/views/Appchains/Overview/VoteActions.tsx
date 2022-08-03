@@ -17,7 +17,6 @@ import {
   Flex,
   Stack,
   useBoolean,
-  useToast,
 } from "@chakra-ui/react"
 
 import { useSpring, animated } from "react-spring"
@@ -37,6 +36,7 @@ import {
 
 import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { Toast } from "components/common/toast"
 
 type VoteActionsProps = {
   data: AppchainInfo
@@ -58,7 +58,6 @@ const VotePopover: React.FC<VotePopoverProps> = ({
   onClose,
 }) => {
   const { accountId, octToken, networkConfig, registry } = useWalletSelector()
-  const toast = useToast()
 
   const bg = useColorModeValue("white", "#25263c")
   const ref = useRef<any>()
@@ -156,12 +155,7 @@ const VotePopover: React.FC<VotePopoverProps> = ({
         if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
           return
         }
-        toast({
-          position: "top-right",
-          title: "Error",
-          description: err.toString(),
-          status: "error",
-        })
+        Toast.error(err)
         setIsDepositing.off()
       })
   }
@@ -194,12 +188,7 @@ const VotePopover: React.FC<VotePopoverProps> = ({
         if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
           return
         }
-        toast({
-          position: "top-right",
-          title: "Error",
-          description: err.toString(),
-          status: "error",
-        })
+        Toast.error(err)
       })
   }
 
@@ -351,7 +340,6 @@ export const VoteActions: React.FC<VoteActionsProps> = ({ data }) => {
 
   const [upvotePopoverOpen, setUpvotePopoverOpen] = useBoolean(false)
   const [downvotePopoverOpen, setDownvotePopoverOpen] = useBoolean(false)
-  const toast = useToast()
 
   const { data: userVotes } = useSWR<UserVotes>(
     accountId ? `votes/${accountId}/${data.appchain_id}` : null
@@ -398,12 +386,7 @@ export const VoteActions: React.FC<VoteActionsProps> = ({ data }) => {
         if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
           return
         }
-        toast({
-          position: "top-right",
-          title: "Error",
-          description: err.toString(),
-          status: "error",
-        })
+        Toast.error(err)
       })
   }
 

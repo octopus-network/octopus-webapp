@@ -126,7 +126,7 @@ export const useTokenBalance = (contractId: string | undefined) => {
   const { accountId, nearAccount } = useWalletSelector()
   useEffect(() => {
     if (global && accountId && contractId) {
-      const contract = new TokenContract(nearAccount, contractId, {
+      const contract = new TokenContract(nearAccount!, contractId, {
         viewMethods: ["ft_balance_of", "storage_balance_of"],
         changeMethods: ["ft_transfer_call"],
       })

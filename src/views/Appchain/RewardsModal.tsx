@@ -1,5 +1,4 @@
 import React, { useMemo, useEffect, useState } from "react"
-import BN from "bn.js"
 
 import {
   Flex,
@@ -20,7 +19,6 @@ import {
   Box,
   SimpleGrid,
   useColorModeValue,
-  useToast,
 } from "@chakra-ui/react"
 
 import {
@@ -40,6 +38,7 @@ import {
   COMPLEX_CALL_GAS,
 } from "primitives"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { Toast } from "components/common/toast"
 
 type RewardsModalProps = {
   rewards: RewardHistory[] | undefined
@@ -62,7 +61,6 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
 }) => {
   const bg = useColorModeValue("#f6f7fa", "#15172c")
 
-  const toast = useToast()
   const { accountId, selector } = useWalletSelector()
 
   const [isClaiming, setIsClaiming] = useBoolean(false)
@@ -169,12 +167,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
         return
       }
 
-      toast({
-        position: "top-right",
-        title: "Error",
-        description: err.toString(),
-        status: "error",
-      })
+      Toast.error(err)
     })
   }
 
@@ -206,12 +199,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
           return
         }
 
-        toast({
-          position: "top-right",
-          title: "Error",
-          description: error.toString(),
-          status: "error",
-        })
+        Toast.error(error)
       }
     }
   }

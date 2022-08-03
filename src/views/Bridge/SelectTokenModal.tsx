@@ -70,7 +70,7 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
     if (isReverse) {
       const promises = collectibleClasses.map((classId) => {
         const contract = new CollectibleContract(
-          nearAccount,
+          nearAccount!,
           `${classId}.${appchainId}.${registry?.contractId}`,
           {
             viewMethods: ["nft_tokens_for_owner"],

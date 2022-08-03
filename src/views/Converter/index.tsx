@@ -19,7 +19,7 @@ export function Converter() {
     ? data[networkConfig?.near.networkId ?? NetworkType.TESTNET].contractId
     : ""
 
-  const contract = useConvertorContract(nearAccount, contractId)
+  const contract = useConvertorContract(nearAccount!, contractId)
   const { whitelist, isLoading: isLoadingWhitelist } = useWhitelist(contract)
 
   const { pools, isLoading: isLoadingPools } = usePools(contract, 0, 10)
