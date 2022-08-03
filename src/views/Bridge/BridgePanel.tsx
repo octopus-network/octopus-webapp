@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect, useCallback } from "react"
 import useSWR from "swr"
 import { ApiPromise, WsProvider } from "@polkadot/api"
 import { PulseLoader } from "react-spinners"
-import { Account, keyStores, Near } from "near-api-js"
+import { providers } from "near-api-js"
 import web3 from "web3"
 
 import {
@@ -37,12 +37,9 @@ import {
   AppchainInfoWithAnchorStatus,
   TokenAsset,
   AppchainSettings,
-  TokenContract,
-  AnchorContract,
   BridgeHistoryStatus,
   BridgeConfig,
   Collectible,
-  CollectibleContract,
 } from "types"
 
 import { ChevronRightIcon } from "@chakra-ui/icons"
@@ -80,6 +77,7 @@ import {
 import useAccounts from "hooks/useAccounts"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
+import { CodeResult } from "near-api-js/lib/providers/provider"
 
 function toHexAddress(ss58Address: string) {
   if (isHex(ss58Address)) {
@@ -111,8 +109,7 @@ export const BridgePanel: React.FC = () => {
 
   const [lastTokenContractId, setLastTokenContractId] = useState("")
 
-  const { accountId, registry, networkConfig, selector, nearAccount } =
-    useWalletSelector()
+  const { accountId, registry, networkConfig, selector } = useWalletSelector()
   const { txns, updateTxn, clearTxnsOfAppchain } = useTxnsStore()
   const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(
     appchainId ? `appchain/${appchainId}` : null,
@@ -276,49 +273,39 @@ export const BridgePanel: React.FC = () => {
     [appchainTxns]
   )
 
-  const tokenContract = useMemo(
-    () =>
-      tokenAsset && nearAccount
-        ? new TokenContract(nearAccount!, tokenAsset.contractId, {
-            viewMethods: ["ft_balance_of", "storage_balance_of"],
-            changeMethods: ["ft_transfer_call"],
-          })
-        : undefined,
-    [tokenAsset, nearAccount]
-  )
-
-  const checkNearAccount = useCallback(() => {
-    if (!networkConfig || !debouncedTargetAccount || !tokenContract) {
+  const checkNearAccount = useCallback(async () => {
+    if (!networkConfig || !debouncedTargetAccount || !tokenAsset) {
       return
     }
 
-    const near = new Near({
-      keyStore: new keyStores.BrowserLocalStorageKeyStore(),
-      headers: {},
-      ...networkConfig.near,
-    })
-
-    // check is valid near account or not
-    const tmpAccount = new Account(near.connection, debouncedTargetAccount)
-    tmpAccount
-      .state()
-      .then((_) => {
-        setIsInvalidTargetAccount.off()
-        // check if target account need deposit storage
-        tokenContract
-          ?.storage_balance_of({ account_id: debouncedTargetAccount })
-          .then((storage) => {
-            if (storage === null) {
-              setTargetAccountNeedDepositStorage.on()
-            } else {
-              setTargetAccountNeedDepositStorage.off()
-            }
-          })
+    try {
+      setIsInvalidTargetAccount.off()
+      const provider = new providers.JsonRpcProvider({
+        url: selector.options.network.nodeUrl,
       })
-      .catch((_) => {
-        setIsInvalidTargetAccount.on()
+      const res = await provider.query<CodeResult>({
+        request_type: "call_function",
+        account_id: tokenAsset.contractId,
+        method_name: "storage_balance_of",
+        args_base64: "",
+        finality: "optimistic",
       })
-  }, [networkConfig, debouncedTargetAccount, tokenContract])
+      const storage = JSON.parse(Buffer.from(res.result).toString())
+      if (storage === null) {
+        setTargetAccountNeedDepositStorage.on()
+      } else {
+        setTargetAccountNeedDepositStorage.off()
+      }
+    } catch (error) {
+      setIsInvalidTargetAccount.on()
+      Toast.error(error)
+    }
+  }, [
+    networkConfig,
+    debouncedTargetAccount,
+    tokenAsset,
+    selector.options.network.nodeUrl,
+  ])
 
   const checkAppchainAccount = useCallback(() => {
     if (!appchainApi || !debouncedTargetAccount) {
@@ -358,17 +345,6 @@ export const BridgePanel: React.FC = () => {
     checkTargetAccount.current()
   }, [debouncedTargetAccount, tokenAsset])
 
-  const anchorContract = useMemo(
-    () =>
-      appchain && nearAccount
-        ? new AnchorContract(nearAccount!, appchain.appchain_anchor, {
-            viewMethods: ["get_appchain_message_processing_result_of"],
-            changeMethods: ["burn_wrapped_appchain_token"],
-          })
-        : undefined,
-    [appchain, nearAccount]
-  )
-
   const pendingTxnsChecker = React.useRef<any>()
   const isCheckingTxns = React.useRef(false)
   pendingTxnsChecker.current = async () => {
@@ -380,9 +356,24 @@ export const BridgePanel: React.FC = () => {
 
     const promises = pendingTxns.map((txn) => {
       if (txn.isAppchainSide) {
-        return anchorContract
-          ?.get_appchain_message_processing_result_of({ nonce: txn.sequenceId })
-          .then((result) => {
+        const provider = new providers.JsonRpcProvider({
+          url: selector.options.network.nodeUrl,
+        })
+
+        return provider
+          .query<CodeResult>({
+            request_type: "call_function",
+            account_id: appchain?.appchain_anchor,
+            method_name: "get_appchain_message_processing_result_of",
+            args_base64: btoa(
+              JSON.stringify({
+                nonce: txn.sequenceId,
+              })
+            ),
+            finality: "optimistic",
+          })
+          .then((res) => {
+            const result = JSON.parse(Buffer.from(res.result).toString())
             if (result?.["Ok"]) {
               updateTxn(txn.appchainId, {
                 ...txn,
@@ -432,30 +423,36 @@ export const BridgePanel: React.FC = () => {
 
   // fetch balance via near contract
   useEffect(() => {
-    if (
-      !isReverse ||
-      !tokenAsset ||
-      !fromAccount ||
-      !tokenContract ||
-      !accountId
-    ) {
+    if (!isReverse || !tokenAsset || !fromAccount || !accountId) {
       return
     }
 
     setIsLoadingBalance.on()
 
-    tokenContract.ft_balance_of({ account_id: accountId }).then((res) => {
-      setBalance(
-        DecimalUtil.fromString(
-          res,
-          Array.isArray(tokenAsset?.metadata.decimals)
-            ? tokenAsset?.metadata.decimals[0]
-            : tokenAsset?.metadata.decimals
-        )
-      )
-      setIsLoadingBalance.off()
+    const provider = new providers.JsonRpcProvider({
+      url: selector.options.network.nodeUrl,
     })
-  }, [isReverse, fromAccount, tokenAsset, tokenContract, accountId])
+    provider
+      .query<CodeResult>({
+        request_type: "call_function",
+        account_id: tokenAsset.contractId,
+        method_name: "ft_balance_of",
+        args_base64: btoa(JSON.stringify({ account_id: accountId })),
+        finality: "optimistic",
+      })
+      .then((res) => {
+        const bal = JSON.parse(Buffer.from(res.result).toString())
+        setBalance(
+          DecimalUtil.fromString(
+            bal,
+            Array.isArray(tokenAsset?.metadata.decimals)
+              ? tokenAsset?.metadata.decimals[0]
+              : tokenAsset?.metadata.decimals
+          )
+        )
+        setIsLoadingBalance.off()
+      })
+  }, [isReverse, fromAccount, tokenAsset, accountId])
 
   const checkBalanceViaRPC = React.useRef<any>()
   checkBalanceViaRPC.current = async () => {
@@ -627,7 +624,7 @@ export const BridgePanel: React.FC = () => {
       if (tokenAsset?.assetId === undefined) {
         await wallet.signAndSendTransaction({
           signerId: accountId,
-          receiverId: anchorContract?.contractId,
+          receiverId: appchain?.appchain_anchor,
           actions: [
             {
               type: "FunctionCall",
@@ -649,7 +646,7 @@ export const BridgePanel: React.FC = () => {
 
       wallet.signAndSendTransaction({
         signerId: accountId,
-        receiverId: tokenContract?.contractId,
+        receiverId: tokenAsset.contractId,
         actions: [
           {
             type: "FunctionCall",
@@ -679,7 +676,7 @@ export const BridgePanel: React.FC = () => {
     }
   }
 
-  const burnCollectible = () => {
+  const burnCollectible = async () => {
     setIsTransferring.on()
     try {
       let targetAccountInHex = toHexAddress(targetAccount || "")
@@ -689,29 +686,31 @@ export const BridgePanel: React.FC = () => {
       }
 
       const anchor_id = `${appchainId}.${registry?.contractId}`
-
-      const contract = new CollectibleContract(
-        nearAccount!,
-        `${collectible?.class}.${anchor_id}`,
-        {
-          viewMethods: [],
-          changeMethods: ["nft_transfer_call"],
-        }
-      )
-
-      contract.nft_transfer_call(
-        {
-          receiver_id: anchor_id,
-          token_id: collectible?.id || "",
-          msg: JSON.stringify({
-            BridgeToAppchain: {
-              receiver_id_in_appchain: targetAccountInHex,
+      const wallet = await selector.wallet()
+      await wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: `${collectible?.class}.${anchor_id}`,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: "nft_transfer_call",
+              args: {
+                receiver_id: anchor_id,
+                token_id: collectible?.id || "",
+                msg: JSON.stringify({
+                  BridgeToAppchain: {
+                    receiver_id_in_appchain: targetAccountInHex,
+                  },
+                }),
+              },
+              gas: COMPLEX_CALL_GAS,
+              deposit: "1",
             },
-          }),
-        },
-        COMPLEX_CALL_GAS,
-        1
-      )
+          },
+        ],
+      })
+      Toast.success("Transferred")
     } catch (err: any) {
       setIsTransferring.off()
       if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
@@ -877,7 +876,7 @@ export const BridgePanel: React.FC = () => {
 
       await wallet.signAndSendTransaction({
         signerId: accountId,
-        receiverId: tokenContract?.contractId || "",
+        receiverId: tokenAsset?.contractId,
         actions: [
           {
             type: "FunctionCall",
@@ -1150,7 +1149,7 @@ export const BridgePanel: React.FC = () => {
                     isLoaded={
                       !isLoadingBalance &&
                       ((!isReverse && !!appchainApi) ||
-                        (isReverse && !!anchorContract))
+                        (isReverse && !!appchain))
                     }
                   >
                     <HStack>

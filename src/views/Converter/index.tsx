@@ -3,26 +3,21 @@ import CreatePool from "components/Convertor/CreatePool"
 import MyPool from "components/Convertor/MyPool"
 import PoolList from "components/Convertor/PoolList"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
-import {
-  useConvertorContract,
-  usePools,
-  useWhitelist,
-} from "hooks/useConvertorContract"
+import { usePools, useWhitelist } from "hooks/useConvertorContract"
 import useSWR from "swr"
 import { ConverterConfig, NetworkType } from "types"
 
 export function Converter() {
-  const { accountId, networkConfig, nearAccount } = useWalletSelector()
+  const { accountId, networkConfig } = useWalletSelector()
   const { data } = useSWR<ConverterConfig>(`converter-config`)
 
   const contractId = data
     ? data[networkConfig?.near.networkId ?? NetworkType.TESTNET].contractId
     : ""
 
-  const contract = useConvertorContract(nearAccount!, contractId)
-  const { whitelist, isLoading: isLoadingWhitelist } = useWhitelist(contract)
+  const { whitelist, isLoading: isLoadingWhitelist } = useWhitelist(contractId)
 
-  const { pools, isLoading: isLoadingPools } = usePools(contract, 0, 10)
+  const { pools, isLoading: isLoadingPools } = usePools(contractId, 0, 30)
 
   const myPools = pools.filter((p) => p.creator === accountId)
 

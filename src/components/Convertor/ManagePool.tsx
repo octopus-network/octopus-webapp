@@ -20,10 +20,7 @@ import {
   Avatar,
 } from "@chakra-ui/react"
 import Decimal from "decimal.js"
-import {
-  useConvertorContract,
-  useTokenBalance,
-} from "hooks/useConvertorContract"
+import { useTokenBalance } from "hooks/useConvertorContract"
 import { SIMPLE_CALL_GAS } from "primitives"
 import { useState } from "react"
 import { AccountId, ConversionPool, FungibleTokenMetadata } from "types"
@@ -33,6 +30,8 @@ import NEP141 from "assets/icons/nep141-token.png"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Transaction } from "@near-wallet-selector/core"
 import { Toast } from "components/common/toast"
+import { providers } from "near-api-js"
+import { CodeResult } from "near-api-js/lib/providers/provider"
 
 function TokenInput({
   token,
@@ -114,10 +113,7 @@ export default function ManagePool({
   const inToken = whitelist.find((t) => t.token_id === pool?.in_token)
   const outToken = whitelist.find((t) => t.token_id === pool?.out_token)
 
-  const { accountId, selector, networkConfig, nearAccount } =
-    useWalletSelector()
-
-  const contract = useConvertorContract(nearAccount!, contractId)
+  const { accountId, selector, networkConfig } = useWalletSelector()
 
   if (!pool) {
     return null
@@ -206,9 +202,22 @@ export default function ManagePool({
         receiverId: contractId,
         actions: [],
       }
-      const storageFee = await contract?.get_storage_fee_gap_of({
-        account_id: accountId!,
+      const provider = new providers.JsonRpcProvider({
+        url: selector.options.network.nodeUrl,
       })
+
+      const res = await provider.query<CodeResult>({
+        request_type: "call_function",
+        account_id: contractId,
+        method_name: "get_storage_fee_gap_of",
+        args_base64: btoa(
+          JSON.stringify({
+            account_id: accountId!,
+          })
+        ),
+        finality: "optimistic",
+      })
+      const storageFee = JSON.parse(Buffer.from(res.result).toString())
 
       if (String(storageFee) !== "0") {
         tx.actions.push({
