@@ -105,7 +105,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
   const [isUnbondingDelegation, setIsUnbondingDelegation] = useBoolean()
   const [delegateModalOpen, setDelegateModalOpen] = useBoolean()
 
-  const { accountId } = useWalletSelector()
+  const { accountId, selector } = useWalletSelector()
 
   const { data: delegators } = useSWR<Delegator[]>(
     appchain && validatorId
@@ -229,47 +229,90 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
     return "Unknown"
   }, [validator, appchainValidators, validatorSessionKeys, ss58Address])
 
-  const toggleDelegation = () => {
-    const method = validator?.can_be_delegated_to
-      ? anchor?.disable_delegation
-      : anchor?.enable_delegation
-
-    setIsTogglingDelegation.on()
-
-    method?.({}, COMPLEX_CALL_GAS).catch((err: any) => {
-      if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
-        return
-      }
+  const toggleDelegation = async () => {
+    try {
+      setIsTogglingDelegation.on()
+      const wallet = await selector.wallet()
+      await wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: anchor?.contractId,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: validator?.can_be_delegated_to
+                ? "disable_delegation"
+                : "enable_delegation",
+              args: {},
+              gas: COMPLEX_CALL_GAS,
+              deposit: "0",
+            },
+          },
+        ],
+      })
+      Toast.success(
+        validator?.can_be_delegated_to
+          ? "Delegation disabled"
+          : "Delegation enabled"
+      )
+      setIsTogglingDelegation.off()
+    } catch (err) {
       Toast.error(err)
       setIsTogglingDelegation.off()
-    })
+    }
   }
 
-  const onUnbondValidator = () => {
-    setIsUnbonding.on()
-    anchor?.unbond_stake({}, COMPLEX_CALL_GAS).catch((err) => {
-      if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
-        return
-      }
-      Toast.error(err)
-      setIsUnbonding.off()
-    })
-  }
-
-  const onUnbondDelegation = () => {
-    setIsUnbondingDelegation.on()
-    anchor
-      ?.unbond_delegation(
-        { validator_id: validator?.validator_id || "" },
-        COMPLEX_CALL_GAS
-      )
-      .catch((err) => {
-        setIsUnbondingDelegation.off()
-        if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
-          return
-        }
-        Toast.error(err)
+  const onUnbondValidator = async () => {
+    try {
+      setIsUnbonding.on()
+      const wallet = await selector.wallet()
+      await wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: anchor?.contractId,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: "unbond_stake",
+              args: {},
+              gas: COMPLEX_CALL_GAS,
+              deposit: "0",
+            },
+          },
+        ],
       })
+      Toast.success("Unbonded")
+      setIsUnbonding.off()
+    } catch (error) {
+      Toast.error(error)
+      setIsUnbonding.off()
+    }
+  }
+
+  const onUnbondDelegation = async () => {
+    try {
+      setIsUnbondingDelegation.on()
+      const wallet = await selector.wallet()
+      await wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: anchor?.contractId,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: "unbond_delegation",
+              args: { validator_id: validator?.validator_id || "" },
+              gas: COMPLEX_CALL_GAS,
+              deposit: "0",
+            },
+          },
+        ],
+      })
+      Toast.success("Unbonded")
+      setIsUnbondingDelegation.off()
+    } catch (error) {
+      setIsUnbondingDelegation.off()
+    }
   }
 
   return (

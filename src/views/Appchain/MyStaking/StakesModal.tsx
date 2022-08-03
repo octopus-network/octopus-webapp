@@ -49,7 +49,7 @@ export const StakesModal: React.FC<RewardsModalProps> = ({
 }) => {
   const bg = useColorModeValue("#f6f7fa", "#15172c")
 
-  const { accountId } = useWalletSelector()
+  const { accountId, selector } = useWalletSelector()
 
   const [isWithdrawing, setIsWithdrawing] = useBoolean(false)
 
@@ -83,17 +83,30 @@ export const StakesModal: React.FC<RewardsModalProps> = ({
     )
   }, [stakes])
 
-  const onWithdrawStakes = () => {
-    setIsWithdrawing.on()
-    anchor
-      ?.withdraw_stake({ account_id: accountId! }, COMPLEX_CALL_GAS)
-      .catch((err) => {
-        setIsWithdrawing.off()
-        if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
-          return
-        }
-        Toast.error(err)
+  const onWithdrawStakes = async () => {
+    try {
+      setIsWithdrawing.on()
+      const wallet = await selector.wallet()
+      wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: anchor?.contractId,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: "withdraw_stake",
+              args: { account_id: accountId! },
+              gas: COMPLEX_CALL_GAS,
+              deposit: "0",
+            },
+          },
+        ],
       })
+      Toast.success("Withdrawed")
+      setIsWithdrawing.off()
+    } catch (error) {
+      setIsWithdrawing.off()
+    }
   }
 
   return (

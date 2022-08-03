@@ -31,7 +31,7 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
 }) => {
   const [amount, setAmount] = useState("")
 
-  const { accountId, octToken } = useWalletSelector()
+  const { accountId, octToken, selector } = useWalletSelector()
 
   const [isDepositing, setIsDepositing] = useBoolean(false)
   const [minimumDeposit, setMinimumDeposit] = useState(ZERO_DECIMAL)
@@ -64,32 +64,42 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
     }
   }, [isOpen])
 
-  const onDeposit = () => {
-    setIsDepositing.on()
-    octToken
-      ?.ft_transfer_call(
-        {
-          receiver_id: anchor?.contractId || "",
-          amount: DecimalUtil.toU64(
-            amountInDecimal,
-            OCT_TOKEN_DECIMALS
-          ).toString(),
-          msg: JSON.stringify({
-            RegisterDelegator: {
-              validator_id: validatorId,
+  const onDeposit = async () => {
+    try {
+      setIsDepositing.on()
+      const wallet = await selector.wallet()
+      await wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: octToken?.contractId,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: "ft_transfer_call",
+              args: {
+                receiver_id: anchor?.contractId || "",
+                amount: DecimalUtil.toU64(
+                  amountInDecimal,
+                  OCT_TOKEN_DECIMALS
+                ).toString(),
+                msg: JSON.stringify({
+                  RegisterDelegator: {
+                    validator_id: validatorId,
+                  },
+                }),
+              },
+              gas: COMPLEX_CALL_GAS,
+              deposit: "1",
             },
-          }),
-        },
-        COMPLEX_CALL_GAS,
-        1
-      )
-      .catch((err) => {
-        setIsDepositing.off()
-        if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
-          return
-        }
-        Toast.error(err)
+          },
+        ],
       })
+      Toast.success("Deposited")
+      setIsDepositing.off()
+    } catch (error) {
+      setIsDepositing.off()
+      Toast.error(error)
+    }
   }
 
   return (

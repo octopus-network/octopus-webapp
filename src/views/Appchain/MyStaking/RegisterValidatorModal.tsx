@@ -47,7 +47,7 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
   const [amount, setAmount] = useState("")
   const [appchainAccount, setAppchainAccount] = useState("")
 
-  const { accountId, octToken } = useWalletSelector()
+  const { accountId, octToken, selector } = useWalletSelector()
   const [email, setEmail] = useState("")
   const [socialMediaHandle, setSocialMediaHandle] = useState("")
   const [canBeDelegatedTo, setCanBeDelegatedTo] = useState(false)
@@ -77,7 +77,7 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
     })
   }, [anchor])
 
-  const onSubmit = () => {
+  const onSubmit = async () => {
     let hexId = ""
     try {
       if (isHex(appchainAccount)) {
@@ -90,38 +90,46 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
       return
     }
 
-    setIsSubmitting.on()
-
-    octToken
-      ?.ft_transfer_call(
-        {
-          receiver_id: anchor?.contractId || "",
-          amount: DecimalUtil.toU64(
-            amountInDecimal,
-            OCT_TOKEN_DECIMALS
-          ).toString(),
-          msg: JSON.stringify({
-            RegisterValidator: {
-              validator_id_in_appchain: hexId,
-              can_be_delegated_to: canBeDelegatedTo,
-              profile: {
-                socialMediaHandle: socialMediaHandle || "",
-                email,
+    try {
+      setIsSubmitting.on()
+      const wallet = await selector.wallet()
+      await wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: octToken?.contractId,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: "ft_transfer_call",
+              args: {
+                receiver_id: anchor?.contractId || "",
+                amount: DecimalUtil.toU64(
+                  amountInDecimal,
+                  OCT_TOKEN_DECIMALS
+                ).toString(),
+                msg: JSON.stringify({
+                  RegisterValidator: {
+                    validator_id_in_appchain: hexId,
+                    can_be_delegated_to: canBeDelegatedTo,
+                    profile: {
+                      socialMediaHandle: socialMediaHandle || "",
+                      email,
+                    },
+                  },
+                }),
               },
+              gas: COMPLEX_CALL_GAS,
+              deposit: "1",
             },
-          }),
-        },
-        COMPLEX_CALL_GAS,
-        1
-      )
-      .catch((err) => {
-        setIsSubmitting.off()
-        if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
-          return
-        }
-
-        Toast.error(err)
+          },
+        ],
       })
+      Toast.success("Submitted")
+      setIsSubmitting.off()
+    } catch (error) {
+      Toast.error(error)
+      setIsSubmitting.off()
+    }
   }
 
   const isEvm = appchain?.appchain_metadata.template_type === "BarnacleEvm"

@@ -139,7 +139,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
     [appchain?.appchain_metadata?.fungible_token_metadata?.decimals, rewards]
   )
 
-  const onClaimRewards = () => {
+  const onClaimRewards = async () => {
     if (!anchor) {
       return
     }
@@ -148,27 +148,36 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
       setNeedDepositStorage.on()
       return
     }
-    setIsClaiming.on()
+    try {
+      const wallet = await selector.wallet()
+      wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: anchor.contractId,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: !!validatorId
+                ? "withdraw_delegator_rewards"
+                : "withdraw_validator_rewards",
+              args: !!validatorId
+                ? {
+                    validator_id: validatorId,
+                    delegator_id: accountId || "",
+                  }
+                : { validator_id: accountId },
+              gas: COMPLEX_CALL_GAS,
+              deposit: "0",
+            },
+          },
+        ],
+      })
 
-    const method = validatorId
-      ? anchor.withdraw_delegator_rewards
-      : anchor.withdraw_validator_rewards
-
-    const params: any = validatorId
-      ? {
-          validator_id: validatorId,
-          delegator_id: accountId || "",
-        }
-      : { validator_id: accountId }
-
-    method(params, COMPLEX_CALL_GAS).catch((err) => {
-      if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
-        setIsClaiming.off()
-        return
-      }
-
-      Toast.error(err)
-    })
+      setIsClaiming.off()
+    } catch (error) {
+      Toast.error(error)
+      setIsClaiming.off()
+    }
   }
 
   const onDepositStorage = async () => {

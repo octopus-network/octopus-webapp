@@ -57,7 +57,8 @@ const VotePopover: React.FC<VotePopoverProps> = ({
   voted,
   onClose,
 }) => {
-  const { accountId, octToken, networkConfig, registry } = useWalletSelector()
+  const { accountId, octToken, networkConfig, registry, selector } =
+    useWalletSelector()
 
   const bg = useColorModeValue("white", "#25263c")
   const ref = useRef<any>()
@@ -130,34 +131,44 @@ const VotePopover: React.FC<VotePopoverProps> = ({
     setAmount(value)
   }
 
-  const onDepositVotes = () => {
-    setIsDepositing.on()
-    octToken
-      ?.ft_transfer_call(
-        {
-          receiver_id: networkConfig?.octopus.registryContractId || "",
-          amount: DecimalUtil.toU64(
-            DecimalUtil.fromString(amount),
-            OCT_TOKEN_DECIMALS
-          ).toString(),
-          msg: JSON.stringify({
-            [`${voteType.replace(/^([a-z])|\s+([a-z])/g, ($1) =>
-              $1.toUpperCase()
-            )}Appchain`]: {
-              appchain_id: appchainId,
+  const onDepositVotes = async () => {
+    try {
+      setIsDepositing.on()
+      const wallet = await selector.wallet()
+      await wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: octToken?.contractId,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: "ft_transfer_call",
+              args: {
+                receiver_id: networkConfig?.octopus.registryContractId || "",
+                amount: DecimalUtil.toU64(
+                  DecimalUtil.fromString(amount),
+                  OCT_TOKEN_DECIMALS
+                ).toString(),
+                msg: JSON.stringify({
+                  [`${voteType.replace(/^([a-z])|\s+([a-z])/g, ($1) =>
+                    $1.toUpperCase()
+                  )}Appchain`]: {
+                    appchain_id: appchainId,
+                  },
+                }),
+              },
+              gas: COMPLEX_CALL_GAS,
+              deposit: "1",
             },
-          }),
-        },
-        SIMPLE_CALL_GAS,
-        1
-      )
-      .catch((err) => {
-        if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
-          return
-        }
-        Toast.error(err)
-        setIsDepositing.off()
+          },
+        ],
       })
+      Toast.success("Deposited")
+      setIsDepositing.off()
+    } catch (error) {
+      Toast.error(error)
+      setIsDepositing.off()
+    }
   }
 
   const onWithdrawVotes = () => {

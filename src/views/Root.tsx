@@ -110,14 +110,6 @@ export const Root: React.FC = () => {
           }
         )
 
-        console.log("", {
-          accountId: wallet.getAccountId(),
-          wallet,
-          registry,
-          octToken,
-          network,
-        })
-
         updateGlobal({
           accountId: wallet.getAccountId(),
           wallet,

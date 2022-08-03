@@ -58,7 +58,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
 
   const [isSubmitting, setIsSubmitting] = useBoolean(false)
 
-  const { accountId, octToken } = useWalletSelector()
+  const { accountId, octToken, selector } = useWalletSelector()
 
   const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null)
   const octBalance = useMemo(
@@ -90,6 +90,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
     ).toString()
 
     try {
+      const wallet = await selector.wallet()
       if (type === "increase") {
         const type = !validatorId ? "IncreaseStake" : "IncreaseDelegation"
         await validateValidatorStake(
@@ -99,22 +100,31 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
           validator,
           appchain
         )
-
-        await octToken?.ft_transfer_call(
-          {
-            receiver_id: anchor?.contractId || "",
-            amount: amountStr,
-            msg: !validatorId
-              ? '"IncreaseStake"'
-              : JSON.stringify({
-                  IncreaseDelegation: {
-                    validator_id: validatorId || "",
-                  },
-                }),
-          },
-          COMPLEX_CALL_GAS,
-          1
-        )
+        await wallet.signAndSendTransaction({
+          signerId: accountId,
+          receiverId: anchor.contractId,
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "ft_transfer_call",
+                args: {
+                  receiver_id: anchor?.contractId || "",
+                  amount: amountStr,
+                  msg: !validatorId
+                    ? '"IncreaseStake"'
+                    : JSON.stringify({
+                        IncreaseDelegation: {
+                          validator_id: validatorId || "",
+                        },
+                      }),
+                },
+                gas: COMPLEX_CALL_GAS,
+                deposit: "0",
+              },
+            },
+          ],
+        })
       } else {
         const type = !validatorId ? "DecreaseStake" : "DecreaseDelegation"
         await validateValidatorStake(
@@ -124,20 +134,29 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
           validator,
           appchain
         )
-        const method = validatorId
-          ? anchor.decrease_delegation
-          : anchor.decrease_stake
-        const params: any = validatorId
-          ? { amount: amountStr, validator_id: validatorId || "" }
-          : { amount: amountStr }
-
-        await method(params, COMPLEX_CALL_GAS)
+        await wallet.signAndSendTransaction({
+          signerId: accountId,
+          receiverId: anchor.contractId,
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: !!validatorId
+                  ? "decrease_delegation"
+                  : "decrease_stake",
+                args: !!validatorId
+                  ? { amount: amountStr, validator_id: validatorId || "" }
+                  : { amount: amountStr },
+                gas: COMPLEX_CALL_GAS,
+                deposit: "0",
+              },
+            },
+          ],
+        })
       }
+      Toast.success("Submitted")
+      setIsSubmitting.off()
     } catch (err: any) {
-      if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
-        setIsSubmitting.off()
-        return
-      }
       Toast.error(err)
     }
 

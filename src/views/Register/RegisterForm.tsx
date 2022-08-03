@@ -60,7 +60,8 @@ export const RegisterForm: React.FC = () => {
     icon: "",
     decimals: 18,
   })
-  const { accountId, registry, octToken, networkConfig } = useWalletSelector()
+  const { accountId, registry, octToken, networkConfig, selector } =
+    useWalletSelector()
 
   const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null)
 
@@ -120,7 +121,7 @@ export const RegisterForm: React.FC = () => {
     )
   }
 
-  const onSubmit = (values: any, actions: any) => {
+  const onSubmit = async (values: any, actions: any) => {
     const {
       appchainId,
       website,
@@ -145,64 +146,76 @@ export const RegisterForm: React.FC = () => {
       return
     }
 
-    octToken
-      ?.ft_transfer_call(
-        {
-          receiver_id: networkConfig?.octopus.registryContractId || "",
-          amount: DecimalUtil.toU64(
-            auditingFee || ZERO_DECIMAL,
-            OCT_TOKEN_DECIMALS
-          ).toString(),
-          msg: JSON.stringify({
-            RegisterAppchain: {
-              appchain_id: appchainId,
-              website_url: website,
-              description,
-              github_address: githubAddress,
-              github_release: githubRelease,
-              contact_email: email,
-              function_spec_url: functionSpec,
-              template_type: templateType,
-              premined_wrapped_appchain_token_beneficiary: preminedBeneficiary,
-              premined_wrapped_appchain_token: DecimalUtil.toU64(
-                DecimalUtil.fromString(preminedAmount),
-                tokenInfo.decimals
-              ).toString(),
-              initial_supply_of_wrapped_appchain_token: DecimalUtil.toU64(
-                DecimalUtil.fromString(initialSupply),
-                tokenInfo.decimals
-              ).toString(),
-              ido_amount_of_wrapped_appchain_token: DecimalUtil.toU64(
-                DecimalUtil.fromString(idoAmount),
-                tokenInfo.decimals
-              ).toString(),
-              initial_era_reward: DecimalUtil.toU64(
-                DecimalUtil.fromString(eraReward),
-                tokenInfo.decimals
-              ).toString(),
-              fungible_token_metadata: {
-                spec: "ft-1.0.0",
-                name: tokenInfo.tokenName,
-                symbol: tokenInfo.tokenSymbol,
-                icon: tokenInfo.icon,
-                reference: null,
-                reference_hash: null,
-                decimals: tokenInfo.decimals * 1,
+    try {
+      const wallet = await selector.wallet()
+      await wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: octToken?.contractId,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: "ft_transfer_call",
+              args: {
+                receiver_id: networkConfig?.octopus.registryContractId || "",
+                amount: DecimalUtil.toU64(
+                  auditingFee || ZERO_DECIMAL,
+                  OCT_TOKEN_DECIMALS
+                ).toString(),
+                msg: JSON.stringify({
+                  RegisterAppchain: {
+                    appchain_id: appchainId,
+                    website_url: website,
+                    description,
+                    github_address: githubAddress,
+                    github_release: githubRelease,
+                    contact_email: email,
+                    function_spec_url: functionSpec,
+                    template_type: templateType,
+                    premined_wrapped_appchain_token_beneficiary:
+                      preminedBeneficiary,
+                    premined_wrapped_appchain_token: DecimalUtil.toU64(
+                      DecimalUtil.fromString(preminedAmount),
+                      tokenInfo.decimals
+                    ).toString(),
+                    initial_supply_of_wrapped_appchain_token: DecimalUtil.toU64(
+                      DecimalUtil.fromString(initialSupply),
+                      tokenInfo.decimals
+                    ).toString(),
+                    ido_amount_of_wrapped_appchain_token: DecimalUtil.toU64(
+                      DecimalUtil.fromString(idoAmount),
+                      tokenInfo.decimals
+                    ).toString(),
+                    initial_era_reward: DecimalUtil.toU64(
+                      DecimalUtil.fromString(eraReward),
+                      tokenInfo.decimals
+                    ).toString(),
+                    fungible_token_metadata: {
+                      spec: "ft-1.0.0",
+                      name: tokenInfo.tokenName,
+                      symbol: tokenInfo.tokenSymbol,
+                      icon: tokenInfo.icon,
+                      reference: null,
+                      reference_hash: null,
+                      decimals: tokenInfo.decimals * 1,
+                    },
+                    custom_metadata: {},
+                  },
+                }),
               },
-              custom_metadata: {},
+              gas: COMPLEX_CALL_GAS,
+              deposit: "1",
             },
-          }),
-        },
-        COMPLEX_CALL_GAS,
-        1
-      )
-      .catch((err) => {
-        actions.setSubmitting(false)
-        if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
-          return
-        }
-        Toast.error(err)
+          },
+        ],
+        callbackUrl: window.location.origin + "/appchains",
       })
+      Toast.success("Registered")
+      actions.setSubmitting(false)
+    } catch (error) {
+      actions.setSubmitting(false)
+      Toast.error(error)
+    }
   }
 
   return (
