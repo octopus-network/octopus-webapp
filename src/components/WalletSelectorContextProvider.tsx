@@ -92,22 +92,22 @@ export const WalletSelectorContextProvider = ({
         setupMyNearWallet({
           iconUrl: "/assets/my-near-wallet-icon.png",
         }),
-        // setupLedger({
-        //   iconUrl: "/assets/ledger-icon.png",
-        // }),
+        setupLedger({
+          iconUrl: "/assets/ledger-icon.png",
+        }),
         setupSender({
           iconUrl: "/assets/sender-icon.png",
         }),
-        // setupWalletConnect({
-        //   iconUrl: "/assets/wallet-connect-icon.png",
-        //   projectId: "1799b9adf32c8cef373a6a41699fe8bf",
-        //   metadata: {
-        //     name: "OCT DApp",
-        //     description: "",
-        //     url: "https://mainnet.oct.network",
-        //     icons: ["https://near-vesting.netlify.app/oct.png"],
-        //   },
-        // }),
+        setupWalletConnect({
+          iconUrl: "/assets/wallet-connect-icon.png",
+          projectId: "1799b9adf32c8cef373a6a41699fe8bf",
+          metadata: {
+            name: "OCT DApp",
+            description: "",
+            url: "https://mainnet.oct.network",
+            icons: ["https://near-vesting.netlify.app/oct.png"],
+          },
+        }),
       ],
     })
     const near = new Near({
