@@ -78,6 +78,7 @@ import useAccounts from "hooks/useAccounts"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
 import { CodeResult } from "near-api-js/lib/providers/provider"
+import { evmBurn, nearBurn, nearBurnNft, substrateBurn } from "utils/bridge"
 
 function toHexAddress(ss58Address: string) {
   if (isHex(ss58Address)) {
@@ -109,7 +110,8 @@ export const BridgePanel: React.FC = () => {
 
   const [lastTokenContractId, setLastTokenContractId] = useState("")
 
-  const { accountId, registry, networkConfig, selector } = useWalletSelector()
+  const { accountId, registry, networkConfig, selector, modal } =
+    useWalletSelector()
   const { txns, updateTxn, clearTxnsOfAppchain } = useTxnsStore()
   const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(
     appchainId ? `appchain/${appchainId}` : null,
@@ -274,7 +276,7 @@ export const BridgePanel: React.FC = () => {
   )
 
   const checkNearAccount = useCallback(async () => {
-    if (!networkConfig || !debouncedTargetAccount || !tokenAsset) {
+    if (!debouncedTargetAccount || !tokenAsset) {
       return
     }
 
@@ -305,24 +307,25 @@ export const BridgePanel: React.FC = () => {
       setIsInvalidTargetAccount.on()
       Toast.error(error)
     }
-  }, [
-    networkConfig,
-    debouncedTargetAccount,
-    tokenAsset,
-    selector.options.network.nodeUrl,
-  ])
+  }, [debouncedTargetAccount, tokenAsset, selector.options.network.nodeUrl])
 
   const checkAppchainAccount = useCallback(() => {
     if (!appchainApi || !debouncedTargetAccount) {
       return
     }
+    console.log(
+      "checkAppchainAccount",
+      isEvm,
+      web3.utils.isAddress(debouncedTargetAccount)
+    )
+
     if (
       (!isEvm &&
         (isHex(debouncedTargetAccount) ||
           !isAddress(debouncedTargetAccount))) ||
       (isEvm && web3.utils.isAddress(debouncedTargetAccount))
     ) {
-      setIsInvalidTargetAccount.on()
+      setIsInvalidTargetAccount.off()
       return
     }
     if (tokenAsset?.assetId === undefined) {
@@ -333,7 +336,7 @@ export const BridgePanel: React.FC = () => {
         setTargetAccountNeedDepositStorage.on()
       }
     })
-  }, [debouncedTargetAccount, appchainApi, tokenAsset])
+  }, [appchainApi, debouncedTargetAccount, isEvm, tokenAsset?.assetId])
 
   const checkTargetAccount = React.useRef<any>()
   checkTargetAccount.current = () => {
@@ -557,11 +560,7 @@ export const BridgePanel: React.FC = () => {
 
   const onLogin = async (e: any) => {
     setIsLogging.on()
-    const wallet = await selector.wallet()
-    wallet.signIn({
-      contractId: networkConfig?.octopus?.registryContractId!,
-      methods: [],
-    } as any)
+    modal.show()
   }
 
   const onLogout = async () => {
@@ -610,117 +609,40 @@ export const BridgePanel: React.FC = () => {
   const burnToken = async () => {
     setIsTransferring.on()
 
-    const amountInU64 = DecimalUtil.toU64(
-      DecimalUtil.fromString(amount),
-      Array.isArray(tokenAsset?.metadata.decimals)
-        ? tokenAsset?.metadata.decimals[0]
-        : tokenAsset?.metadata.decimals
-    )
-
     try {
-      let targetAccountInHex = toHexAddress(targetAccount || "")
-
-      if (!targetAccountInHex) {
-        throw new Error("Invalid target account")
-      }
-
       const wallet = await selector.wallet()
-
-      if (tokenAsset?.assetId === undefined) {
-        await wallet.signAndSendTransaction({
-          signerId: accountId,
-          receiverId: appchain?.appchain_anchor,
-          actions: [
-            {
-              type: "FunctionCall",
-              params: {
-                methodName: "burn_wrapped_appchain_token",
-                args: {
-                  receiver_id: targetAccountInHex,
-                  amount: amountInU64.toString(),
-                },
-                gas: COMPLEX_CALL_GAS,
-                deposit: "0",
-              },
-            },
-          ],
-        })
-        Toast.success("Transaction has been sent")
-        return
-      }
-
-      wallet.signAndSendTransaction({
-        signerId: accountId,
-        receiverId: tokenAsset.contractId,
-        actions: [
-          {
-            type: "FunctionCall",
-            params: {
-              methodName: "ft_transfer_call",
-              args: {
-                receiver_id: appchain?.appchain_anchor || "",
-                amount: amountInU64.toString(),
-                msg: JSON.stringify({
-                  BridgeToAppchain: {
-                    receiver_id_in_appchain: targetAccountInHex,
-                  },
-                }),
-              },
-              gas: COMPLEX_CALL_GAS,
-              deposit: "1",
-            },
-          },
-        ],
+      await nearBurn({
+        token: tokenAsset!,
+        wallet,
+        anchorId: appchain?.appchain_anchor!,
+        isEvm,
+        targetAccount,
+        amount,
       })
+      setIsTransferring.off()
+      Toast.success("Transferred")
     } catch (err: any) {
       setIsTransferring.off()
-      if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
-        return
-      }
       Toast.error(err)
     }
   }
 
   const burnCollectible = async () => {
-    setIsTransferring.on()
     try {
-      let targetAccountInHex = toHexAddress(targetAccount || "")
-
-      if (!targetAccountInHex) {
-        throw new Error("Invalid target account")
-      }
-
-      const anchor_id = `${appchainId}.${registry?.contractId}`
+      setIsTransferring.on()
       const wallet = await selector.wallet()
-      await wallet.signAndSendTransaction({
-        signerId: accountId,
-        receiverId: `${collectible?.class}.${anchor_id}`,
-        actions: [
-          {
-            type: "FunctionCall",
-            params: {
-              methodName: "nft_transfer_call",
-              args: {
-                receiver_id: anchor_id,
-                token_id: collectible?.id || "",
-                msg: JSON.stringify({
-                  BridgeToAppchain: {
-                    receiver_id_in_appchain: targetAccountInHex,
-                  },
-                }),
-              },
-              gas: COMPLEX_CALL_GAS,
-              deposit: "1",
-            },
-          },
-        ],
+      const anchorId = `${appchainId}.${registry?.contractId}`
+      await nearBurnNft({
+        wallet,
+        anchorId,
+        receiverId: `${collectible?.class}.${anchorId}`,
+        tokenId: collectible?.id!,
+        targetAccount,
       })
+      setIsTransferring.off()
       Toast.success("Transferred")
     } catch (err: any) {
       setIsTransferring.off()
-      if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
-        return
-      }
       Toast.error(err)
     }
   }
@@ -728,63 +650,35 @@ export const BridgePanel: React.FC = () => {
   const redeemToken = async () => {
     setIsTransferring.on()
 
-    console.log("redeemToken")
-
-    const targetAccountInHex = stringToHex(targetAccount)
-    const amountInU64 = DecimalUtil.toU64(
-      DecimalUtil.fromString(amount),
-      Array.isArray(tokenAsset?.metadata.decimals)
-        ? tokenAsset?.metadata.decimals[0]
-        : tokenAsset?.metadata.decimals
-    )
-
-    console.log("targetAccountInHex", targetAccountInHex)
-
-    const tx: any =
-      tokenAsset?.assetId === undefined
-        ? appchainApi?.tx.octopusAppchain.lock(
-            targetAccountInHex,
-            amountInU64.toString()
-          )
-        : appchainApi?.tx.octopusAppchain.burnAsset(
-            tokenAsset?.assetId,
-            targetAccountInHex,
-            amountInU64.toString()
-          )
-
-    if (isEvm) {
-    } else {
-      await tx
-        .signAndSend(fromAccount, ({ events = [] }: any) => {
-          events.forEach(({ event: { data, method, section } }: any) => {
-            console.log("event", { data, method, section })
-
-            if (
-              section === "octopusAppchain" &&
-              (method === "Locked" || method === "AssetBurned")
-            ) {
-              updateTxn(appchainId || "", {
-                isAppchainSide: true,
-                appchainId: appchainId || "",
-                hash: tx.hash.toString(),
-                sequenceId: data[method === "Locked" ? 3 : 4].toNumber(),
-                amount: amountInU64.toString(),
-                status: BridgeHistoryStatus.Pending,
-                timestamp: new Date().getTime(),
-                fromAccount: fromAccount || "",
-                toAccount: targetAccount || "",
-                tokenContractId: tokenAsset?.contractId || "",
-              })
-              setIsTransferring.off()
-              checkBalanceViaRPC?.current()
-            }
-          })
+    try {
+      const targetAccountInHex = stringToHex(targetAccount)
+      const amountInU64 = DecimalUtil.toU64(
+        DecimalUtil.fromString(amount),
+        Array.isArray(tokenAsset?.metadata.decimals)
+          ? tokenAsset?.metadata.decimals[0]
+          : tokenAsset?.metadata.decimals
+      )
+      if (isEvm) {
+        await evmBurn({
+          asset_id: tokenAsset?.assetId,
+          amount: amountInU64.toString(),
+          receiver_id: targetAccountInHex,
         })
-        .catch((err: any) => {
-          console.log("err", err)
-          Toast.error(err)
-          setIsTransferring.off()
+      } else {
+        substrateBurn({
+          api: appchainApi!,
+          targetAccount,
+          amount: amountInU64.toString(),
+          asset: tokenAsset,
+          fromAccount: fromAccount!,
+          appchainId: appchainId!,
+          updateTxn,
         })
+      }
+      setIsTransferring.off()
+    } catch (error) {
+      Toast.error(error)
+      setIsTransferring.off()
     }
   }
 

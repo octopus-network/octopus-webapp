@@ -9,40 +9,41 @@ export default function useAccounts(isEvm: boolean, isRequest: boolean) {
     useState<InjectedAccountWithMeta>()
 
   useEffect(() => {
-    if (isEvm) {
-      if (!isRequest) {
-        return
-      }
-      detectEthereumProvider({ mustBeMetaMask: true })
-        .then((provider: any) => {
-          if (provider) {
-            provider
-              .request({
-                method: "eth_requestAccounts",
-              })
-              .then((accounts: string[]) => {
-                const _accounts = accounts.map((t) => {
-                  return {
-                    address: t,
-                    meta: { source: "metamask" },
-                  }
-                })
-                setAccounts(_accounts)
-                setCurrentAccount(_accounts[0])
-              })
+    async function getAccounts() {
+      try {
+        if (isEvm) {
+          if (!isRequest) {
+            return
           }
-        })
-        .catch(console.error)
-    } else {
-      web3Enable("Octopus Network").then((res) => {
-        web3Accounts().then((accounts) => {
+          const provider = await detectEthereumProvider({
+            mustBeMetaMask: true,
+          })
+          if (provider) {
+            const accounts = await (provider as any).request({
+              method: "eth_requestAccounts",
+            })
+
+            const _accounts = accounts.map((t: string) => {
+              return {
+                address: t,
+                meta: { source: "metamask" },
+              }
+            })
+            setAccounts(_accounts)
+            setCurrentAccount(_accounts[0])
+          }
+        } else {
+          await web3Enable("Octopus Network")
+          const accounts = await web3Accounts()
           setAccounts(accounts)
           if (accounts.length) {
             setCurrentAccount(accounts[0])
           }
-        })
-      })
+        }
+      } catch (error) {}
     }
+
+    getAccounts()
   }, [isEvm, isRequest])
 
   return {
