@@ -36,6 +36,16 @@ const getSigner = () => {
   return _signer
 }
 
+export async function setSessionKey(key: string) {
+  const signer = getSigner()
+  const contract = new ethers.Contract(
+    OctopusSessionAddress,
+    OctopusSession,
+    signer
+  )
+  await contract.set_keys(key, "0x00")
+}
+
 export async function nearBurn({
   token,
   amount,

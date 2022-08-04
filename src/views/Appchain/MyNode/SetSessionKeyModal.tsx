@@ -29,6 +29,7 @@ import AccountItem from "components/common/AccountItem"
 import detectEthereumProvider from "@metamask/detect-provider"
 import useAccounts from "hooks/useAccounts"
 import { Toast } from "components/common/toast"
+import { setSessionKey } from "utils/bridge"
 
 type SetSessionKeyModalProps = {
   isOpen: boolean
@@ -68,8 +69,10 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
   }
 
   const onKeyChange = (key: string) => {
-    // TODO: isEvm
-    if (isHex(key) && key.length === 324) {
+    if (
+      isHex(key) &&
+      ((!isEvm && key.length === 324) || (isEvm && key.length === 326))
+    ) {
       setKey(key)
     } else {
       setKey("")
@@ -77,19 +80,21 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
   }
 
   const onSubmit = async () => {
-    setIsSubmitting.on()
-    const injected = await web3FromSource(currentAccount?.meta.source || "")
-    appchainApi?.setSigner(injected.signer)
-
-    const tx = appchainApi?.tx.session.setKeys(key, "0x00")
-    if (!tx) {
-      setIsSubmitting.off()
-      return
-    }
-
     try {
-      await tx
-        .signAndSend(currentAccount?.address as any, (res: any) => {
+      setIsSubmitting.on()
+      if (isEvm) {
+        await setSessionKey(key)
+      } else {
+        const injected = await web3FromSource(currentAccount?.meta.source || "")
+        appchainApi?.setSigner(injected.signer)
+
+        const tx = appchainApi?.tx.session.setKeys(key, "0x00")
+        if (!tx) {
+          setIsSubmitting.off()
+          return
+        }
+
+        await tx.signAndSend(currentAccount?.address as any, (res: any) => {
           if (res.isInBlock) {
             Toast.success("Set session keys success")
 
@@ -98,10 +103,8 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
             }, 500)
           }
         })
-        .catch((err) => {
-          setIsSubmitting.off()
-          throw new Error(err.toString())
-        })
+      }
+      setIsSubmitting.off()
     } catch (err: any) {
       setIsSubmitting.off()
       Toast.error(err)
