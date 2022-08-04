@@ -18,9 +18,9 @@ import {
 import { TokenAsset, CollectibleContract, Collectible } from "types"
 
 import { Empty, BaseModal } from "components"
-import { useGlobalStore } from "stores"
 import failedToLoad from "assets/failed_to_load.svg"
 import { ApiPromise } from "@polkadot/api"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 type SelectTokenModalProps = {
   isOpen: boolean
@@ -54,13 +54,13 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
   const [tabIdx, setTabIdx] = useState(0)
   const [collectibles, setCollectibles] = useState<Collectible[]>()
 
-  const { global } = useGlobalStore()
+  const { registry, nearAccount } = useWalletSelector()
 
   useEffect(() => {
     if (
       !collectibleClasses?.length ||
       !appchainId ||
-      !global.registry ||
+      !registry ||
       !fromAccount
     ) {
       setCollectibles([])
@@ -70,8 +70,8 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
     if (isReverse) {
       const promises = collectibleClasses.map((classId) => {
         const contract = new CollectibleContract(
-          global.wallet?.account() as any,
-          `${classId}.${appchainId}.${global.registry?.contractId}`,
+          nearAccount!,
+          `${classId}.${appchainId}.${registry?.contractId}`,
           {
             viewMethods: ["nft_tokens_for_owner"],
             changeMethods: [],
@@ -172,7 +172,6 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
     appchainId,
     JSON.stringify(collectibleClasses),
     isReverse,
-    global,
     fromAccount,
     appchainApi,
     isOpen,

@@ -1,5 +1,4 @@
 import React, { useMemo, useEffect, useState } from "react"
-import BN from "bn.js"
 
 import {
   Flex,
@@ -20,7 +19,6 @@ import {
   Box,
   SimpleGrid,
   useColorModeValue,
-  useToast,
 } from "@chakra-ui/react"
 
 import {
@@ -32,7 +30,6 @@ import {
 
 import { BaseModal, Empty } from "components"
 import { DecimalUtil, ZERO_DECIMAL } from "utils"
-import { useGlobalStore } from "stores"
 import { WarningTwoIcon } from "@chakra-ui/icons"
 
 import {
@@ -40,6 +37,8 @@ import {
   FAILED_TO_REDIRECT_MESSAGE,
   COMPLEX_CALL_GAS,
 } from "primitives"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { Toast } from "components/common/toast"
 
 type RewardsModalProps = {
   rewards: RewardHistory[] | undefined
@@ -62,8 +61,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
 }) => {
   const bg = useColorModeValue("#f6f7fa", "#15172c")
 
-  const toast = useToast()
-  const { global } = useGlobalStore()
+  const { accountId, selector } = useWalletSelector()
 
   const [isClaiming, setIsClaiming] = useBoolean(false)
   const [isClaimRewardsPaused, setIsClaimRewardsPaused] = useState(false)
@@ -91,11 +89,11 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
   }, [anchor])
 
   useEffect(() => {
-    if (!wrappedAppchainTokenContract) {
+    if (!wrappedAppchainTokenContract || !accountId) {
       return
     }
     wrappedAppchainTokenContract
-      .storage_balance_of({ account_id: global.accountId })
+      .storage_balance_of({ account_id: accountId })
       .then((storage) => {
         setWrappedAppchainTokenStorageBalance(
           storage?.total
@@ -103,7 +101,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
             : ZERO_DECIMAL
         )
       })
-  }, [wrappedAppchainTokenContract, global])
+  }, [wrappedAppchainTokenContract, accountId])
 
   const unwithdrawnRewards = useMemo(() => {
     if (!rewards?.length) {
@@ -122,7 +120,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
         ),
       ZERO_DECIMAL
     )
-  }, [rewards])
+  }, [appchain?.appchain_metadata?.fungible_token_metadata.decimals, rewards])
 
   const totalRewards = useMemo(
     () =>
@@ -138,10 +136,10 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
             ZERO_DECIMAL
           )
         : ZERO_DECIMAL,
-    [rewards]
+    [appchain?.appchain_metadata?.fungible_token_metadata?.decimals, rewards]
   )
 
-  const onClaimRewards = () => {
+  const onClaimRewards = async () => {
     if (!anchor) {
       return
     }
@@ -150,58 +148,69 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
       setNeedDepositStorage.on()
       return
     }
-    setIsClaiming.on()
-
-    const method = validatorId
-      ? anchor.withdraw_delegator_rewards
-      : anchor.withdraw_validator_rewards
-
-    const params: any = validatorId
-      ? {
-          validator_id: validatorId,
-          delegator_id: global.accountId || "",
-        }
-      : { validator_id: global.accountId }
-
-    method(params, COMPLEX_CALL_GAS).catch((err) => {
-      if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
-        setIsClaiming.off()
-        return
-      }
-
-      toast({
-        position: "top-right",
-        title: "Error",
-        description: err.toString(),
-        status: "error",
+    try {
+      const wallet = await selector.wallet()
+      wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: anchor.contractId,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: !!validatorId
+                ? "withdraw_delegator_rewards"
+                : "withdraw_validator_rewards",
+              args: !!validatorId
+                ? {
+                    validator_id: validatorId,
+                    delegator_id: accountId || "",
+                  }
+                : { validator_id: accountId },
+              gas: COMPLEX_CALL_GAS,
+              deposit: "0",
+            },
+          },
+        ],
       })
-    })
+
+      setIsClaiming.off()
+    } catch (error) {
+      Toast.error(error)
+      setIsClaiming.off()
+    }
   }
 
-  const onDepositStorage = () => {
-    setIsDepositingStorage.on()
-    global.wallet
-      ?.account()
-      .functionCall({
-        contractId: wrappedAppchainTokenContract?.contractId || "",
-        methodName: "storage_deposit",
-        args: { account_id: global.accountId },
-        gas: new BN(SIMPLE_CALL_GAS),
-        attachedDeposit: new BN("1250000000000000000000"),
+  const onDepositStorage = async () => {
+    try {
+      setIsDepositingStorage.on()
+
+      const wallet = await selector.wallet()
+      await wallet.signAndSendTransaction({
+        signerId: wallet.id,
+        receiverId: wrappedAppchainTokenContract?.contractId,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: "storage_deposit",
+              args: { account_id: accountId },
+              gas: SIMPLE_CALL_GAS,
+              deposit: "1250000000000000000000",
+            },
+          },
+        ],
       })
-      .catch((err) => {
-        setIsDepositingStorage.off()
-        if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
+      setIsDepositingStorage.off()
+    } catch (error) {
+      setIsDepositingStorage.off()
+      if (error instanceof Error) {
+        if (error.message === FAILED_TO_REDIRECT_MESSAGE) {
           return
         }
 
-        toast({
-          position: "top-right",
-          title: "Error",
-          description: err.toString(),
-          status: "error",
-        })
-      })
+        Toast.error(error)
+      }
+    }
   }
 
   return (

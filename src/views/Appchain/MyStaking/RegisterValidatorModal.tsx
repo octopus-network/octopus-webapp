@@ -13,7 +13,6 @@ import {
   Switch,
   FormHelperText,
   Button,
-  useToast,
   Box,
   useBoolean,
 } from "@chakra-ui/react"
@@ -27,9 +26,10 @@ import {
 import { decodeAddress } from "@polkadot/util-crypto"
 import { u8aToHex, isHex } from "@polkadot/util"
 import { BaseModal } from "components"
-import { useGlobalStore } from "stores"
 import { AnchorContract, AppchainInfoWithAnchorStatus } from "types"
 import { DecimalUtil, ZERO_DECIMAL } from "utils"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { Toast } from "components/common/toast"
 
 type RegisterValidatorModalProps = {
   appchain: AppchainInfoWithAnchorStatus | undefined
@@ -47,8 +47,7 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
   const [amount, setAmount] = useState("")
   const [appchainAccount, setAppchainAccount] = useState("")
 
-  const { global } = useGlobalStore()
-  const toast = useToast()
+  const { accountId, octToken, selector } = useWalletSelector()
   const [email, setEmail] = useState("")
   const [socialMediaHandle, setSocialMediaHandle] = useState("")
   const [canBeDelegatedTo, setCanBeDelegatedTo] = useState(false)
@@ -56,9 +55,7 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
   const [minimumDeposit, setMinimumDeposit] = useState(ZERO_DECIMAL)
 
   const [isSubmitting, setIsSubmitting] = useBoolean()
-  const { data: balances } = useSWR(
-    global.accountId ? `balances/${global.accountId}` : null
-  )
+  const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null)
 
   const amountInDecimal = useMemo(
     () => DecimalUtil.fromString(amount),
@@ -80,7 +77,7 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
     })
   }, [anchor])
 
-  const onSubmit = () => {
+  const onSubmit = async () => {
     let hexId = ""
     try {
       if (isHex(appchainAccount)) {
@@ -89,52 +86,50 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
       const u8a = decodeAddress(appchainAccount)
       hexId = u8aToHex(u8a)
     } catch (err) {
-      toast({
-        position: "top-right",
-        title: "Error",
-        description: "Invalid SS58 address",
-        status: "error",
-      })
+      Toast.error(err)
       return
     }
 
-    setIsSubmitting.on()
-
-    global.octToken
-      ?.ft_transfer_call(
-        {
-          receiver_id: anchor?.contractId || "",
-          amount: DecimalUtil.toU64(
-            amountInDecimal,
-            OCT_TOKEN_DECIMALS
-          ).toString(),
-          msg: JSON.stringify({
-            RegisterValidator: {
-              validator_id_in_appchain: hexId,
-              can_be_delegated_to: canBeDelegatedTo,
-              profile: {
-                socialMediaHandle: socialMediaHandle || "",
-                email,
+    try {
+      setIsSubmitting.on()
+      const wallet = await selector.wallet()
+      await wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: octToken?.contractId,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: "ft_transfer_call",
+              args: {
+                receiver_id: anchor?.contractId || "",
+                amount: DecimalUtil.toU64(
+                  amountInDecimal,
+                  OCT_TOKEN_DECIMALS
+                ).toString(),
+                msg: JSON.stringify({
+                  RegisterValidator: {
+                    validator_id_in_appchain: hexId,
+                    can_be_delegated_to: canBeDelegatedTo,
+                    profile: {
+                      socialMediaHandle: socialMediaHandle || "",
+                      email,
+                    },
+                  },
+                }),
               },
+              gas: COMPLEX_CALL_GAS,
+              deposit: "1",
             },
-          }),
-        },
-        COMPLEX_CALL_GAS,
-        1
-      )
-      .catch((err) => {
-        setIsSubmitting.off()
-        if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
-          return
-        }
-
-        toast({
-          position: "top-right",
-          title: "Error",
-          description: err.toString(),
-          status: "error",
-        })
+          },
+        ],
       })
+      Toast.success("Submitted")
+      setIsSubmitting.off()
+    } catch (error) {
+      Toast.error(error)
+      setIsSubmitting.off()
+    }
   }
 
   const isEvm = appchain?.appchain_metadata.template_type === "BarnacleEvm"

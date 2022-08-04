@@ -1,5 +1,5 @@
-import React from 'react';
-import useSWR from 'swr';
+import React from "react"
+import useSWR from "swr"
 
 import {
   Heading,
@@ -12,75 +12,83 @@ import {
   VStack,
   Spinner,
   Center,
-  Flex
-} from '@chakra-ui/react';
+  Flex,
+} from "@chakra-ui/react"
 
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
-import { ExternalLinkIcon } from '@chakra-ui/icons';
-import { Empty } from 'components';
-import { useGlobalStore } from 'stores';
-import { DecimalUtil } from 'utils';
-import Decimal from 'decimal.js';
+import dayjs from "dayjs"
+import relativeTime from "dayjs/plugin/relativeTime"
+import { ExternalLinkIcon } from "@chakra-ui/icons"
+import { Empty } from "components"
+import { DecimalUtil } from "utils"
+import Decimal from "decimal.js"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 type Airdrop = {
-  time: number;
-  description: string;
+  time: number
+  description: string
   data: {
-    amount: number;
+    amount: number
     hash: string
   }
 }
 
-dayjs.extend(relativeTime);
+dayjs.extend(relativeTime)
 
 export const AirdropItem: React.FC<{
-  airdrop: Airdrop;
+  airdrop: Airdrop
 }> = ({ airdrop }) => {
-
-  const { global } = useGlobalStore();
+  const { networkConfig } = useWalletSelector()
 
   return (
     <Box>
       <Flex justifyContent="space-between" alignItems="center">
         <VStack alignItems="flex-start" spacing={0}>
           <HStack>
-            <Heading fontSize="md">Received {DecimalUtil.beautify(new Decimal(airdrop.data.amount))} OCT</Heading>
+            <Heading fontSize="md">
+              Received {DecimalUtil.beautify(new Decimal(airdrop.data.amount))}{" "}
+              OCT
+            </Heading>
             <Text variant="gray">in</Text>
             <Heading fontSize="md">{airdrop.description}</Heading>
           </HStack>
           <Text variant="gray">{dayjs(airdrop.time).fromNow()}</Text>
         </VStack>
-        <Link href={`${global.network?.near.explorerUrl}/transactions/${airdrop.data.hash}`} isExternal>
-          <Button size="sm" variant="ghost" colorScheme="octo-blue"> View <ExternalLinkIcon ml={1} /></Button>
+        <Link
+          href={`${networkConfig?.near.explorerUrl}/transactions/${airdrop.data.hash}`}
+          isExternal
+        >
+          <Button size="sm" variant="ghost" colorScheme="octo-blue">
+            {" "}
+            View <ExternalLinkIcon ml={1} />
+          </Button>
         </Link>
       </Flex>
     </Box>
-  );
+  )
 }
 
 export const Airdrops: React.FC = () => {
-  const { global } = useGlobalStore();
-  const { data: airdrops, error: airdropsError } = useSWR<Airdrop[]>(global.accountId ? `${global.accountId}/airdrops` : null);
+  const { accountId } = useWalletSelector()
+  const { data: airdrops, error: airdropsError } = useSWR<Airdrop[]>(
+    accountId ? `${accountId}/airdrops` : null
+  )
 
   return (
     <Box>
       <Heading fontSize="2xl">Airdrops</Heading>
-      {
-        !airdrops && !airdropsError ?
+      {!airdrops && !airdropsError ? (
         <Center minH="160px">
           <Spinner size="md" thickness="4px" speed="1s" color="octo-blue.500" />
-        </Center> :
-        airdrops?.length ?
+        </Center>
+      ) : airdrops?.length ? (
         <List spacing={4} mt={6}>
-          {
-            airdrops.map((a, idx) => (
-              <AirdropItem airdrop={a} key={`airdrop-${idx}`} />
-            ))
-          }
-        </List> :
+          {airdrops.map((a, idx) => (
+            <AirdropItem airdrop={a} key={`airdrop-${idx}`} />
+          ))}
+        </List>
+      ) : (
         <Empty />
-      }
+      )}
     </Box>
-  );
+  )
 }

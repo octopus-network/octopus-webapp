@@ -42,10 +42,10 @@ import { AppchainInfoWithAnchorStatus, NetworkConfig } from "types"
 import { BiTimeFive } from "react-icons/bi"
 import { AiOutlineArrowRight } from "react-icons/ai"
 import nearLogo from "assets/near.svg"
-import { useGlobalStore } from "stores"
 import { TxDetail } from "./TxDetail"
 import { formatAppChainAddress } from "utils/format"
 import OctIdenticon from "components/common/OctIdenticon"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 enum BridgeStatus {
   Pending,
@@ -389,11 +389,11 @@ export const Status: React.FC = () => {
 
   const { txId } = useParams()
   const navigate = useNavigate()
-  const { global } = useGlobalStore()
+  const { networkConfig } = useWalletSelector()
 
   const pages = []
   for (let i = 1; i < page + 1; i++) {
-    pages.push(<Page page={i} key={i} network={global.network} />)
+    pages.push(<Page page={i} key={i} network={networkConfig} />)
   }
 
   useEffect(() => {

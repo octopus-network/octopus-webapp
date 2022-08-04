@@ -9,12 +9,9 @@ import {
   FormControl,
   FormHelperText,
   useColorModeValue,
-  HStack,
-  VStack,
   Flex,
   Box,
   Icon,
-  useToast,
   useBoolean,
   Button,
 } from "@chakra-ui/react"
@@ -23,11 +20,7 @@ import type { ApiPromise } from "@polkadot/api"
 import { isHex } from "@polkadot/util"
 import { ChevronRightIcon } from "@chakra-ui/icons"
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types"
-import {
-  web3FromSource,
-  web3Enable,
-  web3Accounts,
-} from "@polkadot/extension-dapp"
+import { web3FromSource } from "@polkadot/extension-dapp"
 import { Empty } from "components"
 
 import { BaseModal } from "components"
@@ -35,6 +28,7 @@ import { AppchainInfo } from "types"
 import AccountItem from "components/common/AccountItem"
 import detectEthereumProvider from "@metamask/detect-provider"
 import useAccounts from "hooks/useAccounts"
+import { Toast } from "components/common/toast"
 
 type SetSessionKeyModalProps = {
   isOpen: boolean
@@ -49,8 +43,6 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
   appchainApi,
   appchain,
 }) => {
-  const toast = useToast()
-
   const bg = useColorModeValue("#f6f7fa", "#15172c")
 
   const [key, setKey] = useState("")
@@ -99,11 +91,7 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
       await tx
         .signAndSend(currentAccount?.address as any, (res: any) => {
           if (res.isInBlock) {
-            toast({
-              title: "Set session keys success",
-              status: "success",
-              position: "top-right",
-            })
+            Toast.success("Set session keys success")
 
             setTimeout(() => {
               window.location.reload()
@@ -116,11 +104,7 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
         })
     } catch (err: any) {
       setIsSubmitting.off()
-      toast({
-        title: err.toString(),
-        status: "error",
-        position: "top-right",
-      })
+      Toast.error(err)
     }
   }
 

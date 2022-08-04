@@ -18,7 +18,6 @@ import {
   DrawerOverlay,
   DrawerContent,
   useBoolean,
-  useToast,
 } from "@chakra-ui/react"
 
 import {
@@ -48,13 +47,14 @@ import { ValidatorProfile } from "./ValidatorProfile"
 import { MyNode } from "./MyNode"
 
 import { Validators } from "./Validators"
-import { useGlobalStore } from "stores"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { Toast } from "components/common/toast"
 
 export const Appchain: React.FC = () => {
   const { id = "", validatorId = "" } = useParams()
 
-  const toast = useToast()
-  const { global } = useGlobalStore()
+  const { accountId, networkConfig, registry, nearAccount } =
+    useWalletSelector()
   const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(
     id ? `appchain/${id}` : null
   )
@@ -66,7 +66,7 @@ export const Appchain: React.FC = () => {
   )
 
   const { data: userVotes } = useSWR<UserVotes>(
-    global.accountId ? `votes/${global.accountId}/${id}` : null
+    accountId ? `votes/${accountId}/${id}` : null
   )
   const userDownvotes = useMemo(
     () => DecimalUtil.fromString(userVotes?.downvotes, OCT_TOKEN_DECIMALS),
@@ -113,7 +113,7 @@ export const Appchain: React.FC = () => {
     }
 
     const anchorContract = new AnchorContract(
-      global.wallet?.account() as any,
+      nearAccount!,
       appchain.appchain_anchor,
       {
         viewMethods: [
@@ -143,12 +143,12 @@ export const Appchain: React.FC = () => {
 
     setAnchor(anchorContract)
 
-    if (global.network?.near) {
+    if (networkConfig?.near) {
       axios
-        .post(`${global.network?.near.restApiUrl}/explorer`, {
+        .post(`${networkConfig?.near.restApiUrl}/explorer`, {
           user: "public_readonly",
-          host: `${global.network?.near.networkId}.db.explorer.indexer.near.dev`,
-          database: `${global.network?.near.networkId}_explorer`,
+          host: `${networkConfig?.near.networkId}.db.explorer.indexer.near.dev`,
+          database: `${networkConfig?.near.networkId}_explorer`,
           password: "nearprotocol",
           port: 5432,
           parameters: [appchain.appchain_anchor],
@@ -166,7 +166,7 @@ export const Appchain: React.FC = () => {
           setUnbondedValidators(Array.from(new Set(tmpArr)))
         })
     }
-  }, [appchain, global])
+  }, [appchain, networkConfig?.near])
 
   useEffect(() => {
     if (!anchor) {
@@ -178,21 +178,17 @@ export const Appchain: React.FC = () => {
   }, [anchor])
 
   useEffect(() => {
-    if (!global.accountId || !wrappedAppchainToken) {
+    if (!accountId || !wrappedAppchainToken) {
       return
     }
 
     setWrappedAppchainTokenContract(
-      new TokenContract(
-        global.wallet?.account() as any,
-        wrappedAppchainToken.contract_account,
-        {
-          viewMethods: ["storage_balance_of", "ft_balance_of"],
-          changeMethods: [],
-        }
-      )
+      new TokenContract(nearAccount!, wrappedAppchainToken.contract_account, {
+        viewMethods: ["storage_balance_of", "ft_balance_of"],
+        changeMethods: [],
+      })
     )
-  }, [wrappedAppchainToken, global])
+  }, [wrappedAppchainToken, accountId])
 
   useEffect(() => {
     if (!appchainSettings) {
@@ -244,25 +240,24 @@ export const Appchain: React.FC = () => {
   const isValidator = useMemo(
     () =>
       validators?.some(
-        (v) => v.validator_id === global.accountId && !v.is_unbonding
+        (v) => v.validator_id === accountId && !v.is_unbonding
       ) || false,
-    [validators, global]
+    [validators, accountId]
   )
   const isUnbonding = useMemo(
     () =>
-      validators?.some(
-        (v) => v.validator_id === global.accountId && v.is_unbonding
-      ) || false,
-    [validators, global]
+      validators?.some((v) => v.validator_id === accountId && v.is_unbonding) ||
+      false,
+    [validators, accountId]
   )
-  const validator = validators?.find((v) => v.validator_id === global.accountId)
+  const validator = validators?.find((v) => v.validator_id === accountId)
 
   const needKeys = useMemo(() => {
-    if (!validatorSessionKeys || !global.accountId) {
+    if (!validatorSessionKeys || !accountId) {
       return false
     }
-    return isValidator && !validatorSessionKeys[global.accountId]
-  }, [isValidator, global, validatorSessionKeys])
+    return isValidator && !validatorSessionKeys[accountId]
+  }, [validatorSessionKeys, accountId, isValidator])
 
   const onDrawerClose = () => {
     navigate(`/appchains/${id}`)
@@ -271,8 +266,8 @@ export const Appchain: React.FC = () => {
   const onWithdrawVotes = (voteType: "upvote" | "downvote") => {
     const method =
       voteType === "upvote"
-        ? global.registry?.withdraw_upvote_deposit_of
-        : global.registry?.withdraw_downvote_deposit_of
+        ? registry?.withdraw_upvote_deposit_of
+        : registry?.withdraw_downvote_deposit_of
 
     ;(voteType === "upvote"
       ? setIsWithdrawingUpvotes
@@ -297,12 +292,7 @@ export const Appchain: React.FC = () => {
         if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
           return
         }
-        toast({
-          position: "top-right",
-          title: "Error",
-          description: err.toString(),
-          status: "error",
-        })
+        Toast.error(err)
       })
   }
 

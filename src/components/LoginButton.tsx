@@ -1,28 +1,20 @@
-import React from 'react';
+import React from "react"
 
-import {
-  Button,
-  useBoolean,
-  Icon
-} from '@chakra-ui/react';
+import { Button, Icon } from "@chakra-ui/react"
 
-import { AiOutlineUser } from 'react-icons/ai';
-import { useGlobalStore } from 'stores';
+import { AiOutlineUser } from "react-icons/ai"
+import { useWalletSelector } from "./WalletSelectorContextProvider"
 
 export const LoginButton: React.FC = () => {
-
-  const { global } = useGlobalStore();
-  const [isLogging, setIsLogging] = useBoolean();
+  const { modal } = useWalletSelector()
 
   const onLogin = (e: any) => {
-    setIsLogging.on();
-    global.wallet?.requestSignIn(global.network?.octopus.registryContractId, 'Octopus Webapp');
+    modal.show()
   }
 
   return (
-    <Button variant="octo-linear" onClick={onLogin} 
-      isLoading={isLogging} isDisabled={isLogging}>
+    <Button variant="octo-linear" onClick={onLogin}>
       <Icon as={AiOutlineUser} boxSize={5} mr={2} /> Login
     </Button>
-  );
+  )
 }

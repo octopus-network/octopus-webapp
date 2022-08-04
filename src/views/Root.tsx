@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useCallback, useRef } from 'react'
+import React, { useEffect, useMemo, useCallback, useRef } from "react"
 
-import { SWRConfig } from 'swr'
-import axios from 'axios'
+import { SWRConfig } from "swr"
+import axios from "axios"
 
 import {
   Box,
@@ -9,26 +9,21 @@ import {
   useToast,
   Spinner,
   Link,
-} from '@chakra-ui/react'
+} from "@chakra-ui/react"
 
-import { Header, Footer } from 'components'
+import { Header, Footer } from "components"
 
-import { Near, keyStores, WalletConnection, providers } from 'near-api-js'
+import { providers } from "near-api-js"
 
-import {
-  RegistryContract,
-  TokenContract,
-  NetworkConfig,
-  BridgeHistory,
-  BridgeHistoryStatus,
-} from 'types'
+import { BridgeHistory, BridgeHistoryStatus } from "types"
 
-import { Outlet } from 'react-router-dom'
-import { useLocation, useNavigate } from 'react-router-dom'
-import { useMatchMutate } from 'hooks'
-import { useGlobalStore, useTxnsStore } from 'stores'
+import { Outlet } from "react-router-dom"
+import { useLocation, useNavigate } from "react-router-dom"
+import { useMatchMutate } from "hooks"
+import { useTxnsStore } from "stores"
 
-import { API_HOST } from 'config'
+import { API_HOST } from "config"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 const LoadingSpinner = () => {
   return (
@@ -45,9 +40,9 @@ const LoadingSpinner = () => {
 }
 
 export const Root: React.FC = () => {
-  const headerBg = useColorModeValue('whiteAlpha.800', 'whiteAlpha.50')
-  const homeBodyBg = useColorModeValue('white', '#0b0c21')
-  const otherPageBodyBg = useColorModeValue('#f6f7fa', '#0b0c21')
+  const headerBg = useColorModeValue("whiteAlpha.800", "whiteAlpha.50")
+  const homeBodyBg = useColorModeValue("white", "#0b0c21")
+  const otherPageBodyBg = useColorModeValue("#f6f7fa", "#0b0c21")
   const location = useLocation()
 
   const navigate = useNavigate()
@@ -59,68 +54,14 @@ export const Root: React.FC = () => {
     []
   )
 
-  const { updateGlobal, global } = useGlobalStore()
+  const { accountId, networkConfig } = useWalletSelector()
   const { updateTxn } = useTxnsStore()
 
   const matchMutate = useMatchMutate()
 
-  // initialize
-  useEffect(() => {
-    axios
-      .get(`${API_HOST}/network-config`)
-      .then((res) => res.data)
-      .then((network: NetworkConfig) => {
-        const near = new Near({
-          keyStore: new keyStores.BrowserLocalStorageKeyStore(),
-          headers: {},
-          ...network.near,
-        })
-
-        const wallet = new WalletConnection(
-          near,
-          network.octopus.registryContractId
-        )
-
-        const registry = new RegistryContract(
-          wallet.account(),
-          network.octopus.registryContractId,
-          {
-            viewMethods: [
-              'get_owner',
-              'get_upvote_deposit_for',
-              'get_downvote_deposit_for',
-              'get_registry_settings',
-              'get_protocol_settings',
-            ],
-            changeMethods: [
-              'withdraw_upvote_deposit_of',
-              'withdraw_downvote_deposit_of',
-            ],
-          }
-        )
-
-        const octToken = new TokenContract(
-          wallet.account(),
-          network.octopus.octTokenContractId,
-          {
-            viewMethods: ['ft_balance_of', 'ft_total_supply'],
-            changeMethods: ['ft_transfer_call'],
-          }
-        )
-
-        updateGlobal({
-          accountId: wallet.getAccountId(),
-          wallet,
-          registry,
-          octToken,
-          network,
-        })
-      })
-  }, [])
-
   // change body bg in different page
   useEffect(() => {
-    if (location.pathname === '/home') {
+    if (location.pathname === "/home") {
       document.body.style.background = homeBodyBg
     } else {
       document.body.style.background = otherPageBodyBg
@@ -129,7 +70,7 @@ export const Root: React.FC = () => {
 
   const checkRedirect = useCallback(() => {
     if (/appchains\/join/.test(location.pathname)) {
-      navigate('/appchains')
+      navigate("/appchains")
     } else if (/appchains\/overview/.test(location.pathname)) {
       axios.post(`${API_HOST}/update-appchains`).then(() => {
         // refresh cache
@@ -174,27 +115,27 @@ export const Root: React.FC = () => {
 
   // check tx status
   useEffect(() => {
-    if (!global?.accountId) {
+    if (!accountId) {
       return
     }
 
-    const transactionHashes = urlParams.get('transactionHashes') || ''
-    const errorMessage = urlParams.get('errorMessage') || ''
+    const transactionHashes = urlParams.get("transactionHashes") || ""
+    const errorMessage = urlParams.get("errorMessage") || ""
 
-    console.log('transactionHashes', transactionHashes)
+    console.log("transactionHashes", transactionHashes)
     if (errorMessage) {
       toast({
-        position: 'top-right',
+        position: "top-right",
         description: decodeURIComponent(errorMessage),
-        status: 'error',
+        status: "error",
       })
       clearMessageAndHashes()
       return
     } else if (transactionHashes) {
       toastIdRef.current = toast({
-        position: 'top-right',
+        position: "top-right",
         render: () => <LoadingSpinner />,
-        status: 'info',
+        status: "info",
         duration: null,
       })
     } else {
@@ -202,16 +143,16 @@ export const Root: React.FC = () => {
     }
 
     const provider = new providers.JsonRpcProvider(
-      global.network?.near.archivalUrl
+      networkConfig?.near.archivalUrl
     )
 
-    const txHashes = transactionHashes.split(',')
+    const txHashes = transactionHashes.split(",")
     const lastTxHash = txHashes[txHashes.length - 1]
     provider
-      .txStatus(lastTxHash, global.accountId)
+      .txStatus(lastTxHash, accountId)
       .then((status) => {
         const { receipts_outcome } = status
-        let message = ''
+        let message = ""
         for (let i = 0; i < receipts_outcome.length; i++) {
           const { outcome } = receipts_outcome[i]
           if ((outcome.status as any).Failure) {
@@ -229,25 +170,22 @@ export const Root: React.FC = () => {
 
               const reg1 =
                   /Wrapped appchain token burnt in contract '(.+)' by '(.+)' for '(.+)' of appchain. Amount: '(.+)', Crosschain notification index: '(.+)'/,
-
                 reg2 =
                   /Received fungible token in contract '(.+)' from '(.+)'. Start transfer to '(.+)' of appchain. Amount: '(.+)', Crosschain notification index: '(.+)'/,
-
-                reg3 = 
+                reg3 =
                   /Received NFT in contract '(.+)' from '(.+)'. Start transfer to '(.+)' of appchain. Crosschain notification index: '(.+)'./
 
               res = reg1.exec(log) ?? reg2.exec(log) ?? reg3.exec(log)
 
               if (res?.length) {
-
                 const isNFT = res.length === 5
 
-                const appchainId = (outcome as any).executor_id.split('.')?.[0]
+                const appchainId = (outcome as any).executor_id.split(".")?.[0]
 
                 const contractId = res[1],
                   nearAccount = res[2],
                   appchainAccount = res[3],
-                  amount = isNFT ? '1' : res[4],
+                  amount = isNFT ? "1" : res[4],
                   notificationIndex = isNFT ? res[4] : res[5]
 
                 onAppchainTokenBurnt({
@@ -270,7 +208,7 @@ export const Root: React.FC = () => {
           throw new Error(message)
         }
         if (/register/.test(location.pathname)) {
-          window.location.replace('/appchains')
+          window.location.replace("/appchains")
         } else if (/bridge/.test(location.pathname)) {
           toast.close(toastIdRef.current)
         } else if (toastIdRef.current) {
@@ -278,19 +216,19 @@ export const Root: React.FC = () => {
             toast.close(toastIdRef.current)
           } else {
             toast.update(toastIdRef.current, {
-              title: 'Success',
+              title: "Success",
               description: (
                 <Link
                   variant="octo-linear"
-                  href={`${global.network?.near.explorerUrl}/transactions/${lastTxHash}`}
+                  href={`${networkConfig?.near.explorerUrl}/transactions/${lastTxHash}`}
                   className="success-tx-link"
                 >
                   Click to check transaction detail
                 </Link>
               ),
               duration: 2500,
-              variant: 'left-accent',
-              status: 'success',
+              variant: "left-accent",
+              status: "success",
             })
           }
         }
@@ -301,23 +239,23 @@ export const Root: React.FC = () => {
         toast.update(toastIdRef.current, {
           description: err?.kind?.ExecutionError || err.toString(),
           duration: 5000,
-          status: 'error',
+          status: "error",
         })
       })
 
     clearMessageAndHashes()
-  }, [global, urlParams])
+  }, [urlParams])
 
   const clearMessageAndHashes = useCallback(() => {
     const { protocol, host, pathname, hash } = window.location
-    urlParams.delete('errorMessage')
-    urlParams.delete('errorCode')
-    urlParams.delete('transactionHashes')
+    urlParams.delete("errorMessage")
+    urlParams.delete("errorCode")
+    urlParams.delete("transactionHashes")
     const params = urlParams.toString()
     const newUrl = `${protocol}//${host}${pathname}${
-      params ? '?' + params : ''
+      params ? "?" + params : ""
     }${hash}`
-    window.history.pushState({ path: newUrl }, '', newUrl)
+    window.history.pushState({ path: newUrl }, "", newUrl)
   }, [urlParams])
 
   return (

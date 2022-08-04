@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react'
-import useSWR from 'swr'
+import React, { useState, useMemo } from "react"
+import useSWR from "swr"
 
 import {
   Box,
@@ -11,27 +11,22 @@ import {
   PopoverTrigger,
   PopoverContent,
   PopoverBody,
-  useToast,
   Flex,
-} from '@chakra-ui/react'
+} from "@chakra-ui/react"
 
-import { AnchorContract, AppchainInfoWithAnchorStatus, Validator } from 'types'
+import { AnchorContract, AppchainInfoWithAnchorStatus, Validator } from "types"
 
-import {
-  COMPLEX_CALL_GAS,
-  OCT_TOKEN_DECIMALS,
-  FAILED_TO_REDIRECT_MESSAGE,
-} from 'primitives'
+import { COMPLEX_CALL_GAS, OCT_TOKEN_DECIMALS } from "primitives"
 
-import { useGlobalStore } from 'stores'
-
-import { AmountInput } from 'components'
-import { DecimalUtil, ZERO_DECIMAL } from 'utils'
-import Decimal from 'decimal.js'
-import { validateValidatorStake } from 'utils/validate'
+import { AmountInput } from "components"
+import { DecimalUtil, ZERO_DECIMAL } from "utils"
+import Decimal from "decimal.js"
+import { validateValidatorStake } from "utils/validate"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { Toast } from "components/common/toast"
 
 type StakingPopoverProps = {
-  type: 'increase' | 'decrease'
+  type: "increase" | "decrease"
   deposit?: Decimal
   anchor?: AnchorContract
   validatorId?: string
@@ -54,18 +49,15 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
   const initialFocusRef = React.useRef<any>()
 
   const inputRef = React.useRef<any>()
-  const [amount, setAmount] = useState('')
+  const [amount, setAmount] = useState("")
 
   const [isSubmitting, setIsSubmitting] = useBoolean(false)
 
-  const { global } = useGlobalStore()
-  const toast = useToast()
+  const { accountId, octToken, selector } = useWalletSelector()
 
-  const { data: balances } = useSWR(
-    global.accountId ? `balances/${global.accountId}` : null
-  )
+  const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null)
   const octBalance = useMemo(
-    () => DecimalUtil.fromString(balances?.['OCT']),
+    () => DecimalUtil.fromString(balances?.["OCT"]),
     [balances]
   )
 
@@ -93,8 +85,9 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
     ).toString()
 
     try {
-      if (type === 'increase') {
-        const type = !validatorId ? 'IncreaseStake' : 'IncreaseDelegation'
+      const wallet = await selector.wallet()
+      if (type === "increase") {
+        const type = !validatorId ? "IncreaseStake" : "IncreaseDelegation"
         await validateValidatorStake(
           anchor,
           DecimalUtil.fromString(amountStr),
@@ -102,24 +95,33 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
           validator,
           appchain
         )
-
-        await global.octToken?.ft_transfer_call(
-          {
-            receiver_id: anchor?.contractId || '',
-            amount: amountStr,
-            msg: !validatorId
-              ? '"IncreaseStake"'
-              : JSON.stringify({
-                  IncreaseDelegation: {
-                    validator_id: validatorId || '',
-                  },
-                }),
-          },
-          COMPLEX_CALL_GAS,
-          1
-        )
+        await wallet.signAndSendTransaction({
+          signerId: accountId,
+          receiverId: anchor.contractId,
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "ft_transfer_call",
+                args: {
+                  receiver_id: anchor?.contractId || "",
+                  amount: amountStr,
+                  msg: !validatorId
+                    ? '"IncreaseStake"'
+                    : JSON.stringify({
+                        IncreaseDelegation: {
+                          validator_id: validatorId || "",
+                        },
+                      }),
+                },
+                gas: COMPLEX_CALL_GAS,
+                deposit: "0",
+              },
+            },
+          ],
+        })
       } else {
-        const type = !validatorId ? 'DecreaseStake' : 'DecreaseDelegation'
+        const type = !validatorId ? "DecreaseStake" : "DecreaseDelegation"
         await validateValidatorStake(
           anchor,
           DecimalUtil.fromString(amountStr),
@@ -127,27 +129,30 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
           validator,
           appchain
         )
-        const method = validatorId
-          ? anchor.decrease_delegation
-          : anchor.decrease_stake
-        const params: any = validatorId
-          ? { amount: amountStr, validator_id: validatorId || '' }
-          : { amount: amountStr }
-
-        await method(params, COMPLEX_CALL_GAS)
+        await wallet.signAndSendTransaction({
+          signerId: accountId,
+          receiverId: anchor.contractId,
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: !!validatorId
+                  ? "decrease_delegation"
+                  : "decrease_stake",
+                args: !!validatorId
+                  ? { amount: amountStr, validator_id: validatorId || "" }
+                  : { amount: amountStr },
+                gas: COMPLEX_CALL_GAS,
+                deposit: "0",
+              },
+            },
+          ],
+        })
       }
+      Toast.success("Submitted")
+      setIsSubmitting.off()
     } catch (err: any) {
-      if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
-        setIsSubmitting.off()
-        return
-      }
-
-      toast({
-        position: 'top-right',
-        title: 'Error',
-        description: err.toString(),
-        status: 'error',
-      })
+      Toast.error(err)
     }
 
     setIsSubmitting.off()
@@ -163,8 +168,8 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
       <PopoverContent w="360px">
         <PopoverBody p={4}>
           <Heading fontSize="md">
-            {(type === 'increase' ? 'Increase' : 'Decrease') +
-              (validatorId ? ' Delegation' : ' Stake')}
+            {(type === "increase" ? "Increase" : "Decrease") +
+              (validatorId ? " Delegation" : " Stake")}
           </Heading>
           {helper ? (
             <Text variant="gray" mt={3}>
@@ -172,7 +177,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
             </Text>
           ) : null}
           <Box mt={3}>
-            {type === 'increase' && (
+            {type === "increase" && (
               <Flex mb={2} justifyContent="flex-end">
                 <Text variant="gray" size="sm">
                   OCT balance: {octBalance.toFixed(0)}
@@ -192,21 +197,21 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
               isDisabled={
                 isSubmitting ||
                 amountInDecimal.lte(ZERO_DECIMAL) ||
-                (type === 'increase' && amountInDecimal.gt(octBalance)) ||
-                (type === 'decrease' && amountInDecimal.gt(deposit))
+                (type === "increase" && amountInDecimal.gt(octBalance)) ||
+                (type === "decrease" && amountInDecimal.gt(deposit))
               }
               onClick={onSubmit}
               isLoading={isSubmitting}
               width="100%"
             >
               {amountInDecimal.lte(ZERO_DECIMAL)
-                ? 'Input Amount'
-                : (type === 'increase' && amountInDecimal.gt(octBalance)) ||
-                  (type === 'decrease' && amountInDecimal.gt(deposit))
-                ? `Insufficient ${type === 'increase' ? 'Balance' : 'Deposit'}`
-                : type === 'increase'
-                ? 'Increase'
-                : 'Decrease'}
+                ? "Input Amount"
+                : (type === "increase" && amountInDecimal.gt(octBalance)) ||
+                  (type === "decrease" && amountInDecimal.gt(deposit))
+                ? `Insufficient ${type === "increase" ? "Balance" : "Deposit"}`
+                : type === "increase"
+                ? "Increase"
+                : "Decrease"}
             </Button>
           </Box>
         </PopoverBody>

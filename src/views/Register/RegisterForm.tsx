@@ -24,7 +24,6 @@ import {
   PopoverContent,
   PopoverArrow,
   PopoverCloseButton,
-  useToast,
   Textarea,
   GridItem,
   RadioGroup,
@@ -35,13 +34,14 @@ import {
 import { EditIcon } from "@chakra-ui/icons"
 import { DecimalUtil, ZERO_DECIMAL } from "utils"
 import { Formik, Form, Field } from "formik"
-import { useGlobalStore } from "stores"
 import {
   OCT_TOKEN_DECIMALS,
   COMPLEX_CALL_GAS,
   FAILED_TO_REDIRECT_MESSAGE,
 } from "primitives"
 import Decimal from "decimal.js"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { Toast } from "components/common/toast"
 
 export const RegisterForm: React.FC = () => {
   const bg = useColorModeValue("white", "#15172c")
@@ -60,11 +60,10 @@ export const RegisterForm: React.FC = () => {
     icon: "",
     decimals: 18,
   })
-  const { global } = useGlobalStore()
+  const { accountId, registry, octToken, networkConfig, selector } =
+    useWalletSelector()
 
-  const { data: balances } = useSWR(
-    global.accountId ? `balances/${global.accountId}` : null
-  )
+  const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null)
 
   const octBalance = useMemo(
     () => DecimalUtil.fromString(balances?.["OCT"]),
@@ -72,10 +71,9 @@ export const RegisterForm: React.FC = () => {
   )
 
   const initialFieldRef = React.useRef(null)
-  const toast = useToast()
 
   useEffect(() => {
-    global.registry?.get_registry_settings().then((settings) => {
+    registry?.get_registry_settings().then((settings) => {
       setAuditingFee(
         DecimalUtil.fromString(
           settings.minimum_register_deposit,
@@ -83,7 +81,7 @@ export const RegisterForm: React.FC = () => {
         )
       )
     })
-  }, [global])
+  }, [registry])
 
   const validateAppchainId = (value: string) => {
     const reg = /^[a-z]([-a-z0-9]*[a-z0-9]){1,20}$/
@@ -123,7 +121,7 @@ export const RegisterForm: React.FC = () => {
     )
   }
 
-  const onSubmit = (values: any, actions: any) => {
+  const onSubmit = async (values: any, actions: any) => {
     const {
       appchainId,
       website,
@@ -141,81 +139,83 @@ export const RegisterForm: React.FC = () => {
     } = values
 
     if (!tokenInfo.tokenName || !tokenInfo.tokenSymbol) {
-      toast({
-        position: "top-right",
-        title: "Error",
-        description: "Please input the token info",
-        status: "error",
-      })
+      Toast.error("Please input the token info")
       setTimeout(() => {
         actions.setSubmitting(false)
       }, 300)
       return
     }
 
-    global.octToken
-      ?.ft_transfer_call(
-        {
-          receiver_id: global.network?.octopus.registryContractId || "",
-          amount: DecimalUtil.toU64(
-            auditingFee || ZERO_DECIMAL,
-            OCT_TOKEN_DECIMALS
-          ).toString(),
-          msg: JSON.stringify({
-            RegisterAppchain: {
-              appchain_id: appchainId,
-              website_url: website,
-              description,
-              github_address: githubAddress,
-              github_release: githubRelease,
-              contact_email: email,
-              function_spec_url: functionSpec,
-              template_type: templateType,
-              premined_wrapped_appchain_token_beneficiary: preminedBeneficiary,
-              premined_wrapped_appchain_token: DecimalUtil.toU64(
-                DecimalUtil.fromString(preminedAmount),
-                tokenInfo.decimals
-              ).toString(),
-              initial_supply_of_wrapped_appchain_token: DecimalUtil.toU64(
-                DecimalUtil.fromString(initialSupply),
-                tokenInfo.decimals
-              ).toString(),
-              ido_amount_of_wrapped_appchain_token: DecimalUtil.toU64(
-                DecimalUtil.fromString(idoAmount),
-                tokenInfo.decimals
-              ).toString(),
-              initial_era_reward: DecimalUtil.toU64(
-                DecimalUtil.fromString(eraReward),
-                tokenInfo.decimals
-              ).toString(),
-              fungible_token_metadata: {
-                spec: "ft-1.0.0",
-                name: tokenInfo.tokenName,
-                symbol: tokenInfo.tokenSymbol,
-                icon: tokenInfo.icon,
-                reference: null,
-                reference_hash: null,
-                decimals: tokenInfo.decimals * 1,
+    try {
+      const wallet = await selector.wallet()
+      await wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: octToken?.contractId,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: "ft_transfer_call",
+              args: {
+                receiver_id: networkConfig?.octopus.registryContractId || "",
+                amount: DecimalUtil.toU64(
+                  auditingFee || ZERO_DECIMAL,
+                  OCT_TOKEN_DECIMALS
+                ).toString(),
+                msg: JSON.stringify({
+                  RegisterAppchain: {
+                    appchain_id: appchainId,
+                    website_url: website,
+                    description,
+                    github_address: githubAddress,
+                    github_release: githubRelease,
+                    contact_email: email,
+                    function_spec_url: functionSpec,
+                    template_type: templateType,
+                    premined_wrapped_appchain_token_beneficiary:
+                      preminedBeneficiary,
+                    premined_wrapped_appchain_token: DecimalUtil.toU64(
+                      DecimalUtil.fromString(preminedAmount),
+                      tokenInfo.decimals
+                    ).toString(),
+                    initial_supply_of_wrapped_appchain_token: DecimalUtil.toU64(
+                      DecimalUtil.fromString(initialSupply),
+                      tokenInfo.decimals
+                    ).toString(),
+                    ido_amount_of_wrapped_appchain_token: DecimalUtil.toU64(
+                      DecimalUtil.fromString(idoAmount),
+                      tokenInfo.decimals
+                    ).toString(),
+                    initial_era_reward: DecimalUtil.toU64(
+                      DecimalUtil.fromString(eraReward),
+                      tokenInfo.decimals
+                    ).toString(),
+                    fungible_token_metadata: {
+                      spec: "ft-1.0.0",
+                      name: tokenInfo.tokenName,
+                      symbol: tokenInfo.tokenSymbol,
+                      icon: tokenInfo.icon,
+                      reference: null,
+                      reference_hash: null,
+                      decimals: tokenInfo.decimals * 1,
+                    },
+                    custom_metadata: {},
+                  },
+                }),
               },
-              custom_metadata: {},
+              gas: COMPLEX_CALL_GAS,
+              deposit: "1",
             },
-          }),
-        },
-        COMPLEX_CALL_GAS,
-        1
-      )
-      .catch((err) => {
-        actions.setSubmitting(false)
-        if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
-          return
-        }
-        toast({
-          position: "top-right",
-          title: "Error",
-          description: err.toString(),
-          status: "error",
-        })
+          },
+        ],
+        callbackUrl: window.location.origin + "/appchains",
       })
+      Toast.success("Registered")
+      actions.setSubmitting(false)
+    } catch (error) {
+      actions.setSubmitting(false)
+      Toast.error(error)
+    }
   }
 
   return (
@@ -572,7 +572,7 @@ export const RegisterForm: React.FC = () => {
                   </Skeleton>
                   <Heading fontSize="md">OCT</Heading>
                 </HStack>
-                {global.accountId ? (
+                {accountId ? (
                   <Skeleton isLoaded={!!balances}>
                     <Text variant="gray" fontSize="sm">
                       Balance:{" "}
@@ -591,12 +591,12 @@ export const RegisterForm: React.FC = () => {
                   type="submit"
                   disabled={
                     props.isSubmitting ||
-                    !global.accountId ||
+                    !accountId ||
                     !auditingFee ||
                     octBalance.lt(auditingFee)
                   }
                 >
-                  {!global.accountId
+                  {!accountId
                     ? "Please Login"
                     : auditingFee && balances && octBalance.lt(auditingFee)
                     ? "Insufficient Balance"

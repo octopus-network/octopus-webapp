@@ -44,13 +44,13 @@ import { TiKey } from "react-icons/ti"
 import { BsThreeDots } from "react-icons/bs"
 import { API_HOST } from "config"
 import { Alert } from "components"
-import { useGlobalStore } from "stores"
 import { SetSessionKeyModal } from "./SetSessionKeyModal"
 import type { ApiPromise } from "@polkadot/api"
 import { FcGoogle } from "react-icons/fc"
 
 import { InstanceInfoModal } from "./InstanceInfoModal"
 import { AppchainInfo } from "types"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 type MyNodeProps = {
   appchainId: string | undefined
@@ -123,7 +123,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
 
   const { data: deployConfig } = useSWR("deploy-config")
 
-  const { global } = useGlobalStore()
+  const { accountId } = useWalletSelector()
   const { hasCopied: hasInstanceCopied, onCopy: onCopyInstance } = useClipboard(
     node?.instance ? `${node.instance.user}@${node.instance.ip}` : ""
   )
@@ -189,7 +189,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
       !accessKeyInLocalStorage ||
       !appchainId ||
       !cloudVendorInLocalStorage ||
-      !global.accountId
+      !accountId
     ) {
       return
     }
@@ -197,7 +197,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
     axios
       .get(
         `
-      ${API_HOST}/node/${cloudVendorInLocalStorage}/${accessKeyInLocalStorage}/${appchainId}/${global.accountId}
+      ${API_HOST}/node/${cloudVendorInLocalStorage}/${accessKeyInLocalStorage}/${appchainId}/${accountId}
     `
       )
       .then((res) => res.data)
@@ -207,18 +207,18 @@ export const MyNode: React.FC<MyNodeProps> = ({
         }
         setIsInitializing.off()
       })
-  }, [appchainId, global])
+  }, [accountId, appchainId])
 
   useEffect(() => {
     if (!node || !deployConfig || !appchainId) {
       return
     }
 
-    if (global.accountId && node?.state === "12") {
+    if (accountId && node?.state === "12") {
       axios
         .get(
           `
-        ${API_HOST}/node-metrics/${node.uuid}/${cloudVendorInLocalStorage}/${accessKeyInLocalStorage}/${appchainId}/${global.accountId}
+        ${API_HOST}/node-metrics/${node.uuid}/${cloudVendorInLocalStorage}/${accessKeyInLocalStorage}/${appchainId}/${accountId}
       `
         )
         .then((res) => res.data)
@@ -232,13 +232,13 @@ export const MyNode: React.FC<MyNodeProps> = ({
       node.task?.base_image &&
       node.task?.base_image !== deployConfig.baseImages[appchainId].image &&
       (!deployConfig.upgradeWhitelist?.length ||
-        deployConfig.upgradeWhitelist.includes(global.accountId))
+        deployConfig.upgradeWhitelist.includes(accountId))
     ) {
       setIsImageNeedUpgrade.on()
     } else {
       setIsImageNeedUpgrade.off()
     }
-  }, [node, deployConfig, appchainId, global])
+  }, [node, deployConfig, appchainId, accountId])
 
   const onNextStep = () => {
     setIsLoadingNode.on()
@@ -252,9 +252,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
     window.localStorage.setItem("OCTOPUS_DEPLOYER_ACCESS_KEY", key)
 
     axios
-      .get(
-        `${API_HOST}/node/${cloudVendor}/${key}/${appchainId}/${global.accountId}`
-      )
+      .get(`${API_HOST}/node/${cloudVendor}/${key}/${appchainId}/${accountId}`)
       .then((res) => res.data)
       .then((res) => {
         if (res) {
@@ -272,7 +270,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
         appchain: appchainId,
         cloudVendor,
         accessKey,
-        accountId: global.accountId,
+        accountId: accountId,
         region: deployRegion,
         project: projectId,
       })
@@ -289,7 +287,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
     setIsRefreshing.on()
     axios
       .get(
-        `${API_HOST}/node/${cloudVendor}/${accessKey}/${appchainId}/${global.accountId}`
+        `${API_HOST}/node/${cloudVendor}/${accessKey}/${appchainId}/${accountId}`
       )
       .then((res) => res.data)
       .then((res) => {

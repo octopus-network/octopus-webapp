@@ -46,9 +46,7 @@ import bridgeIcon from "assets/icons/bridge.png"
 import githubIcon from "assets/icons/github.png"
 
 import { DecimalUtil, toValidUrl } from "utils"
-import Decimal from "decimal.js"
 import { EPOCH_DURATION_MS } from "primitives"
-import { useGlobalStore } from "stores"
 import { FaUser } from "react-icons/fa"
 import useChainData from "hooks/useChainData"
 import DescItem from "components/common/DescItem"
@@ -56,6 +54,7 @@ import { BsThreeDots } from "react-icons/bs"
 import { FiCopy, FiExternalLink } from "react-icons/fi"
 import LinkBox from "components/common/LinkBox"
 import useChainState from "hooks/useChainState"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 dayjs.extend(duration)
 dayjs.extend(relativeTime)
@@ -77,7 +76,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
   const linksBg = useColorModeValue("#f5f7fa", "#1e1f34")
   const borderColor = useColorModeValue("#e3e3e3", "#333")
 
-  const { global } = useGlobalStore()
+  const { networkConfig } = useWalletSelector()
 
   const isSubqEnabled = !!appchainSettings?.subql_endpoint
 
@@ -162,7 +161,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
         </Link>
 
         <Link
-          href={`${global?.network?.octopus.explorerUrl}/${appchain?.appchain_id}`}
+          href={`${networkConfig?.octopus.explorerUrl}/${appchain?.appchain_id}`}
           isExternal
         >
           <LinkBox icon={explorerIcon} label="Explorer" />
@@ -190,7 +189,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
           <MenuList>
             <MenuItem>
               <Link
-                href={`${global?.network?.near.explorerUrl}/accounts/${appchain?.appchain_anchor}`}
+                href={`${networkConfig?.near.explorerUrl}/accounts/${appchain?.appchain_anchor}`}
                 isExternal
               >
                 <HStack gap={2}>

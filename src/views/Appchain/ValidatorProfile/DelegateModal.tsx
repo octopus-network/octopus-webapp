@@ -1,19 +1,20 @@
-import React, { useState, useEffect, useMemo } from 'react'
-import useSWR from 'swr'
+import React, { useState, useEffect, useMemo } from "react"
+import useSWR from "swr"
 
-import { Text, Button, Box, Flex, useBoolean, useToast } from '@chakra-ui/react'
+import { Text, Button, Box, Flex, useBoolean } from "@chakra-ui/react"
 
-import { BaseModal, AmountInput } from 'components'
+import { BaseModal, AmountInput } from "components"
 
 import {
   OCT_TOKEN_DECIMALS,
   COMPLEX_CALL_GAS,
   FAILED_TO_REDIRECT_MESSAGE,
-} from 'primitives'
+} from "primitives"
 
-import { AnchorContract } from 'types'
-import { ZERO_DECIMAL, DecimalUtil } from 'utils'
-import { useGlobalStore } from 'stores'
+import { AnchorContract } from "types"
+import { ZERO_DECIMAL, DecimalUtil } from "utils"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { Toast } from "components/common/toast"
 
 type DelegateModalProps = {
   isOpen: boolean
@@ -28,25 +29,22 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
   validatorId,
   anchor,
 }) => {
-  const [amount, setAmount] = useState('')
+  const [amount, setAmount] = useState("")
 
-  const { global } = useGlobalStore()
-  const toast = useToast()
+  const { accountId, octToken, selector } = useWalletSelector()
 
   const [isDepositing, setIsDepositing] = useBoolean(false)
   const [minimumDeposit, setMinimumDeposit] = useState(ZERO_DECIMAL)
   const inputRef = React.useRef<any>()
 
-  const { data: balances } = useSWR(
-    global.accountId ? `balances/${global.accountId}` : null
-  )
+  const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null)
 
   const amountInDecimal = useMemo(
     () => DecimalUtil.fromString(amount),
     [amount]
   )
   const octBalance = useMemo(
-    () => DecimalUtil.fromString(balances?.['OCT']),
+    () => DecimalUtil.fromString(balances?.["OCT"]),
     [balances]
   )
 
@@ -66,37 +64,42 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
     }
   }, [isOpen])
 
-  const onDeposit = () => {
-    setIsDepositing.on()
-    global.octToken
-      ?.ft_transfer_call(
-        {
-          receiver_id: anchor?.contractId || '',
-          amount: DecimalUtil.toU64(
-            amountInDecimal,
-            OCT_TOKEN_DECIMALS
-          ).toString(),
-          msg: JSON.stringify({
-            RegisterDelegator: {
-              validator_id: validatorId,
+  const onDeposit = async () => {
+    try {
+      setIsDepositing.on()
+      const wallet = await selector.wallet()
+      await wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: octToken?.contractId,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: "ft_transfer_call",
+              args: {
+                receiver_id: anchor?.contractId || "",
+                amount: DecimalUtil.toU64(
+                  amountInDecimal,
+                  OCT_TOKEN_DECIMALS
+                ).toString(),
+                msg: JSON.stringify({
+                  RegisterDelegator: {
+                    validator_id: validatorId,
+                  },
+                }),
+              },
+              gas: COMPLEX_CALL_GAS,
+              deposit: "1",
             },
-          }),
-        },
-        COMPLEX_CALL_GAS,
-        1
-      )
-      .catch((err) => {
-        setIsDepositing.off()
-        if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
-          return
-        }
-        toast({
-          position: 'top-right',
-          title: 'Error',
-          description: err.toString(),
-          status: 'error',
-        })
+          },
+        ],
       })
+      Toast.success("Deposited")
+      setIsDepositing.off()
+    } catch (error) {
+      setIsDepositing.off()
+      Toast.error(error)
+    }
   }
 
   return (
@@ -133,12 +136,12 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
           width="100%"
         >
           {!amount
-            ? 'Input Amount'
+            ? "Input Amount"
             : amountInDecimal.lt(minimumDeposit)
-            ? 'Minimum Limit'
+            ? "Minimum Limit"
             : amountInDecimal.gt(octBalance)
-            ? 'Insufficient Balance'
-            : 'Deposit'}
+            ? "Insufficient Balance"
+            : "Deposit"}
         </Button>
       </Box>
     </BaseModal>

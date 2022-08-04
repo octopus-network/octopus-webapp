@@ -23,7 +23,6 @@ import {
   useBoolean,
   SimpleGrid,
   useColorModeValue,
-  useToast,
   IconButton,
   DrawerFooter,
   Divider,
@@ -56,12 +55,13 @@ import { DelegatorsTable } from "./DelegatorsTable"
 import { StakingPopover } from "../StakingPopover"
 import { DelegateModal } from "./DelegateModal"
 import { RewardsModal } from "../RewardsModal"
-import { useGlobalStore } from "stores"
 import { DecimalUtil, toShortAddress, ZERO_DECIMAL } from "utils"
 
 import octoAvatar from "assets/icons/avatar.png"
 import { formatAppChainAddress } from "utils/format"
 import OctIdenticon from "components/common/OctIdenticon"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { Toast } from "components/common/toast"
 
 type ValidatorProfileProps = {
   wrappedAppchainTokenContract?: TokenContract
@@ -105,8 +105,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
   const [isUnbondingDelegation, setIsUnbondingDelegation] = useBoolean()
   const [delegateModalOpen, setDelegateModalOpen] = useBoolean()
 
-  const { global } = useGlobalStore()
-  const toast = useToast()
+  const { accountId, selector } = useWalletSelector()
 
   const { data: delegators } = useSWR<Delegator[]>(
     appchain && validatorId
@@ -115,29 +114,25 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
   )
 
   const isDelegated = useMemo(
-    () =>
-      global?.accountId &&
-      !!delegators?.find((d) => d.delegator_id === global.accountId),
-    [delegators, global]
+    () => accountId && !!delegators?.find((d) => d.delegator_id === accountId),
+    [delegators, accountId]
   )
 
   const { data: delegatorRewards } = useSWR<RewardHistory[]>(
     isDelegated && appchain?.anchor_status
-      ? `rewards/${validator?.validator_id}/${appchain?.appchain_id}/${global?.accountId}/${appchain?.anchor_status?.index_range_of_validator_set_history?.end_index}`
+      ? `rewards/${validator?.validator_id}/${appchain?.appchain_id}/${accountId}/${appchain?.anchor_status?.index_range_of_validator_set_history?.end_index}`
       : null
   )
 
-  const { data: balances } = useSWR(
-    global.accountId ? `balances/${global.accountId}` : null
-  )
+  const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null)
 
   useEffect(() => {
-    if (!anchor || !appchain) {
+    if (!anchor || !appchain || !accountId) {
       return
     }
     anchor
       ?.get_delegator_deposit_of({
-        delegator_id: global.accountId,
+        delegator_id: accountId,
         validator_id: validator?.validator_id || "",
       })
       .then((deposit) => {
@@ -145,7 +140,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
           DecimalUtil.fromString(deposit, OCT_TOKEN_DECIMALS)
         )
       })
-  }, [anchor, global, validator, appchain])
+  }, [anchor, accountId, validator, appchain])
 
   const unwithdrawnDelegatorRewards = useMemo(() => {
     if (!delegatorRewards?.length) {
@@ -162,7 +157,10 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
         ),
       ZERO_DECIMAL
     )
-  }, [delegatorRewards])
+  }, [
+    appchain?.appchain_metadata?.fungible_token_metadata.decimals,
+    delegatorRewards,
+  ])
 
   useEffect(() => {
     if (!validator || !anchor) {
@@ -174,7 +172,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
       .then((profile) => {
         setValidatorProfile(profile)
       })
-  }, [validator])
+  }, [anchor, validator])
 
   const ss58Address = formatAppChainAddress(
     validator?.validator_id_in_appchain,
@@ -189,8 +187,8 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
   )
 
   const isMyself = useMemo(
-    () => global && validator && global.accountId === validator.validator_id,
-    [global, validator]
+    () => validator && accountId === validator.validator_id,
+    [accountId, validator]
   )
 
   const validatorState = useMemo(() => {
@@ -231,62 +229,90 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
     return "Unknown"
   }, [validator, appchainValidators, validatorSessionKeys, ss58Address])
 
-  const toggleDelegation = () => {
-    const method = validator?.can_be_delegated_to
-      ? anchor?.disable_delegation
-      : anchor?.enable_delegation
-
-    setIsTogglingDelegation.on()
-
-    method?.({}, COMPLEX_CALL_GAS).catch((err: any) => {
-      if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
-        return
-      }
-      toast({
-        position: "top-right",
-        title: "Error",
-        description: err.toString(),
-        status: "error",
+  const toggleDelegation = async () => {
+    try {
+      setIsTogglingDelegation.on()
+      const wallet = await selector.wallet()
+      await wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: anchor?.contractId,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: validator?.can_be_delegated_to
+                ? "disable_delegation"
+                : "enable_delegation",
+              args: {},
+              gas: COMPLEX_CALL_GAS,
+              deposit: "0",
+            },
+          },
+        ],
       })
-      setIsTogglingDelegation.off()
-    })
-  }
-
-  const onUnbondValidator = () => {
-    setIsUnbonding.on()
-    anchor?.unbond_stake({}, COMPLEX_CALL_GAS).catch((err) => {
-      if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
-        return
-      }
-      toast({
-        position: "top-right",
-        title: "Error",
-        description: err.toString(),
-        status: "error",
-      })
-      setIsUnbonding.off()
-    })
-  }
-
-  const onUnbondDelegation = () => {
-    setIsUnbondingDelegation.on()
-    anchor
-      ?.unbond_delegation(
-        { validator_id: validator?.validator_id || "" },
-        COMPLEX_CALL_GAS
+      Toast.success(
+        validator?.can_be_delegated_to
+          ? "Delegation disabled"
+          : "Delegation enabled"
       )
-      .catch((err) => {
-        setIsUnbondingDelegation.off()
-        if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
-          return
-        }
-        toast({
-          position: "top-right",
-          title: "Error",
-          description: err.toString(),
-          status: "error",
-        })
+      setIsTogglingDelegation.off()
+    } catch (err) {
+      Toast.error(err)
+      setIsTogglingDelegation.off()
+    }
+  }
+
+  const onUnbondValidator = async () => {
+    try {
+      setIsUnbonding.on()
+      const wallet = await selector.wallet()
+      await wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: anchor?.contractId,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: "unbond_stake",
+              args: {},
+              gas: COMPLEX_CALL_GAS,
+              deposit: "0",
+            },
+          },
+        ],
       })
+      Toast.success("Unbonded")
+      setIsUnbonding.off()
+    } catch (error) {
+      Toast.error(error)
+      setIsUnbonding.off()
+    }
+  }
+
+  const onUnbondDelegation = async () => {
+    try {
+      setIsUnbondingDelegation.on()
+      const wallet = await selector.wallet()
+      await wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: anchor?.contractId,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: "unbond_delegation",
+              args: { validator_id: validator?.validator_id || "" },
+              gas: COMPLEX_CALL_GAS,
+              deposit: "0",
+            },
+          },
+        ],
+      })
+      Toast.success("Unbonded")
+      setIsUnbondingDelegation.off()
+    } catch (error) {
+      setIsUnbondingDelegation.off()
+    }
   }
 
   return (
@@ -459,7 +485,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
           <Box mt={4} p={4} borderWidth={1} borderRadius="lg">
             <Flex alignItems="center" justifyContent="space-between">
               <Heading fontSize="md">Delegators</Heading>
-              {global.accountId && validator && !isDelegated ? (
+              {accountId && validator && !isDelegated ? (
                 <Button
                   colorScheme="octo-blue"
                   size="sm"
@@ -502,19 +528,19 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
         <DrawerFooter justifyContent="flex-start">
           <Box bg={footerBg} p={4} borderRadius="lg" w="100%">
             <Flex justifyContent="space-between" alignItems="center">
-              {global.accountId ? (
+              {accountId ? (
                 <HStack>
                   <Avatar
                     boxSize={8}
                     src={octoAvatar}
                     display={{ base: "none", md: "block" }}
                   />
-                  <Heading fontSize="lg">{global.accountId}</Heading>
+                  <Heading fontSize="lg">{accountId}</Heading>
                 </HStack>
               ) : (
                 <LoginButton />
               )}
-              {global.accountId ? (
+              {accountId ? (
                 <VStack alignItems="flex-end" spacing={0}>
                   <HStack>
                     <Text
