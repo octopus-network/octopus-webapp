@@ -1,6 +1,21 @@
+import { Box, Spinner } from "@chakra-ui/react"
 import { createStandaloneToast } from "@chakra-ui/toast"
 
 export const { ToastContainer, toast } = createStandaloneToast()
+
+const LoadingSpinner = () => {
+  return (
+    <Box p={2}>
+      <Spinner
+        thickness="4px"
+        speed="0.65s"
+        emptyColor="gray.200"
+        color="octo-blue.500"
+        size="md"
+      />
+    </Box>
+  )
+}
 
 export class Toast {
   static error(error: string | Error | unknown) {
@@ -10,7 +25,7 @@ export class Toast {
     } else {
       message = error as string
     }
-    toast({
+    return toast({
       position: "top-right",
       title: "Error",
       description: message,
@@ -19,11 +34,20 @@ export class Toast {
   }
 
   static success(message: string) {
-    toast({
+    return toast({
       position: "top-right",
       title: "Success",
       description: message,
       status: "success",
+    })
+  }
+
+  static info(message: string) {
+    return toast({
+      position: "top-right",
+      render: () => <LoadingSpinner />,
+      status: "info",
+      duration: null,
     })
   }
 }

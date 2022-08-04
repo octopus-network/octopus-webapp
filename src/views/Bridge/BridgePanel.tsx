@@ -293,7 +293,6 @@ export const BridgePanel: React.FC = () => {
         finality: "optimistic",
       })
       const storage = JSON.parse(Buffer.from(res.result).toString())
-      console.log("storage", storage)
 
       if (storage === null) {
         setTargetAccountNeedDepositStorage.on()
@@ -870,12 +869,7 @@ export const BridgePanel: React.FC = () => {
       ).toString()
 
       if (!balance.gte(toDepositAmount)) {
-        return toast({
-          position: "top-right",
-          title: "Error",
-          description: "Balance not enough",
-          status: "error",
-        })
+        return Toast.error("Balance not enough")
       }
       const tx = appchainApi.tx.balances.transfer(
         targetAccount,

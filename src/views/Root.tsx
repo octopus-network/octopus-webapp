@@ -24,6 +24,7 @@ import { useTxnsStore } from "stores"
 
 import { API_HOST } from "config"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { Toast } from "components/common/toast"
 
 const LoadingSpinner = () => {
   return (
@@ -124,20 +125,11 @@ export const Root: React.FC = () => {
 
     console.log("transactionHashes", transactionHashes)
     if (errorMessage) {
-      toast({
-        position: "top-right",
-        description: decodeURIComponent(errorMessage),
-        status: "error",
-      })
+      Toast.error(decodeURIComponent(errorMessage))
       clearMessageAndHashes()
       return
     } else if (transactionHashes) {
-      toastIdRef.current = toast({
-        position: "top-right",
-        render: () => <LoadingSpinner />,
-        status: "info",
-        duration: null,
-      })
+      toastIdRef.current = Toast.info("")
     } else {
       return
     }
