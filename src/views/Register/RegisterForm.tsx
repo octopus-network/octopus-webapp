@@ -442,7 +442,7 @@ export const RegisterForm: React.FC = () => {
                     isInvalid={form.errors.eraReward && form.touched.eraReward}
                     isRequired
                   >
-                    <FormLabel htmlFor="eraReward">Era Reward</FormLabel>
+                    <FormLabel htmlFor="eraReward">Daily Reward</FormLabel>
                     <Input
                       {...field}
                       type="number"

@@ -146,7 +146,7 @@ export const StakesModal: React.FC<RewardsModalProps> = ({
           <Table>
             <Thead>
               <Tr>
-                <Th>Era</Th>
+                <Th>Day</Th>
                 <Th isNumeric>Amount</Th>
                 <Th isNumeric>Unlock Time</Th>
               </Tr>
@@ -182,7 +182,7 @@ export const StakesModal: React.FC<RewardsModalProps> = ({
       ) : (
         <Empty
           message="No Unbonded Stakes"
-          helper="If you just unbonded your stakes, it will be displayed in next era."
+          helper="If you just unbonded your stakes, it will be displayed in next era(tomorrow)."
         />
       )}
     </BaseModal>

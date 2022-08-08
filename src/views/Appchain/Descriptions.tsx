@@ -252,13 +252,13 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
         pb={4}
       >
         <DescItem
-          title="Current Era"
+          title="Online Days"
           isLoaded={!!currentEra}
           value={currentEra !== undefined ? currentEra : "loading"}
         />
 
         <DescItem
-          title="Next Era"
+          title="Next Day Reward"
           isLoaded={!!nextEraTime}
           titleExtra={
             nextEraTime ? (
@@ -289,7 +289,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
         />
 
         <DescItem
-          title="Era Reward"
+          title="Daily Reward"
           isLoaded
           value={
             appchainSettings?.era_reward && wrappedAppchainToken
