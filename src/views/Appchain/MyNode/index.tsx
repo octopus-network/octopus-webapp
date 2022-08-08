@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
-import axios from 'axios'
-import useSWR from 'swr'
+import React, { useState, useEffect } from "react"
+import axios from "axios"
+import useSWR from "swr"
 
 import {
   Box,
@@ -27,7 +27,7 @@ import {
   useColorModeValue,
   useBoolean,
   Skeleton,
-} from '@chakra-ui/react'
+} from "@chakra-ui/react"
 
 import {
   DownloadIcon,
@@ -35,19 +35,19 @@ import {
   CheckIcon,
   CopyIcon,
   RepeatIcon,
-} from '@chakra-ui/icons'
+} from "@chakra-ui/icons"
 
-import { BsFillTerminalFill } from 'react-icons/bs'
-import { HiUpload } from 'react-icons/hi'
-import { TiKey } from 'react-icons/ti'
-import { BsThreeDots } from 'react-icons/bs'
-import { API_HOST } from 'config'
-import { Alert } from 'components'
-import { useGlobalStore } from 'stores'
-import { SetSessionKeyModal } from './SetSessionKeyModal'
-import type { ApiPromise } from '@polkadot/api'
+import { BsFillTerminalFill } from "react-icons/bs"
+import { HiUpload } from "react-icons/hi"
+import { TiKey } from "react-icons/ti"
+import { BsThreeDots } from "react-icons/bs"
+import { API_HOST } from "config"
+import { Alert } from "components"
+import { useGlobalStore } from "stores"
+import { SetSessionKeyModal } from "./SetSessionKeyModal"
+import type { ApiPromise } from "@polkadot/api"
 
-import { InstanceInfoModal } from './InstanceInfoModal'
+import { InstanceInfoModal } from "./InstanceInfoModal"
 
 type MyNodeProps = {
   appchainId: string | undefined
@@ -56,21 +56,21 @@ type MyNodeProps = {
 }
 
 const cloudVendorInLocalStorage =
-  window.localStorage.getItem('OCTOPUS_DEPLOYER_CLOUD_VENDOR') || ''
+  window.localStorage.getItem("OCTOPUS_DEPLOYER_CLOUD_VENDOR") || ""
 const accessKeyInLocalStorage =
-  window.localStorage.getItem('OCTOPUS_DEPLOYER_ACCESS_KEY') ||
-  window.localStorage.getItem('accessKey') ||
-  ''
+  window.localStorage.getItem("OCTOPUS_DEPLOYER_ACCESS_KEY") ||
+  window.localStorage.getItem("accessKey") ||
+  ""
 
 const statesRecord: any = {
-  '0': { label: 'Init', color: 'blue', state: 0 },
-  '10': { label: 'Applying', color: 'teal', state: 10 },
-  '11': { label: 'Apply Failed', color: 'red', state: 11 },
-  '12': { label: 'Running', color: 'octo-blue', state: 12 },
-  '20': { label: 'Destroying', color: 'teal', state: 20 },
-  '21': { label: 'Destroy Failed', color: 'orange', state: 21 },
-  '22': { label: 'Destroyed', color: 'gray', state: 22 },
-  '30': { label: 'Upgrading', color: 'green', state: 30 },
+  "0": { label: "Init", color: "blue", state: 0 },
+  "10": { label: "Applying", color: "teal", state: 10 },
+  "11": { label: "Apply Failed", color: "red", state: 11 },
+  "12": { label: "Running", color: "octo-blue", state: 12 },
+  "20": { label: "Destroying", color: "teal", state: 20 },
+  "21": { label: "Destroy Failed", color: "orange", state: 21 },
+  "22": { label: "Destroyed", color: "gray", state: 22 },
+  "30": { label: "Upgrading", color: "green", state: 30 },
 }
 
 export const MyNode: React.FC<MyNodeProps> = ({
@@ -78,10 +78,10 @@ export const MyNode: React.FC<MyNodeProps> = ({
   needKeys,
   appchainApi,
 }) => {
-  const bg = useColorModeValue('white', '#15172c')
+  const bg = useColorModeValue("white", "#15172c")
 
   const [cloudVendor, setCloudVendor] = useState<string>(
-    cloudVendorInLocalStorage || 'AWS'
+    cloudVendorInLocalStorage || "AWS"
   )
   const [accessKey, setAccessKey] = useState<string>(accessKeyInLocalStorage)
   const [node, setNode] = useState<any>()
@@ -102,21 +102,21 @@ export const MyNode: React.FC<MyNodeProps> = ({
   const [instanceInfoModalOpen, setInstanceInfoModalOpen] = useBoolean()
 
   const [isImageNeedUpgrade, setIsImageNeedUpgrade] = useBoolean()
-  const [deployRegion, setDeployRegion] = useState<string>('')
+  const [deployRegion, setDeployRegion] = useState<string>("")
 
-  const [inputAccessKey, setInputAccessKey] = useState('')
+  const [inputAccessKey, setInputAccessKey] = useState("")
 
-  const inputBg = useColorModeValue('#f5f7fa', 'whiteAlpha.100')
+  const inputBg = useColorModeValue("#f5f7fa", "whiteAlpha.100")
 
-  const { data: deployConfig } = useSWR('deploy-config')
+  const { data: deployConfig } = useSWR("deploy-config")
 
   const { global } = useGlobalStore()
   const { hasCopied: hasInstanceCopied, onCopy: onCopyInstance } = useClipboard(
-    node?.instance ? `${node.instance.user}@${node.instance.ip}` : ''
+    node?.instance ? `${node.instance.user}@${node.instance.ip}` : ""
   )
 
   const { hasCopied: hasNodeIdCopied, onCopy: onCopyNodeId } = useClipboard(
-    node?.uuid || ''
+    node?.uuid || ""
   )
 
   useEffect(() => {
@@ -149,7 +149,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
       return
     }
 
-    if (global.accountId && node?.state === '12') {
+    if (global.accountId && node?.state === "12") {
       axios
         .get(
           `
@@ -176,8 +176,8 @@ export const MyNode: React.FC<MyNodeProps> = ({
   }, [node, deployConfig, appchainId, global])
 
   const onNextStep = () => {
-    window.localStorage.setItem('OCTOPUS_DEPLOYER_CLOUD_VENDOR', cloudVendor)
-    window.localStorage.setItem('OCTOPUS_DEPLOYER_ACCESS_KEY', inputAccessKey)
+    window.localStorage.setItem("OCTOPUS_DEPLOYER_CLOUD_VENDOR", cloudVendor)
+    window.localStorage.setItem("OCTOPUS_DEPLOYER_ACCESS_KEY", inputAccessKey)
 
     setIsLoadingNode.on()
     axios
@@ -197,9 +197,13 @@ export const MyNode: React.FC<MyNodeProps> = ({
   const onDeploy = () => {
     setIsDeploying.on()
     axios
-      .post(
-        `${API_HOST}/deploy-node/${cloudVendor}/${accessKey}/${appchainId}/${global.accountId}/${deployRegion}`
-      )
+      .post(`${API_HOST}/deploy-node`, {
+        appchain: appchainId,
+        cloudVendor,
+        accessKey,
+        accountId: global.accountId,
+        region: deployRegion,
+      })
       .then((res) => res.data)
       .then((res) => {
         if (res) {
@@ -226,16 +230,16 @@ export const MyNode: React.FC<MyNodeProps> = ({
   }
 
   const onClearCache = () => {
-    window.localStorage.removeItem('OCTOPUS_DEPLOYER_CLOUD_VENDOR')
-    window.localStorage.removeItem('OCTOPUS_DEPLOYER_ACCESS_KEY')
-    window.localStorage.removeItem('accessKey')
+    window.localStorage.removeItem("OCTOPUS_DEPLOYER_CLOUD_VENDOR")
+    window.localStorage.removeItem("OCTOPUS_DEPLOYER_ACCESS_KEY")
+    window.localStorage.removeItem("accessKey")
     window.location.reload()
   }
 
   const onApplyNode = () => {
     const secretKey = window.prompt(
-      'Please enter the secret key of your server',
-      ''
+      "Please enter the secret key of your server",
+      ""
     )
 
     if (!secretKey) {
@@ -247,7 +251,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
       .put(
         `${deployConfig.deployApiHost}/tasks/${node?.uuid}`,
         {
-          action: 'apply',
+          action: "apply",
           secret_key: secretKey,
         },
         {
@@ -265,8 +269,8 @@ export const MyNode: React.FC<MyNodeProps> = ({
     }
 
     const secretKey = window.prompt(
-      'Please enter the secret key of your server',
-      ''
+      "Please enter the secret key of your server",
+      ""
     )
 
     if (!secretKey) {
@@ -278,7 +282,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
       .put(
         `${deployConfig.deployApiHost}/tasks/${node?.uuid}`,
         {
-          action: 'update',
+          action: "update",
           secret_key: secretKey,
           base_image: deployConfig.baseImages[appchainId]?.image,
         },
@@ -293,8 +297,8 @@ export const MyNode: React.FC<MyNodeProps> = ({
 
   const onDestroyNode = () => {
     const secretKey = window.prompt(
-      'Please enter the secret key of your server',
-      ''
+      "Please enter the secret key of your server",
+      ""
     )
 
     if (!secretKey) {
@@ -306,7 +310,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
       .put(
         `${deployConfig.deployApiHost}/tasks/${node?.uuid}`,
         {
-          action: 'destroy',
+          action: "destroy",
           secret_key: secretKey,
         },
         {
@@ -487,12 +491,12 @@ export const MyNode: React.FC<MyNodeProps> = ({
                     </IconButton>
                   </HStack>
                 ) : (
-                  '-'
+                  "-"
                 )}
               </Flex>
             </List>
             <Box mt={3}>
-              {node?.state === '0' ? (
+              {node?.state === "0" ? (
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                   <Button
                     colorScheme="octo-blue"
@@ -510,7 +514,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
                     <Icon as={DeleteIcon} mr={2} boxSize={3} /> Delete
                   </Button>
                 </SimpleGrid>
-              ) : node?.state === '10' || node?.state === '20' ? (
+              ) : node?.state === "10" || node?.state === "20" ? (
                 <SimpleGrid columns={1}>
                   <Button
                     onClick={onRefresh}
@@ -520,7 +524,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
                     <RepeatIcon mr={1} /> Refresh
                   </Button>
                 </SimpleGrid>
-              ) : node?.state === '11' || node?.state === '21' ? (
+              ) : node?.state === "11" || node?.state === "21" ? (
                 <SimpleGrid columns={1}>
                   <Button
                     colorScheme="red"
@@ -531,7 +535,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
                     <Icon as={DeleteIcon} mr={2} boxSize={3} /> Destroy
                   </Button>
                 </SimpleGrid>
-              ) : node?.state === '12' ? (
+              ) : node?.state === "12" ? (
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                   <Button as={Link} isExternal href={node.instance.ssh_key}>
                     <Icon as={DownloadIcon} mr={2} boxSize={3} /> RSA
@@ -545,7 +549,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
                     <Icon as={DeleteIcon} mr={2} boxSize={3} /> Destroy
                   </Button>
                 </SimpleGrid>
-              ) : node?.state === '22' ? (
+              ) : node?.state === "22" ? (
                 <SimpleGrid columns={1}>
                   <Button
                     onClick={onDeleteNode}
@@ -555,7 +559,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
                     <Icon as={DeleteIcon} mr={2} boxSize={3} /> Delete
                   </Button>
                 </SimpleGrid>
-              ) : node?.state === '30' ? (
+              ) : node?.state === "30" ? (
                 <SimpleGrid columns={1}>
                   <Button as={Link} isExternal href={node.instance.ssh_key}>
                     <Icon as={DownloadIcon} mr={2} boxSize={3} /> RSA
