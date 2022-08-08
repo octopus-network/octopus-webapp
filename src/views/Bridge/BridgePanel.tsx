@@ -79,6 +79,7 @@ import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
 import { CodeResult } from "near-api-js/lib/providers/provider"
 import { evmBurn, nearBurn, nearBurnNft, substrateBurn } from "utils/bridge"
+import AddressInpput from "components/Bridge/AddressInput"
 
 function toHexAddress(ss58Address: string) {
   if (isHex(ss58Address)) {
@@ -98,11 +99,8 @@ export const BridgePanel: React.FC = () => {
   const navigate = useNavigate()
 
   const grayBg = useColorModeValue("#f2f4f7", "#1e1f34")
-  const [isLogging, setIsLogging] = useBoolean()
   const [isLoadingBalance, setIsLoadingBalance] = useBoolean()
   const [isAmountInputFocused, setIsAmountInputFocused] = useBoolean()
-  const [isAccountInputFocused, setIsAccountInputFocused] = useBoolean()
-  const [selectAccountModalOpen, setSelectAccountModalOpen] = useBoolean()
   const [selectTokenModalOpen, setSelectTokenModalOpen] = useBoolean()
   const [isTransferring, setIsTransferring] = useBoolean()
   const [isHistoryDrawerOpen, setIsHistoryDrawerOpen] = useBoolean()
@@ -110,8 +108,7 @@ export const BridgePanel: React.FC = () => {
 
   const [lastTokenContractId, setLastTokenContractId] = useState("")
 
-  const { accountId, registry, networkConfig, selector, modal } =
-    useWalletSelector()
+  const { accountId, registry, networkConfig, selector } = useWalletSelector()
   const { txns, updateTxn, clearTxnsOfAppchain } = useTxnsStore()
   const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(
     appchainId ? `appchain/${appchainId}` : null,
@@ -139,15 +136,6 @@ export const BridgePanel: React.FC = () => {
   const isReverse = useMemo(
     () => !appchainId || new RegExp(`^/bridge/near/`).test(pathname),
     [pathname]
-  )
-
-  const fromChainName = useMemo(
-    () => (isReverse ? "NEAR" : appchainId),
-    [isReverse, appchainId]
-  )
-  const targetChainName = useMemo(
-    () => (!isReverse ? "NEAR" : appchainId),
-    [isReverse, appchainId]
   )
 
   const { accounts, currentAccount, setCurrentAccount } = useAccounts(
@@ -535,7 +523,6 @@ export const BridgePanel: React.FC = () => {
     setTargetAccount(initialTargetAccount || "")
   }, [initialTargetAccount])
 
-  const targetAccountInputRef = React.useRef<any>()
   const amountInputRef = React.useRef<any>()
 
   const onToggleDirection = () => {
@@ -547,31 +534,6 @@ export const BridgePanel: React.FC = () => {
     setTimeout(() => {
       amountInputRef.current?.focus()
     }, 300)
-  }
-
-  const onClearTargetAccount = () => {
-    setTargetAccount("")
-
-    if (targetAccountInputRef.current) {
-      targetAccountInputRef.current.value = ""
-      targetAccountInputRef.current.focus()
-    }
-  }
-
-  const onLogin = async (e: any) => {
-    setIsLogging.on()
-    modal.show()
-  }
-
-  const onLogout = async () => {
-    const wallet = await selector.wallet()
-    wallet.signOut()
-    window.location.replace(window.location.origin + window.location.pathname)
-  }
-
-  const onSelectAccount = (account: InjectedAccountWithMeta) => {
-    setCurrentAccount(account)
-    setSelectAccountModalOpen.off()
   }
 
   const onSelectToken = (
@@ -864,84 +826,11 @@ export const BridgePanel: React.FC = () => {
           </Center>
         ) : (
           <Box mt={4}>
-            <Box bg={grayBg} p={4} borderRadius="lg" pt={2}>
-              <Heading fontSize="md" className="octo-gray">
-                From
-              </Heading>
-              <Flex mt={3} alignItems="center" justifyContent="space-between">
-                <HStack spacing={3} maxW="calc(100% - 120px)">
-                  <Avatar
-                    boxSize={8}
-                    name={fromChainName}
-                    src={
-                      isReverse
-                        ? nearLogo
-                        : (appchain?.appchain_metadata?.fungible_token_metadata
-                            .icon as any)
-                    }
-                  />
-                  <Heading
-                    fontSize="lg"
-                    textOverflow="ellipsis"
-                    overflow="hidden"
-                    whiteSpace="nowrap"
-                  >
-                    {fromAccount || fromChainName}
-                  </Heading>
-                </HStack>
-                {!fromAccount ? (
-                  isReverse ? (
-                    <Button
-                      colorScheme="octo-blue"
-                      isLoading={isLogging}
-                      isDisabled={isLogging}
-                      onClick={onLogin}
-                      size="sm"
-                    >
-                      Connect
-                    </Button>
-                  ) : (
-                    <Button
-                      colorScheme="octo-blue"
-                      onClick={async () => {
-                        // eth
-                        if (isEvm) {
-                          if (typeof window.ethereum !== "undefined") {
-                            console.log("MetaMask is installed!")
-                            window.ethereum
-                              .request({
-                                method: "eth_requestAccounts",
-                              })
-                              .then((res: any) => {
-                                console.log("res", res)
-                              })
-                              .catch(console.error)
-                          }
-                        } else {
-                          // polkadot
-                          setSelectAccountModalOpen.on()
-                        }
-                      }}
-                      size="sm"
-                    >
-                      Connect
-                    </Button>
-                  )
-                ) : isReverse ? (
-                  <Button variant="white" onClick={onLogout} size="sm">
-                    Disconnect
-                  </Button>
-                ) : (
-                  <Button
-                    variant="white"
-                    onClick={setSelectAccountModalOpen.on}
-                    size="sm"
-                  >
-                    Change
-                  </Button>
-                )}
-              </Flex>
-            </Box>
+            <AddressInpput
+              label="From"
+              chain={isReverse ? "NEAR" : appchainId}
+              appchain={appchain}
+            />
             <Flex justifyContent="center">
               <IconButton
                 aria-label="switch"
@@ -955,90 +844,11 @@ export const BridgePanel: React.FC = () => {
                 <Icon as={MdSwapVert} boxSize={4} />
               </IconButton>
             </Flex>
-            <Box
-              bg={isAccountInputFocused ? bg : grayBg}
-              p={4}
-              borderRadius="lg"
-              pt={2}
-              borderColor={isAccountInputFocused ? "#2468f2" : grayBg}
-              borderWidth={1}
-            >
-              <Flex
-                alignItems="center"
-                justifyContent="space-between"
-                minH="25px"
-              >
-                <Heading fontSize="md" className="octo-gray">
-                  Target
-                </Heading>
-                {isInvalidTargetAccount ? (
-                  <HStack color="red">
-                    <WarningIcon boxSize={3} />
-                    <Text fontSize="xs">Invalid account</Text>
-                  </HStack>
-                ) : targetAccountNeedDepositStorage ? (
-                  <HStack>
-                    <WarningIcon color="red" boxSize={3} />
-                    <Text fontSize="xs" color="red">
-                      This account hasn't been setup yet
-                    </Text>
-                    <Button
-                      colorScheme="octo-blue"
-                      variant="ghost"
-                      size="xs"
-                      isDisabled={isDepositingStorage || !accountId}
-                      isLoading={isDepositingStorage}
-                      onClick={onDepositStorage}
-                    >
-                      {accountId ? "Setup" : "Please Login"}
-                    </Button>
-                  </HStack>
-                ) : null}
-              </Flex>
-              <HStack spacing={3} mt={3}>
-                <Avatar
-                  boxSize={8}
-                  name={targetChainName}
-                  src={
-                    !isReverse
-                      ? nearLogo
-                      : (appchain?.appchain_metadata?.fungible_token_metadata
-                          .icon as any)
-                  }
-                />
-                <InputGroup variant="unstyled">
-                  <Input
-                    value={targetAccount}
-                    size="lg"
-                    fontWeight={600}
-                    maxW="calc(100% - 40px)"
-                    placeholder={`Target account in ${targetChainName}`}
-                    borderRadius="none"
-                    onFocus={setIsAccountInputFocused.on}
-                    onBlur={setIsAccountInputFocused.off}
-                    onChange={(e) => setTargetAccount(e.target.value)}
-                    ref={targetAccountInputRef}
-                    type="text"
-                  />
-                  {targetAccount ? (
-                    <InputRightElement>
-                      <IconButton
-                        aria-label="clear"
-                        size="sm"
-                        isRound
-                        onClick={onClearTargetAccount}
-                      >
-                        <Icon
-                          as={AiFillCloseCircle}
-                          boxSize={5}
-                          className="octo-gray"
-                        />
-                      </IconButton>
-                    </InputRightElement>
-                  ) : null}
-                </InputGroup>
-              </HStack>
-            </Box>
+            <AddressInpput
+              label="Target"
+              chain={!isReverse ? "NEAR" : appchainId}
+              appchain={appchain}
+            />
             <Box
               borderWidth={1}
               p={4}
@@ -1187,13 +997,6 @@ export const BridgePanel: React.FC = () => {
           </Box>
         )}
       </Box>
-      <SelectWeb3AccountModal
-        isOpen={selectAccountModalOpen}
-        onClose={setSelectAccountModalOpen.off}
-        accounts={accounts}
-        onChooseAccount={onSelectAccount}
-        selectedAccount={fromAccount}
-      />
 
       <SelectTokenModal
         isOpen={selectTokenModalOpen}
