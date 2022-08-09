@@ -17,7 +17,7 @@ import {
 import nearLogo from "assets/near.svg"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import useAccounts from "hooks/useAccounts"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { AppchainInfoWithAnchorStatus } from "types"
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types"
 import { SelectWeb3AccountModal } from "views/Bridge/SelectWeb3AccountModal"
@@ -33,7 +33,7 @@ export default function AddressInpput({
   label: string
   chain: string
   appchain?: AppchainInfoWithAnchorStatus
-  onChange: (value: string) => void
+  onChange: (value: string | undefined) => void
 }) {
   const grayBg = useColorModeValue("#f2f4f7", "#1e1f34")
   const isEvm = appchain?.appchain_metadata.template_type === "BarnacleEvm"
@@ -47,13 +47,25 @@ export default function AddressInpput({
   )
   const isNear = chain === "NEAR"
   const isFrom = label === "From"
+
+  const onUpdateAddress = useCallback(
+    (value: string | undefined) => {
+      setAddress(value)
+      console.log("onUpdateAddress", value)
+
+      onChange(value)
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  )
+
   useEffect(() => {
     if (isNear) {
-      setAddress(accountId)
+      onUpdateAddress(accountId)
     } else {
-      setAddress(currentAccount?.address)
+      onUpdateAddress(currentAccount?.address)
     }
-  }, [accountId, currentAccount, isNear])
+  }, [accountId, currentAccount, isNear, onUpdateAddress])
 
   const onSelectAccount = (account: InjectedAccountWithMeta) => {
     setCurrentAccount(account)
@@ -99,7 +111,7 @@ export default function AddressInpput({
   }
 
   const onClear = () => {
-    setAddress("")
+    onUpdateAddress("")
   }
 
   return (
@@ -110,7 +122,7 @@ export default function AddressInpput({
         </Heading>
       </Flex>
       <Flex mt={3} alignItems="center" justifyContent="space-between">
-        <HStack spacing={0} maxW="calc(100% - 60px)">
+        <HStack spacing={1} flex={1}>
           <Avatar
             boxSize={8}
             name={chain}
@@ -131,7 +143,7 @@ export default function AddressInpput({
               {address || chain}
             </Heading>
           ) : (
-            <InputGroup variant="unstyled" flex="1">
+            <InputGroup variant="unstyled">
               <Input
                 value={address}
                 size="lg"
@@ -139,7 +151,7 @@ export default function AddressInpput({
                 maxW="calc(100% - 40px)"
                 placeholder={`Target account in ${chain}`}
                 borderRadius="none"
-                onChange={(e) => setAddress(e.target.value)}
+                onChange={(e) => onUpdateAddress(e.target.value)}
                 type="text"
               />
               {address && (

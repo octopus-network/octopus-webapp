@@ -4,11 +4,13 @@ import { isHex, stringToHex, u8aToHex } from "@polkadot/util"
 import { decodeAddress } from "@polkadot/util-crypto"
 import { Toast } from "components/common/toast"
 import { BigNumber, ethers } from "ethers"
+import { providers } from "near-api-js"
+import { CodeResult } from "near-api-js/lib/providers/provider"
 import { COMPLEX_CALL_GAS } from "primitives"
 import { BridgeHistoryStatus, TokenAsset } from "types"
 import OctopusAppchain from "./abis/OctopusAppchain.json"
 import OctopusSession from "./abis/OctopusSession.json"
-import { DecimalUtil } from "./decimal"
+import { DecimalUtil, ZERO_DECIMAL } from "./decimal"
 
 let _signer: ethers.providers.JsonRpcSigner | null = null
 
@@ -34,6 +36,40 @@ const getSigner = () => {
     _signer = provider.getSigner()
   }
   return _signer
+}
+
+export async function getTokenBalance({
+  nodeUrl,
+  accountId,
+  tokenAsset,
+}: {
+  nodeUrl: string
+  accountId: string
+  tokenAsset: TokenAsset
+}) {
+  try {
+    const provider = new providers.JsonRpcProvider({
+      url: nodeUrl,
+    })
+    const res = await provider.query<CodeResult>({
+      request_type: "call_function",
+      account_id: tokenAsset.contractId,
+      method_name: "ft_balance_of",
+      args_base64: btoa(JSON.stringify({ account_id: accountId })),
+      finality: "optimistic",
+    })
+
+    const bal = JSON.parse(Buffer.from(res.result).toString())
+
+    return DecimalUtil.fromString(
+      bal,
+      Array.isArray(tokenAsset?.metadata.decimals)
+        ? tokenAsset?.metadata.decimals[0]
+        : tokenAsset?.metadata.decimals
+    )
+  } catch (error) {
+    return ZERO_DECIMAL
+  }
 }
 
 export async function setSessionKey(key: string) {

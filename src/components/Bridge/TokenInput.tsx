@@ -15,29 +15,153 @@ import {
   useColorModeValue,
   VStack,
 } from "@chakra-ui/react"
-import nearLogo from "assets/near.svg"
+import { ApiPromise } from "@polkadot/api"
+
 import { AmountInput } from "components/AmountInput"
-import { useEffect, useState } from "react"
-import { AppchainInfoWithAnchorStatus, Collectible, TokenAsset } from "types"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import Decimal from "decimal.js"
+import { providers } from "near-api-js"
+import { CodeResult } from "near-api-js/lib/providers/provider"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { AiFillCloseCircle } from "react-icons/ai"
+import useSWR from "swr"
+import {
+  AppchainInfoWithAnchorStatus,
+  BridgeConfig,
+  Collectible,
+  TokenAsset,
+} from "types"
+import { DecimalUtil, ZERO_DECIMAL } from "utils"
+import { getTokenBalance } from "utils/bridge"
+import { SelectTokenModal } from "views/Bridge/SelectTokenModal"
 
 export default function TokenInpput({
   chain,
   appchain,
   from,
+  appchainId,
+  onChangeAmount,
+  onChangeTokenAsset,
+  appchainApi,
 }: {
   chain: string
   appchain?: AppchainInfoWithAnchorStatus
   from: string
+  appchainId: string
+  onChangeAmount: (value: string) => void
+  onChangeTokenAsset: (value: TokenAsset) => void
+  appchainApi?: ApiPromise
 }) {
+  const { accountId, selector } = useWalletSelector()
+
   const bg = useColorModeValue("white", "#15172c")
   const grayBg = useColorModeValue("#f2f4f7", "#1e1f34")
   const [amount, setAmount] = useState("")
   const [tokenAsset, setTokenAsset] = useState<TokenAsset>()
   const [collectible, setCollectible] = useState<Collectible>()
+  const [balance, setBalance] = useState<Decimal>()
   const [isAmountInputFocused, setIsAmountInputFocused] = useBoolean()
   const [selectTokenModalOpen, setSelectTokenModalOpen] = useBoolean()
+  const [isLoadingBalance, setIsLoadingBalance] = useBoolean()
 
-  useEffect(() => {}, [])
+  const { data: tokens } = useSWR<TokenAsset[]>(
+    appchainId ? `tokens/${appchainId}` : null
+  )
+  const { data: bridgeConfig } = useSWR<BridgeConfig>(
+    appchainId ? `bridge-config/${appchainId}` : null
+  )
+  const { data: collectibleClasses } = useSWR<number[]>(
+    appchainId ? `collectible-classes/${appchainId}` : null
+  )
+
+  const filteredTokens = useMemo(() => {
+    if (!tokens?.length) {
+      return []
+    }
+
+    if (!bridgeConfig?.whitelist) {
+      return tokens
+    }
+
+    return tokens.filter(
+      (t) =>
+        !Object.keys(bridgeConfig.whitelist).includes(t.contractId) ||
+        (Object.keys(bridgeConfig.whitelist).includes(t.contractId) &&
+          accountId &&
+          Object.values(bridgeConfig.whitelist)
+            .flat(Infinity)
+            .includes(accountId))
+    )
+  }, [tokens, bridgeConfig, accountId])
+
+  const onUpdateAmount = useCallback((v: string) => {
+    setAmount(v)
+    onChangeAmount(v)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  const isNear = chain === "NEAR"
+  const onSetMax = () => {
+    if (!isNear && tokenAsset?.assetId === undefined) {
+      onUpdateAmount(
+        balance?.sub(0.1).gt(ZERO_DECIMAL) ? balance?.sub(0.1).toString() : ""
+      )
+    } else {
+      onUpdateAmount(balance?.toString() || "")
+    }
+  }
+
+  const onUpdateTokenAsset = useCallback((t: TokenAsset) => {
+    setTokenAsset(t)
+    onChangeTokenAsset(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  useEffect(() => {
+    if (filteredTokens.length) {
+      onUpdateTokenAsset(filteredTokens[0])
+    }
+  }, [filteredTokens, onUpdateTokenAsset])
+
+  useEffect(() => {
+    if (!(tokenAsset && accountId)) {
+      setBalance(ZERO_DECIMAL)
+      return
+    }
+    if (isNear) {
+      setIsLoadingBalance.on()
+
+      getTokenBalance({
+        nodeUrl: selector.options.network.nodeUrl,
+        accountId,
+        tokenAsset,
+      }).then((bal) => {
+        setBalance(bal)
+        setIsLoadingBalance.off()
+      })
+    } else {
+    }
+  }, [
+    tokenAsset,
+    accountId,
+    setIsLoadingBalance,
+    selector.options.network.nodeUrl,
+    isNear,
+  ])
+
+  const onSelectToken = (
+    token: TokenAsset | Collectible,
+    isCollectible = false
+  ) => {
+    if (isCollectible) {
+      setCollectible(token as Collectible)
+    } else {
+      setCollectible(undefined)
+      onUpdateTokenAsset(token as TokenAsset)
+    }
+
+    onUpdateAmount("")
+    setSelectTokenModalOpen.off()
+  }
+
   return (
     <Box
       borderWidth={1}
@@ -52,13 +176,8 @@ export default function TokenInpput({
         <Heading fontSize="md" className="octo-gray">
           Bridge Asset
         </Heading>
-        {fromAccount && !collectible ? (
-          <Skeleton
-            isLoaded={
-              !isLoadingBalance &&
-              ((!isReverse && !!appchainApi) || (isReverse && !!appchain))
-            }
-          >
+        {!!from && !collectible ? (
+          <Skeleton isLoaded={!isLoadingBalance}>
             <HStack>
               <Text fontSize="sm" variant="gray">
                 Balance: {balance ? DecimalUtil.beautify(balance) : "-"}
@@ -113,8 +232,7 @@ export default function TokenInpput({
             fontWeight={700}
             unstyled
             value={amount}
-            onChange={setAmount}
-            refObj={amountInputRef}
+            onChange={onUpdateAmount}
             onFocus={setIsAmountInputFocused.on}
             onBlur={setIsAmountInputFocused.off}
           />
@@ -137,6 +255,18 @@ export default function TokenInpput({
           </Button>
         </Flex>
       )}
+      <SelectTokenModal
+        isOpen={selectTokenModalOpen}
+        onClose={setSelectTokenModalOpen.off}
+        tokens={filteredTokens}
+        isReverse={isNear}
+        appchainApi={appchainApi}
+        appchainId={appchainId}
+        fromAccount={from}
+        collectibleClasses={collectibleClasses}
+        onSelectToken={onSelectToken}
+        selectedToken={tokenAsset?.metadata?.symbol}
+      />
     </Box>
   )
 }

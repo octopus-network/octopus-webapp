@@ -80,28 +80,14 @@ import { Toast } from "components/common/toast"
 import { CodeResult } from "near-api-js/lib/providers/provider"
 import { evmBurn, nearBurn, nearBurnNft, substrateBurn } from "utils/bridge"
 import AddressInpput from "components/Bridge/AddressInput"
-
-function toHexAddress(ss58Address: string) {
-  if (isHex(ss58Address)) {
-    return ""
-  }
-  try {
-    const u8a = decodeAddress(ss58Address)
-    return u8aToHex(u8a)
-  } catch (err) {
-    return ""
-  }
-}
+import TokenInpput from "components/Bridge/TokenInput"
 
 export const BridgePanel: React.FC = () => {
   const bg = useColorModeValue("white", "#15172c")
   const { appchainId } = useParams()
   const navigate = useNavigate()
 
-  const grayBg = useColorModeValue("#f2f4f7", "#1e1f34")
   const [isLoadingBalance, setIsLoadingBalance] = useBoolean()
-  const [isAmountInputFocused, setIsAmountInputFocused] = useBoolean()
-  const [selectTokenModalOpen, setSelectTokenModalOpen] = useBoolean()
   const [isTransferring, setIsTransferring] = useBoolean()
   const [isHistoryDrawerOpen, setIsHistoryDrawerOpen] = useBoolean()
   const [isDepositingStorage, setIsDepositingStorage] = useBoolean()
@@ -118,10 +104,6 @@ export const BridgePanel: React.FC = () => {
     appchainId ? `appchain-settings/${appchainId}` : null
   )
 
-  const { data: collectibleClasses } = useSWR<number[]>(
-    appchainId ? `collectible-classes/${appchainId}` : null
-  )
-
   const { data: tokens } = useSWR<TokenAsset[]>(
     appchainId ? `tokens/${appchainId}` : null
   )
@@ -132,7 +114,6 @@ export const BridgePanel: React.FC = () => {
   const isEvm = appchain?.appchain_metadata.template_type === "BarnacleEvm"
 
   const { pathname } = useLocation()
-  const [amount, setAmount] = useState("")
   const isReverse = useMemo(
     () => !appchainId || new RegExp(`^/bridge/near/`).test(pathname),
     [pathname]
@@ -144,9 +125,13 @@ export const BridgePanel: React.FC = () => {
   )
 
   const [targetAccount, setTargetAccount] = useState("")
+  const [appchainApi, setAppchainApi] = useState<ApiPromise>()
+
   const [tokenAsset, setTokenAsset] = useState<TokenAsset>()
   const [collectible, setCollectible] = useState<Collectible>()
-  const [appchainApi, setAppchainApi] = useState<ApiPromise>()
+  const [from, setFrom] = useState("")
+  const [to, setTo] = useState("")
+  const [amount, setAmount] = useState("")
 
   const [isInvalidTargetAccount, setIsInvalidTargetAccount] = useBoolean()
   const [targetAccountNeedDepositStorage, setTargetAccountNeedDepositStorage] =
@@ -217,17 +202,6 @@ export const BridgePanel: React.FC = () => {
       amountInputRef.current?.focus()
     }, 300)
   }, [appchainId])
-
-  useEffect(() => {
-    if (filteredTokens.length) {
-      setTokenAsset(
-        lastTokenContractId
-          ? filteredTokens.find((t) => t.contractId === lastTokenContractId) ||
-              filteredTokens[0]
-          : filteredTokens[0]
-      )
-    }
-  }, [filteredTokens, lastTokenContractId])
 
   const fromAccount = useMemo(() => {
     if (isReverse) {
@@ -506,15 +480,6 @@ export const BridgePanel: React.FC = () => {
   }, [isReverse, appchainApi, accountId, fromAccount, tokenAsset, bridgeConfig])
 
   useEffect(() => {
-    if (!fromAccount) {
-      setBalance(ZERO_DECIMAL)
-      if (isLoadingBalance) {
-        setIsLoadingBalance.off()
-      }
-    }
-  }, [fromAccount, isLoadingBalance])
-
-  useEffect(() => {
     setTargetAccount(initialTargetAccount || "")
   }, [initialTargetAccount])
 
@@ -525,41 +490,6 @@ export const BridgePanel: React.FC = () => {
       navigate(`/bridge/${appchainId}/near`)
     } else {
       navigate(`/bridge/near/${appchainId}`)
-    }
-    setTimeout(() => {
-      amountInputRef.current?.focus()
-    }, 300)
-  }
-
-  const onSelectToken = (
-    token: TokenAsset | Collectible,
-    isCollectible = false
-  ) => {
-    if (isCollectible) {
-      setCollectible(token as Collectible)
-    } else {
-      setCollectible(undefined)
-      setTokenAsset(token as TokenAsset)
-      setTimeout(() => {
-        amountInputRef.current?.focus()
-      }, 300)
-      window.localStorage.setItem(
-        "OCTOPUS_BRIDGE_TOKEN_CONTRACT_ID",
-        (token as TokenAsset).contractId
-      )
-    }
-
-    setAmount("")
-    setSelectTokenModalOpen.off()
-  }
-
-  const onSetMax = () => {
-    if (!isReverse && tokenAsset?.assetId === undefined) {
-      setAmount(
-        balance?.sub(0.1).gt(ZERO_DECIMAL) ? balance?.sub(0.1).toString() : ""
-      )
-    } else {
-      setAmount(balance?.toString() || "")
     }
   }
 
@@ -825,7 +755,7 @@ export const BridgePanel: React.FC = () => {
               label="From"
               chain={isReverse ? "NEAR" : appchainId}
               appchain={appchain}
-              onChange={(from) => {}}
+              onChange={(from) => setFrom(from || "")}
             />
             <Flex justifyContent="center">
               <IconButton
@@ -844,118 +774,16 @@ export const BridgePanel: React.FC = () => {
               label="Target"
               chain={!isReverse ? "NEAR" : appchainId}
               appchain={appchain}
-              onChange={(to) => {}}
+              onChange={(to) => setTo(to || "")}
             />
-            <Box
-              borderWidth={1}
-              p={4}
-              borderColor={isAmountInputFocused ? "#2468f2" : grayBg}
-              bg={isAmountInputFocused ? bg : grayBg}
-              borderRadius="lg"
-              pt={2}
-              mt={6}
-            >
-              <Flex
-                alignItems="center"
-                justifyContent="space-between"
-                minH="25px"
-              >
-                <Heading fontSize="md" className="octo-gray">
-                  Bridge Asset
-                </Heading>
-                {fromAccount && !collectible ? (
-                  <Skeleton
-                    isLoaded={
-                      !isLoadingBalance &&
-                      ((!isReverse && !!appchainApi) ||
-                        (isReverse && !!appchain))
-                    }
-                  >
-                    <HStack>
-                      <Text fontSize="sm" variant="gray">
-                        Balance: {balance ? DecimalUtil.beautify(balance) : "-"}
-                      </Text>
-                      {balance?.gt(ZERO_DECIMAL) ? (
-                        <Button
-                          size="xs"
-                          variant="ghost"
-                          colorScheme="octo-blue"
-                          onClick={onSetMax}
-                        >
-                          Max
-                        </Button>
-                      ) : null}
-                    </HStack>
-                  </Skeleton>
-                ) : null}
-              </Flex>
-              {collectible ? (
-                <Flex
-                  mt={3}
-                  borderWidth={1}
-                  p={2}
-                  borderColor="octo-blue.500"
-                  borderRadius="lg"
-                  overflow="hidden"
-                  position="relative"
-                >
-                  <Box w="20%">
-                    <Image src={collectible.metadata.mediaUri} w="100%" />
-                  </Box>
-                  <VStack alignItems="flex-start" ml={3}>
-                    <Heading fontSize="md">{collectible.metadata.name}</Heading>
-                  </VStack>
-                  <Box position="absolute" top={1} right={1}>
-                    <IconButton
-                      aria-label="clear"
-                      size="sm"
-                      isRound
-                      onClick={() => setCollectible(undefined)}
-                    >
-                      <Icon
-                        as={AiFillCloseCircle}
-                        boxSize={5}
-                        className="octo-gray"
-                      />
-                    </IconButton>
-                  </Box>
-                </Flex>
-              ) : (
-                <Flex mt={3} alignItems="center">
-                  <AmountInput
-                    autoFocus
-                    placeholder="0.00"
-                    fontSize="xl"
-                    fontWeight={700}
-                    unstyled
-                    value={amount}
-                    onChange={setAmount}
-                    refObj={amountInputRef}
-                    onFocus={setIsAmountInputFocused.on}
-                    onBlur={setIsAmountInputFocused.off}
-                  />
-                  <Button
-                    ml={3}
-                    size="sm"
-                    variant="ghost"
-                    onClick={setSelectTokenModalOpen.on}
-                  >
-                    <HStack>
-                      <Avatar
-                        name={tokenAsset?.metadata?.symbol}
-                        src={tokenAsset?.metadata?.icon as any}
-                        boxSize={5}
-                        size="sm"
-                      />
-                      <Heading fontSize="md">
-                        {tokenAsset?.metadata?.symbol}
-                      </Heading>
-                      <Icon as={ChevronDownIcon} />
-                    </HStack>
-                  </Button>
-                </Flex>
-              )}
-            </Box>
+            <TokenInpput
+              chain={!isReverse ? "NEAR" : appchainId}
+              appchain={appchain}
+              from={from}
+              appchainId={appchainId}
+              onChangeAmount={(amount) => setAmount(amount)}
+              onChangeTokenAsset={(ta) => setTokenAsset(ta)}
+            />
             <Box mt={8}>
               <Button
                 colorScheme="octo-blue"
@@ -994,19 +822,6 @@ export const BridgePanel: React.FC = () => {
           </Box>
         )}
       </Box>
-
-      <SelectTokenModal
-        isOpen={selectTokenModalOpen}
-        onClose={setSelectTokenModalOpen.off}
-        tokens={filteredTokens}
-        isReverse={isReverse}
-        appchainApi={appchainApi}
-        appchainId={appchainId}
-        fromAccount={fromAccount}
-        collectibleClasses={collectibleClasses}
-        onSelectToken={onSelectToken}
-        selectedToken={tokenAsset?.metadata?.symbol}
-      />
 
       <Drawer
         placement="right"
