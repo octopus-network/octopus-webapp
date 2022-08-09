@@ -331,7 +331,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
         />
 
         <DescItem
-          title="Next Day Reward"
+          title="Next Reward"
           isLoaded={!!nextEraTime}
           titleExtra={
             nextEraTime ? (
