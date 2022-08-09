@@ -275,7 +275,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
                     <WarningTwoIcon boxSize={3} />
                     <Text fontSize="sm">
                       You can only claim the rewards distributed within the last
-                      84 eras.
+                      84 eras(days).
                     </Text>
                   </HStack>
                 </Flex>
@@ -287,7 +287,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
               <Table>
                 <Thead>
                   <Tr>
-                    <Th>Era</Th>
+                    <Th>Day</Th>
                     <Th isNumeric>Reward</Th>
                     <Th isNumeric>Unclaimed</Th>
                   </Tr>
