@@ -23,21 +23,21 @@ import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types"
 import { SelectWeb3AccountModal } from "views/Bridge/SelectWeb3AccountModal"
 import { Toast } from "components/common/toast"
 import { AiFillCloseCircle } from "react-icons/ai"
-import { WarningIcon } from "@chakra-ui/icons"
 
 export default function AddressInpput({
   label,
   chain,
   appchain,
+  onChange,
 }: {
   label: string
   chain: string
   appchain?: AppchainInfoWithAnchorStatus
+  onChange: (value: string) => void
 }) {
   const grayBg = useColorModeValue("#f2f4f7", "#1e1f34")
   const isEvm = appchain?.appchain_metadata.template_type === "BarnacleEvm"
 
-  const [isDepositingStorage, setIsDepositingStorage] = useBoolean()
   const [selectAccountModalOpen, setSelectAccountModalOpen] = useBoolean()
   const [address, setAddress] = useState<string | undefined>()
   const { accountId, modal, selector } = useWalletSelector()
@@ -102,101 +102,12 @@ export default function AddressInpput({
     setAddress("")
   }
 
-  const onDepositStorage = async () => {
-    // if (isReverse) {
-    //   if (!appchainApi || !currentAccount) {
-    //     return
-    //   }
-    //   await web3Enable("Octopus Network")
-    //   const injected = await web3FromSource(currentAccount.meta.source || "")
-    //   appchainApi.setSigner(injected.signer)
-    //   setIsDepositingStorage.on()
-    //   const res = await appchainApi?.query.system.account(fromAccount)
-    //   const resJSON: any = res?.toJSON()
-    //   const balance = DecimalUtil.fromString(
-    //     resJSON?.data?.free,
-    //     Array.isArray(tokenAsset?.metadata.decimals)
-    //       ? tokenAsset?.metadata.decimals[1]
-    //       : tokenAsset?.metadata.decimals
-    //   )
-    //   const toDepositAmount = DecimalUtil.toU64(
-    //     new Decimal(0.01),
-    //     appchain?.appchain_metadata?.fungible_token_metadata?.decimals
-    //   ).toString()
-    //   if (!balance.gte(toDepositAmount)) {
-    //     return Toast.error("Balance not enough")
-    //   }
-    //   const tx = appchainApi.tx.balances.transfer(
-    //     targetAccount,
-    //     toDepositAmount
-    //   )
-    //   tx.signAndSend(currentAccount.address, (res) => {
-    //     if (res.isInBlock) {
-    //       setIsDepositingStorage.off()
-    //       setTargetAccountNeedDepositStorage.off()
-    //     }
-    //   })
-    //   return
-    // }
-    // console.log("accountId", targetAccount, accountId)
-    // try {
-    //   setIsDepositingStorage.on()
-    //   const wallet = await selector.wallet()
-    //   await wallet.signAndSendTransaction({
-    //     signerId: accountId,
-    //     receiverId: tokenAsset?.contractId,
-    //     actions: [
-    //       {
-    //         type: "FunctionCall",
-    //         params: {
-    //           methodName: "storage_deposit",
-    //           args: { account_id: targetAccount },
-    //           gas: SIMPLE_CALL_GAS,
-    //           deposit: "1250000000000000000000",
-    //         },
-    //       },
-    //     ],
-    //   })
-    //   setIsDepositingStorage.off()
-    // } catch (err) {
-    //   setIsDepositingStorage.off()
-    //   if (err instanceof Error) {
-    //     if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
-    //       return
-    //     }
-    //     Toast.error(err)
-    //   }
-    // }
-  }
-
   return (
     <Box bg={grayBg} p={4} borderRadius="lg" pt={2}>
       <Flex alignItems="center" justifyContent="space-between" minH="25px">
         <Heading fontSize="md" className="octo-gray">
           {label}
         </Heading>
-        {/* {!isFrom && (
-                  <HStack color="red">
-                    <WarningIcon boxSize={3} />
-                    <Text fontSize="xs">Invalid account</Text>
-                  </HStack>
-                ) : targetAccountNeedDepositStorage ? (
-                  <HStack>
-                    <WarningIcon color="red" boxSize={3} />
-                    <Text fontSize="xs" color="red">
-                      This account hasn't been setup yet
-                    </Text>
-                    <Button
-                      colorScheme="octo-blue"
-                      variant="ghost"
-                      size="xs"
-                      isDisabled={isDepositingStorage || !accountId}
-                      isLoading={isDepositingStorage}
-                      onClick={onDepositStorage}
-                    >
-                      {accountId ? "Setup" : "Please Login"}
-                    </Button>
-                  </HStack>) : null} */}
       </Flex>
       <Flex mt={3} alignItems="center" justifyContent="space-between">
         <HStack spacing={0} maxW="calc(100% - 60px)">

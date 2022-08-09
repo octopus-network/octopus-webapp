@@ -301,11 +301,6 @@ export const BridgePanel: React.FC = () => {
     if (!appchainApi || !debouncedTargetAccount) {
       return
     }
-    console.log(
-      "checkAppchainAccount",
-      isEvm,
-      web3.utils.isAddress(debouncedTargetAccount)
-    )
 
     if (
       (!isEvm &&
@@ -830,6 +825,7 @@ export const BridgePanel: React.FC = () => {
               label="From"
               chain={isReverse ? "NEAR" : appchainId}
               appchain={appchain}
+              onChange={(from) => {}}
             />
             <Flex justifyContent="center">
               <IconButton
@@ -848,6 +844,7 @@ export const BridgePanel: React.FC = () => {
               label="Target"
               chain={!isReverse ? "NEAR" : appchainId}
               appchain={appchain}
+              onChange={(to) => {}}
             />
             <Box
               borderWidth={1}

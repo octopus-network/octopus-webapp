@@ -1,3 +1,4 @@
+import { ChevronDownIcon } from "@chakra-ui/icons"
 import {
   Avatar,
   Box,
@@ -5,103 +6,137 @@ import {
   Flex,
   Heading,
   HStack,
+  Icon,
+  IconButton,
+  Image,
+  Skeleton,
+  Text,
+  useBoolean,
   useColorModeValue,
+  VStack,
 } from "@chakra-ui/react"
 import nearLogo from "assets/near.svg"
-import { useEffect } from "react"
-import { AppchainInfoWithAnchorStatus } from "types"
+import { AmountInput } from "components/AmountInput"
+import { useEffect, useState } from "react"
+import { AppchainInfoWithAnchorStatus, Collectible, TokenAsset } from "types"
 
 export default function TokenInpput({
-  label,
   chain,
   appchain,
+  from,
 }: {
-  label: string
   chain: string
   appchain?: AppchainInfoWithAnchorStatus
+  from: string
 }) {
+  const bg = useColorModeValue("white", "#15172c")
   const grayBg = useColorModeValue("#f2f4f7", "#1e1f34")
-  const isEvm = appchain?.appchain_metadata.template_type === "BarnacleEvm"
+  const [amount, setAmount] = useState("")
+  const [tokenAsset, setTokenAsset] = useState<TokenAsset>()
+  const [collectible, setCollectible] = useState<Collectible>()
+  const [isAmountInputFocused, setIsAmountInputFocused] = useBoolean()
+  const [selectTokenModalOpen, setSelectTokenModalOpen] = useBoolean()
 
   useEffect(() => {}, [])
   return (
-    <Box bg={grayBg} p={4} borderRadius="lg" pt={2}>
-      {/* <Heading fontSize="md" className="octo-gray">
-        {label}
-      </Heading>
-      <Flex mt={3} alignItems="center" justifyContent="space-between">
-        <HStack spacing={3} maxW="calc(100% - 120px)">
-          <Avatar
-            boxSize={8}
-            name={chain}
-            src={
-              chain === "NEAR"
-                ? nearLogo
-                : (appchain?.appchain_metadata?.fungible_token_metadata
-                    .icon as any)
+    <Box
+      borderWidth={1}
+      p={4}
+      borderColor={isAmountInputFocused ? "#2468f2" : grayBg}
+      bg={isAmountInputFocused ? bg : grayBg}
+      borderRadius="lg"
+      pt={2}
+      mt={6}
+    >
+      <Flex alignItems="center" justifyContent="space-between" minH="25px">
+        <Heading fontSize="md" className="octo-gray">
+          Bridge Asset
+        </Heading>
+        {fromAccount && !collectible ? (
+          <Skeleton
+            isLoaded={
+              !isLoadingBalance &&
+              ((!isReverse && !!appchainApi) || (isReverse && !!appchain))
             }
+          >
+            <HStack>
+              <Text fontSize="sm" variant="gray">
+                Balance: {balance ? DecimalUtil.beautify(balance) : "-"}
+              </Text>
+              {balance?.gt(ZERO_DECIMAL) ? (
+                <Button
+                  size="xs"
+                  variant="ghost"
+                  colorScheme="octo-blue"
+                  onClick={onSetMax}
+                >
+                  Max
+                </Button>
+              ) : null}
+            </HStack>
+          </Skeleton>
+        ) : null}
+      </Flex>
+      {collectible ? (
+        <Flex
+          mt={3}
+          borderWidth={1}
+          p={2}
+          borderColor="octo-blue.500"
+          borderRadius="lg"
+          overflow="hidden"
+          position="relative"
+        >
+          <Box w="20%">
+            <Image src={collectible.metadata.mediaUri} w="100%" />
+          </Box>
+          <VStack alignItems="flex-start" ml={3}>
+            <Heading fontSize="md">{collectible.metadata.name}</Heading>
+          </VStack>
+          <Box position="absolute" top={1} right={1}>
+            <IconButton
+              aria-label="clear"
+              size="sm"
+              isRound
+              onClick={() => setCollectible(undefined)}
+            >
+              <Icon as={AiFillCloseCircle} boxSize={5} className="octo-gray" />
+            </IconButton>
+          </Box>
+        </Flex>
+      ) : (
+        <Flex mt={3} alignItems="center">
+          <AmountInput
+            autoFocus
+            placeholder="0.00"
+            fontSize="xl"
+            fontWeight={700}
+            unstyled
+            value={amount}
+            onChange={setAmount}
+            refObj={amountInputRef}
+            onFocus={setIsAmountInputFocused.on}
+            onBlur={setIsAmountInputFocused.off}
           />
-          <Heading
-            fontSize="lg"
-            textOverflow="ellipsis"
-            overflow="hidden"
-            whiteSpace="nowrap"
-          >
-            {fromAccount || chain}
-          </Heading>
-        </HStack>
-        {!fromAccount ? (
-          isReverse ? (
-            <Button
-              colorScheme="octo-blue"
-              isLoading={isLogging}
-              isDisabled={isLogging}
-              onClick={onLogin}
-              size="sm"
-            >
-              Connect
-            </Button>
-          ) : (
-            <Button
-              colorScheme="octo-blue"
-              onClick={async () => {
-                // eth
-                if (isEvm) {
-                  if (typeof window.ethereum !== "undefined") {
-                    console.log("MetaMask is installed!")
-                    window.ethereum
-                      .request({
-                        method: "eth_requestAccounts",
-                      })
-                      .then((res: any) => {
-                        console.log("res", res)
-                      })
-                      .catch(console.error)
-                  }
-                } else {
-                  // polkadot
-                  setSelectAccountModalOpen.on()
-                }
-              }}
-              size="sm"
-            >
-              Connect
-            </Button>
-          )
-        ) : isReverse ? (
-          <Button variant="white" onClick={onLogout} size="sm">
-            Disconnect
-          </Button>
-        ) : (
           <Button
-            variant="white"
-            onClick={setSelectAccountModalOpen.on}
+            ml={3}
             size="sm"
+            variant="ghost"
+            onClick={setSelectTokenModalOpen.on}
           >
-            Change
+            <HStack>
+              <Avatar
+                name={tokenAsset?.metadata?.symbol}
+                src={tokenAsset?.metadata?.icon as any}
+                boxSize={5}
+                size="sm"
+              />
+              <Heading fontSize="md">{tokenAsset?.metadata?.symbol}</Heading>
+              <Icon as={ChevronDownIcon} />
+            </HStack>
           </Button>
-        )}
-      </Flex> */}
+        </Flex>
+      )}
     </Box>
   )
 }
