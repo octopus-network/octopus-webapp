@@ -3,7 +3,6 @@ import useSWR from "swr"
 import { ApiPromise, WsProvider } from "@polkadot/api"
 import { PulseLoader } from "react-spinners"
 import { providers } from "near-api-js"
-import web3 from "web3"
 
 import {
   Box,
@@ -43,21 +42,13 @@ import {
 } from "types"
 
 import { ChevronRightIcon } from "@chakra-ui/icons"
-import { decodeAddress, isAddress } from "@polkadot/util-crypto"
-import { u8aToHex, stringToHex, isHex } from "@polkadot/util"
-import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types"
+import { isHex, stringToHex } from "@polkadot/util"
 
 import { web3FromSource, web3Enable } from "@polkadot/extension-dapp"
 
 import { Empty } from "components"
-import nearLogo from "assets/near.svg"
-import { ChevronDownIcon, WarningIcon } from "@chakra-ui/icons"
 import { MdSwapVert } from "react-icons/md"
-import { AiFillCloseCircle } from "react-icons/ai"
-import { SelectWeb3AccountModal } from "./SelectWeb3AccountModal"
-import { SelectTokenModal } from "./SelectTokenModal"
 import { History } from "./History"
-import { AmountInput } from "components"
 import {
   useParams,
   useNavigate,
@@ -65,22 +56,24 @@ import {
   Link as RouterLink,
 } from "react-router-dom"
 import Decimal from "decimal.js"
-import { ZERO_DECIMAL, DecimalUtil } from "utils"
+import { DecimalUtil } from "utils"
 import { useTxnsStore } from "stores"
-import { useDebounce } from "use-debounce"
 
-import {
-  COMPLEX_CALL_GAS,
-  FAILED_TO_REDIRECT_MESSAGE,
-  SIMPLE_CALL_GAS,
-} from "primitives"
+import { FAILED_TO_REDIRECT_MESSAGE, SIMPLE_CALL_GAS } from "primitives"
 import useAccounts from "hooks/useAccounts"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
 import { CodeResult } from "near-api-js/lib/providers/provider"
-import { evmBurn, nearBurn, nearBurnNft, substrateBurn } from "utils/bridge"
+import {
+  evmBurn,
+  isValidAddress,
+  nearBurn,
+  nearBurnNft,
+  substrateBurn,
+} from "utils/bridge"
 import AddressInpput from "components/Bridge/AddressInput"
 import TokenInpput from "components/Bridge/TokenInput"
+import { isAddress } from "@polkadot/util-crypto"
 
 export const BridgePanel: React.FC = () => {
   const bg = useColorModeValue("white", "#15172c")
@@ -91,8 +84,6 @@ export const BridgePanel: React.FC = () => {
   const [isTransferring, setIsTransferring] = useBoolean()
   const [isHistoryDrawerOpen, setIsHistoryDrawerOpen] = useBoolean()
   const [isDepositingStorage, setIsDepositingStorage] = useBoolean()
-
-  const [lastTokenContractId, setLastTokenContractId] = useState("")
 
   const { accountId, registry, networkConfig, selector } = useWalletSelector()
   const { txns, updateTxn, clearTxnsOfAppchain } = useTxnsStore()
@@ -114,17 +105,13 @@ export const BridgePanel: React.FC = () => {
   const isEvm = appchain?.appchain_metadata.template_type === "BarnacleEvm"
 
   const { pathname } = useLocation()
-  const isReverse = useMemo(
+  const isNearToAppchain = useMemo(
     () => !appchainId || new RegExp(`^/bridge/near/`).test(pathname),
-    [pathname]
+    [appchainId, pathname]
   )
 
-  const { accounts, currentAccount, setCurrentAccount } = useAccounts(
-    isEvm,
-    isEvm
-  )
+  const { currentAccount } = useAccounts(isEvm, isEvm)
 
-  const [targetAccount, setTargetAccount] = useState("")
   const [appchainApi, setAppchainApi] = useState<ApiPromise>()
 
   const [tokenAsset, setTokenAsset] = useState<TokenAsset>()
@@ -133,13 +120,8 @@ export const BridgePanel: React.FC = () => {
   const [to, setTo] = useState("")
   const [amount, setAmount] = useState("")
 
-  const [isInvalidTargetAccount, setIsInvalidTargetAccount] = useBoolean()
   const [targetAccountNeedDepositStorage, setTargetAccountNeedDepositStorage] =
     useBoolean()
-
-  const [balance, setBalance] = useState<Decimal>()
-
-  const [debouncedTargetAccount] = useDebounce(targetAccount, 600)
 
   const filteredTokens = useMemo(() => {
     if (!tokens?.length) {
@@ -189,10 +171,6 @@ export const BridgePanel: React.FC = () => {
       return
     }
 
-    setLastTokenContractId(
-      window.localStorage.getItem("OCTOPUS_BRIDGE_TOKEN_CONTRACT_ID") || ""
-    )
-
     setTokenAsset(undefined)
     setCollectible(undefined)
     setAppchainApi(undefined)
@@ -201,34 +179,21 @@ export const BridgePanel: React.FC = () => {
     setTimeout(() => {
       amountInputRef.current?.focus()
     }, 300)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appchainId])
-
-  const fromAccount = useMemo(() => {
-    if (isReverse) {
-      return accountId
-      // } else if (appchainId?.includes("evm")) {
-      //   return ethAccounts[0]
-    }
-
-    return currentAccount?.address
-  }, [isReverse, accountId, currentAccount])
-  const initialTargetAccount = useMemo(
-    () => (!isReverse ? accountId : currentAccount?.address),
-    [isReverse, accountId, currentAccount]
-  )
 
   const appchainTxns = useMemo(
     () =>
       Object.values(appchainId ? txns?.[appchainId] || {} : {})
         .filter(
           (t) =>
-            t.fromAccount === fromAccount ||
-            t.toAccount === fromAccount ||
+            t.fromAccount === from ||
+            t.toAccount === from ||
             t.fromAccount === accountId ||
             t.toAccount === accountId
         )
         .sort((a, b) => b.timestamp - a.timestamp),
-    [appchainId, txns, accountId, fromAccount]
+    [appchainId, txns, accountId, from]
   )
 
   const pendingTxns = useMemo(
@@ -236,79 +201,6 @@ export const BridgePanel: React.FC = () => {
       appchainTxns.filter((txn) => txn.status === BridgeHistoryStatus.Pending),
     [appchainTxns]
   )
-
-  const checkNearAccount = useCallback(async () => {
-    if (!debouncedTargetAccount || !tokenAsset) {
-      return
-    }
-
-    try {
-      setIsInvalidTargetAccount.off()
-      const provider = new providers.JsonRpcProvider({
-        url: selector.options.network.nodeUrl,
-      })
-      const res = await provider.query<CodeResult>({
-        request_type: "call_function",
-        account_id: tokenAsset.contractId,
-        method_name: "storage_balance_of",
-        args_base64: btoa(
-          JSON.stringify({ account_id: debouncedTargetAccount })
-        ),
-        finality: "optimistic",
-      })
-      const storage = JSON.parse(Buffer.from(res.result).toString())
-
-      if (storage === null) {
-        setTargetAccountNeedDepositStorage.on()
-      } else {
-        setTargetAccountNeedDepositStorage.off()
-      }
-    } catch (error) {
-      console.log("error", error)
-
-      setIsInvalidTargetAccount.on()
-      Toast.error(error)
-    }
-  }, [debouncedTargetAccount, tokenAsset, selector.options.network.nodeUrl])
-
-  const checkAppchainAccount = useCallback(() => {
-    if (!appchainApi || !debouncedTargetAccount) {
-      return
-    }
-
-    if (
-      (!isEvm &&
-        (isHex(debouncedTargetAccount) ||
-          !isAddress(debouncedTargetAccount))) ||
-      (isEvm && web3.utils.isAddress(debouncedTargetAccount))
-    ) {
-      setIsInvalidTargetAccount.off()
-      return
-    }
-    if (tokenAsset?.assetId === undefined) {
-      return
-    }
-    appchainApi?.query.system.account(debouncedTargetAccount).then((res) => {
-      if (res.providers.toNumber() === 0) {
-        setTargetAccountNeedDepositStorage.on()
-      }
-    })
-  }, [appchainApi, debouncedTargetAccount, isEvm, tokenAsset?.assetId])
-
-  const checkTargetAccount = React.useRef<any>()
-  checkTargetAccount.current = () => {
-    setIsInvalidTargetAccount.off()
-    setTargetAccountNeedDepositStorage.off()
-    if (isReverse) {
-      checkAppchainAccount()
-    } else {
-      checkNearAccount()
-    }
-  }
-
-  useEffect(() => {
-    checkTargetAccount.current()
-  }, [debouncedTargetAccount, tokenAsset])
 
   const pendingTxnsChecker = React.useRef<any>()
   const isCheckingTxns = React.useRef(false)
@@ -386,107 +278,10 @@ export const BridgePanel: React.FC = () => {
     pendingTxnsChecker.current()
   }, 5 * 1000)
 
-  // fetch balance via near contract
-  useEffect(() => {
-    if (!isReverse || !tokenAsset || !fromAccount || !accountId) {
-      return
-    }
-
-    setIsLoadingBalance.on()
-
-    const provider = new providers.JsonRpcProvider({
-      url: selector.options.network.nodeUrl,
-    })
-    provider
-      .query<CodeResult>({
-        request_type: "call_function",
-        account_id: tokenAsset.contractId,
-        method_name: "ft_balance_of",
-        args_base64: btoa(JSON.stringify({ account_id: accountId })),
-        finality: "optimistic",
-      })
-      .then((res) => {
-        const bal = JSON.parse(Buffer.from(res.result).toString())
-        setBalance(
-          DecimalUtil.fromString(
-            bal,
-            Array.isArray(tokenAsset?.metadata.decimals)
-              ? tokenAsset?.metadata.decimals[0]
-              : tokenAsset?.metadata.decimals
-          )
-        )
-        setIsLoadingBalance.off()
-      })
-  }, [isReverse, fromAccount, tokenAsset, accountId])
-
-  const checkBalanceViaRPC = React.useRef<any>()
-  checkBalanceViaRPC.current = async () => {
-    if (!tokenAsset || !bridgeConfig) {
-      return
-    }
-
-    let balance = ZERO_DECIMAL
-    if (tokenAsset.assetId === undefined) {
-      const res = await appchainApi?.query.system.account(fromAccount)
-      const resJSON: any = res?.toJSON()
-      balance = DecimalUtil.fromString(
-        resJSON?.data?.free,
-        Array.isArray(tokenAsset?.metadata.decimals)
-          ? tokenAsset?.metadata.decimals[1]
-          : tokenAsset?.metadata.decimals
-      )
-    } else {
-      const query =
-        appchainApi?.query[bridgeConfig.tokenPallet.section]?.[
-          bridgeConfig.tokenPallet.method
-        ]
-
-      if (!query) {
-        return
-      }
-
-      const res = await (bridgeConfig.tokenPallet.paramsType === "Tuple"
-        ? query([tokenAsset.assetId, fromAccount])
-        : query(tokenAsset.assetId, fromAccount))
-
-      const resJSON: any = res?.toJSON()
-
-      balance = DecimalUtil.fromString(
-        resJSON?.[bridgeConfig.tokenPallet.valueKey],
-        Array.isArray(tokenAsset?.metadata.decimals)
-          ? tokenAsset?.metadata.decimals[1]
-          : tokenAsset?.metadata.decimals
-      )
-    }
-
-    setBalance(balance)
-    setIsLoadingBalance.off()
-  }
-
-  // fetch balance from appchain rpc
-  useEffect(() => {
-    if (
-      isReverse ||
-      !tokenAsset ||
-      !accountId ||
-      !appchainApi ||
-      !fromAccount ||
-      !bridgeConfig
-    ) {
-      return
-    }
-
-    checkBalanceViaRPC?.current()
-  }, [isReverse, appchainApi, accountId, fromAccount, tokenAsset, bridgeConfig])
-
-  useEffect(() => {
-    setTargetAccount(initialTargetAccount || "")
-  }, [initialTargetAccount])
-
   const amountInputRef = React.useRef<any>()
 
   const onToggleDirection = () => {
-    if (isReverse) {
+    if (isNearToAppchain) {
       navigate(`/bridge/${appchainId}/near`)
     } else {
       navigate(`/bridge/near/${appchainId}`)
@@ -503,7 +298,7 @@ export const BridgePanel: React.FC = () => {
         wallet,
         anchorId: appchain?.appchain_anchor!,
         isEvm,
-        targetAccount,
+        targetAccount: to,
         amount,
       })
       setIsTransferring.off()
@@ -524,7 +319,7 @@ export const BridgePanel: React.FC = () => {
         anchorId,
         receiverId: `${collectible?.class}.${anchorId}`,
         tokenId: collectible?.id!,
-        targetAccount,
+        targetAccount: to,
       })
       setIsTransferring.off()
       Toast.success("Transferred")
@@ -538,7 +333,7 @@ export const BridgePanel: React.FC = () => {
     setIsTransferring.on()
 
     try {
-      const targetAccountInHex = stringToHex(targetAccount)
+      const targetAccountInHex = stringToHex(to)
       const amountInU64 = DecimalUtil.toU64(
         DecimalUtil.fromString(amount),
         Array.isArray(tokenAsset?.metadata.decimals)
@@ -554,10 +349,10 @@ export const BridgePanel: React.FC = () => {
       } else {
         substrateBurn({
           api: appchainApi!,
-          targetAccount,
+          targetAccount: to,
           amount: amountInU64.toString(),
           asset: tokenAsset,
-          fromAccount: fromAccount!,
+          fromAccount: from!,
           appchainId: appchainId!,
           updateTxn,
         })
@@ -572,7 +367,7 @@ export const BridgePanel: React.FC = () => {
   const redeemCollectible = async () => {
     setIsTransferring.on()
 
-    const targetAccountInHex = stringToHex(targetAccount)
+    const targetAccountInHex = stringToHex(to)
 
     const tx: any = appchainApi?.tx.octopusAppchain.lockNft(
       collectible?.class,
@@ -581,7 +376,7 @@ export const BridgePanel: React.FC = () => {
     )
 
     await tx
-      .signAndSend(fromAccount, ({ events = [] }: any) => {
+      .signAndSend(from, ({ events = [] }: any) => {
         events.forEach(({ event: { data, method, section } }: any) => {
           if (section === "octopusAppchain" && method === "NftLocked") {
             setIsTransferring.off()
@@ -604,13 +399,11 @@ export const BridgePanel: React.FC = () => {
   }
 
   const onRedeem = async () => {
-    console.log("onRedeem", currentAccount?.meta.source)
-
     // eth
     if (isEvm) {
     } else {
       await web3Enable("Octopus Network")
-      const injected = await web3FromSource(currentAccount?.meta.source || "")
+      const injected = await web3FromSource(to || "")
       appchainApi?.setSigner(injected.signer)
     }
 
@@ -626,7 +419,7 @@ export const BridgePanel: React.FC = () => {
   }
 
   const onDepositStorage = async () => {
-    if (isReverse) {
+    if (isNearToAppchain) {
       if (!appchainApi || !currentAccount) {
         return
       }
@@ -636,7 +429,7 @@ export const BridgePanel: React.FC = () => {
 
       setIsDepositingStorage.on()
 
-      const res = await appchainApi?.query.system.account(fromAccount)
+      const res = await appchainApi?.query.system.account(from)
       const resJSON: any = res?.toJSON()
       const balance = DecimalUtil.fromString(
         resJSON?.data?.free,
@@ -652,10 +445,7 @@ export const BridgePanel: React.FC = () => {
       if (!balance.gte(toDepositAmount)) {
         return Toast.error("Balance not enough")
       }
-      const tx = appchainApi.tx.balances.transfer(
-        targetAccount,
-        toDepositAmount
-      )
+      const tx = appchainApi.tx.balances.transfer(to, toDepositAmount)
 
       tx.signAndSend(currentAccount.address, (res) => {
         if (res.isInBlock) {
@@ -666,8 +456,6 @@ export const BridgePanel: React.FC = () => {
 
       return
     }
-
-    console.log("accountId", targetAccount, accountId)
 
     try {
       setIsDepositingStorage.on()
@@ -681,7 +469,7 @@ export const BridgePanel: React.FC = () => {
             type: "FunctionCall",
             params: {
               methodName: "storage_deposit",
-              args: { account_id: targetAccount },
+              args: { account_id: to },
               gas: SIMPLE_CALL_GAS,
               deposit: "1250000000000000000000",
             },
@@ -697,6 +485,23 @@ export const BridgePanel: React.FC = () => {
         }
         Toast.error(err)
       }
+    }
+  }
+
+  const onSubmit = async () => {
+    try {
+      const isValidTargetAddress = await isValidAddress({
+        address: to,
+        isNearToAppchain,
+        isEvm,
+      })
+      if (!isValidTargetAddress) {
+        throw new Error("Invalid target account")
+      }
+      // check amount
+      // check actions
+    } catch (error) {
+      Toast.error(error)
     }
   }
 
@@ -753,7 +558,7 @@ export const BridgePanel: React.FC = () => {
           <Box mt={4}>
             <AddressInpput
               label="From"
-              chain={isReverse ? "NEAR" : appchainId}
+              chain={isNearToAppchain ? "NEAR" : appchainId}
               appchain={appchain}
               onChange={(from) => setFrom(from || "")}
             />
@@ -772,13 +577,14 @@ export const BridgePanel: React.FC = () => {
             </Flex>
             <AddressInpput
               label="Target"
-              chain={!isReverse ? "NEAR" : appchainId}
+              chain={!isNearToAppchain ? "NEAR" : appchainId}
               appchain={appchain}
               onChange={(to) => setTo(to || "")}
             />
             <TokenInpput
-              chain={!isReverse ? "NEAR" : appchainId}
+              chain={isNearToAppchain ? "NEAR" : appchainId}
               appchain={appchain}
+              appchainApi={appchainApi}
               from={from}
               appchainId={appchainId}
               onChangeAmount={(amount) => setAmount(amount)}
@@ -790,31 +596,28 @@ export const BridgePanel: React.FC = () => {
                 size="lg"
                 width="100%"
                 isDisabled={
-                  !fromAccount ||
+                  !from ||
                   isLoadingBalance ||
-                  !targetAccount ||
-                  (!collectible && (!amount || balance?.lt(amount))) ||
+                  !to ||
+                  (!collectible && !amount) ||
                   isTransferring ||
-                  isInvalidTargetAccount ||
                   targetAccountNeedDepositStorage
                 }
                 isLoading={isTransferring}
                 spinner={
                   <PulseLoader color="rgba(255, 255, 255, .9)" size={12} />
                 }
-                onClick={isReverse ? onBurn : onRedeem}
+                onClick={isNearToAppchain ? onBurn : onRedeem}
               >
-                {!fromAccount
+                {!from
                   ? "Connect Wallet"
-                  : !targetAccount
+                  : !to
                   ? "Input Target Account"
-                  : isInvalidTargetAccount || targetAccountNeedDepositStorage
+                  : targetAccountNeedDepositStorage
                   ? "Invalid Target Account"
                   : !collectible
                   ? !amount
                     ? "Input Amount"
-                    : balance?.lt(amount)
-                    ? "Insufficient Balance"
                     : "Transfer"
                   : "Transfer"}
               </Button>

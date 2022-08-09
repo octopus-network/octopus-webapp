@@ -1,7 +1,7 @@
 import { Wallet } from "@near-wallet-selector/core"
 import { ApiPromise } from "@polkadot/api"
 import { isHex, stringToHex, u8aToHex } from "@polkadot/util"
-import { decodeAddress } from "@polkadot/util-crypto"
+import { decodeAddress, isAddress } from "@polkadot/util-crypto"
 import { Toast } from "components/common/toast"
 import { BigNumber, ethers } from "ethers"
 import { providers } from "near-api-js"
@@ -11,6 +11,9 @@ import { BridgeHistoryStatus, TokenAsset } from "types"
 import OctopusAppchain from "./abis/OctopusAppchain.json"
 import OctopusSession from "./abis/OctopusSession.json"
 import { DecimalUtil, ZERO_DECIMAL } from "./decimal"
+import web3 from "web3"
+
+import { BridgeConfig } from "types"
 
 let _signer: ethers.providers.JsonRpcSigner | null = null
 
@@ -38,7 +41,82 @@ const getSigner = () => {
   return _signer
 }
 
-export async function getTokenBalance({
+export async function isValidAddress({
+  address,
+  isNearToAppchain,
+  isEvm,
+}: {
+  address: string
+  isNearToAppchain: boolean
+  isEvm: boolean
+}) {
+  // substrate address
+  if (isNearToAppchain) {
+    return (
+      (!isEvm && (isHex(address) || !isAddress(address))) ||
+      (isEvm && web3.utils.isAddress(address))
+    )
+  }
+  return true
+  // TODO: check if address is valid for NEAR
+  // try {
+
+  // } catch (error) {
+  //   return false
+  // }
+}
+
+export async function getPolkaTokenBalance({
+  tokenAsset,
+  appchainApi,
+  bridgeConfig,
+  account,
+}: {
+  tokenAsset: TokenAsset
+  appchainApi: ApiPromise
+  bridgeConfig: BridgeConfig
+  account: string
+}) {
+  let balance = ZERO_DECIMAL
+  try {
+    if (tokenAsset.assetId === undefined) {
+      const res = await appchainApi?.query.system.account(account)
+      const resJSON: any = res?.toJSON()
+      balance = DecimalUtil.fromString(
+        resJSON?.data?.free,
+        Array.isArray(tokenAsset?.metadata.decimals)
+          ? tokenAsset?.metadata.decimals[1]
+          : tokenAsset?.metadata.decimals
+      )
+    } else {
+      const query =
+        appchainApi?.query[bridgeConfig.tokenPallet.section]?.[
+          bridgeConfig.tokenPallet.method
+        ]
+
+      if (!query) {
+        return
+      }
+
+      const res = await (bridgeConfig.tokenPallet.paramsType === "Tuple"
+        ? query([tokenAsset.assetId, account])
+        : query(tokenAsset.assetId, account))
+
+      const resJSON: any = res?.toJSON()
+
+      balance = DecimalUtil.fromString(
+        resJSON?.[bridgeConfig.tokenPallet.valueKey],
+        Array.isArray(tokenAsset?.metadata.decimals)
+          ? tokenAsset?.metadata.decimals[1]
+          : tokenAsset?.metadata.decimals
+      )
+    }
+  } catch (error) {}
+
+  return balance
+}
+
+export async function getNearTokenBalance({
   nodeUrl,
   accountId,
   tokenAsset,

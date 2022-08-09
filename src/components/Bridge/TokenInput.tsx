@@ -32,7 +32,7 @@ import {
   TokenAsset,
 } from "types"
 import { DecimalUtil, ZERO_DECIMAL } from "utils"
-import { getTokenBalance } from "utils/bridge"
+import { getNearTokenBalance, getPolkaTokenBalance } from "utils/bridge"
 import { SelectTokenModal } from "views/Bridge/SelectTokenModal"
 
 export default function TokenInpput({
@@ -122,29 +122,40 @@ export default function TokenInpput({
   }, [filteredTokens, onUpdateTokenAsset])
 
   useEffect(() => {
-    if (!(tokenAsset && accountId)) {
-      setBalance(ZERO_DECIMAL)
+    if (!(tokenAsset && from)) {
       return
     }
     if (isNear) {
       setIsLoadingBalance.on()
 
-      getTokenBalance({
+      getNearTokenBalance({
         nodeUrl: selector.options.network.nodeUrl,
-        accountId,
+        accountId: from,
         tokenAsset,
       }).then((bal) => {
         setBalance(bal)
         setIsLoadingBalance.off()
       })
-    } else {
+    } else if (appchainApi && bridgeConfig) {
+      setIsLoadingBalance.on()
+      getPolkaTokenBalance({
+        account: from,
+        appchainApi: appchainApi,
+        tokenAsset,
+        bridgeConfig,
+      }).then((bal) => {
+        setBalance(bal)
+        setIsLoadingBalance.off()
+      })
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     tokenAsset,
-    accountId,
-    setIsLoadingBalance,
+    from,
     selector.options.network.nodeUrl,
     isNear,
+    appchainApi,
+    bridgeConfig,
   ])
 
   const onSelectToken = (

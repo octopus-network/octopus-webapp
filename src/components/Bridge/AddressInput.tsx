@@ -46,13 +46,11 @@ export default function AddressInpput({
     isEvm
   )
   const isNear = chain === "NEAR"
-  const isFrom = label === "From"
+  // const isFrom = label === "From"
 
   const onUpdateAddress = useCallback(
     (value: string | undefined) => {
       setAddress(value)
-      console.log("onUpdateAddress", value)
-
       onChange(value)
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -69,6 +67,7 @@ export default function AddressInpput({
 
   const onSelectAccount = (account: InjectedAccountWithMeta) => {
     setCurrentAccount(account)
+    onUpdateAddress(account.address)
     setSelectAccountModalOpen.off()
   }
 
@@ -133,45 +132,34 @@ export default function AddressInpput({
                     .icon as any)
             }
           />
-          {isFrom ? (
-            <Heading
-              fontSize="lg"
-              textOverflow="ellipsis"
-              overflow="hidden"
-              whiteSpace="nowrap"
-            >
-              {address || chain}
-            </Heading>
-          ) : (
-            <InputGroup variant="unstyled">
-              <Input
-                value={address}
-                size="lg"
-                fontWeight={600}
-                maxW="calc(100% - 40px)"
-                placeholder={`Target account in ${chain}`}
-                borderRadius="none"
-                onChange={(e) => onUpdateAddress(e.target.value)}
-                type="text"
-              />
-              {address && (
-                <InputRightElement>
-                  <IconButton
-                    aria-label="clear"
-                    size="sm"
-                    isRound
-                    onClick={onClear}
-                  >
-                    <Icon
-                      as={AiFillCloseCircle}
-                      boxSize={5}
-                      className="octo-gray"
-                    />
-                  </IconButton>
-                </InputRightElement>
-              )}
-            </InputGroup>
-          )}
+          <InputGroup variant="unstyled">
+            <Input
+              value={address}
+              size="lg"
+              fontWeight={600}
+              maxW="calc(100% - 40px)"
+              placeholder={`Target account in ${chain}`}
+              borderRadius="none"
+              onChange={(e) => onUpdateAddress(e.target.value)}
+              type="text"
+            />
+            {address && (
+              <InputRightElement>
+                <IconButton
+                  aria-label="clear"
+                  size="sm"
+                  isRound
+                  onClick={onClear}
+                >
+                  <Icon
+                    as={AiFillCloseCircle}
+                    boxSize={5}
+                    className="octo-gray"
+                  />
+                </IconButton>
+              </InputRightElement>
+            )}
+          </InputGroup>
         </HStack>
 
         {!address ? (
