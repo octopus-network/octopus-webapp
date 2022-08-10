@@ -27,12 +27,7 @@ import { IoMdThumbsUp, IoMdThumbsDown } from "react-icons/io"
 import { AppchainInfo, UserVotes } from "types"
 import { API_HOST } from "config"
 
-import {
-  OCT_TOKEN_DECIMALS,
-  SIMPLE_CALL_GAS,
-  COMPLEX_CALL_GAS,
-  FAILED_TO_REDIRECT_MESSAGE,
-} from "primitives"
+import { OCT_TOKEN_DECIMALS, COMPLEX_CALL_GAS } from "primitives"
 
 import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
@@ -196,9 +191,6 @@ const VotePopover: React.FC<VotePopoverProps> = ({
       })
       .catch((err) => {
         setIsWithdrawing.off()
-        if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
-          return
-        }
         Toast.error(err)
       })
   }
@@ -394,9 +386,6 @@ export const VoteActions: React.FC<VoteActionsProps> = ({ data }) => {
           .then(() => window.location.reload())
       })
       .catch((err) => {
-        if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
-          return
-        }
         Toast.error(err)
       })
   }

@@ -24,11 +24,7 @@ import { DecimalUtil, ZERO_DECIMAL } from "utils"
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
 
-import {
-  FAILED_TO_REDIRECT_MESSAGE,
-  COMPLEX_CALL_GAS,
-  OCT_TOKEN_DECIMALS,
-} from "primitives"
+import { COMPLEX_CALL_GAS, OCT_TOKEN_DECIMALS } from "primitives"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
 

@@ -87,11 +87,11 @@ export default function AddressInpput({
   }
 
   useEffect(() => {
+    setTargetAccountNeedDepositStorage.off()
     if (!address || isFrom || !tokenAsset) {
       return
     }
     if (isNear) {
-      setTargetAccountNeedDepositStorage.off()
       const provider = new providers.JsonRpcProvider({
         url: selector.options.network.nodeUrl,
       })
@@ -110,7 +110,6 @@ export default function AddressInpput({
           }
         })
     } else if (appchainApi) {
-      setTargetAccountNeedDepositStorage.off()
       appchainApi?.query.system.account(address).then((res: any) => {
         if (res.providers.toNumber() === 0) {
           setTargetAccountNeedDepositStorage.on()

@@ -17,11 +17,7 @@ import {
   useBoolean,
 } from "@chakra-ui/react"
 
-import {
-  OCT_TOKEN_DECIMALS,
-  COMPLEX_CALL_GAS,
-  FAILED_TO_REDIRECT_MESSAGE,
-} from "primitives"
+import { OCT_TOKEN_DECIMALS, COMPLEX_CALL_GAS } from "primitives"
 
 import { decodeAddress } from "@polkadot/util-crypto"
 import { u8aToHex, isHex } from "@polkadot/util"
