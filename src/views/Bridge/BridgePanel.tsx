@@ -548,15 +548,7 @@ export const BridgePanel: React.FC = () => {
                 }
                 onClick={onSubmit}
               >
-                {!from
-                  ? "Connect Wallet"
-                  : !to
-                  ? "Input Target Account"
-                  : !collectible
-                  ? !amount
-                    ? "Input Amount"
-                    : "Transfer"
-                  : "Transfer"}
+                Transfer
               </Button>
             </Box>
           </Box>

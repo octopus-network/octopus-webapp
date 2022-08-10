@@ -190,7 +190,7 @@ export default function AddressInpput({
           : tokenAsset?.metadata.decimals
       )
       const toDepositAmount = DecimalUtil.toU64(
-        new Decimal(0.01),
+        new Decimal(isEvm ? 0.0002 : 0.01),
         appchain?.appchain_metadata?.fungible_token_metadata?.decimals
       ).toString()
 
