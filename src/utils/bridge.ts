@@ -7,13 +7,12 @@ import { BigNumber, ethers } from "ethers"
 import { providers } from "near-api-js"
 import { CodeResult } from "near-api-js/lib/providers/provider"
 import { COMPLEX_CALL_GAS } from "primitives"
-import { BridgeHistoryStatus, TokenAsset } from "types"
+import { BridgeHistoryStatus, TokenAsset, BridgeConfig } from "types"
 import OctopusAppchain from "./abis/OctopusAppchain.json"
 import OctopusSession from "./abis/OctopusSession.json"
 import { DecimalUtil, ZERO_DECIMAL } from "./decimal"
 import web3 from "web3"
-
-import { BridgeConfig } from "types"
+import BN from "bn.js"
 
 let _signer: ethers.providers.JsonRpcSigner | null = null
 
@@ -53,7 +52,7 @@ export async function isValidAddress({
   // substrate address
   if (isNearToAppchain) {
     return (
-      (!isEvm && (isHex(address) || !isAddress(address))) ||
+      (!isEvm && (isHex(address) || isAddress(address))) ||
       (isEvm && web3.utils.isAddress(address))
     )
   }
@@ -64,6 +63,22 @@ export async function isValidAddress({
   // } catch (error) {
   //   return false
   // }
+}
+
+export async function isValidAmount({
+  address,
+  isNearToAppchain,
+  amount,
+}: {
+  address: string
+  isNearToAppchain: boolean
+  amount: BN
+}): Promise<boolean> {
+  if (amount.lte(new BN(0))) {
+    return false
+  }
+
+  return true
 }
 
 export async function getPolkaTokenBalance({
@@ -183,6 +198,7 @@ export async function nearBurn({
   )
 
   let targetAccountInHex = targetAccount
+
   if (!isEvm) {
     targetAccountInHex = toHexAddress(targetAccount || "")
   }
@@ -309,8 +325,6 @@ export async function substrateBurn({
 
   await tx.signAndSend(fromAccount, ({ events = [] }: any) => {
     events.forEach(({ event: { data, method, section } }: any) => {
-      console.log("event", { data, method, section })
-
       if (
         section === "octopusAppchain" &&
         (method === "Locked" || method === "AssetBurned")
@@ -336,30 +350,46 @@ export async function evmBurn({
   asset_id,
   amount,
   receiver_id,
+  updateTxn,
+  appchainId,
+  fromAccount,
 }: {
   asset_id?: number
   amount: string
   receiver_id: string
+  updateTxn: (key: string, value: any) => void
+  appchainId?: string
+  fromAccount?: string
 }) {
+  let hash = ""
   if (typeof asset_id === "number") {
-    evmBurnAsset(asset_id, amount, receiver_id)
+    hash = await evmBurnAsset(asset_id, amount, receiver_id)
   } else {
-    evmLock(amount, receiver_id)
+    hash = await evmLock(amount, receiver_id)
   }
+  updateTxn(appchainId || "", {
+    isAppchainSide: true,
+    appchainId,
+    hash,
+    sequenceId: 0,
+    amount,
+    status: BridgeHistoryStatus.Pending,
+    timestamp: new Date().getTime(),
+    fromAccount,
+    toAccount: receiver_id,
+    tokenContractId: asset_id,
+  })
 }
 
 export async function evmLock(amount: string, receiver_id: string) {
-  try {
-    const signer = getSigner()
-    const contract = new ethers.Contract(
-      OctopusAppchainAddress,
-      OctopusAppchain,
-      signer
-    )
-    await contract.lock(amount, receiver_id)
-  } catch (error) {
-    throw error
-  }
+  const signer = getSigner()
+  const contract = new ethers.Contract(
+    OctopusAppchainAddress,
+    OctopusAppchain,
+    signer
+  )
+  const tx = await contract.lock(amount, receiver_id)
+  return tx.hash
 }
 
 export async function evmBurnAsset(
@@ -367,17 +397,14 @@ export async function evmBurnAsset(
   amount: string,
   receiver_id: string
 ) {
-  try {
-    const signer = getSigner()
-    const contract = new ethers.Contract(
-      OctopusAppchainAddress,
-      OctopusAppchain,
-      signer
-    )
-    await contract.burn_asset(asset_id, amount, receiver_id)
-  } catch (error) {
-    throw error
-  }
+  const signer = getSigner()
+  const contract = new ethers.Contract(
+    OctopusAppchainAddress,
+    OctopusAppchain,
+    signer
+  )
+  const tx = await contract.burn_asset(asset_id, amount, receiver_id)
+  return tx.hash
 }
 
 export async function evmLockNft(

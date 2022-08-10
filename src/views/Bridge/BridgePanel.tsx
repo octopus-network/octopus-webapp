@@ -3,24 +3,18 @@ import useSWR from "swr"
 import { ApiPromise, WsProvider } from "@polkadot/api"
 import { PulseLoader } from "react-spinners"
 import { providers } from "near-api-js"
+import detectEthereumProvider from "@metamask/detect-provider"
 
 import {
   Box,
   Heading,
   Flex,
-  VStack,
   useColorModeValue,
   Center,
-  Skeleton,
-  InputRightElement,
-  Input,
-  Image,
   HStack,
   Text,
-  InputGroup,
   Icon,
   IconButton,
-  Avatar,
   Spinner,
   CircularProgress,
   CircularProgressLabel,
@@ -42,7 +36,7 @@ import {
 } from "types"
 
 import { ChevronRightIcon } from "@chakra-ui/icons"
-import { isHex, stringToHex } from "@polkadot/util"
+import { stringToHex } from "@polkadot/util"
 
 import { web3FromSource, web3Enable } from "@polkadot/extension-dapp"
 
@@ -55,11 +49,9 @@ import {
   useLocation,
   Link as RouterLink,
 } from "react-router-dom"
-import Decimal from "decimal.js"
 import { DecimalUtil } from "utils"
 import { useTxnsStore } from "stores"
 
-import { FAILED_TO_REDIRECT_MESSAGE, SIMPLE_CALL_GAS } from "primitives"
 import useAccounts from "hooks/useAccounts"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
@@ -67,23 +59,21 @@ import { CodeResult } from "near-api-js/lib/providers/provider"
 import {
   evmBurn,
   isValidAddress,
+  isValidAmount,
   nearBurn,
   nearBurnNft,
   substrateBurn,
 } from "utils/bridge"
 import AddressInpput from "components/Bridge/AddressInput"
 import TokenInpput from "components/Bridge/TokenInput"
-import { isAddress } from "@polkadot/util-crypto"
 
 export const BridgePanel: React.FC = () => {
   const bg = useColorModeValue("white", "#15172c")
   const { appchainId } = useParams()
   const navigate = useNavigate()
 
-  const [isLoadingBalance, setIsLoadingBalance] = useBoolean()
   const [isTransferring, setIsTransferring] = useBoolean()
   const [isHistoryDrawerOpen, setIsHistoryDrawerOpen] = useBoolean()
-  const [isDepositingStorage, setIsDepositingStorage] = useBoolean()
 
   const { accountId, registry, networkConfig, selector } = useWalletSelector()
   const { txns, updateTxn, clearTxnsOfAppchain } = useTxnsStore()
@@ -119,9 +109,6 @@ export const BridgePanel: React.FC = () => {
   const [from, setFrom] = useState("")
   const [to, setTo] = useState("")
   const [amount, setAmount] = useState("")
-
-  const [targetAccountNeedDepositStorage, setTargetAccountNeedDepositStorage] =
-    useBoolean()
 
   const filteredTokens = useMemo(() => {
     if (!tokens?.length) {
@@ -174,7 +161,6 @@ export const BridgePanel: React.FC = () => {
     setTokenAsset(undefined)
     setCollectible(undefined)
     setAppchainApi(undefined)
-    setIsLoadingBalance.on()
     setAmount("")
     setTimeout(() => {
       amountInputRef.current?.focus()
@@ -289,84 +275,60 @@ export const BridgePanel: React.FC = () => {
   }
 
   const burnToken = async () => {
-    setIsTransferring.on()
-
-    try {
-      const wallet = await selector.wallet()
-      await nearBurn({
-        token: tokenAsset!,
-        wallet,
-        anchorId: appchain?.appchain_anchor!,
-        isEvm,
-        targetAccount: to,
-        amount,
-      })
-      setIsTransferring.off()
-      Toast.success("Transferred")
-    } catch (err: any) {
-      setIsTransferring.off()
-      Toast.error(err)
-    }
+    const wallet = await selector.wallet()
+    await nearBurn({
+      token: tokenAsset!,
+      wallet,
+      anchorId: appchain?.appchain_anchor!,
+      isEvm,
+      targetAccount: to,
+      amount,
+    })
   }
 
   const burnCollectible = async () => {
-    try {
-      setIsTransferring.on()
-      const wallet = await selector.wallet()
-      const anchorId = `${appchainId}.${registry?.contractId}`
-      await nearBurnNft({
-        wallet,
-        anchorId,
-        receiverId: `${collectible?.class}.${anchorId}`,
-        tokenId: collectible?.id!,
-        targetAccount: to,
-      })
-      setIsTransferring.off()
-      Toast.success("Transferred")
-    } catch (err: any) {
-      setIsTransferring.off()
-      Toast.error(err)
-    }
+    const wallet = await selector.wallet()
+    const anchorId = `${appchainId}.${registry?.contractId}`
+    await nearBurnNft({
+      wallet,
+      anchorId,
+      receiverId: `${collectible?.class}.${anchorId}`,
+      tokenId: collectible?.id!,
+      targetAccount: to,
+    })
   }
 
   const redeemToken = async () => {
-    setIsTransferring.on()
-
-    try {
-      const targetAccountInHex = stringToHex(to)
-      const amountInU64 = DecimalUtil.toU64(
-        DecimalUtil.fromString(amount),
-        Array.isArray(tokenAsset?.metadata.decimals)
-          ? tokenAsset?.metadata.decimals[0]
-          : tokenAsset?.metadata.decimals
-      )
-      if (isEvm) {
-        await evmBurn({
-          asset_id: tokenAsset?.assetId,
-          amount: amountInU64.toString(),
-          receiver_id: targetAccountInHex,
-        })
-      } else {
-        substrateBurn({
-          api: appchainApi!,
-          targetAccount: to,
-          amount: amountInU64.toString(),
-          asset: tokenAsset,
-          fromAccount: from!,
-          appchainId: appchainId!,
-          updateTxn,
-        })
-      }
-      setIsTransferring.off()
-    } catch (error) {
-      Toast.error(error)
-      setIsTransferring.off()
+    const targetAccountInHex = stringToHex(to)
+    const amountInU64 = DecimalUtil.toU64(
+      DecimalUtil.fromString(amount),
+      Array.isArray(tokenAsset?.metadata.decimals)
+        ? tokenAsset?.metadata.decimals[0]
+        : tokenAsset?.metadata.decimals
+    )
+    if (isEvm) {
+      await evmBurn({
+        asset_id: tokenAsset?.assetId,
+        amount: amountInU64.toString(),
+        receiver_id: targetAccountInHex,
+        updateTxn,
+        appchainId,
+        fromAccount: from,
+      })
+    } else {
+      await substrateBurn({
+        api: appchainApi!,
+        targetAccount: to,
+        amount: amountInU64.toString(),
+        asset: tokenAsset,
+        fromAccount: from!,
+        appchainId: appchainId!,
+        updateTxn,
+      })
     }
   }
 
   const redeemCollectible = async () => {
-    setIsTransferring.on()
-
     const targetAccountInHex = stringToHex(to)
 
     const tx: any = appchainApi?.tx.octopusAppchain.lockNft(
@@ -375,132 +337,113 @@ export const BridgePanel: React.FC = () => {
       targetAccountInHex
     )
 
-    await tx
-      .signAndSend(from, ({ events = [] }: any) => {
-        events.forEach(({ event: { data, method, section } }: any) => {
-          if (section === "octopusAppchain" && method === "NftLocked") {
-            setIsTransferring.off()
-            setCollectible(undefined)
-          }
-        })
+    await tx.signAndSend(from, ({ events = [] }: any) => {
+      events.forEach(({ event: { data, method, section } }: any) => {
+        if (section === "octopusAppchain" && method === "NftLocked") {
+          setIsTransferring.off()
+          setCollectible(undefined)
+        }
       })
-      .catch((err: any) => {
-        Toast.error(err)
-        setIsTransferring.off()
-      })
-  }
-
-  const onBurn = () => {
-    if (!collectible) {
-      burnToken()
-    } else {
-      burnCollectible()
-    }
-  }
-
-  const onRedeem = async () => {
-    // eth
-    if (isEvm) {
-    } else {
-      await web3Enable("Octopus Network")
-      const injected = await web3FromSource(to || "")
-      appchainApi?.setSigner(injected.signer)
-    }
-
-    if (!collectible) {
-      redeemToken()
-    } else {
-      redeemCollectible()
-    }
+    })
   }
 
   const onClearHistory = () => {
     clearTxnsOfAppchain(appchainId || "")
   }
 
-  const onDepositStorage = async () => {
-    if (isNearToAppchain) {
-      if (!appchainApi || !currentAccount) {
-        return
-      }
-      await web3Enable("Octopus Network")
-      const injected = await web3FromSource(currentAccount.meta.source || "")
-      appchainApi.setSigner(injected.signer)
-
-      setIsDepositingStorage.on()
-
-      const res = await appchainApi?.query.system.account(from)
-      const resJSON: any = res?.toJSON()
-      const balance = DecimalUtil.fromString(
-        resJSON?.data?.free,
-        Array.isArray(tokenAsset?.metadata.decimals)
-          ? tokenAsset?.metadata.decimals[1]
-          : tokenAsset?.metadata.decimals
-      )
-      const toDepositAmount = DecimalUtil.toU64(
-        new Decimal(0.01),
-        appchain?.appchain_metadata?.fungible_token_metadata?.decimals
-      ).toString()
-
-      if (!balance.gte(toDepositAmount)) {
-        return Toast.error("Balance not enough")
-      }
-      const tx = appchainApi.tx.balances.transfer(to, toDepositAmount)
-
-      tx.signAndSend(currentAccount.address, (res) => {
-        if (res.isInBlock) {
-          setIsDepositingStorage.off()
-          setTargetAccountNeedDepositStorage.off()
-        }
-      })
-
-      return
-    }
-
-    try {
-      setIsDepositingStorage.on()
-      const wallet = await selector.wallet()
-
-      await wallet.signAndSendTransaction({
-        signerId: accountId,
-        receiverId: tokenAsset?.contractId,
-        actions: [
-          {
-            type: "FunctionCall",
-            params: {
-              methodName: "storage_deposit",
-              args: { account_id: to },
-              gas: SIMPLE_CALL_GAS,
-              deposit: "1250000000000000000000",
-            },
-          },
-        ],
-      })
-      setIsDepositingStorage.off()
-    } catch (err) {
-      setIsDepositingStorage.off()
-      if (err instanceof Error) {
-        if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
-          return
-        }
-        Toast.error(err)
-      }
-    }
-  }
-
   const onSubmit = async () => {
     try {
-      const isValidTargetAddress = await isValidAddress({
+      setIsTransferring.on()
+      const _isValidTargetAddress = await isValidAddress({
         address: to,
         isNearToAppchain,
         isEvm,
       })
-      if (!isValidTargetAddress) {
+      if (!_isValidTargetAddress) {
         throw new Error("Invalid target account")
       }
+      // check chain if it's BarnacleEvm
+      if (isEvm && !isNearToAppchain) {
+        const chainId = window.ethereum?.networkVersion
+
+        if (chainId !== Number(appchain?.evm_chain_id)) {
+          const provider = (await detectEthereumProvider({
+            mustBeMetaMask: true,
+          })) as any
+          if (!provider) {
+            throw new Error("Please install MetaMask first")
+          }
+
+          await provider.request({
+            method: "wallet_addEthereumChain",
+            params: [
+              {
+                chainId: "0x" + Number(appchain.evm_chain_id).toString(16), // Moonbase Alpha's chainId is 1287, which is 0x507 in hex
+                chainName: appchain?.appchain_id,
+                nativeCurrency: {
+                  name: appchain.appchain_metadata.fungible_token_metadata.name,
+                  symbol:
+                    appchain.appchain_metadata.fungible_token_metadata.symbol,
+                  decimals:
+                    appchain.appchain_metadata.fungible_token_metadata.decimals,
+                },
+                rpcUrls: [
+                  (appchainSettings?.rpc_endpoint || "").replace(
+                    "wss:",
+                    "https:"
+                  ),
+                ],
+                blockExplorerUrls: ["https://moonbase.moonscan.io/"],
+              },
+            ],
+          })
+        }
+      } else if (!isNearToAppchain && !isEvm) {
+        console.log("web3Enabling", from)
+        await web3Enable("Octopus Network")
+        const injected = await web3FromSource(currentAccount?.meta.source || "")
+        appchainApi?.setSigner(injected.signer)
+      }
+
       // check amount
-      // check actions
+      console.log("tokenAsset", tokenAsset)
+
+      if (tokenAsset) {
+        const amountInU64 = DecimalUtil.toU64(
+          DecimalUtil.fromString(amount),
+          Array.isArray(tokenAsset?.metadata.decimals)
+            ? tokenAsset?.metadata.decimals[0]
+            : tokenAsset?.metadata.decimals
+        )
+        const _isValidAmount = await isValidAmount({
+          address: from,
+          isNearToAppchain,
+          amount: amountInU64,
+        })
+
+        if (!_isValidAmount) {
+          throw new Error("Invalid amount")
+        }
+
+        if (isNearToAppchain) {
+          await burnToken()
+        } else {
+          await redeemToken()
+        }
+      }
+
+      if (collectible) {
+        if (isNearToAppchain) {
+          await burnCollectible()
+        } else {
+          await redeemCollectible()
+        }
+      }
+      setIsTransferring.off()
+      Toast.success("Bridging")
+      window.location.reload()
     } catch (error) {
+      setIsTransferring.off()
       Toast.error(error)
     }
   }
@@ -580,6 +523,7 @@ export const BridgePanel: React.FC = () => {
               chain={!isNearToAppchain ? "NEAR" : appchainId}
               appchain={appchain}
               onChange={(to) => setTo(to || "")}
+              tokenAsset={tokenAsset}
             />
             <TokenInpput
               chain={isNearToAppchain ? "NEAR" : appchainId}
@@ -596,25 +540,18 @@ export const BridgePanel: React.FC = () => {
                 size="lg"
                 width="100%"
                 isDisabled={
-                  !from ||
-                  isLoadingBalance ||
-                  !to ||
-                  (!collectible && !amount) ||
-                  isTransferring ||
-                  targetAccountNeedDepositStorage
+                  !from || !to || (!collectible && !amount) || isTransferring
                 }
                 isLoading={isTransferring}
                 spinner={
                   <PulseLoader color="rgba(255, 255, 255, .9)" size={12} />
                 }
-                onClick={isNearToAppchain ? onBurn : onRedeem}
+                onClick={onSubmit}
               >
                 {!from
                   ? "Connect Wallet"
                   : !to
                   ? "Input Target Account"
-                  : targetAccountNeedDepositStorage
-                  ? "Invalid Target Account"
                   : !collectible
                   ? !amount
                     ? "Input Amount"

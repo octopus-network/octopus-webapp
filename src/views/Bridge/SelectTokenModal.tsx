@@ -191,7 +191,7 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
           >
             Token
           </Button>
-          <Button
+          {/* <Button
             size="sm"
             variant="ghost"
             onClick={() => setTabIdx(1)}
@@ -199,7 +199,7 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
             opacity={tabIdx === 1 ? 1 : 0.5}
           >
             Collectible
-          </Button>
+          </Button> */}
         </HStack>
       </HStack>
       {tabIdx === 0 ? (

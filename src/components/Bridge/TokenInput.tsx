@@ -20,8 +20,6 @@ import { ApiPromise } from "@polkadot/api"
 import { AmountInput } from "components/AmountInput"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import Decimal from "decimal.js"
-import { providers } from "near-api-js"
-import { CodeResult } from "near-api-js/lib/providers/provider"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { AiFillCloseCircle } from "react-icons/ai"
 import useSWR from "swr"
@@ -242,6 +240,7 @@ export default function TokenInpput({
             fontSize="xl"
             fontWeight={700}
             unstyled
+            min={0}
             value={amount}
             onChange={onUpdateAmount}
             onFocus={setIsAmountInputFocused.on}

@@ -39,6 +39,7 @@ export type AppchainInfo = {
   upvote_deposit: string
   validator_count: number
   voting_score: string
+  evm_chain_id: string
 }
 
 export type IndexRange = {
