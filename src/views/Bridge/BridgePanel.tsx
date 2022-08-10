@@ -3,25 +3,18 @@ import useSWR from "swr"
 import { ApiPromise, WsProvider } from "@polkadot/api"
 import { PulseLoader } from "react-spinners"
 import { providers } from "near-api-js"
-import web3 from "web3"
+import detectEthereumProvider from "@metamask/detect-provider"
 
 import {
   Box,
   Heading,
   Flex,
-  VStack,
   useColorModeValue,
   Center,
-  Skeleton,
-  InputRightElement,
-  Input,
-  Image,
   HStack,
   Text,
-  InputGroup,
   Icon,
   IconButton,
-  Avatar,
   Spinner,
   CircularProgress,
   CircularProgressLabel,
@@ -43,75 +36,46 @@ import {
 } from "types"
 
 import { ChevronRightIcon } from "@chakra-ui/icons"
-import { decodeAddress, isAddress } from "@polkadot/util-crypto"
-import { u8aToHex, stringToHex, isHex } from "@polkadot/util"
-import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types"
+import { stringToHex } from "@polkadot/util"
 
 import { web3FromSource, web3Enable } from "@polkadot/extension-dapp"
 
 import { Empty } from "components"
-import nearLogo from "assets/near.svg"
-import { ChevronDownIcon, WarningIcon } from "@chakra-ui/icons"
 import { MdSwapVert } from "react-icons/md"
-import { AiFillCloseCircle } from "react-icons/ai"
-import { SelectWeb3AccountModal } from "./SelectWeb3AccountModal"
-import { SelectTokenModal } from "./SelectTokenModal"
 import { History } from "./History"
-import { AmountInput } from "components"
 import {
   useParams,
   useNavigate,
   useLocation,
   Link as RouterLink,
 } from "react-router-dom"
-import Decimal from "decimal.js"
-import { ZERO_DECIMAL, DecimalUtil } from "utils"
+import { DecimalUtil } from "utils"
 import { useTxnsStore } from "stores"
-import { useDebounce } from "use-debounce"
 
-import {
-  COMPLEX_CALL_GAS,
-  FAILED_TO_REDIRECT_MESSAGE,
-  SIMPLE_CALL_GAS,
-} from "primitives"
 import useAccounts from "hooks/useAccounts"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
 import { CodeResult } from "near-api-js/lib/providers/provider"
-import { evmBurn, nearBurn, nearBurnNft, substrateBurn } from "utils/bridge"
-
-function toHexAddress(ss58Address: string) {
-  if (isHex(ss58Address)) {
-    return ""
-  }
-  try {
-    const u8a = decodeAddress(ss58Address)
-    return u8aToHex(u8a)
-  } catch (err) {
-    return ""
-  }
-}
+import {
+  evmBurn,
+  isValidAddress,
+  isValidAmount,
+  nearBurn,
+  nearBurnNft,
+  substrateBurn,
+} from "utils/bridge"
+import AddressInpput from "components/Bridge/AddressInput"
+import TokenInpput from "components/Bridge/TokenInput"
 
 export const BridgePanel: React.FC = () => {
   const bg = useColorModeValue("white", "#15172c")
   const { appchainId } = useParams()
   const navigate = useNavigate()
 
-  const grayBg = useColorModeValue("#f2f4f7", "#1e1f34")
-  const [isLogging, setIsLogging] = useBoolean()
-  const [isLoadingBalance, setIsLoadingBalance] = useBoolean()
-  const [isAmountInputFocused, setIsAmountInputFocused] = useBoolean()
-  const [isAccountInputFocused, setIsAccountInputFocused] = useBoolean()
-  const [selectAccountModalOpen, setSelectAccountModalOpen] = useBoolean()
-  const [selectTokenModalOpen, setSelectTokenModalOpen] = useBoolean()
   const [isTransferring, setIsTransferring] = useBoolean()
   const [isHistoryDrawerOpen, setIsHistoryDrawerOpen] = useBoolean()
-  const [isDepositingStorage, setIsDepositingStorage] = useBoolean()
 
-  const [lastTokenContractId, setLastTokenContractId] = useState("")
-
-  const { accountId, registry, networkConfig, selector, modal } =
-    useWalletSelector()
+  const { accountId, registry, networkConfig, selector } = useWalletSelector()
   const { txns, updateTxn, clearTxnsOfAppchain } = useTxnsStore()
   const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(
     appchainId ? `appchain/${appchainId}` : null,
@@ -119,10 +83,6 @@ export const BridgePanel: React.FC = () => {
   )
   const { data: appchainSettings } = useSWR<AppchainSettings>(
     appchainId ? `appchain-settings/${appchainId}` : null
-  )
-
-  const { data: collectibleClasses } = useSWR<number[]>(
-    appchainId ? `collectible-classes/${appchainId}` : null
   )
 
   const { data: tokens } = useSWR<TokenAsset[]>(
@@ -135,38 +95,20 @@ export const BridgePanel: React.FC = () => {
   const isEvm = appchain?.appchain_metadata.template_type === "BarnacleEvm"
 
   const { pathname } = useLocation()
-  const [amount, setAmount] = useState("")
-  const isReverse = useMemo(
+  const isNearToAppchain = useMemo(
     () => !appchainId || new RegExp(`^/bridge/near/`).test(pathname),
-    [pathname]
+    [appchainId, pathname]
   )
 
-  const fromChainName = useMemo(
-    () => (isReverse ? "NEAR" : appchainId),
-    [isReverse, appchainId]
-  )
-  const targetChainName = useMemo(
-    () => (!isReverse ? "NEAR" : appchainId),
-    [isReverse, appchainId]
-  )
+  const { currentAccount } = useAccounts(isEvm, isEvm)
 
-  const { accounts, currentAccount, setCurrentAccount } = useAccounts(
-    isEvm,
-    isEvm
-  )
-
-  const [targetAccount, setTargetAccount] = useState("")
-  const [tokenAsset, setTokenAsset] = useState<TokenAsset>()
-  const [collectible, setCollectible] = useState<Collectible>()
   const [appchainApi, setAppchainApi] = useState<ApiPromise>()
 
-  const [isInvalidTargetAccount, setIsInvalidTargetAccount] = useBoolean()
-  const [targetAccountNeedDepositStorage, setTargetAccountNeedDepositStorage] =
-    useBoolean()
-
-  const [balance, setBalance] = useState<Decimal>()
-
-  const [debouncedTargetAccount] = useDebounce(targetAccount, 600)
+  const [tokenAsset, setTokenAsset] = useState<TokenAsset>()
+  const [collectible, setCollectible] = useState<Collectible>()
+  const [from, setFrom] = useState("")
+  const [to, setTo] = useState("")
+  const [amount, setAmount] = useState("")
 
   const filteredTokens = useMemo(() => {
     if (!tokens?.length) {
@@ -216,57 +158,28 @@ export const BridgePanel: React.FC = () => {
       return
     }
 
-    setLastTokenContractId(
-      window.localStorage.getItem("OCTOPUS_BRIDGE_TOKEN_CONTRACT_ID") || ""
-    )
-
     setTokenAsset(undefined)
     setCollectible(undefined)
     setAppchainApi(undefined)
-    setIsLoadingBalance.on()
     setAmount("")
     setTimeout(() => {
       amountInputRef.current?.focus()
     }, 300)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appchainId])
-
-  useEffect(() => {
-    if (filteredTokens.length) {
-      setTokenAsset(
-        lastTokenContractId
-          ? filteredTokens.find((t) => t.contractId === lastTokenContractId) ||
-              filteredTokens[0]
-          : filteredTokens[0]
-      )
-    }
-  }, [filteredTokens, lastTokenContractId])
-
-  const fromAccount = useMemo(() => {
-    if (isReverse) {
-      return accountId
-      // } else if (appchainId?.includes("evm")) {
-      //   return ethAccounts[0]
-    }
-
-    return currentAccount?.address
-  }, [isReverse, accountId, currentAccount])
-  const initialTargetAccount = useMemo(
-    () => (!isReverse ? accountId : currentAccount?.address),
-    [isReverse, accountId, currentAccount]
-  )
 
   const appchainTxns = useMemo(
     () =>
       Object.values(appchainId ? txns?.[appchainId] || {} : {})
         .filter(
           (t) =>
-            t.fromAccount === fromAccount ||
-            t.toAccount === fromAccount ||
+            t.fromAccount === from ||
+            t.toAccount === from ||
             t.fromAccount === accountId ||
             t.toAccount === accountId
         )
         .sort((a, b) => b.timestamp - a.timestamp),
-    [appchainId, txns, accountId, fromAccount]
+    [appchainId, txns, accountId, from]
   )
 
   const pendingTxns = useMemo(
@@ -274,84 +187,6 @@ export const BridgePanel: React.FC = () => {
       appchainTxns.filter((txn) => txn.status === BridgeHistoryStatus.Pending),
     [appchainTxns]
   )
-
-  const checkNearAccount = useCallback(async () => {
-    if (!debouncedTargetAccount || !tokenAsset) {
-      return
-    }
-
-    try {
-      setIsInvalidTargetAccount.off()
-      const provider = new providers.JsonRpcProvider({
-        url: selector.options.network.nodeUrl,
-      })
-      const res = await provider.query<CodeResult>({
-        request_type: "call_function",
-        account_id: tokenAsset.contractId,
-        method_name: "storage_balance_of",
-        args_base64: btoa(
-          JSON.stringify({ account_id: debouncedTargetAccount })
-        ),
-        finality: "optimistic",
-      })
-      const storage = JSON.parse(Buffer.from(res.result).toString())
-
-      if (storage === null) {
-        setTargetAccountNeedDepositStorage.on()
-      } else {
-        setTargetAccountNeedDepositStorage.off()
-      }
-    } catch (error) {
-      console.log("error", error)
-
-      setIsInvalidTargetAccount.on()
-      Toast.error(error)
-    }
-  }, [debouncedTargetAccount, tokenAsset, selector.options.network.nodeUrl])
-
-  const checkAppchainAccount = useCallback(() => {
-    if (!appchainApi || !debouncedTargetAccount) {
-      return
-    }
-    console.log(
-      "checkAppchainAccount",
-      isEvm,
-      web3.utils.isAddress(debouncedTargetAccount)
-    )
-
-    if (
-      (!isEvm &&
-        (isHex(debouncedTargetAccount) ||
-          !isAddress(debouncedTargetAccount))) ||
-      (isEvm && web3.utils.isAddress(debouncedTargetAccount))
-    ) {
-      setIsInvalidTargetAccount.off()
-      return
-    }
-    if (tokenAsset?.assetId === undefined) {
-      return
-    }
-    appchainApi?.query.system.account(debouncedTargetAccount).then((res) => {
-      if (res.providers.toNumber() === 0) {
-        setTargetAccountNeedDepositStorage.on()
-      }
-    })
-  }, [appchainApi, debouncedTargetAccount, isEvm, tokenAsset?.assetId])
-
-  const checkTargetAccount = React.useRef<any>()
-  checkTargetAccount.current = () => {
-    setIsInvalidTargetAccount.off()
-    setTargetAccountNeedDepositStorage.off()
-    if (isReverse) {
-      checkAppchainAccount()
-    } else {
-      checkNearAccount()
-    }
-  }
-
-  useEffect(() => {
-    checkTargetAccount.current()
-  }, [debouncedTargetAccount, tokenAsset])
 
   const pendingTxnsChecker = React.useRef<any>()
   const isCheckingTxns = React.useRef(false)
@@ -429,263 +264,72 @@ export const BridgePanel: React.FC = () => {
     pendingTxnsChecker.current()
   }, 5 * 1000)
 
-  // fetch balance via near contract
-  useEffect(() => {
-    if (!isReverse || !tokenAsset || !fromAccount || !accountId) {
-      return
-    }
-
-    setIsLoadingBalance.on()
-
-    const provider = new providers.JsonRpcProvider({
-      url: selector.options.network.nodeUrl,
-    })
-    provider
-      .query<CodeResult>({
-        request_type: "call_function",
-        account_id: tokenAsset.contractId,
-        method_name: "ft_balance_of",
-        args_base64: btoa(JSON.stringify({ account_id: accountId })),
-        finality: "optimistic",
-      })
-      .then((res) => {
-        const bal = JSON.parse(Buffer.from(res.result).toString())
-        setBalance(
-          DecimalUtil.fromString(
-            bal,
-            Array.isArray(tokenAsset?.metadata.decimals)
-              ? tokenAsset?.metadata.decimals[0]
-              : tokenAsset?.metadata.decimals
-          )
-        )
-        setIsLoadingBalance.off()
-      })
-  }, [isReverse, fromAccount, tokenAsset, accountId])
-
-  const checkBalanceViaRPC = React.useRef<any>()
-  checkBalanceViaRPC.current = async () => {
-    if (!tokenAsset || !bridgeConfig) {
-      return
-    }
-
-    let balance = ZERO_DECIMAL
-    if (tokenAsset.assetId === undefined) {
-      const res = await appchainApi?.query.system.account(fromAccount)
-      const resJSON: any = res?.toJSON()
-      balance = DecimalUtil.fromString(
-        resJSON?.data?.free,
-        Array.isArray(tokenAsset?.metadata.decimals)
-          ? tokenAsset?.metadata.decimals[1]
-          : tokenAsset?.metadata.decimals
-      )
-    } else {
-      const query =
-        appchainApi?.query[bridgeConfig.tokenPallet.section]?.[
-          bridgeConfig.tokenPallet.method
-        ]
-
-      if (!query) {
-        return
-      }
-
-      const res = await (bridgeConfig.tokenPallet.paramsType === "Tuple"
-        ? query([tokenAsset.assetId, fromAccount])
-        : query(tokenAsset.assetId, fromAccount))
-
-      const resJSON: any = res?.toJSON()
-
-      balance = DecimalUtil.fromString(
-        resJSON?.[bridgeConfig.tokenPallet.valueKey],
-        Array.isArray(tokenAsset?.metadata.decimals)
-          ? tokenAsset?.metadata.decimals[1]
-          : tokenAsset?.metadata.decimals
-      )
-    }
-
-    setBalance(balance)
-    setIsLoadingBalance.off()
-  }
-
-  // fetch balance from appchain rpc
-  useEffect(() => {
-    if (
-      isReverse ||
-      !tokenAsset ||
-      !accountId ||
-      !appchainApi ||
-      !fromAccount ||
-      !bridgeConfig
-    ) {
-      return
-    }
-
-    checkBalanceViaRPC?.current()
-  }, [isReverse, appchainApi, accountId, fromAccount, tokenAsset, bridgeConfig])
-
-  useEffect(() => {
-    if (!fromAccount) {
-      setBalance(ZERO_DECIMAL)
-      if (isLoadingBalance) {
-        setIsLoadingBalance.off()
-      }
-    }
-  }, [fromAccount, isLoadingBalance])
-
-  useEffect(() => {
-    setTargetAccount(initialTargetAccount || "")
-  }, [initialTargetAccount])
-
-  const targetAccountInputRef = React.useRef<any>()
   const amountInputRef = React.useRef<any>()
 
   const onToggleDirection = () => {
-    if (isReverse) {
+    if (isNearToAppchain) {
       navigate(`/bridge/${appchainId}/near`)
     } else {
       navigate(`/bridge/near/${appchainId}`)
     }
-    setTimeout(() => {
-      amountInputRef.current?.focus()
-    }, 300)
-  }
-
-  const onClearTargetAccount = () => {
-    setTargetAccount("")
-
-    if (targetAccountInputRef.current) {
-      targetAccountInputRef.current.value = ""
-      targetAccountInputRef.current.focus()
-    }
-  }
-
-  const onLogin = async (e: any) => {
-    setIsLogging.on()
-    modal.show()
-  }
-
-  const onLogout = async () => {
-    const wallet = await selector.wallet()
-    wallet.signOut()
-    window.location.replace(window.location.origin + window.location.pathname)
-  }
-
-  const onSelectAccount = (account: InjectedAccountWithMeta) => {
-    setCurrentAccount(account)
-    setSelectAccountModalOpen.off()
-  }
-
-  const onSelectToken = (
-    token: TokenAsset | Collectible,
-    isCollectible = false
-  ) => {
-    if (isCollectible) {
-      setCollectible(token as Collectible)
-    } else {
-      setCollectible(undefined)
-      setTokenAsset(token as TokenAsset)
-      setTimeout(() => {
-        amountInputRef.current?.focus()
-      }, 300)
-      window.localStorage.setItem(
-        "OCTOPUS_BRIDGE_TOKEN_CONTRACT_ID",
-        (token as TokenAsset).contractId
-      )
-    }
-
-    setAmount("")
-    setSelectTokenModalOpen.off()
-  }
-
-  const onSetMax = () => {
-    if (!isReverse && tokenAsset?.assetId === undefined) {
-      setAmount(
-        balance?.sub(0.1).gt(ZERO_DECIMAL) ? balance?.sub(0.1).toString() : ""
-      )
-    } else {
-      setAmount(balance?.toString() || "")
-    }
   }
 
   const burnToken = async () => {
-    setIsTransferring.on()
-
-    try {
-      const wallet = await selector.wallet()
-      await nearBurn({
-        token: tokenAsset!,
-        wallet,
-        anchorId: appchain?.appchain_anchor!,
-        isEvm,
-        targetAccount,
-        amount,
-      })
-      setIsTransferring.off()
-      Toast.success("Transferred")
-    } catch (err: any) {
-      setIsTransferring.off()
-      Toast.error(err)
-    }
+    const wallet = await selector.wallet()
+    await nearBurn({
+      token: tokenAsset!,
+      wallet,
+      anchorId: appchain?.appchain_anchor!,
+      isEvm,
+      targetAccount: to,
+      amount,
+    })
   }
 
   const burnCollectible = async () => {
-    try {
-      setIsTransferring.on()
-      const wallet = await selector.wallet()
-      const anchorId = `${appchainId}.${registry?.contractId}`
-      await nearBurnNft({
-        wallet,
-        anchorId,
-        receiverId: `${collectible?.class}.${anchorId}`,
-        tokenId: collectible?.id!,
-        targetAccount,
-      })
-      setIsTransferring.off()
-      Toast.success("Transferred")
-    } catch (err: any) {
-      setIsTransferring.off()
-      Toast.error(err)
-    }
+    const wallet = await selector.wallet()
+    const anchorId = `${appchainId}.${registry?.contractId}`
+    await nearBurnNft({
+      wallet,
+      anchorId,
+      receiverId: `${collectible?.class}.${anchorId}`,
+      tokenId: collectible?.id!,
+      targetAccount: to,
+    })
   }
 
   const redeemToken = async () => {
-    setIsTransferring.on()
-
-    try {
-      const targetAccountInHex = stringToHex(targetAccount)
-      const amountInU64 = DecimalUtil.toU64(
-        DecimalUtil.fromString(amount),
-        Array.isArray(tokenAsset?.metadata.decimals)
-          ? tokenAsset?.metadata.decimals[0]
-          : tokenAsset?.metadata.decimals
-      )
-      if (isEvm) {
-        await evmBurn({
-          asset_id: tokenAsset?.assetId,
-          amount: amountInU64.toString(),
-          receiver_id: targetAccountInHex,
-        })
-      } else {
-        substrateBurn({
-          api: appchainApi!,
-          targetAccount,
-          amount: amountInU64.toString(),
-          asset: tokenAsset,
-          fromAccount: fromAccount!,
-          appchainId: appchainId!,
-          updateTxn,
-        })
-      }
-      setIsTransferring.off()
-    } catch (error) {
-      Toast.error(error)
-      setIsTransferring.off()
+    const targetAccountInHex = stringToHex(to)
+    const amountInU64 = DecimalUtil.toU64(
+      DecimalUtil.fromString(amount),
+      Array.isArray(tokenAsset?.metadata.decimals)
+        ? tokenAsset?.metadata.decimals[0]
+        : tokenAsset?.metadata.decimals
+    )
+    if (isEvm) {
+      await evmBurn({
+        asset_id: tokenAsset?.assetId,
+        amount: amountInU64.toString(),
+        receiver_id: targetAccountInHex,
+        updateTxn,
+        appchainId,
+        fromAccount: from,
+      })
+    } else {
+      await substrateBurn({
+        api: appchainApi!,
+        targetAccount: to,
+        amount: amountInU64.toString(),
+        asset: tokenAsset,
+        fromAccount: from!,
+        appchainId: appchainId!,
+        updateTxn,
+      })
     }
   }
 
   const redeemCollectible = async () => {
-    setIsTransferring.on()
-
-    const targetAccountInHex = stringToHex(targetAccount)
+    const targetAccountInHex = stringToHex(to)
 
     const tx: any = appchainApi?.tx.octopusAppchain.lockNft(
       collectible?.class,
@@ -693,123 +337,114 @@ export const BridgePanel: React.FC = () => {
       targetAccountInHex
     )
 
-    await tx
-      .signAndSend(fromAccount, ({ events = [] }: any) => {
-        events.forEach(({ event: { data, method, section } }: any) => {
-          if (section === "octopusAppchain" && method === "NftLocked") {
-            setIsTransferring.off()
-            setCollectible(undefined)
-          }
-        })
+    await tx.signAndSend(from, ({ events = [] }: any) => {
+      events.forEach(({ event: { data, method, section } }: any) => {
+        if (section === "octopusAppchain" && method === "NftLocked") {
+          setIsTransferring.off()
+          setCollectible(undefined)
+        }
       })
-      .catch((err: any) => {
-        Toast.error(err)
-        setIsTransferring.off()
-      })
-  }
-
-  const onBurn = () => {
-    if (!collectible) {
-      burnToken()
-    } else {
-      burnCollectible()
-    }
-  }
-
-  const onRedeem = async () => {
-    console.log("onRedeem", currentAccount?.meta.source)
-
-    // eth
-    if (isEvm) {
-    } else {
-      await web3Enable("Octopus Network")
-      const injected = await web3FromSource(currentAccount?.meta.source || "")
-      appchainApi?.setSigner(injected.signer)
-    }
-
-    if (!collectible) {
-      redeemToken()
-    } else {
-      redeemCollectible()
-    }
+    })
   }
 
   const onClearHistory = () => {
     clearTxnsOfAppchain(appchainId || "")
   }
 
-  const onDepositStorage = async () => {
-    if (isReverse) {
-      if (!appchainApi || !currentAccount) {
-        return
-      }
-      await web3Enable("Octopus Network")
-      const injected = await web3FromSource(currentAccount.meta.source || "")
-      appchainApi.setSigner(injected.signer)
-
-      setIsDepositingStorage.on()
-
-      const res = await appchainApi?.query.system.account(fromAccount)
-      const resJSON: any = res?.toJSON()
-      const balance = DecimalUtil.fromString(
-        resJSON?.data?.free,
-        Array.isArray(tokenAsset?.metadata.decimals)
-          ? tokenAsset?.metadata.decimals[1]
-          : tokenAsset?.metadata.decimals
-      )
-      const toDepositAmount = DecimalUtil.toU64(
-        new Decimal(0.01),
-        appchain?.appchain_metadata?.fungible_token_metadata?.decimals
-      ).toString()
-
-      if (!balance.gte(toDepositAmount)) {
-        return Toast.error("Balance not enough")
-      }
-      const tx = appchainApi.tx.balances.transfer(
-        targetAccount,
-        toDepositAmount
-      )
-
-      tx.signAndSend(currentAccount.address, (res) => {
-        if (res.isInBlock) {
-          setIsDepositingStorage.off()
-          setTargetAccountNeedDepositStorage.off()
-        }
-      })
-
-      return
-    }
-
-    console.log("accountId", targetAccount, accountId)
-
+  const onSubmit = async () => {
     try {
-      setIsDepositingStorage.on()
-      const wallet = await selector.wallet()
-
-      await wallet.signAndSendTransaction({
-        signerId: accountId,
-        receiverId: tokenAsset?.contractId,
-        actions: [
-          {
-            type: "FunctionCall",
-            params: {
-              methodName: "storage_deposit",
-              args: { account_id: targetAccount },
-              gas: SIMPLE_CALL_GAS,
-              deposit: "1250000000000000000000",
-            },
-          },
-        ],
+      setIsTransferring.on()
+      const _isValidTargetAddress = await isValidAddress({
+        address: to,
+        isNearToAppchain,
+        isEvm,
       })
-      setIsDepositingStorage.off()
-    } catch (err) {
-      setIsDepositingStorage.off()
-      if (err instanceof Error) {
-        if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
-          return
-        }
-        Toast.error(err)
+      if (!_isValidTargetAddress) {
+        throw new Error("Invalid target account")
       }
+      // check chain if it's BarnacleEvm
+      if (isEvm && !isNearToAppchain) {
+        const chainId = window.ethereum?.networkVersion
+
+        if (chainId !== Number(appchain?.evm_chain_id)) {
+          const provider = (await detectEthereumProvider({
+            mustBeMetaMask: true,
+          })) as any
+          if (!provider) {
+            throw new Error("Please install MetaMask first")
+          }
+
+          await provider.request({
+            method: "wallet_addEthereumChain",
+            params: [
+              {
+                chainId: "0x" + Number(appchain.evm_chain_id).toString(16), // Moonbase Alpha's chainId is 1287, which is 0x507 in hex
+                chainName: appchain?.appchain_id,
+                nativeCurrency: {
+                  name: appchain.appchain_metadata.fungible_token_metadata.name,
+                  symbol:
+                    appchain.appchain_metadata.fungible_token_metadata.symbol,
+                  decimals:
+                    appchain.appchain_metadata.fungible_token_metadata.decimals,
+                },
+                rpcUrls: [
+                  (appchainSettings?.rpc_endpoint || "").replace(
+                    "wss:",
+                    "https:"
+                  ),
+                ],
+                blockExplorerUrls: ["https://moonbase.moonscan.io/"],
+              },
+            ],
+          })
+        }
+      } else if (!isNearToAppchain && !isEvm) {
+        console.log("web3Enabling", from)
+        await web3Enable("Octopus Network")
+        const injected = await web3FromSource(currentAccount?.meta.source || "")
+        appchainApi?.setSigner(injected.signer)
+      }
+
+      // check amount
+      console.log("tokenAsset", tokenAsset)
+
+      if (tokenAsset) {
+        const amountInU64 = DecimalUtil.toU64(
+          DecimalUtil.fromString(amount),
+          Array.isArray(tokenAsset?.metadata.decimals)
+            ? tokenAsset?.metadata.decimals[0]
+            : tokenAsset?.metadata.decimals
+        )
+        const _isValidAmount = await isValidAmount({
+          address: from,
+          isNearToAppchain,
+          amount: amountInU64,
+        })
+
+        if (!_isValidAmount) {
+          throw new Error("Invalid amount")
+        }
+
+        if (isNearToAppchain) {
+          await burnToken()
+        } else {
+          await redeemToken()
+        }
+      }
+
+      if (collectible) {
+        if (isNearToAppchain) {
+          await burnCollectible()
+        } else {
+          await redeemCollectible()
+        }
+      }
+      setIsTransferring.off()
+      Toast.success("Bridging")
+      window.location.reload()
+    } catch (error) {
+      setIsTransferring.off()
+      Toast.error(error)
     }
   }
 
@@ -864,84 +499,12 @@ export const BridgePanel: React.FC = () => {
           </Center>
         ) : (
           <Box mt={4}>
-            <Box bg={grayBg} p={4} borderRadius="lg" pt={2}>
-              <Heading fontSize="md" className="octo-gray">
-                From
-              </Heading>
-              <Flex mt={3} alignItems="center" justifyContent="space-between">
-                <HStack spacing={3} maxW="calc(100% - 120px)">
-                  <Avatar
-                    boxSize={8}
-                    name={fromChainName}
-                    src={
-                      isReverse
-                        ? nearLogo
-                        : (appchain?.appchain_metadata?.fungible_token_metadata
-                            .icon as any)
-                    }
-                  />
-                  <Heading
-                    fontSize="lg"
-                    textOverflow="ellipsis"
-                    overflow="hidden"
-                    whiteSpace="nowrap"
-                  >
-                    {fromAccount || fromChainName}
-                  </Heading>
-                </HStack>
-                {!fromAccount ? (
-                  isReverse ? (
-                    <Button
-                      colorScheme="octo-blue"
-                      isLoading={isLogging}
-                      isDisabled={isLogging}
-                      onClick={onLogin}
-                      size="sm"
-                    >
-                      Connect
-                    </Button>
-                  ) : (
-                    <Button
-                      colorScheme="octo-blue"
-                      onClick={async () => {
-                        // eth
-                        if (isEvm) {
-                          if (typeof window.ethereum !== "undefined") {
-                            console.log("MetaMask is installed!")
-                            window.ethereum
-                              .request({
-                                method: "eth_requestAccounts",
-                              })
-                              .then((res: any) => {
-                                console.log("res", res)
-                              })
-                              .catch(console.error)
-                          }
-                        } else {
-                          // polkadot
-                          setSelectAccountModalOpen.on()
-                        }
-                      }}
-                      size="sm"
-                    >
-                      Connect
-                    </Button>
-                  )
-                ) : isReverse ? (
-                  <Button variant="white" onClick={onLogout} size="sm">
-                    Disconnect
-                  </Button>
-                ) : (
-                  <Button
-                    variant="white"
-                    onClick={setSelectAccountModalOpen.on}
-                    size="sm"
-                  >
-                    Change
-                  </Button>
-                )}
-              </Flex>
-            </Box>
+            <AddressInpput
+              label="From"
+              chain={isNearToAppchain ? "NEAR" : appchainId}
+              appchain={appchain}
+              onChange={(from) => setFrom(from || "")}
+            />
             <Flex justifyContent="center">
               <IconButton
                 aria-label="switch"
@@ -955,258 +518,42 @@ export const BridgePanel: React.FC = () => {
                 <Icon as={MdSwapVert} boxSize={4} />
               </IconButton>
             </Flex>
-            <Box
-              bg={isAccountInputFocused ? bg : grayBg}
-              p={4}
-              borderRadius="lg"
-              pt={2}
-              borderColor={isAccountInputFocused ? "#2468f2" : grayBg}
-              borderWidth={1}
-            >
-              <Flex
-                alignItems="center"
-                justifyContent="space-between"
-                minH="25px"
-              >
-                <Heading fontSize="md" className="octo-gray">
-                  Target
-                </Heading>
-                {isInvalidTargetAccount ? (
-                  <HStack color="red">
-                    <WarningIcon boxSize={3} />
-                    <Text fontSize="xs">Invalid account</Text>
-                  </HStack>
-                ) : targetAccountNeedDepositStorage ? (
-                  <HStack>
-                    <WarningIcon color="red" boxSize={3} />
-                    <Text fontSize="xs" color="red">
-                      This account hasn't been setup yet
-                    </Text>
-                    <Button
-                      colorScheme="octo-blue"
-                      variant="ghost"
-                      size="xs"
-                      isDisabled={isDepositingStorage || !accountId}
-                      isLoading={isDepositingStorage}
-                      onClick={onDepositStorage}
-                    >
-                      {accountId ? "Setup" : "Please Login"}
-                    </Button>
-                  </HStack>
-                ) : null}
-              </Flex>
-              <HStack spacing={3} mt={3}>
-                <Avatar
-                  boxSize={8}
-                  name={targetChainName}
-                  src={
-                    !isReverse
-                      ? nearLogo
-                      : (appchain?.appchain_metadata?.fungible_token_metadata
-                          .icon as any)
-                  }
-                />
-                <InputGroup variant="unstyled">
-                  <Input
-                    value={targetAccount}
-                    size="lg"
-                    fontWeight={600}
-                    maxW="calc(100% - 40px)"
-                    placeholder={`Target account in ${targetChainName}`}
-                    borderRadius="none"
-                    onFocus={setIsAccountInputFocused.on}
-                    onBlur={setIsAccountInputFocused.off}
-                    onChange={(e) => setTargetAccount(e.target.value)}
-                    ref={targetAccountInputRef}
-                    type="text"
-                  />
-                  {targetAccount ? (
-                    <InputRightElement>
-                      <IconButton
-                        aria-label="clear"
-                        size="sm"
-                        isRound
-                        onClick={onClearTargetAccount}
-                      >
-                        <Icon
-                          as={AiFillCloseCircle}
-                          boxSize={5}
-                          className="octo-gray"
-                        />
-                      </IconButton>
-                    </InputRightElement>
-                  ) : null}
-                </InputGroup>
-              </HStack>
-            </Box>
-            <Box
-              borderWidth={1}
-              p={4}
-              borderColor={isAmountInputFocused ? "#2468f2" : grayBg}
-              bg={isAmountInputFocused ? bg : grayBg}
-              borderRadius="lg"
-              pt={2}
-              mt={6}
-            >
-              <Flex
-                alignItems="center"
-                justifyContent="space-between"
-                minH="25px"
-              >
-                <Heading fontSize="md" className="octo-gray">
-                  Bridge Asset
-                </Heading>
-                {fromAccount && !collectible ? (
-                  <Skeleton
-                    isLoaded={
-                      !isLoadingBalance &&
-                      ((!isReverse && !!appchainApi) ||
-                        (isReverse && !!appchain))
-                    }
-                  >
-                    <HStack>
-                      <Text fontSize="sm" variant="gray">
-                        Balance: {balance ? DecimalUtil.beautify(balance) : "-"}
-                      </Text>
-                      {balance?.gt(ZERO_DECIMAL) ? (
-                        <Button
-                          size="xs"
-                          variant="ghost"
-                          colorScheme="octo-blue"
-                          onClick={onSetMax}
-                        >
-                          Max
-                        </Button>
-                      ) : null}
-                    </HStack>
-                  </Skeleton>
-                ) : null}
-              </Flex>
-              {collectible ? (
-                <Flex
-                  mt={3}
-                  borderWidth={1}
-                  p={2}
-                  borderColor="octo-blue.500"
-                  borderRadius="lg"
-                  overflow="hidden"
-                  position="relative"
-                >
-                  <Box w="20%">
-                    <Image src={collectible.metadata.mediaUri} w="100%" />
-                  </Box>
-                  <VStack alignItems="flex-start" ml={3}>
-                    <Heading fontSize="md">{collectible.metadata.name}</Heading>
-                  </VStack>
-                  <Box position="absolute" top={1} right={1}>
-                    <IconButton
-                      aria-label="clear"
-                      size="sm"
-                      isRound
-                      onClick={() => setCollectible(undefined)}
-                    >
-                      <Icon
-                        as={AiFillCloseCircle}
-                        boxSize={5}
-                        className="octo-gray"
-                      />
-                    </IconButton>
-                  </Box>
-                </Flex>
-              ) : (
-                <Flex mt={3} alignItems="center">
-                  <AmountInput
-                    autoFocus
-                    placeholder="0.00"
-                    fontSize="xl"
-                    fontWeight={700}
-                    unstyled
-                    value={amount}
-                    onChange={setAmount}
-                    refObj={amountInputRef}
-                    onFocus={setIsAmountInputFocused.on}
-                    onBlur={setIsAmountInputFocused.off}
-                  />
-                  <Button
-                    ml={3}
-                    size="sm"
-                    variant="ghost"
-                    onClick={setSelectTokenModalOpen.on}
-                  >
-                    <HStack>
-                      <Avatar
-                        name={tokenAsset?.metadata?.symbol}
-                        src={tokenAsset?.metadata?.icon as any}
-                        boxSize={5}
-                        size="sm"
-                      />
-                      <Heading fontSize="md">
-                        {tokenAsset?.metadata?.symbol}
-                      </Heading>
-                      <Icon as={ChevronDownIcon} />
-                    </HStack>
-                  </Button>
-                </Flex>
-              )}
-            </Box>
+            <AddressInpput
+              label="Target"
+              chain={!isNearToAppchain ? "NEAR" : appchainId}
+              appchain={appchain}
+              onChange={(to) => setTo(to || "")}
+              tokenAsset={tokenAsset}
+            />
+            <TokenInpput
+              chain={isNearToAppchain ? "NEAR" : appchainId}
+              appchain={appchain}
+              appchainApi={appchainApi}
+              from={from}
+              appchainId={appchainId}
+              onChangeAmount={(amount) => setAmount(amount)}
+              onChangeTokenAsset={(ta) => setTokenAsset(ta)}
+            />
             <Box mt={8}>
               <Button
                 colorScheme="octo-blue"
                 size="lg"
                 width="100%"
                 isDisabled={
-                  !fromAccount ||
-                  isLoadingBalance ||
-                  !targetAccount ||
-                  (!collectible && (!amount || balance?.lt(amount))) ||
-                  isTransferring ||
-                  isInvalidTargetAccount ||
-                  targetAccountNeedDepositStorage
+                  !from || !to || (!collectible && !amount) || isTransferring
                 }
                 isLoading={isTransferring}
                 spinner={
                   <PulseLoader color="rgba(255, 255, 255, .9)" size={12} />
                 }
-                onClick={isReverse ? onBurn : onRedeem}
+                onClick={onSubmit}
               >
-                {!fromAccount
-                  ? "Connect Wallet"
-                  : !targetAccount
-                  ? "Input Target Account"
-                  : isInvalidTargetAccount || targetAccountNeedDepositStorage
-                  ? "Invalid Target Account"
-                  : !collectible
-                  ? !amount
-                    ? "Input Amount"
-                    : balance?.lt(amount)
-                    ? "Insufficient Balance"
-                    : "Transfer"
-                  : "Transfer"}
+                Transfer
               </Button>
             </Box>
           </Box>
         )}
       </Box>
-      <SelectWeb3AccountModal
-        isOpen={selectAccountModalOpen}
-        onClose={setSelectAccountModalOpen.off}
-        accounts={accounts}
-        onChooseAccount={onSelectAccount}
-        selectedAccount={fromAccount}
-      />
-
-      <SelectTokenModal
-        isOpen={selectTokenModalOpen}
-        onClose={setSelectTokenModalOpen.off}
-        tokens={filteredTokens}
-        isReverse={isReverse}
-        appchainApi={appchainApi}
-        appchainId={appchainId}
-        fromAccount={fromAccount}
-        collectibleClasses={collectibleClasses}
-        onSelectToken={onSelectToken}
-        selectedToken={tokenAsset?.metadata?.symbol}
-      />
 
       <Drawer
         placement="right"
