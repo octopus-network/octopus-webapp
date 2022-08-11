@@ -24,6 +24,8 @@ import Decimal from "decimal.js"
 import { validateValidatorStake } from "utils/validate"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
+import StakeInput from "components/common/StakeInput"
+import { parseNearAmount } from "near-api-js/lib/utils/format"
 
 type StakingPopoverProps = {
   type: "increase" | "decrease"
@@ -49,7 +51,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
   const initialFocusRef = React.useRef<any>()
 
   const inputRef = React.useRef<any>()
-  const [amount, setAmount] = useState("")
+  const [amount, setAmount] = useState(0)
 
   const [isSubmitting, setIsSubmitting] = useBoolean(false)
 
@@ -62,7 +64,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
   )
 
   const amountInDecimal = useMemo(
-    () => DecimalUtil.fromString(amount),
+    () => DecimalUtil.fromNumber(amount),
     [amount]
   )
 
@@ -97,7 +99,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
         )
         await wallet.signAndSendTransaction({
           signerId: accountId,
-          receiverId: anchor.contractId,
+          receiverId: octToken?.contractId,
           actions: [
             {
               type: "FunctionCall",
@@ -115,7 +117,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
                       }),
                 },
                 gas: COMPLEX_CALL_GAS,
-                deposit: "0",
+                deposit: "1",
               },
             },
           ],
@@ -131,7 +133,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
         )
         await wallet.signAndSendTransaction({
           signerId: accountId,
-          receiverId: anchor.contractId,
+          receiverId: octToken?.contractId,
           actions: [
             {
               type: "FunctionCall",
@@ -143,7 +145,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
                   ? { amount: amountStr, validator_id: validatorId || "" }
                   : { amount: amountStr },
                 gas: COMPLEX_CALL_GAS,
-                deposit: "0",
+                deposit: "1",
               },
             },
           ],
@@ -176,7 +178,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
               {helper}
             </Text>
           ) : null}
-          <Box mt={3}>
+          <Box mt={3} gap={3} p={3}>
             {type === "increase" && (
               <Flex mb={2} justifyContent="flex-end">
                 <Text variant="gray" size="sm">
@@ -187,8 +189,16 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
             <AmountInput
               placeholder="Amount of OCT"
               refObj={inputRef}
+              value={`${amount}`}
+              type="number"
+            />
+            <StakeInput
+              anchor={anchor}
+              appchain={appchain}
+              validator={validator}
+              type={type}
               onChange={(v) => setAmount(v)}
-              value={amount}
+              octBalance={octBalance}
             />
           </Box>
           <Box mt={3}>
