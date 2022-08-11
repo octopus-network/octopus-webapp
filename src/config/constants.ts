@@ -27,3 +27,14 @@ export const TOKEN_METHODS = {
   viewMethods: ["storage_balance_of", "ft_balance_of"],
   changeMethods: [],
 }
+
+export const NODE_STATE_RECORD: any = {
+  "0": { label: "Init", color: "blue", state: 0 },
+  "10": { label: "Applying", color: "teal", state: 10 },
+  "11": { label: "Apply Failed", color: "red", state: 11 },
+  "12": { label: "Running", color: "octo-blue", state: 12 },
+  "20": { label: "Destroying", color: "teal", state: 20 },
+  "21": { label: "Destroy Failed", color: "orange", state: 21 },
+  "22": { label: "Destroyed", color: "gray", state: 22 },
+  "30": { label: "Upgrading", color: "green", state: 30 },
+}

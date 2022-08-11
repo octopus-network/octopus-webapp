@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useCallback } from "react"
+import React, { useMemo, useState, useEffect } from "react"
 import useSWR from "swr"
 import { ApiPromise, WsProvider } from "@polkadot/api"
 import { PulseLoader } from "react-spinners"
