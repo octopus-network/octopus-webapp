@@ -1,4 +1,4 @@
-import { Contract } from 'near-api-js'
+import { Contract } from "near-api-js"
 
 import {
   StorageDeposit,
@@ -7,8 +7,8 @@ import {
   RewardHistory,
   UnbondedHistory,
   StakingHistory,
-} from 'types'
-import { ProtocolSettings } from './appchain'
+} from "types"
+import { ProtocolSettings } from "./appchain"
 
 type FtBalanceOfArgs = {
   account_id: string
@@ -78,6 +78,10 @@ export class TokenContract extends Contract {
 
   ft_metadata(): Promise<any> {
     return this.ft_metadata()
+  }
+
+  storage_balance_bounds(): Promise<any> {
+    return this.storage_balance_bounds()
   }
 }
 
