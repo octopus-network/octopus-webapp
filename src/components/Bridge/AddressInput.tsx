@@ -213,6 +213,17 @@ export default function AddressInpput({
       setIsDepositingStorage.on()
       const wallet = await selector.wallet()
 
+      const provider = new providers.JsonRpcProvider({
+        url: selector.options.network.nodeUrl,
+      })
+      const res = await provider.query<CodeResult>({
+        request_type: "call_function",
+        account_id: tokenAsset?.contractId,
+        method_name: "storage_balance_bounds",
+        args_base64: "",
+        finality: "optimistic",
+      })
+      const bounds = JSON.parse(Buffer.from(res.result).toString())
       await wallet.signAndSendTransaction({
         signerId: accountId,
         receiverId: tokenAsset?.contractId,
@@ -223,7 +234,7 @@ export default function AddressInpput({
               methodName: "storage_deposit",
               args: { account_id: address },
               gas: SIMPLE_CALL_GAS,
-              deposit: "1250000000000000000000",
+              deposit: bounds.min,
             },
           },
         ],
