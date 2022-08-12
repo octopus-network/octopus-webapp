@@ -52,16 +52,12 @@ import { useWalletSelector } from "components/WalletSelectorContextProvider"
 type MyStakingProps = {
   appchain?: AppchainInfoWithAnchorStatus
   anchor?: AnchorContract
-  isValidator: boolean
-  isUnbonding: boolean
   validator?: Validator
 }
 
 export const MyStaking: React.FC<MyStakingProps> = ({
   appchain,
   anchor,
-  isValidator,
-  isUnbonding,
   validator,
 }) => {
   const bg = useColorModeValue(
@@ -70,6 +66,8 @@ export const MyStaking: React.FC<MyStakingProps> = ({
   )
 
   const whiteBg = useColorModeValue("white", "#15172c")
+  const isUnbonding = !!(validator && validator?.is_unbonding)
+  const isValidator = !!(validator && !validator?.is_unbonding)
 
   const [registerValidatorModalOpen, setRegisterValidatorModalOpen] =
     useBoolean(false)

@@ -123,7 +123,6 @@ export const Appchain: React.FC = () => {
 
   const validator = validators?.find((v) => v.validator_id === accountId)
   const isValidator = !!(validator && !validator?.is_unbonding)
-  const isUnbonding = !!(validator && validator?.is_unbonding)
 
   const needKeys = useMemo(() => {
     if (!validatorSessionKeys || !accountId) {
@@ -243,19 +242,9 @@ export const Appchain: React.FC = () => {
               appchainId={id}
               needKeys={needKeys}
               appchainApi={appchainApi}
+              anchor={anchor}
+              validator={validator}
             />
-
-            {validator && (
-              <Box mt={4}>
-                <MyStaking
-                  appchain={appchain}
-                  anchor={anchor}
-                  isUnbonding={isUnbonding}
-                  isValidator={isValidator}
-                  validator={validator}
-                />
-              </Box>
-            )}
           </GridItem>
         </Grid>
         <Box mt={8}>

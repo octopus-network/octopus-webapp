@@ -9,23 +9,19 @@ import {
   Text,
   Icon,
   Flex,
-  Select,
   Spinner,
   Center,
-  HStack,
   Menu,
   MenuButton,
   MenuItem,
   MenuList,
-  Input,
-  IconButton,
   useColorModeValue,
   useBoolean,
+  Link,
 } from "@chakra-ui/react"
 
 import { DeleteIcon } from "@chakra-ui/icons"
 
-import { CloseIcon } from "@chakra-ui/icons"
 import { BsFillTerminalFill } from "react-icons/bs"
 import { HiUpload } from "react-icons/hi"
 import { TiKey } from "react-icons/ti"
@@ -34,48 +30,36 @@ import { API_HOST } from "config"
 import { Alert } from "components"
 import { SetSessionKeyModal } from "./SetSessionKeyModal"
 import type { ApiPromise } from "@polkadot/api"
-import { FcGoogle } from "react-icons/fc"
 
 import { InstanceInfoModal } from "./InstanceInfoModal"
-import { AppchainInfo, CLOUD_VENDOR } from "types"
+import { AnchorContract, AppchainInfo, CLOUD_VENDOR, Validator } from "types"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import NodeBoard from "components/AppChain/NodeBoard"
+import { MyStaking } from "../MyStaking"
+import NodeForm from "components/AppChain/NodeForm"
 
 type MyNodeProps = {
   appchainId: string | undefined
   appchainApi: ApiPromise | undefined
   needKeys: boolean
   appchain?: AppchainInfo
+  anchor?: AnchorContract
+  validator?: Validator
 }
-
-const cloudVendorInLocalStorage = window.localStorage.getItem(
-  "OCTOPUS_DEPLOYER_CLOUD_VENDOR"
-) as CLOUD_VENDOR
-const accessKeyInLocalStorage =
-  window.localStorage.getItem("OCTOPUS_DEPLOYER_ACCESS_KEY") ||
-  window.localStorage.getItem("accessKey") ||
-  ""
-
-const OAUTH_SCOPE =
-  "https://www.googleapis.com/auth/cloud-platform.read-only https://www.googleapis.com/auth/compute"
 
 export const MyNode: React.FC<MyNodeProps> = ({
   appchainId,
   needKeys,
   appchainApi,
   appchain,
+  anchor,
+  validator,
 }) => {
   const bg = useColorModeValue("white", "#15172c")
 
-  const [cloudVendor, setCloudVendor] = useState<CLOUD_VENDOR>(
-    cloudVendorInLocalStorage || CLOUD_VENDOR.AWS
-  )
-  const [accessKey, setAccessKey] = useState<string>(accessKeyInLocalStorage)
   const [node, setNode] = useState<any>()
 
   const [isInitializing, setIsInitializing] = useBoolean()
-  const [isLoadingNode, setIsLoadingNode] = useBoolean()
-  const [isDeploying, setIsDeploying] = useBoolean()
   const [isUpgrading, setIsUpgrading] = useBoolean()
 
   const [nodeMetrics, setNodeMetrics] = useState<any>()
@@ -86,71 +70,18 @@ export const MyNode: React.FC<MyNodeProps> = ({
 
   const [isImageNeedUpgrade, setIsImageNeedUpgrade] = useBoolean()
   const [oauthUser, setOAuthUser] = useState<any>()
-  const [isAuthorized, setIsAuthorized] = useState(false)
-  const [authClient, setAuthClient] = useState<any>()
-  const [projects, setProjects] = useState<any[]>()
-  const [projectId, setProjectId] = useState<string>()
-  const [deployRegion, setDeployRegion] = useState<string>("")
-
-  const [inputAccessKey, setInputAccessKey] = useState("")
-
-  const inputBg = useColorModeValue("#f5f7fa", "whiteAlpha.100")
 
   const { data: deployConfig } = useSWR("deploy-config")
 
   const { accountId } = useWalletSelector()
 
-  useEffect(() => {
-    window.gapi.load("client", () => {
-      window.gapi.client
-        .init({
-          apiKey: "AIzaSyCXBs_7uR9X7wNIWgNuD5D7nvTniKsfjGU",
-          clientId:
-            "398338012986-f9ge03gubuvksee6rsmtorrpgtrsppf2.apps.googleusercontent.com",
-          scope: OAUTH_SCOPE,
-          discoveryDocs: [
-            "https://www.googleapis.com/discovery/v1/apis/compute/v1/rest",
-            "https://cloudresourcemanager.googleapis.com/$discovery/rest?version=v1",
-          ],
-        })
-        .then(() => {
-          const client = window.gapi.auth2.getAuthInstance()
-          setAuthClient(client)
-        })
-    })
-  }, [])
-
-  useEffect(() => {
-    if (!authClient) {
-      return
-    }
-
-    const checkStatus = () => {
-      const user = authClient.currentUser.get()
-
-      const authorized = user.hasGrantedScopes(OAUTH_SCOPE)
-      setIsAuthorized(authorized)
-      if (authorized) {
-        setOAuthUser(user)
-
-        const request = window.gapi.client.request({
-          method: "GET",
-          path: "https://cloudresourcemanager.googleapis.com/v1/projects",
-        })
-
-        request.execute((res: any) => {
-          setProjects(res?.projects)
-          console.log(res)
-        })
-      }
-    }
-
-    if (authClient.isSignedIn.get()) {
-      checkStatus()
-    }
-
-    authClient.isSignedIn.listen(checkStatus)
-  }, [authClient])
+  const cloudVendorInLocalStorage = window.localStorage.getItem(
+    "OCTOPUS_DEPLOYER_CLOUD_VENDOR"
+  ) as CLOUD_VENDOR
+  const accessKeyInLocalStorage =
+    window.localStorage.getItem("OCTOPUS_DEPLOYER_ACCESS_KEY") ||
+    window.localStorage.getItem("accessKey") ||
+    ""
 
   useEffect(() => {
     if (
@@ -175,7 +106,13 @@ export const MyNode: React.FC<MyNodeProps> = ({
         }
         setIsInitializing.off()
       })
-  }, [accountId, appchainId])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    accessKeyInLocalStorage,
+    accountId,
+    appchainId,
+    cloudVendorInLocalStorage,
+  ])
 
   useEffect(() => {
     if (!node || !deployConfig || !appchainId) {
@@ -206,50 +143,15 @@ export const MyNode: React.FC<MyNodeProps> = ({
     } else {
       setIsImageNeedUpgrade.off()
     }
-  }, [node, deployConfig, appchainId, accountId])
-
-  const onNextStep = () => {
-    setIsLoadingNode.on()
-
-    const key =
-      cloudVendor === "AWS"
-        ? inputAccessKey
-        : oauthUser.getBasicProfile().getEmail()
-
-    window.localStorage.setItem("OCTOPUS_DEPLOYER_CLOUD_VENDOR", cloudVendor)
-    window.localStorage.setItem("OCTOPUS_DEPLOYER_ACCESS_KEY", key)
-
-    axios
-      .get(`${API_HOST}/node/${cloudVendor}/${key}/${appchainId}/${accountId}`)
-      .then((res) => res.data)
-      .then((res) => {
-        if (res) {
-          setNode(res)
-        }
-        setAccessKey(key)
-        setIsLoadingNode.off()
-      })
-  }
-
-  const onDeploy = () => {
-    setIsDeploying.on()
-    axios
-      .post(`${API_HOST}/deploy-node`, {
-        appchain: appchainId,
-        cloudVendor,
-        accessKey,
-        accountId: accountId,
-        region: deployRegion,
-        project: projectId,
-      })
-      .then((res) => res.data)
-      .then((res) => {
-        if (res) {
-          setNode(res)
-        }
-        setIsDeploying.off()
-      })
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    node,
+    deployConfig,
+    appchainId,
+    accountId,
+    cloudVendorInLocalStorage,
+    accessKeyInLocalStorage,
+  ])
 
   const onClearCache = () => {
     window.localStorage.removeItem("OCTOPUS_DEPLOYER_CLOUD_VENDOR")
@@ -265,7 +167,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
 
     let secretKey
 
-    if (cloudVendor === "AWS") {
+    if (cloudVendorInLocalStorage === "AWS") {
       secretKey = window.prompt(
         "Please enter the secret key of your server",
         ""
@@ -275,7 +177,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
         return
       }
     } else {
-      const { access_token } = oauthUser.getAuthResponse()
+      const { access_token } = oauthUser?.getAuthResponse()
       secretKey = access_token
     }
 
@@ -297,9 +199,9 @@ export const MyNode: React.FC<MyNodeProps> = ({
       })
   }
 
-  const onOAuth = () => {
-    authClient?.signIn()
-  }
+  // check NODE_STATE_RECORD for state meaning
+  const isShowStaking =
+    !!validator || ["12", "20", "21", "22", "30"].includes(node?.state)
 
   return (
     <>
@@ -403,146 +305,43 @@ export const MyNode: React.FC<MyNodeProps> = ({
           <NodeBoard
             node={node}
             appchainId={appchainId}
-            cloudVendor={cloudVendor}
+            cloudVendor={cloudVendorInLocalStorage}
             setNode={setNode}
-            deployAccessKey={accessKey}
+            deployAccessKey={accessKeyInLocalStorage}
             deployConfig={deployConfig}
           />
-        ) : accessKey ? (
-          <>
-            <Flex minH="120px" justifyContent="center" flexDirection="column">
-              {cloudVendor === "GCP" ? (
-                <Flex
-                  bg={inputBg}
-                  p={1}
-                  borderRadius="lg"
-                  alignItems="center"
-                  mb={2}
-                >
-                  <Box p={2}>
-                    <Text variant="gray">Projects</Text>
-                  </Box>
-                  <Box flex={1}>
-                    <Select
-                      variant="unstyled"
-                      p={2}
-                      placeholder="Select Project"
-                      onChange={(e) => setProjectId(e.target.value)}
-                      textAlign="right"
-                    >
-                      {projects?.map((project: any, idx: number) => (
-                        <option
-                          value={project.projectId}
-                          key={`project-${idx}`}
-                        >
-                          {project.name}
-                        </option>
-                      ))}
-                    </Select>
-                  </Box>
-                </Flex>
-              ) : null}
-              <Flex bg={inputBg} p={1} borderRadius="lg" alignItems="center">
-                <Box p={2}>
-                  <Text variant="gray">Deploy region</Text>
-                </Box>
-                <Box flex={1}>
-                  <Select
-                    variant="unstyled"
-                    p={2}
-                    defaultValue=""
-                    onChange={(e) => setDeployRegion(e.target.value)}
-                    textAlign="right"
-                  >
-                    {deployConfig?.regions.map((region: any, idx: number) => (
-                      <option value={region.value} key={`option-${idx}`}>
-                        {region.label}
-                      </option>
-                    ))}
-                  </Select>
-                </Box>
-              </Flex>
-            </Flex>
-            <Button
-              colorScheme="octo-blue"
-              width="100%"
-              onClick={onDeploy}
-              isLoading={isDeploying}
-              isDisabled={isDeploying || (cloudVendor === "GCP" && !projectId)}
-            >
-              Deploy
-            </Button>
-          </>
         ) : (
-          <>
-            <Flex minH="120px" justifyContent="center" flexDirection="column">
-              <Flex bg={inputBg} p={1} borderRadius="lg">
-                <Box>
-                  <Select
-                    variant="unstyled"
-                    p={2}
-                    defaultValue={cloudVendor}
-                    onChange={(e) =>
-                      setCloudVendor(e.target.value as CLOUD_VENDOR)
-                    }
-                  >
-                    <option value="AWS">AWS</option>
-                    <option value="GCP">GCP</option>
-                  </Select>
-                </Box>
-                <Flex flex={1} alignItems="center">
-                  {cloudVendor === "AWS" ? (
-                    <Input
-                      variant="unstyled"
-                      placeholder="Access Key"
-                      w="100%"
-                      p={2}
-                      onChange={(e) => setInputAccessKey(e.target.value)}
-                    />
-                  ) : isAuthorized ? (
-                    <HStack>
-                      <Heading fontSize="md">
-                        {oauthUser?.getBasicProfile()?.getEmail()}
-                      </Heading>
-                      <IconButton
-                        size="xs"
-                        aria-label="logout"
-                        isRound
-                        onClick={authClient?.signOut}
-                        disabled={!authClient}
-                        icon={<CloseIcon boxSize="10px" />}
-                      />
-                    </HStack>
-                  ) : (
-                    <Button
-                      size="sm"
-                      onClick={onOAuth}
-                      disabled={!authClient}
-                      variant="ghost"
-                      colorScheme="octo-blue"
-                    >
-                      <Icon as={FcGoogle} mr={1} /> Sign in with Google
-                    </Button>
-                  )}
-                </Flex>
-              </Flex>
-            </Flex>
-            <Button
-              colorScheme="octo-blue"
-              width="100%"
-              isDisabled={
-                !cloudVendor ||
-                isLoadingNode ||
-                (cloudVendor === "AWS" ? !inputAccessKey : !isAuthorized)
-              }
-              onClick={onNextStep}
-              isLoading={isLoadingNode}
-            >
-              Deploy A Node
-            </Button>
-          </>
+          <NodeForm
+            setNode={setNode}
+            validator={validator}
+            appchainId={appchainId}
+            myNodeSetOAuthUser={setOAuthUser}
+          />
         )}
       </Box>
+      {isShowStaking ? (
+        <Box mt={4}>
+          <MyStaking
+            appchain={appchain}
+            anchor={anchor}
+            validator={validator}
+          />
+        </Box>
+      ) : (
+        <Box m={6}>
+          <Text textAlign="center">
+            Learn about{" "}
+            <Link
+              href="https://docs.oct.network/maintain/validator-deploy.html#deploy-validator-node"
+              variant="blue-underline"
+              isExternal
+              ml={2}
+            >
+              Deploy Validator Node
+            </Link>
+          </Text>
+        </Box>
+      )}
       <SetSessionKeyModal
         appchain={appchain}
         appchainApi={appchainApi}
