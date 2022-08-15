@@ -5,11 +5,7 @@ import { Text, Button, Box, Flex, useBoolean } from "@chakra-ui/react"
 
 import { BaseModal, AmountInput } from "components"
 
-import {
-  OCT_TOKEN_DECIMALS,
-  COMPLEX_CALL_GAS,
-  FAILED_TO_REDIRECT_MESSAGE,
-} from "primitives"
+import { OCT_TOKEN_DECIMALS, COMPLEX_CALL_GAS } from "primitives"
 
 import { AnchorContract } from "types"
 import { ZERO_DECIMAL, DecimalUtil } from "utils"

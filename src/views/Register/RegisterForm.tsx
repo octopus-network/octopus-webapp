@@ -34,11 +34,7 @@ import {
 import { EditIcon } from "@chakra-ui/icons"
 import { DecimalUtil, ZERO_DECIMAL } from "utils"
 import { Formik, Form, Field } from "formik"
-import {
-  OCT_TOKEN_DECIMALS,
-  COMPLEX_CALL_GAS,
-  FAILED_TO_REDIRECT_MESSAGE,
-} from "primitives"
+import { OCT_TOKEN_DECIMALS, COMPLEX_CALL_GAS } from "primitives"
 import Decimal from "decimal.js"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"

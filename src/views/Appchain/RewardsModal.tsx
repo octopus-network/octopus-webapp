@@ -25,26 +25,22 @@ import {
   AppchainInfoWithAnchorStatus,
   RewardHistory,
   AnchorContract,
-  TokenContract,
+  WrappedAppchainToken,
 } from "types"
 
 import { BaseModal, Empty } from "components"
 import { DecimalUtil, ZERO_DECIMAL } from "utils"
 import { WarningTwoIcon } from "@chakra-ui/icons"
 
-import {
-  SIMPLE_CALL_GAS,
-  FAILED_TO_REDIRECT_MESSAGE,
-  COMPLEX_CALL_GAS,
-} from "primitives"
+import { SIMPLE_CALL_GAS, COMPLEX_CALL_GAS } from "primitives"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
+import { useTokenContract } from "hooks/useTokenContract"
 
 type RewardsModalProps = {
-  rewards: RewardHistory[] | undefined
-  appchain: AppchainInfoWithAnchorStatus | undefined
-  anchor: AnchorContract | undefined
-  wrappedAppchainTokenContract: TokenContract | undefined
+  rewards?: RewardHistory[]
+  appchain?: AppchainInfoWithAnchorStatus
+  anchor?: AnchorContract
   validatorId?: string
   isOpen: boolean
   onClose: () => void
@@ -56,7 +52,6 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
   rewards,
   appchain,
   anchor,
-  wrappedAppchainTokenContract,
   validatorId,
 }) => {
   const bg = useColorModeValue("#f6f7fa", "#15172c")
@@ -67,11 +62,15 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
   const [isClaimRewardsPaused, setIsClaimRewardsPaused] = useState(false)
   const [isDepositingStorage, setIsDepositingStorage] = useBoolean(false)
   const [needDepositStorage, setNeedDepositStorage] = useBoolean(false)
+  const [wrappedAppchainToken, setWrappedAppchainToken] =
+    useState<WrappedAppchainToken>()
 
   const [
     wrappedAppchainTokenStorageBalance,
     setWrappedAppchainTokenStorageBalance,
   ] = useState(ZERO_DECIMAL)
+
+  const tokenContract = useTokenContract(wrappedAppchainToken?.contract_account)
 
   useEffect(() => {
     if (!isOpen) {
@@ -82,17 +81,21 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
   useEffect(() => {
     if (!anchor) {
       setIsClaimRewardsPaused(false)
+      return
     }
-    anchor?.get_anchor_status().then(({ rewards_withdrawal_is_paused }) => {
+    anchor.get_anchor_status().then(({ rewards_withdrawal_is_paused }) => {
       setIsClaimRewardsPaused(rewards_withdrawal_is_paused as boolean)
+    })
+    anchor.get_wrapped_appchain_token().then((wrappedToken) => {
+      setWrappedAppchainToken(wrappedToken)
     })
   }, [anchor])
 
   useEffect(() => {
-    if (!wrappedAppchainTokenContract || !accountId) {
+    if (!tokenContract || !accountId) {
       return
     }
-    wrappedAppchainTokenContract
+    tokenContract
       .storage_balance_of({ account_id: accountId })
       .then((storage) => {
         setWrappedAppchainTokenStorageBalance(
@@ -101,7 +104,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
             : ZERO_DECIMAL
         )
       })
-  }, [wrappedAppchainTokenContract, accountId])
+  }, [tokenContract, accountId])
 
   const unwithdrawnRewards = useMemo(() => {
     if (!rewards?.length) {
@@ -187,7 +190,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
       const wallet = await selector.wallet()
       await wallet.signAndSendTransaction({
         signerId: wallet.id,
-        receiverId: wrappedAppchainTokenContract?.contractId,
+        receiverId: wrappedAppchainToken?.contract_account,
         actions: [
           {
             type: "FunctionCall",
@@ -203,13 +206,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
       setIsDepositingStorage.off()
     } catch (error) {
       setIsDepositingStorage.off()
-      if (error instanceof Error) {
-        if (error.message === FAILED_TO_REDIRECT_MESSAGE) {
-          return
-        }
-
-        Toast.error(error)
-      }
+      Toast.error(error)
     }
   }
 

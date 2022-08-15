@@ -1,5 +1,4 @@
 import React, { useMemo, useState, useEffect } from "react"
-import { ApiPromise, WsProvider } from "@polkadot/api"
 import axios from "axios"
 import useSWR from "swr"
 
@@ -18,24 +17,12 @@ import {
   DrawerOverlay,
   DrawerContent,
   useBoolean,
+  useColorModeValue,
 } from "@chakra-ui/react"
 
-import {
-  AppchainInfoWithAnchorStatus,
-  AnchorContract,
-  AppchainSettings,
-  ValidatorSessionKey,
-  TokenContract,
-  Validator,
-  UserVotes,
-  WrappedAppchainToken,
-} from "types"
+import { AnchorContract, UserVotes, WrappedAppchainToken } from "types"
 
-import {
-  OCT_TOKEN_DECIMALS,
-  COMPLEX_CALL_GAS,
-  FAILED_TO_REDIRECT_MESSAGE,
-} from "primitives"
+import { OCT_TOKEN_DECIMALS, COMPLEX_CALL_GAS } from "primitives"
 
 import { API_HOST } from "config"
 import { DecimalUtil, ZERO_DECIMAL } from "utils"
@@ -49,21 +36,26 @@ import { MyNode } from "./MyNode"
 import { Validators } from "./Validators"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
+import { ANCHOR_METHODS } from "config/constants"
+import { getUnbondedValidators } from "utils/appchain"
+import { useAppChain } from "hooks/useAppChain"
 
 export const Appchain: React.FC = () => {
   const { id = "", validatorId = "" } = useParams()
+  const bg = useColorModeValue("white", "#15172c")
+
+  const {
+    appchain,
+    appchainSettings,
+    validators,
+    validatorsError,
+    appchainApi,
+    validatorSessionKeys,
+    appchainValidators,
+  } = useAppChain(id)
 
   const { accountId, networkConfig, registry, nearAccount } =
     useWalletSelector()
-  const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(
-    id ? `appchain/${id}` : null
-  )
-  const { data: appchainSettings } = useSWR<AppchainSettings>(
-    id ? `appchain-settings/${id}` : null
-  )
-  const { data: validators, error: validatorsError } = useSWR<Validator[]>(
-    appchain ? `validators/${appchain.appchain_id}` : null
-  )
 
   const { data: userVotes } = useSWR<UserVotes>(
     accountId ? `votes/${accountId}/${id}` : null
@@ -77,25 +69,18 @@ export const Appchain: React.FC = () => {
     [userVotes]
   )
 
-  const [appchainValidators, setAppchainValidators] = useState<string[]>()
-  const [validatorSessionKeys, setValidatorSessionKeys] =
-    useState<Record<string, ValidatorSessionKey>>()
-
   const [isWithdrawingUpvotes, setIsWithdrawingUpvotes] = useBoolean()
   const [isWithdrawingDownvotes, setIsWithdrawingDownvotes] = useBoolean()
 
-  const [appchainApi, setAppchainApi] = useState<ApiPromise>()
   const navigate = useNavigate()
 
   const [anchor, setAnchor] = useState<AnchorContract>()
   const [wrappedAppchainToken, setWrappedAppchainToken] =
     useState<WrappedAppchainToken>()
-  const [wrappedAppchainTokenContract, setWrappedAppchainTokenContract] =
-    useState<TokenContract>()
 
   const [unbondedValidators, setUnbondedValidators] = useState<any[]>()
 
-  const drawerOpen = useMemo(() => !!id && !!validatorId, [validatorId])
+  const drawerOpen = useMemo(() => !!id && !!validatorId, [id, validatorId])
 
   useEffect(() => {
     if (drawerOpen) {
@@ -115,58 +100,17 @@ export const Appchain: React.FC = () => {
     const anchorContract = new AnchorContract(
       nearAccount!,
       appchain.appchain_anchor,
-      {
-        viewMethods: [
-          "get_protocol_settings",
-          "get_validator_deposit_of",
-          "get_wrapped_appchain_token",
-          "get_delegator_deposit_of",
-          "get_validator_profile",
-          "get_unbonded_stakes_of",
-          "get_delegator_rewards_of",
-          "get_anchor_status",
-          "get_user_staking_histories_of",
-        ],
-        changeMethods: [
-          "enable_delegation",
-          "disable_delegation",
-          "decrease_stake",
-          "withdraw_validator_rewards",
-          "unbond_stake",
-          "withdraw_stake",
-          "unbond_delegation",
-          "withdraw_delegator_rewards",
-          "decrease_delegation",
-        ],
-      }
+      ANCHOR_METHODS
     )
 
     setAnchor(anchorContract)
 
     if (networkConfig?.near) {
-      axios
-        .post(`${networkConfig?.near.restApiUrl}/explorer`, {
-          user: "public_readonly",
-          host: `${networkConfig?.near.networkId}.db.explorer.indexer.near.dev`,
-          database: `${networkConfig?.near.networkId}_explorer`,
-          password: "nearprotocol",
-          port: 5432,
-          parameters: [appchain.appchain_anchor],
-          query: `
-          SELECT * FROM public.action_receipt_actions 
-          WHERE receipt_receiver_account_id = $1
-          AND args->>'method_name' = 'unbond_stake'
-          LIMIT 100;
-        `,
-        })
-        .then((res) => {
-          const tmpArr = res.data.map(
-            (r: any) => r.receipt_predecessor_account_id
-          )
-          setUnbondedValidators(Array.from(new Set(tmpArr)))
-        })
+      getUnbondedValidators(networkConfig, appchain.appchain_anchor).then(
+        (uvs) => setUnbondedValidators(uvs)
+      )
     }
-  }, [appchain, networkConfig?.near])
+  }, [appchain, nearAccount, networkConfig, networkConfig?.near])
 
   useEffect(() => {
     if (!anchor) {
@@ -177,80 +121,8 @@ export const Appchain: React.FC = () => {
     })
   }, [anchor])
 
-  useEffect(() => {
-    if (!accountId || !wrappedAppchainToken) {
-      return
-    }
-
-    setWrappedAppchainTokenContract(
-      new TokenContract(nearAccount!, wrappedAppchainToken.contract_account, {
-        viewMethods: ["storage_balance_of", "ft_balance_of"],
-        changeMethods: [],
-      })
-    )
-  }, [wrappedAppchainToken, accountId])
-
-  useEffect(() => {
-    if (!appchainSettings) {
-      return
-    }
-
-    const provider = new WsProvider(appchainSettings.rpc_endpoint)
-    const api = new ApiPromise({ provider })
-
-    api.isReady.then((api) => setAppchainApi(api))
-  }, [appchainSettings])
-
-  useEffect(() => {
-    appchainApi?.query?.session?.validators().then((vs) => {
-      setAppchainValidators(vs.map((v) => v.toString()))
-    })
-
-    if (validators) {
-      appchainApi?.query?.session?.nextKeys
-        .multi(validators.map((v) => v.validator_id_in_appchain))
-        .then((keys) => {
-          let tmpObj: Record<string, ValidatorSessionKey> = {}
-          keys.forEach(
-            (key, idx) =>
-              (tmpObj[validators[idx].validator_id] =
-                key.toJSON() as ValidatorSessionKey)
-          )
-
-          setValidatorSessionKeys(tmpObj)
-        })
-    }
-  }, [appchainApi, validators])
-
-  useEffect(() => {
-    if (!appchainApi) {
-      return
-    }
-    appchainApi.query.octopusLpos.activeEra().then((era) => {
-      const eraJSON: any = era.toJSON()
-      appchainApi.query.octopusLpos
-        .erasRewardPoints(eraJSON.index)
-        .then((points) => {
-          const pointsJSON: any = points.toJSON()
-          console.log("pointsJSON", pointsJSON)
-        })
-    })
-  }, [appchainApi])
-
-  const isValidator = useMemo(
-    () =>
-      validators?.some(
-        (v) => v.validator_id === accountId && !v.is_unbonding
-      ) || false,
-    [validators, accountId]
-  )
-  const isUnbonding = useMemo(
-    () =>
-      validators?.some((v) => v.validator_id === accountId && v.is_unbonding) ||
-      false,
-    [validators, accountId]
-  )
   const validator = validators?.find((v) => v.validator_id === accountId)
+  const isValidator = !!(validator && !validator?.is_unbonding)
 
   const needKeys = useMemo(() => {
     if (!validatorSessionKeys || !accountId) {
@@ -289,9 +161,6 @@ export const Appchain: React.FC = () => {
           .then(() => window.location.reload())
       })
       .catch((err) => {
-        if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
-          return
-        }
         Toast.error(err)
       })
   }
@@ -367,24 +236,15 @@ export const Appchain: React.FC = () => {
               wrappedAppchainToken={wrappedAppchainToken}
             />
           </GridItem>
-          <GridItem colSpan={{ base: 3, lg: 2 }}>
-            <MyStaking
+          <GridItem colSpan={{ base: 3, lg: 2 }} bg={bg} borderRadius="lg">
+            <MyNode
               appchain={appchain}
+              appchainId={id}
+              needKeys={needKeys}
+              appchainApi={appchainApi}
               anchor={anchor}
-              isUnbonding={isUnbonding}
-              isValidator={isValidator}
-              wrappedAppchainTokenContract={wrappedAppchainTokenContract}
               validator={validator}
             />
-
-            <Box mt={5}>
-              <MyNode
-                appchain={appchain}
-                appchainId={id}
-                needKeys={needKeys}
-                appchainApi={appchainApi}
-              />
-            </Box>
           </GridItem>
         </Grid>
         <Box mt={8}>
@@ -395,7 +255,6 @@ export const Appchain: React.FC = () => {
             unbondedValidators={unbondedValidators}
             appchainValidators={appchainValidators}
             validatorSessionKeys={validatorSessionKeys}
-            wrappedAppchainTokenContract={wrappedAppchainTokenContract}
             anchor={anchor}
           />
         </Box>
@@ -410,7 +269,6 @@ export const Appchain: React.FC = () => {
         <DrawerContent>
           <ValidatorProfile
             appchain={appchain}
-            wrappedAppchainTokenContract={wrappedAppchainTokenContract}
             anchor={anchor}
             validatorId={validatorId}
             appchainValidators={appchainValidators}

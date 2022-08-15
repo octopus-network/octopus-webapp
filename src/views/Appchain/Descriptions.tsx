@@ -60,10 +60,10 @@ dayjs.extend(duration)
 dayjs.extend(relativeTime)
 
 type DescriptionsProps = {
-  appchain: AppchainInfoWithAnchorStatus | undefined
-  appchainSettings: AppchainSettings | undefined
-  wrappedAppchainToken: WrappedAppchainToken | undefined
-  appchainApi: ApiPromise | undefined
+  appchain?: AppchainInfoWithAnchorStatus
+  appchainSettings?: AppchainSettings
+  wrappedAppchainToken?: WrappedAppchainToken
+  appchainApi?: ApiPromise
 }
 
 export const Descriptions: React.FC<DescriptionsProps> = ({

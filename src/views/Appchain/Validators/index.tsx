@@ -28,7 +28,6 @@ import {
   AppchainInfoWithAnchorStatus,
   ValidatorSessionKey,
   RewardHistory,
-  TokenContract,
 } from "types"
 
 import { ValidatorRow } from "./ValidatorRow"
@@ -42,14 +41,13 @@ import { formatAppChainAddress } from "utils/format"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 type ValidatorsProps = {
-  appchain: AppchainInfoWithAnchorStatus | undefined
+  appchain?: AppchainInfoWithAnchorStatus
   isLoadingValidators: boolean
   unbondedValidators?: string[]
-  validators: Validator[] | undefined
-  appchainValidators: string[] | undefined
-  validatorSessionKeys: Record<string, ValidatorSessionKey> | undefined
-  wrappedAppchainTokenContract: TokenContract | undefined
-  anchor: AnchorContract | undefined
+  validators?: Validator[]
+  appchainValidators?: string[]
+  validatorSessionKeys?: Record<string, ValidatorSessionKey>
+  anchor?: AnchorContract
 }
 
 type SortButtonProps = {
@@ -105,7 +103,6 @@ export const Validators: React.FC<ValidatorsProps> = ({
   isLoadingValidators,
   validators,
   unbondedValidators,
-  wrappedAppchainTokenContract,
   appchainValidators,
   validatorSessionKeys,
 }) => {
@@ -422,7 +419,6 @@ export const Validators: React.FC<ValidatorsProps> = ({
         anchor={anchor}
         appchain={appchain}
         validatorId={unbondedRewardsValidatorId}
-        wrappedAppchainTokenContract={wrappedAppchainTokenContract}
       />
     </>
   )

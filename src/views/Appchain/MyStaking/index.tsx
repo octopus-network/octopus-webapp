@@ -26,7 +26,6 @@ import {
   AnchorContract,
   RewardHistory,
   AppchainInfoWithAnchorStatus,
-  TokenContract,
   UnbondedHistory,
   StakingHistory,
   Validator,
@@ -51,20 +50,14 @@ import { DecimalUtil, ZERO_DECIMAL } from "utils"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 type MyStakingProps = {
-  appchain: AppchainInfoWithAnchorStatus | undefined
-  anchor: AnchorContract | undefined
-  isValidator: boolean
-  isUnbonding: boolean
-  wrappedAppchainTokenContract: TokenContract | undefined
+  appchain?: AppchainInfoWithAnchorStatus
+  anchor?: AnchorContract
   validator?: Validator
 }
 
 export const MyStaking: React.FC<MyStakingProps> = ({
   appchain,
   anchor,
-  wrappedAppchainTokenContract,
-  isValidator,
-  isUnbonding,
   validator,
 }) => {
   const bg = useColorModeValue(
@@ -73,6 +66,8 @@ export const MyStaking: React.FC<MyStakingProps> = ({
   )
 
   const whiteBg = useColorModeValue("white", "#15172c")
+  const isUnbonding = !!(validator && validator?.is_unbonding)
+  const isValidator = !!(validator && !validator?.is_unbonding)
 
   const [registerValidatorModalOpen, setRegisterValidatorModalOpen] =
     useBoolean(false)
@@ -152,7 +147,7 @@ export const MyStaking: React.FC<MyStakingProps> = ({
         p={6}
         pt={4}
         pb={6}
-        borderRadius="lg"
+        borderBottomRadius="lg"
       >
         {isValidator ? (
           <>
@@ -377,7 +372,6 @@ export const MyStaking: React.FC<MyStakingProps> = ({
         onClose={setRewardsModalOpen.off}
         appchain={appchain}
         anchor={anchor}
-        wrappedAppchainTokenContract={wrappedAppchainTokenContract}
         rewards={rewards}
       />
 

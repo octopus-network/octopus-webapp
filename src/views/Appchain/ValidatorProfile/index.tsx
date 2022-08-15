@@ -35,15 +35,10 @@ import {
   AnchorContract,
   Delegator,
   RewardHistory,
-  TokenContract,
   AppchainInfoWithAnchorStatus,
 } from "types"
 
-import {
-  COMPLEX_CALL_GAS,
-  FAILED_TO_REDIRECT_MESSAGE,
-  OCT_TOKEN_DECIMALS,
-} from "primitives"
+import { COMPLEX_CALL_GAS, OCT_TOKEN_DECIMALS } from "primitives"
 
 import { CheckIcon, CopyIcon, AddIcon, MinusIcon } from "@chakra-ui/icons"
 import { BiDoorOpen, BiLogOut } from "react-icons/bi"
@@ -64,7 +59,6 @@ import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
 
 type ValidatorProfileProps = {
-  wrappedAppchainTokenContract?: TokenContract
   appchain?: AppchainInfoWithAnchorStatus
   anchor?: AnchorContract
   validatorId: string
@@ -76,7 +70,6 @@ type ValidatorProfileProps = {
 
 export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
   appchain,
-  wrappedAppchainTokenContract,
   validatorId,
   anchor,
   validators,
@@ -609,7 +602,6 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
         appchain={appchain}
         anchor={anchor}
         validatorId={validatorId}
-        wrappedAppchainTokenContract={wrappedAppchainTokenContract}
         rewards={delegatorRewards}
       />
     </>
