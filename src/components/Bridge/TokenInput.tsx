@@ -120,12 +120,11 @@ export default function TokenInpput({
   }, [filteredTokens, onUpdateTokenAsset])
 
   useEffect(() => {
+    setIsLoadingBalance.on()
     if (!(tokenAsset && from)) {
       return
     }
     if (isNear) {
-      setIsLoadingBalance.on()
-
       getNearTokenBalance({
         nodeUrl: selector.options.network.nodeUrl,
         accountId: from,
@@ -135,7 +134,6 @@ export default function TokenInpput({
         setIsLoadingBalance.off()
       })
     } else if (appchainApi && bridgeConfig) {
-      setIsLoadingBalance.on()
       getPolkaTokenBalance({
         account: from,
         appchainApi: appchainApi,

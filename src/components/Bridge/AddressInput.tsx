@@ -95,6 +95,7 @@ export default function AddressInpput({
       const provider = new providers.JsonRpcProvider({
         url: selector.options.network.nodeUrl,
       })
+
       provider
         .query<CodeResult>({
           request_type: "call_function",
@@ -105,14 +106,19 @@ export default function AddressInpput({
         })
         .then((res) => {
           const storage = JSON.parse(Buffer.from(res.result).toString())
+
           if (storage === null) {
             setTargetAccountNeedDepositStorage.on()
+          } else {
+            setTargetAccountNeedDepositStorage.off()
           }
         })
     } else if (appchainApi) {
       appchainApi?.query.system.account(address).then((res: any) => {
         if (res.providers.toNumber() === 0) {
           setTargetAccountNeedDepositStorage.on()
+        } else {
+          setTargetAccountNeedDepositStorage.off()
         }
       })
     }
@@ -141,6 +147,7 @@ export default function AddressInpput({
             console.log("res", res)
           })
           .catch(console.error)
+        setSelectAccountModalOpen.on()
       } else {
         Toast.error("Please install MetaMask first")
       }
