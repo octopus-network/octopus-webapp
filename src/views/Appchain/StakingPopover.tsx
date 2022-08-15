@@ -24,6 +24,7 @@ import Decimal from "decimal.js"
 import { validateValidatorStake } from "utils/validate"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
+import StakeInput from "components/AppChain/StakeInput"
 
 type StakingPopoverProps = {
   type: "increase" | "decrease"
@@ -49,7 +50,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
   const initialFocusRef = React.useRef<any>()
 
   const inputRef = React.useRef<any>()
-  const [amount, setAmount] = useState("")
+  const [amount, setAmount] = useState(0)
 
   const [isSubmitting, setIsSubmitting] = useBoolean(false)
 
@@ -62,7 +63,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
   )
 
   const amountInDecimal = useMemo(
-    () => DecimalUtil.fromString(amount),
+    () => DecimalUtil.fromString(String(amount)),
     [amount]
   )
 
@@ -87,17 +88,10 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
     try {
       const wallet = await selector.wallet()
       if (type === "increase") {
-        const type = !validatorId ? "IncreaseStake" : "IncreaseDelegation"
-        await validateValidatorStake(
-          anchor,
-          DecimalUtil.fromString(amountStr),
-          type,
-          validator,
-          appchain
-        )
+        // const type = !validatorId ? "IncreaseStake" : "IncreaseDelegation"
         await wallet.signAndSendTransaction({
           signerId: accountId,
-          receiverId: anchor.contractId,
+          receiverId: octToken?.contractId,
           actions: [
             {
               type: "FunctionCall",
@@ -115,20 +109,13 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
                       }),
                 },
                 gas: COMPLEX_CALL_GAS,
-                deposit: "0",
+                deposit: "1",
               },
             },
           ],
         })
       } else {
-        const type = !validatorId ? "DecreaseStake" : "DecreaseDelegation"
-        await validateValidatorStake(
-          anchor,
-          DecimalUtil.fromString(amountStr),
-          type,
-          validator,
-          appchain
-        )
+        // const type = !validatorId ? "DecreaseStake" : "DecreaseDelegation"
         await wallet.signAndSendTransaction({
           signerId: accountId,
           receiverId: anchor.contractId,
@@ -176,7 +163,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
               {helper}
             </Text>
           ) : null}
-          <Box mt={3}>
+          <Box mt={3} p={6}>
             {type === "increase" && (
               <Flex mb={2} justifyContent="flex-end">
                 <Text variant="gray" size="sm">
@@ -184,11 +171,14 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
                 </Text>
               </Flex>
             )}
-            <AmountInput
-              placeholder="Amount of OCT"
-              refObj={inputRef}
+            <Heading>{amount} OCT</Heading>
+            <StakeInput
+              anchor={anchor}
+              appchain={appchain}
+              validator={validator}
+              type={type}
               onChange={(v) => setAmount(v)}
-              value={amount}
+              octBalance={octBalance}
             />
           </Box>
           <Box mt={3}>
@@ -204,14 +194,10 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
               isLoading={isSubmitting}
               width="100%"
             >
-              {amountInDecimal.lte(ZERO_DECIMAL)
-                ? "Input Amount"
-                : (type === "increase" && amountInDecimal.gt(octBalance)) ||
-                  (type === "decrease" && amountInDecimal.gt(deposit))
+              {(type === "increase" && amountInDecimal.gt(octBalance)) ||
+              (type === "decrease" && amountInDecimal.gt(deposit))
                 ? `Insufficient ${type === "increase" ? "Balance" : "Deposit"}`
-                : type === "increase"
-                ? "Increase"
-                : "Decrease"}
+                : "Confirm"}
             </Button>
           </Box>
         </PopoverBody>
