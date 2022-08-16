@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from "react"
 import useSWR from "swr"
 
-import { Text, Button, Box, Flex, useBoolean } from "@chakra-ui/react"
+import { Text, Button, Box, Flex, useBoolean, Heading } from "@chakra-ui/react"
 
-import { BaseModal, AmountInput } from "components"
+import { BaseModal } from "components"
 
 import { OCT_TOKEN_DECIMALS, COMPLEX_CALL_GAS } from "primitives"
 
@@ -11,10 +11,11 @@ import { AnchorContract } from "types"
 import { ZERO_DECIMAL, DecimalUtil } from "utils"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
+import DelegateInput from "components/AppChain/DelegateInput"
 
 type DelegateModalProps = {
   isOpen: boolean
-  anchor: AnchorContract | undefined
+  anchor?: AnchorContract
   onClose: () => void
   validatorId: string
 }
@@ -25,7 +26,7 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
   validatorId,
   anchor,
 }) => {
-  const [amount, setAmount] = useState("")
+  const [amount, setAmount] = useState(0)
 
   const { accountId, octToken, selector } = useWalletSelector()
 
@@ -36,7 +37,7 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
   const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null)
 
   const amountInDecimal = useMemo(
-    () => DecimalUtil.fromString(amount),
+    () => DecimalUtil.fromNumber(amount),
     [amount]
   )
   const octBalance = useMemo(
@@ -112,12 +113,16 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
           OCT balance: {octBalance.toFixed(0)}
         </Text>
       </Flex>
-      <AmountInput
-        placeholder="Deposit amount"
-        value={amount}
-        onChange={(v) => setAmount(v)}
-        refObj={inputRef}
-      />
+      <Box mt={3} p={6}>
+        <Heading>{amount} OCT</Heading>
+        <DelegateInput
+          anchor={anchor}
+          validatorId={validatorId}
+          type="increase"
+          onChange={(v) => setAmount(v)}
+          octBalance={octBalance}
+        />
+      </Box>
       <Box mt={4}>
         <Button
           colorScheme="octo-blue"

@@ -12,24 +12,26 @@ import { Toast } from "components/common/toast"
 import Decimal from "decimal.js"
 import { OCT_TOKEN_DECIMALS } from "primitives"
 import { useEffect, useState } from "react"
-import { AnchorContract, Validator } from "types"
-import { DecimalUtil } from "utils"
+import { AnchorContract } from "types"
+import { DecimalUtil, ZERO_DECIMAL } from "utils"
 
-export default function StakeInput({
+export default function DelegateInput({
   anchor,
   type,
-  validator,
+  validatorId,
   onChange,
   octBalance,
+  deposited = ZERO_DECIMAL,
 }: {
   anchor?: AnchorContract
   type: "increase" | "decrease"
-  validator?: Validator
+  validatorId?: string
   onChange: (amount: number) => void
   octBalance: Decimal
+  deposited?: Decimal
 }) {
   const [min] = useState(0)
-  const [max, setMax] = useState(10000)
+  const [max, setMax] = useState(0)
   const [step, setStep] = useState(1)
   const [showTooltip, setShowTooltip] = useBoolean()
   const [value, setValue] = useState(0)
@@ -43,14 +45,18 @@ export default function StakeInput({
         const protocolSettings = await anchor.get_protocol_settings()
 
         const _step = DecimalUtil.fromString(
-          protocolSettings.minimum_validator_deposit_changing_amount,
+          protocolSettings.minimum_delegator_deposit,
           OCT_TOKEN_DECIMALS
         ).toNumber()
 
         setStep(_step)
         setValue(_step)
-        if (validator) {
+        if (validatorId) {
           if (type === "increase") {
+            const validatorDeposited = await anchor.get_validator_deposit_of({
+              validator_id: validatorId,
+            })
+
             const anchorStatus = await anchor.get_anchor_status()
             const validatorSetInfo = await anchor.get_validator_set_info_of({
               era_number:
@@ -62,10 +68,11 @@ export default function StakeInput({
             )
               .mul(protocolSettings.maximum_validator_stake_percent)
               .div(100)
-              .minus(validator.total_stake)
+              .minus(validatorDeposited)
 
             const max = Math.min(
-              DecimalUtil.shift(maximumAllowedIncreased, OCT_TOKEN_DECIMALS),
+              DecimalUtil.shift(maximumAllowedIncreased, OCT_TOKEN_DECIMALS) -
+                deposited.toNumber(),
               octBalance.toNumber()
             )
 
@@ -74,15 +81,7 @@ export default function StakeInput({
               onChange(_step)
             }
           } else {
-            const maximumAllowedDecreased = new Decimal(
-              validator.total_stake
-            ).minus(protocolSettings.minimum_validator_deposit)
-
-            const max = DecimalUtil.shift(
-              maximumAllowedDecreased,
-              OCT_TOKEN_DECIMALS
-            )
-
+            const max = deposited.toNumber() - _step
             setMax(max)
             if (max > _step) {
               onChange(_step)
@@ -96,7 +95,7 @@ export default function StakeInput({
 
     initSetting()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [anchor, validator, octBalance, type])
+  }, [anchor, validatorId, octBalance, type])
 
   if (max < step) {
     return <Text mt={2}>You can't {type} more</Text>

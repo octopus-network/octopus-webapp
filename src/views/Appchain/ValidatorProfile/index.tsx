@@ -440,6 +440,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                     }
                     type="increase"
                     validatorId={validatorId}
+                    deposit={delegatedDeposits}
                     anchor={anchor}
                     validator={validator}
                     appchain={appchain}

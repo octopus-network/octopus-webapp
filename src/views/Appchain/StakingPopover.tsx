@@ -18,13 +18,12 @@ import { AnchorContract, AppchainInfoWithAnchorStatus, Validator } from "types"
 
 import { COMPLEX_CALL_GAS, OCT_TOKEN_DECIMALS } from "primitives"
 
-import { AmountInput } from "components"
 import { DecimalUtil, ZERO_DECIMAL } from "utils"
 import Decimal from "decimal.js"
-import { validateValidatorStake } from "utils/validate"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
 import StakeInput from "components/AppChain/StakeInput"
+import DelegateInput from "components/AppChain/DelegateInput"
 
 type StakingPopoverProps = {
   type: "increase" | "decrease"
@@ -88,7 +87,6 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
     try {
       const wallet = await selector.wallet()
       if (type === "increase") {
-        // const type = !validatorId ? "IncreaseStake" : "IncreaseDelegation"
         await wallet.signAndSendTransaction({
           signerId: accountId,
           receiverId: octToken?.contractId,
@@ -115,7 +113,6 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
           ],
         })
       } else {
-        // const type = !validatorId ? "DecreaseStake" : "DecreaseDelegation"
         await wallet.signAndSendTransaction({
           signerId: accountId,
           receiverId: anchor.contractId,
@@ -172,14 +169,24 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
               </Flex>
             )}
             <Heading>{amount} OCT</Heading>
-            <StakeInput
-              anchor={anchor}
-              appchain={appchain}
-              validator={validator}
-              type={type}
-              onChange={(v) => setAmount(v)}
-              octBalance={octBalance}
-            />
+            {validatorId ? (
+              <DelegateInput
+                anchor={anchor}
+                validatorId={validator?.validator_id}
+                type={type}
+                onChange={(v) => setAmount(v)}
+                octBalance={octBalance}
+                deposited={deposit}
+              />
+            ) : (
+              <StakeInput
+                anchor={anchor}
+                validator={validator}
+                type={type}
+                onChange={(v) => setAmount(v)}
+                octBalance={octBalance}
+              />
+            )}
           </Box>
           <Box mt={3}>
             <Button
