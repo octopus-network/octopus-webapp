@@ -168,7 +168,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
                 </Text>
               </Flex>
             )}
-            <Heading>{amount} OCT</Heading>
+            <Heading textAlign="center">{amount} OCT</Heading>
             {validatorId ? (
               <DelegateInput
                 anchor={anchor}

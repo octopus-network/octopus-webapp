@@ -77,13 +77,13 @@ export default function DelegateInput({
             )
 
             setMax(max)
-            if (max > _step) {
+            if (max >= _step) {
               onChange(_step)
             }
           } else {
             const max = deposited.toNumber() - _step
             setMax(max)
-            if (max > _step) {
+            if (max >= _step) {
               onChange(_step)
             }
           }

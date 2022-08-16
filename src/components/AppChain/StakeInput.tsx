@@ -70,7 +70,7 @@ export default function StakeInput({
             )
 
             setMax(max)
-            if (max > _step) {
+            if (max >= _step) {
               onChange(_step)
             }
           } else {
@@ -84,7 +84,7 @@ export default function StakeInput({
             )
 
             setMax(max)
-            if (max > _step) {
+            if (max >= _step) {
               onChange(_step)
             }
           }

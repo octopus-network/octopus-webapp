@@ -114,7 +114,7 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
         </Text>
       </Flex>
       <Box mt={3} p={6}>
-        <Heading>{amount} OCT</Heading>
+        <Heading textAlign="center">{amount} OCT</Heading>
         <DelegateInput
           anchor={anchor}
           validatorId={validatorId}
