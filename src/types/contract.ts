@@ -1,4 +1,4 @@
-import { Contract } from 'near-api-js'
+import { Contract } from "near-api-js"
 
 import {
   StorageDeposit,
@@ -7,8 +7,8 @@ import {
   RewardHistory,
   UnbondedHistory,
   StakingHistory,
-} from 'types'
-import { ProtocolSettings } from './appchain'
+} from "types"
+import { ProtocolSettings } from "./appchain"
 
 type FtBalanceOfArgs = {
   account_id: string
@@ -132,6 +132,10 @@ export class AnchorContract extends Contract {
 
   get_anchor_status(): Promise<any> {
     return this.get_anchor_status()
+  }
+
+  get_validator_set_info_of(args: { era_number: string }): Promise<any> {
+    return this.get_validator_set_info_of(args)
   }
 
   get_validator_deposit_of(args: { validator_id: string }): Promise<string> {
@@ -259,27 +263,25 @@ export class ConvertorContract extends Contract {
 }
 
 export class CollectibleContract extends Contract {
-  nft_tokens_for_owner(
-    args: {
-      account_id: AccountId;
-      from_index: string;
-      limit?: string;
-    }
-  ): Promise<any> {
-    return this.nft_tokens_for_owner(args);
+  nft_tokens_for_owner(args: {
+    account_id: AccountId
+    from_index: string
+    limit?: string
+  }): Promise<any> {
+    return this.nft_tokens_for_owner(args)
   }
 
   nft_transfer_call(
     args: {
-      receiver_id: AccountId;
-      token_id: string | null;
-      approval_id?: string;
-      memo?: string;
-      msg: string;
+      receiver_id: AccountId
+      token_id: string | null
+      approval_id?: string
+      memo?: string
+      msg: string
     },
     gas: string,
     deposit: number
   ): Promise<any> {
-    return this.nft_transfer_call(args, gas, deposit);
+    return this.nft_transfer_call(args, gas, deposit)
   }
 }

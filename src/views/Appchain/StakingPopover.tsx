@@ -18,12 +18,12 @@ import { AnchorContract, AppchainInfoWithAnchorStatus, Validator } from "types"
 
 import { COMPLEX_CALL_GAS, OCT_TOKEN_DECIMALS } from "primitives"
 
-import { AmountInput } from "components"
 import { DecimalUtil, ZERO_DECIMAL } from "utils"
 import Decimal from "decimal.js"
-import { validateValidatorStake } from "utils/validate"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
+import StakeInput from "components/AppChain/StakeInput"
+import DelegateInput from "components/AppChain/DelegateInput"
 
 type StakingPopoverProps = {
   type: "increase" | "decrease"
@@ -49,7 +49,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
   const initialFocusRef = React.useRef<any>()
 
   const inputRef = React.useRef<any>()
-  const [amount, setAmount] = useState("")
+  const [amount, setAmount] = useState(0)
 
   const [isSubmitting, setIsSubmitting] = useBoolean(false)
 
@@ -62,7 +62,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
   )
 
   const amountInDecimal = useMemo(
-    () => DecimalUtil.fromString(amount),
+    () => DecimalUtil.fromString(String(amount)),
     [amount]
   )
 
@@ -87,17 +87,9 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
     try {
       const wallet = await selector.wallet()
       if (type === "increase") {
-        const type = !validatorId ? "IncreaseStake" : "IncreaseDelegation"
-        await validateValidatorStake(
-          anchor,
-          DecimalUtil.fromString(amountStr),
-          type,
-          validator,
-          appchain
-        )
         await wallet.signAndSendTransaction({
           signerId: accountId,
-          receiverId: anchor.contractId,
+          receiverId: octToken?.contractId,
           actions: [
             {
               type: "FunctionCall",
@@ -115,20 +107,12 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
                       }),
                 },
                 gas: COMPLEX_CALL_GAS,
-                deposit: "0",
+                deposit: "1",
               },
             },
           ],
         })
       } else {
-        const type = !validatorId ? "DecreaseStake" : "DecreaseDelegation"
-        await validateValidatorStake(
-          anchor,
-          DecimalUtil.fromString(amountStr),
-          type,
-          validator,
-          appchain
-        )
         await wallet.signAndSendTransaction({
           signerId: accountId,
           receiverId: anchor.contractId,
@@ -176,7 +160,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
               {helper}
             </Text>
           ) : null}
-          <Box mt={3}>
+          <Box mt={3} p={6}>
             {type === "increase" && (
               <Flex mb={2} justifyContent="flex-end">
                 <Text variant="gray" size="sm">
@@ -184,12 +168,25 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
                 </Text>
               </Flex>
             )}
-            <AmountInput
-              placeholder="Amount of OCT"
-              refObj={inputRef}
-              onChange={(v) => setAmount(v)}
-              value={amount}
-            />
+            <Heading>{amount} OCT</Heading>
+            {validatorId ? (
+              <DelegateInput
+                anchor={anchor}
+                validatorId={validator?.validator_id}
+                type={type}
+                onChange={(v) => setAmount(v)}
+                octBalance={octBalance}
+                deposited={deposit}
+              />
+            ) : (
+              <StakeInput
+                anchor={anchor}
+                validator={validator}
+                type={type}
+                onChange={(v) => setAmount(v)}
+                octBalance={octBalance}
+              />
+            )}
           </Box>
           <Box mt={3}>
             <Button
@@ -204,14 +201,10 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
               isLoading={isSubmitting}
               width="100%"
             >
-              {amountInDecimal.lte(ZERO_DECIMAL)
-                ? "Input Amount"
-                : (type === "increase" && amountInDecimal.gt(octBalance)) ||
-                  (type === "decrease" && amountInDecimal.gt(deposit))
+              {(type === "increase" && amountInDecimal.gt(octBalance)) ||
+              (type === "decrease" && amountInDecimal.gt(deposit))
                 ? `Insufficient ${type === "increase" ? "Balance" : "Deposit"}`
-                : type === "increase"
-                ? "Increase"
-                : "Decrease"}
+                : "Confirm"}
             </Button>
           </Box>
         </PopoverBody>

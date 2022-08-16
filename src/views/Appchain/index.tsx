@@ -29,7 +29,6 @@ import { DecimalUtil, ZERO_DECIMAL } from "utils"
 import { useParams, useNavigate } from "react-router-dom"
 import { Breadcrumb } from "components"
 import { Descriptions } from "./Descriptions"
-import { MyStaking } from "./MyStaking"
 import { ValidatorProfile } from "./ValidatorProfile"
 import { MyNode } from "./MyNode"
 
