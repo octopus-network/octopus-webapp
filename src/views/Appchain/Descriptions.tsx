@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useMemo } from "react"
 
 import relativeTime from "dayjs/plugin/relativeTime"
 import duration from "dayjs/plugin/duration"
@@ -45,8 +45,8 @@ import explorerIcon from "assets/icons/explorer.png"
 import bridgeIcon from "assets/icons/bridge.png"
 import githubIcon from "assets/icons/github.png"
 
-import { DecimalUtil, toValidUrl } from "utils"
-import { EPOCH_DURATION_MS } from "primitives"
+import { DecimalUtil, toValidUrl, ZERO_DECIMAL } from "utils"
+import { EPOCH_DURATION_MS, OCT_TOKEN_DECIMALS } from "primitives"
 import { FaUser } from "react-icons/fa"
 import useChainData from "hooks/useChainData"
 import DescItem from "components/common/DescItem"
@@ -91,11 +91,16 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
 
   const {
     totalAsset,
+    stakedOctValue,
     currentEra,
     totalIssuance,
     nextEraTime,
     nextEraTimeLeft,
-  } = useChainState(appchainApi)
+  } = useChainState(
+    appchainApi,
+    appchain?.appchain_anchor,
+    appchain?.total_stake
+  )
 
   return (
     <Box bg={bg} p={6} borderRadius="lg">
@@ -128,7 +133,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
               </HStack>
             ) : null}
             <Text fontSize="sm" className="octo-gray">
-              {appchain?.appchain_metadata.description}
+              {appchain?.appchain_metadata?.description}
             </Text>
           </VStack>
         </HStack>
@@ -236,9 +241,20 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
         />
 
         <DescItem
-          title="Foreign Asset Cap"
+          title="Cross-chain Asset"
           isLoaded={!!nextEraTime}
-          value={totalAsset}
+          value={
+            <>
+              <Heading
+                fontSize="xl"
+                color={
+                  stakedOctValue.lessThan(totalAsset.mul(3))
+                    ? "#FFAA15"
+                    : "#00C781"
+                }
+              >{`$${DecimalUtil.beautify(totalAsset)}`}</Heading>
+            </>
+          }
         />
       </SimpleGrid>
 

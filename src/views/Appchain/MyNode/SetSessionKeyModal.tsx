@@ -4,7 +4,6 @@ import {
   Input,
   Text,
   List,
-  Heading,
   Link,
   FormControl,
   FormHelperText,
@@ -57,7 +56,7 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
     }
   }, [isOpen])
 
-  const isEvm = appchain?.appchain_metadata.template_type === "BarnacleEvm"
+  const isEvm = appchain?.appchain_metadata?.template_type === "BarnacleEvm"
   const { accounts, currentAccount, setCurrentAccount } = useAccounts(
     isEvm,
     isOpen

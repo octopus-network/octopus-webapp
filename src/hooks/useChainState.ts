@@ -1,17 +1,28 @@
 import { ApiPromise } from "@polkadot/api"
-import { u8aToBuffer } from "@polkadot/util"
 import axios from "axios"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { API_HOST } from "config"
 import Decimal from "decimal.js"
-import { EPOCH_DURATION_MS } from "primitives"
+import { providers } from "near-api-js"
+import { CodeResult } from "near-api-js/lib/providers/provider"
+import { EPOCH_DURATION_MS, OCT_TOKEN_DECIMALS } from "primitives"
 import { useEffect, useState } from "react"
+import { CrossChainToken, TokenPriceItem } from "types"
+import { DecimalUtil, ZERO_DECIMAL } from "utils"
 
-export default function useChainState(appchainApi: ApiPromise | undefined) {
-  const [totalAsset, setTotalAsset] = useState("$0")
+export default function useChainState(
+  appchainApi: ApiPromise | undefined,
+  anchorId: string | undefined,
+  stakedOct: string | undefined
+) {
+  const [totalAsset, setTotalAsset] = useState(ZERO_DECIMAL)
+  const [stakedOctValue, setStakedOctValue] = useState(ZERO_DECIMAL)
   const [currentEra, setCurrentEra] = useState<number>()
   const [totalIssuance, setTotalIssuance] = useState<string>()
 
   const [nextEraTime, setNextEraTime] = useState(0)
   const [nextEraTimeLeft, setNextEraTimeLeft] = useState(0)
+  const { selector } = useWalletSelector()
 
   useEffect(() => {
     if (!appchainApi) {
@@ -34,71 +45,54 @@ export default function useChainState(appchainApi: ApiPromise | undefined) {
     })
 
     async function calcAssets() {
+      if (!anchorId) {
+        return
+      }
       try {
-        const keys = await appchainApi?.rpc.state.getKeysPaged(
-          "0x18878563306ebb9373c9e8590d9f405e32324c1f19077ebd896ac99badc0dd34",
-          1000,
-          "0x18878563306ebb9373c9e8590d9f405e32324c1f19077ebd896ac99badc0dd34"
-        )
+        const provider = new providers.JsonRpcProvider({
+          url: selector.options.network.nodeUrl,
+        })
+        const res = await provider.query<CodeResult>({
+          request_type: "call_function",
+          account_id: anchorId,
+          method_name: "get_near_fungible_tokens",
+          args_base64: "",
+          finality: "optimistic",
+        })
+        const crossChainTokens = JSON.parse(
+          Buffer.from(res.result).toString()
+        ) as CrossChainToken[]
 
-        const assets = await appchainApi?.rpc.state.queryStorageAt(keys!)
+        if (crossChainTokens.length !== 0) {
+          const result = await axios.get(`${API_HOST}/prices`)
 
-        const result = await Promise.all(
-          (assets as any).map(async (t: any) => {
-            try {
-              const assetId = u8aToBuffer(t.toU8a(true))
-                ?.reverse()
-                .toString("hex")
+          const listedTokens = result.data as TokenPriceItem[]
 
-              // console.log("assetid", t.toHuman(), new Decimal(assetId).toNumber())
-              const asset = await appchainApi?.query.octopusAssets.asset(
-                Number(assetId)
-              )
-              const _supply = (asset?.toJSON() as any)?.supply
-
-              const meta = await appchainApi?.query.octopusAssets.metadata(
-                assetId
-              )
-
-              const symbol = (meta?.toHuman() as any)?.symbol
-              const decimals = (meta?.toHuman() as any)?.decimals
-
-              const supply = new Decimal(_supply ?? 0).toFixed(0)
-              if (supply === "0") {
-                return undefined
-              }
-              return {
-                supply,
-                symbol,
-                decimals,
-              }
-            } catch (error) {
-              return undefined
-            }
-          })
-        )
-
-        if (result.filter((t) => t).length !== 0) {
-          const listPrices = await axios.get(
-            "https://indexer.ref.finance/list-token-price"
-          )
-          const listedTokens = Object.values(listPrices.data)
-
-          const total = result
+          const total = crossChainTokens
             .filter((t) => t)
             .reduce((sum, t) => {
-              const token: any = listedTokens.find(
-                (lt: any) => lt.symbol === t.symbol
+              const token: TokenPriceItem | undefined = listedTokens.find(
+                (lt) => lt.token_account_id === t.contract_account
               )
               if (token) {
-                return new Decimal(t.supply)
+                return new Decimal(t.locked_balance)
                   .mul(new Decimal(token.price))
-                  .div(10 ** token.decimal)
+                  .div(10 ** token.ftInfo.decimals)
                   .add(sum)
               }
               return sum
             }, new Decimal(0))
-          setTotalAsset(`$${total.toFixed(2)}`)
+          setTotalAsset(total)
+
+          const octToken = listedTokens.find((t) => t.ftInfo.symbol === "OCT")
+          if (octToken) {
+            const staked = DecimalUtil.fromString(
+              stakedOct || "0",
+              OCT_TOKEN_DECIMALS
+            ).mul(new Decimal(octToken.price))
+
+            setStakedOctValue(staked)
+          }
         }
       } catch (error) {
         console.log("error", error)
@@ -107,10 +101,11 @@ export default function useChainState(appchainApi: ApiPromise | undefined) {
 
     calcAssets()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appchainApi?.genesisHash])
+  }, [appchainApi?.genesisHash, anchorId, stakedOct])
 
   return {
     totalAsset,
+    stakedOctValue,
     currentEra,
     totalIssuance,
     nextEraTime,
