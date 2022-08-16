@@ -367,18 +367,18 @@ export async function evmBurn({
   } else {
     hash = await evmLock(amount, receiver_id)
   }
-  updateTxn(appchainId || "", {
-    isAppchainSide: true,
-    appchainId,
-    hash,
-    sequenceId: 0,
-    amount,
-    status: BridgeHistoryStatus.Pending,
-    timestamp: new Date().getTime(),
-    fromAccount,
-    toAccount: receiver_id,
-    tokenContractId: asset_id,
-  })
+  // updateTxn(appchainId || "", {
+  //   isAppchainSide: true,
+  //   appchainId,
+  //   hash,
+  //   sequenceId: 0,
+  //   amount,
+  //   status: BridgeHistoryStatus.Pending,
+  //   timestamp: new Date().getTime(),
+  //   fromAccount,
+  //   toAccount: receiver_id,
+  //   tokenContractId: asset_id,
+  // })
 }
 
 export async function evmLock(amount: string, receiver_id: string) {
