@@ -175,7 +175,7 @@ export default function NodeForm({
                 onChange={(e) => setCloudVendor(e.target.value as CLOUD_VENDOR)}
               >
                 <option value="AWS">AWS</option>
-                <option value="GCP">GCP</option>
+                {/* <option value="GCP">GCP</option> */}
               </Select>
             </Box>
             <Flex flex={1} alignItems="center">

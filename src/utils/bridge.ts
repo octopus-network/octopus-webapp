@@ -11,7 +11,6 @@ import { BridgeHistoryStatus, TokenAsset, BridgeConfig } from "types"
 import OctopusAppchain from "./abis/OctopusAppchain.json"
 import OctopusSession from "./abis/OctopusSession.json"
 import { DecimalUtil, ZERO_DECIMAL } from "./decimal"
-import web3 from "web3"
 import BN from "bn.js"
 
 let _signer: ethers.providers.JsonRpcSigner | null = null
@@ -53,9 +52,10 @@ export async function isValidAddress({
   if (isNearToAppchain) {
     return (
       (!isEvm && (isHex(address) || isAddress(address))) ||
-      (isEvm && web3.utils.isAddress(address))
+      (isEvm && ethers.utils.getAddress(address) !== null)
     )
   }
+
   return true
   // TODO: check if address is valid for NEAR
   // try {
