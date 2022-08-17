@@ -32,6 +32,7 @@ import { OCT_TOKEN_DECIMALS, COMPLEX_CALL_GAS } from "primitives"
 import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
+import { onTxSent } from "utils/helper"
 
 type VoteActionsProps = {
   data: AppchainInfo
@@ -160,6 +161,7 @@ const VotePopover: React.FC<VotePopoverProps> = ({
       })
       Toast.success("Deposited")
       setIsDepositing.off()
+      onTxSent()
     } catch (error) {
       Toast.error(error)
       setIsDepositing.off()

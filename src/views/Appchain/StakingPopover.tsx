@@ -24,6 +24,7 @@ import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
 import StakeInput from "components/AppChain/StakeInput"
 import DelegateInput from "components/AppChain/DelegateInput"
+import { onTxSent } from "utils/helper"
 
 type StakingPopoverProps = {
   type: "increase" | "decrease"
@@ -112,6 +113,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
             },
           ],
         })
+        onTxSent()
       } else {
         await wallet.signAndSendTransaction({
           signerId: accountId,
@@ -135,6 +137,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
       }
       Toast.success("Submitted")
       setIsSubmitting.off()
+      onTxSent()
     } catch (err: any) {
       Toast.error(err)
     }

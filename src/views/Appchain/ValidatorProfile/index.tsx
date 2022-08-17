@@ -57,6 +57,7 @@ import { formatAppChainAddress } from "utils/format"
 import OctIdenticon from "components/common/OctIdenticon"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
+import { onTxSent } from "utils/helper"
 
 type ValidatorProfileProps = {
   appchain?: AppchainInfoWithAnchorStatus
@@ -249,6 +250,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
           : "Delegation enabled"
       )
       setIsTogglingDelegation.off()
+      onTxSent()
     } catch (err) {
       Toast.error(err)
       setIsTogglingDelegation.off()
@@ -276,6 +278,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
       })
       Toast.success("Unbonded")
       setIsUnbonding.off()
+      onTxSent()
     } catch (error) {
       Toast.error(error)
       setIsUnbonding.off()
@@ -303,6 +306,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
       })
       Toast.success("Unbonded")
       setIsUnbondingDelegation.off()
+      onTxSent()
     } catch (error) {
       setIsUnbondingDelegation.off()
     }

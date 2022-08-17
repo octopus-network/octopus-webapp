@@ -229,7 +229,7 @@ export async function nearBurn({
     return
   }
 
-  wallet.signAndSendTransaction({
+  await wallet.signAndSendTransaction({
     receiverId: token.contractId,
     actions: [
       {
@@ -341,6 +341,7 @@ export async function substrateBurn({
           toAccount: targetAccount,
           tokenContractId: asset?.contractId,
         })
+        window.location.reload()
       }
     })
   })

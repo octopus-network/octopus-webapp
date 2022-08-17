@@ -26,6 +26,7 @@ import { AnchorContract, AppchainInfoWithAnchorStatus } from "types"
 import { DecimalUtil, ZERO_DECIMAL } from "utils"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
+import { onTxSent } from "utils/helper"
 
 type RegisterValidatorModalProps = {
   appchain: AppchainInfoWithAnchorStatus | undefined
@@ -122,6 +123,7 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
       })
       Toast.success("Submitted")
       setIsSubmitting.off()
+      onTxSent()
     } catch (error) {
       Toast.error(error)
       setIsSubmitting.off()

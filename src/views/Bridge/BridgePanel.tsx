@@ -441,7 +441,9 @@ export const BridgePanel: React.FC = () => {
       }
       setIsTransferring.off()
       Toast.success("Bridging")
-      window.location.reload()
+      if (isNearToAppchain) {
+        window.location.reload()
+      }
     } catch (error) {
       setIsTransferring.off()
       Toast.error(error)

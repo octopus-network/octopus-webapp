@@ -27,6 +27,7 @@ import relativeTime from "dayjs/plugin/relativeTime"
 import { COMPLEX_CALL_GAS, OCT_TOKEN_DECIMALS } from "primitives"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
+import { onTxSent } from "utils/helper"
 
 type RewardsModalProps = {
   stakes: UnbondedHistory[] | undefined
@@ -100,6 +101,7 @@ export const StakesModal: React.FC<RewardsModalProps> = ({
       })
       Toast.success("Withdrawed")
       setIsWithdrawing.off()
+      onTxSent()
     } catch (error) {
       setIsWithdrawing.off()
     }

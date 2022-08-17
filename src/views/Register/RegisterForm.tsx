@@ -38,6 +38,7 @@ import { OCT_TOKEN_DECIMALS, COMPLEX_CALL_GAS } from "primitives"
 import Decimal from "decimal.js"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
+import { onTxSent } from "utils/helper"
 
 export const RegisterForm: React.FC = () => {
   const bg = useColorModeValue("white", "#15172c")
@@ -208,6 +209,7 @@ export const RegisterForm: React.FC = () => {
       })
       Toast.success("Registered")
       actions.setSubmitting(false)
+      onTxSent(window.location.origin + "/appchains")
     } catch (error) {
       actions.setSubmitting(false)
       Toast.error(error)

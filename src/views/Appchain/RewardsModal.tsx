@@ -36,6 +36,7 @@ import { SIMPLE_CALL_GAS, COMPLEX_CALL_GAS } from "primitives"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
 import { useTokenContract } from "hooks/useTokenContract"
+import { onTxSent } from "utils/helper"
 
 type RewardsModalProps = {
   rewards?: RewardHistory[]
@@ -153,7 +154,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
     }
     try {
       const wallet = await selector.wallet()
-      wallet.signAndSendTransaction({
+      await wallet.signAndSendTransaction({
         signerId: accountId,
         receiverId: anchor.contractId,
         actions: [
@@ -177,6 +178,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
       })
 
       setIsClaiming.off()
+      onTxSent()
     } catch (error) {
       Toast.error(error)
       setIsClaiming.off()
@@ -204,6 +206,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
         ],
       })
       setIsDepositingStorage.off()
+      onTxSent()
     } catch (error) {
       setIsDepositingStorage.off()
       Toast.error(error)

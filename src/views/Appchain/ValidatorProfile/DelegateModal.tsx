@@ -12,6 +12,7 @@ import { ZERO_DECIMAL, DecimalUtil } from "utils"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
 import DelegateInput from "components/AppChain/DelegateInput"
+import { onTxSent } from "utils/helper"
 
 type DelegateModalProps = {
   isOpen: boolean
@@ -93,6 +94,7 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
       })
       Toast.success("Deposited")
       setIsDepositing.off()
+      onTxSent()
     } catch (error) {
       setIsDepositing.off()
       Toast.error(error)
