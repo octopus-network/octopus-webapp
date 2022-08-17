@@ -26,7 +26,6 @@ interface WalletSelectorContextValue {
   modal: WalletSelectorModal
   accounts: Array<AccountState>
   accountId: string | undefined
-  setAccountId: (accountId: string) => void
   near: Near | null
   registry: RegistryContract | null
   networkConfig: NetworkConfig | null
@@ -44,37 +43,12 @@ export const WalletSelectorContextProvider = ({
 }) => {
   const [selector, setSelector] = useState<WalletSelector | null>(null)
   const [modal, setModal] = useState<WalletSelectorModal | null>(null)
-  const [accountId, setAccountId] = useState<string | undefined>()
   const [accounts, setAccounts] = useState<Array<AccountState>>([])
   const [near, setNear] = useState<Near | null>(null)
   const [registry, setRegistry] = useState<RegistryContract | null>(null)
   const [networkConfig, setNetworkConfig] = useState<NetworkConfig | null>(null)
   const [octToken, setOctToken] = useState<TokenContract | null>(null)
   const [nearAccount, setNearAccount] = useState<Account | undefined>(undefined)
-
-  const syncAccountState = (
-    currentAccountId: string | undefined,
-    newAccounts: Array<AccountState>
-  ) => {
-    if (!newAccounts.length) {
-      localStorage.removeItem("accountId")
-      setAccountId(undefined)
-      setAccounts([])
-
-      return
-    }
-
-    const validAccountId =
-      currentAccountId &&
-      newAccounts.some((x) => x.accountId === currentAccountId)
-    const newAccountId = validAccountId
-      ? currentAccountId
-      : newAccounts[0].accountId
-
-    localStorage.setItem("accountId", newAccountId)
-    setAccountId(newAccountId)
-    setAccounts(newAccounts)
-  }
 
   const init = useCallback(async () => {
     const config = await axios
@@ -84,16 +58,19 @@ export const WalletSelectorContextProvider = ({
 
     const _selector = await setupWalletSelector({
       network: config?.near.networkId,
-      debug: true,
+      debug: false,
       modules: [
         setupNearWallet({
           iconUrl: "/assets/near-wallet-icon.png",
+          deprecated: false,
         }),
         setupMyNearWallet({
           iconUrl: "/assets/my-near-wallet-icon.png",
+          deprecated: false,
         }),
         setupLedger({
           iconUrl: "/assets/ledger-icon.png",
+          deprecated: false,
         }),
         setupSender({
           iconUrl: "/assets/sender-icon.png",
@@ -102,7 +79,7 @@ export const WalletSelectorContextProvider = ({
           iconUrl: "/assets/wallet-connect-icon.png",
           projectId: "1799b9adf32c8cef373a6a41699fe8bf",
           metadata: {
-            name: "OCT DApp",
+            name: "Octopus Network",
             description: "",
             url: "https://mainnet.oct.network",
             icons: ["https://near-vesting.netlify.app/oct.png"],
@@ -167,10 +144,7 @@ export const WalletSelectorContextProvider = ({
     })
     const state = _selector.store.getState()
 
-    syncAccountState(
-      localStorage.getItem("accountId") ?? undefined,
-      state.accounts
-    )
+    setAccounts(state.accounts)
 
     window.selector = _selector
     window.modal = _modal
@@ -199,15 +173,18 @@ export const WalletSelectorContextProvider = ({
       .subscribe((nextAccounts) => {
         console.log("Accounts Update", nextAccounts)
 
-        syncAccountState(accountId, nextAccounts)
+        setAccounts(nextAccounts)
       })
 
     return () => subscription.unsubscribe()
-  }, [selector, accountId])
+  }, [selector])
 
   if (!selector || !modal) {
     return null
   }
+
+  const accountId =
+    accounts.find((account) => account.active)?.accountId || undefined
 
   return (
     <WalletSelectorContext.Provider
@@ -216,7 +193,6 @@ export const WalletSelectorContextProvider = ({
         modal,
         accounts,
         accountId,
-        setAccountId,
         registry,
         near,
         octToken,
