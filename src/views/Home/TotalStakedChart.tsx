@@ -132,7 +132,7 @@ export const TotalStakedChart: React.FC = () => {
               Total Staked $OCT
             </Text>
             <Heading fontSize="2xl">
-              {DecimalUtil.beautify(new Decimal(currentValue))}
+              {DecimalUtil.beautify(new Decimal(currentValue), 0)}
             </Heading>
           </Skeleton>
           <HStack spacing={3} mt={8}></HStack>

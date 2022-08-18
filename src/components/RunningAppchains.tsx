@@ -134,7 +134,8 @@ const RunningItem: React.FC<RunningItemProps> = ({ whiteBg = false, data }) => {
           </Text>
           <Heading fontSize="lg">
             {DecimalUtil.beautify(
-              DecimalUtil.fromString(data.total_stake, OCT_TOKEN_DECIMALS)
+              DecimalUtil.fromString(data.total_stake, OCT_TOKEN_DECIMALS),
+              0
             )}
           </Heading>
         </VStack>

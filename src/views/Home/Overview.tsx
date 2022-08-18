@@ -152,7 +152,7 @@ export const Overview: React.FC = () => {
                           ).mul(data.octPrice)
                         )
                         .mul(100)
-                        .toFixed(2) + "%"
+                        .toFixed(1) + "%"
                     : "loading"}
                 </Heading>
               </Skeleton>
