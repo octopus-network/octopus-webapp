@@ -32,6 +32,7 @@ import { TotalStakedChart } from "./TotalStakedChart"
 import { DecimalUtil } from "utils"
 import { useNavigate } from "react-router-dom"
 import { OCT_TOKEN_DECIMALS } from "primitives"
+import Decimal from "decimal.js"
 
 const Card: React.FC<
   BoxProps & {
@@ -143,13 +144,15 @@ export const Overview: React.FC = () => {
               <Skeleton isLoaded={!!data}>
                 <Heading fontSize="3xl">
                   {!!data
-                    ? DecimalUtil.fromString(
-                        data.totalStakedAmount,
-                        OCT_TOKEN_DECIMALS
-                      )
-                        .mul(data.octPrice)
-                        .div(data.totalAnnualizedFee)
-                        .toFixed(2)
+                    ? new Decimal(data.totalAnnualizedFee)
+                        .div(
+                          DecimalUtil.fromString(
+                            data.totalStakedAmount,
+                            OCT_TOKEN_DECIMALS
+                          ).mul(data.octPrice)
+                        )
+                        .mul(100)
+                        .toFixed(2) + "%"
                     : "loading"}
                 </Heading>
               </Skeleton>
