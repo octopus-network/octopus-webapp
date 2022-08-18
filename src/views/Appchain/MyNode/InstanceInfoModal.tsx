@@ -27,7 +27,7 @@ export const InstanceInfoModal: React.FC<Props> = ({
   isOpen,
   onClose,
 }) => {
-  if (!metrics || metrics?.Code === "NotFoundError") {
+  if (!metrics || !metrics?.cpu) {
     return null
   }
 
