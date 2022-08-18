@@ -3,13 +3,7 @@ import React, { useEffect, useMemo, useCallback, useRef } from "react"
 import { SWRConfig } from "swr"
 import axios from "axios"
 
-import {
-  Box,
-  useColorModeValue,
-  useToast,
-  Spinner,
-  Link,
-} from "@chakra-ui/react"
+import { Box, useColorModeValue, useToast, Link } from "@chakra-ui/react"
 
 import { Header, Footer } from "components"
 
@@ -25,20 +19,6 @@ import { useTxnsStore } from "stores"
 import { API_HOST } from "config"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
-
-const LoadingSpinner = () => {
-  return (
-    <Box p={2}>
-      <Spinner
-        thickness="4px"
-        speed="0.65s"
-        emptyColor="gray.200"
-        color="octo-blue.500"
-        size="md"
-      />
-    </Box>
-  )
-}
 
 export const Root: React.FC = () => {
   const headerBg = useColorModeValue("whiteAlpha.800", "whiteAlpha.50")

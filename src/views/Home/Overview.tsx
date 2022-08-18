@@ -1,32 +1,17 @@
-import React, { useEffect } from "react"
+import React from "react"
 import useSWR from "swr"
 
 import {
   Container,
-  Grid,
   BoxProps,
-  GridItem,
-  Image,
   Flex,
   Text,
   Skeleton,
   Heading,
   useColorModeValue,
   Box,
-  Icon,
-  useBoolean,
   SimpleGrid,
 } from "@chakra-ui/react"
-
-import { useSpring, animated } from "react-spring"
-
-import dotIcon from "assets/icons/dot.png"
-import dotIcon2 from "assets/icons/dot2.png"
-
-import squareIcon from "assets/icons/square.png"
-import squareIcon2 from "assets/icons/square2.png"
-
-import { HiOutlineArrowNarrowRight } from "react-icons/hi"
 
 import { TotalStakedChart } from "./TotalStakedChart"
 import { DecimalUtil } from "utils"

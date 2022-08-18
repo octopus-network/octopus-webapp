@@ -25,6 +25,7 @@ import {
 import { OCT_TOKEN_DECIMALS } from "primitives"
 import Decimal from "decimal.js"
 import dayjs from "dayjs"
+import { CategoricalChartState } from "recharts/types/chart/generateCategoricalChart"
 
 const CustomTooltip = ({
   label,
@@ -106,7 +107,8 @@ export const TotalStakedChart: React.FC = () => {
   }, [klineData])
 
   const onAreaMouseMove = useCallback(
-    ({ isTooltipActive, activePayload }) => {
+    (nextState: CategoricalChartState, event: any) => {
+      const { isTooltipActive, activePayload } = nextState
       if (isTooltipActive) {
         if (activePayload && activePayload.length) {
           const { value } = activePayload[0].payload

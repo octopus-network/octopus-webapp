@@ -1,4 +1,4 @@
-import React, { useMemo } from "react"
+import React from "react"
 
 import relativeTime from "dayjs/plugin/relativeTime"
 import duration from "dayjs/plugin/duration"
@@ -45,8 +45,8 @@ import explorerIcon from "assets/icons/explorer.png"
 import bridgeIcon from "assets/icons/bridge.png"
 import githubIcon from "assets/icons/github.png"
 
-import { DecimalUtil, toValidUrl, ZERO_DECIMAL } from "utils"
-import { EPOCH_DURATION_MS, OCT_TOKEN_DECIMALS } from "primitives"
+import { DecimalUtil, toValidUrl } from "utils"
+import { EPOCH_DURATION_MS } from "primitives"
 import { FaUser } from "react-icons/fa"
 import useChainData from "hooks/useChainData"
 import DescItem from "components/common/DescItem"
