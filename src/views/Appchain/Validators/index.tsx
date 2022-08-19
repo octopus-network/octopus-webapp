@@ -75,22 +75,35 @@ const SortButton: React.FC<SortButtonProps> = ({
 
   return (
     <HStack
+     
       alignItems="center"
+     
       justifyContent="center"
+     
       onClick={onClick}
+     
       cursor="pointer"
+    
     >
       <Text variant="gray">{label}</Text>
       <VStack spacing={0}>
         <Icon
+         
           as={TriangleUpIcon}
+         
           boxSize={2}
-          opacity={sortIdx === indexArr[0] ? 1 : 0.3}
+         
+          opacity={sortIdx === indexArr[0] ? 1 : 00.3}
+       
         />
         <Icon
+         
           as={TriangleDownIcon}
+         
           boxSize={2}
-          opacity={sortIdx === indexArr[1] ? 1 : 0.3}
+         
+          opacity={sortIdx === indexArr[1] ? 1 : 00.3}
+       
         />
       </VStack>
     </HStack>
@@ -104,7 +117,7 @@ export const Validators: React.FC<ValidatorsProps> = ({
   validators,
   unbondedValidators,
   appchainValidators,
-  validatorSessionKeys,
+  validatorSessionKeys,,
 }) => {
   const bg = useColorModeValue("white", "#15172c")
 
@@ -423,3 +436,4 @@ export const Validators: React.FC<ValidatorsProps> = ({
     </>
   )
 }
+

@@ -160,6 +160,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
     window.location.reload()
   }
 
+>>>>>>> main
   const onUpgradeImage = () => {
     if (!appchainId) {
       return
@@ -193,11 +194,13 @@ export const MyNode: React.FC<MyNodeProps> = ({
         {
           headers: { authorization: node?.user },
         }
+>>>>>>> main
       )
-      .then((res) => {
-        window.location.reload()
-      })
-  }
+
+<<<<<<< HEAD
+      if (!secretKey) {
+        return
+      }
 
   // check NODE_STATE_RECORD for state meaning
   const isShowStaking =

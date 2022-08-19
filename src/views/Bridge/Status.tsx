@@ -430,7 +430,7 @@ export const Status: React.FC = () => {
           fontSize="sm"
         >
           <GridItem colSpan={2}>
-            <Text>Event/Token</Text>
+            <Text>Event/Event/Token</Text>
           </GridItem>
           <GridItem colSpan={4}>
             <Text>From/Hash</Text>

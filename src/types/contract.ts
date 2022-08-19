@@ -79,6 +79,10 @@ export class TokenContract extends Contract {
   ft_metadata(): Promise<any> {
     return this.ft_metadata()
   }
+
+  storage_balance_bounds(): Promise<any> {
+    return this.storage_balance_bounds()
+  }
 }
 
 export class RegistryContract extends Contract {
