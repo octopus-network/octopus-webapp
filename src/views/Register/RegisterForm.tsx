@@ -135,6 +135,7 @@ export const RegisterForm: React.FC = () => {
       templateType,
     } = values
 
+    actions.setSubmitting(true)
     if (!tokenInfo.tokenName || !tokenInfo.tokenSymbol) {
       Toast.error("Please input the token info")
       setTimeout(() => {
@@ -209,7 +210,6 @@ export const RegisterForm: React.FC = () => {
       })
       Toast.success("Registered")
       actions.setSubmitting(false)
-      onTxSent(window.location.origin + "/appchains")
     } catch (error) {
       actions.setSubmitting(false)
       Toast.error(error)
