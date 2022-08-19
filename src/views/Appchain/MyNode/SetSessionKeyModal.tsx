@@ -29,6 +29,7 @@ import detectEthereumProvider from "@metamask/detect-provider"
 import useAccounts from "hooks/useAccounts"
 import { Toast } from "components/common/toast"
 import { setSessionKey } from "utils/bridge"
+import { onTxSent } from "utils/helper"
 
 type SetSessionKeyModalProps = {
   isOpen: boolean
@@ -83,6 +84,8 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
       setIsSubmitting.on()
       if (isEvm) {
         await setSessionKey(key)
+        Toast.success("Set session keys success")
+        onTxSent()
       } else {
         const injected = await web3FromSource(currentAccount?.meta.source || "")
         appchainApi?.setSigner(injected.signer)
@@ -98,7 +101,7 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
             Toast.success("Set session keys success")
 
             setTimeout(() => {
-              window.location.reload()
+              onTxSent()
             }, 500)
           }
         })
