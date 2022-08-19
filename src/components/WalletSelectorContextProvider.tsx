@@ -64,27 +64,27 @@ export const WalletSelectorContextProvider = ({
           iconUrl: "/assets/near-wallet-icon.png",
           deprecated: false,
         }),
-        setupMyNearWallet({
-          iconUrl: "/assets/my-near-wallet-icon.png",
-          deprecated: false,
-        }),
-        setupLedger({
-          iconUrl: "/assets/ledger-icon.png",
-          deprecated: false,
-        }),
-        setupSender({
-          iconUrl: "/assets/sender-icon.png",
-        }),
-        setupWalletConnect({
-          iconUrl: "/assets/wallet-connect-icon.png",
-          projectId: "1799b9adf32c8cef373a6a41699fe8bf",
-          metadata: {
-            name: "Octopus Network",
-            description: "",
-            url: "https://mainnet.oct.network",
-            icons: ["https://near-vesting.netlify.app/oct.png"],
-          },
-        }),
+        // setupMyNearWallet({
+        //   iconUrl: "/assets/my-near-wallet-icon.png",
+        //   deprecated: false,
+        // }),
+        // setupLedger({
+        //   iconUrl: "/assets/ledger-icon.png",
+        //   deprecated: false,
+        // }),
+        // setupSender({
+        //   iconUrl: "/assets/sender-icon.png",
+        // }),
+        // setupWalletConnect({
+        //   iconUrl: "/assets/wallet-connect-icon.png",
+        //   projectId: "1799b9adf32c8cef373a6a41699fe8bf",
+        //   metadata: {
+        //     name: "Octopus Network",
+        //     description: "",
+        //     url: "https://mainnet.oct.network",
+        //     icons: ["https://near-vesting.netlify.app/oct.png"],
+        //   },
+        // }),
       ],
     })
     const near = new Near({
