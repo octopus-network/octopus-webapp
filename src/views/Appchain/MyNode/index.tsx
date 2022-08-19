@@ -160,7 +160,6 @@ export const MyNode: React.FC<MyNodeProps> = ({
     window.location.reload()
   }
 
->>>>>>> main
   const onUpgradeImage = () => {
     if (!appchainId) {
       return
@@ -183,25 +182,22 @@ export const MyNode: React.FC<MyNodeProps> = ({
     }
 
     setIsUpgrading.on()
-    axios
-      .put(
-        `${deployConfig.deployApiHost}/tasks/${node?.uuid}`,
-        {
-          action: "update",
-          secret_key: secretKey,
-          base_image: deployConfig.baseImages[appchainId]?.image,
-        },
-        {
-          headers: { authorization: node?.user },
-        }
->>>>>>> main
-      )
-
-<<<<<<< HEAD
-      if (!secretKey) {
-        return
+    axios.put(
+      `${deployConfig.deployApiHost}/tasks/${node?.uuid}`,
+      {
+        action: "update",
+        secret_key: secretKey,
+        base_image: deployConfig.baseImages[appchainId]?.image,
+      },
+      {
+        headers: { authorization: node?.user },
       }
+    )
 
+    if (!secretKey) {
+      return
+    }
+  }
   // check NODE_STATE_RECORD for state meaning
   const isShowStaking =
     !!validator || ["12", "20", "21", "22", "30"].includes(node?.state)

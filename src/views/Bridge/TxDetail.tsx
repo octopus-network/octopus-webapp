@@ -81,15 +81,10 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
       <DrawerBody pb={6}>
         <Box bg={grayBg} borderRadius="lg" pl={3} pr={3}>
           <Flex
-           
             alignItems="center"
-           
             justifyContent="space-between"
-           
             pt={2}
-           
             pb={2}
-          
           >
             <Text color="gray">Transaction Id</Text>
             <HStack maxW="70%">
@@ -106,15 +101,10 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
             </HStack>
           </Flex>
           <Flex
-           
             alignItems="center"
-           
             justifyContent="space-between"
-           
             pt={2}
-           
             pb={2}
-          
           >
             <Text color="gray">Direction</Text>
             <HStack>
@@ -150,7 +140,7 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
                     {isAppchainSide ? appchainId : "NEAR"}
                   </Text>
                 </HStack>
-              ))}
+              )}
               <Icon as={AiOutlineArrowRight} boxSize={4} />
               {!isAppchainSide ? (
                 <Link as={RouterLink} to={`/appchains/${appchainId}`}>
@@ -184,7 +174,7 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
                     {!isAppchainSide ? appchainId : "NEAR"}
                   </Text>
                 </HStack>
-              ))}
+              )}
             </HStack>
           </Flex>
 
@@ -219,15 +209,10 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
             </HStack>
           </Flex>
           <Flex
-           
             alignItems="center"
-           
             justifyContent="space-between"
-           
             pt={2}
-           
             pb={2}
-          
           >
             <Text color="gray">From Account</Text>
             <Link
@@ -260,15 +245,10 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
             </Link>
           </Flex>
           <Flex
-           
             alignItems="center"
-           
             justifyContent="space-between"
-           
             pt={3}
-           
             pb={3}
-          
           >
             <Text color="gray">To Account</Text>
             <Link
@@ -318,4 +298,3 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
     </>
   )
 }
-

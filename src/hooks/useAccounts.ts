@@ -10,11 +10,12 @@ export default function useAccounts(isEvm: boolean, isRequest: boolean) {
 
   useEffect(() => {
     async function getAccounts() {
+      if (!isRequest) {
+        return
+      }
+
       try {
         if (isEvm) {
-          if (!isRequest) {
-            return
-          }
           const provider = await detectEthereumProvider({
             mustBeMetaMask: true,
           })

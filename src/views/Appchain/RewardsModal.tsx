@@ -56,7 +56,6 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
   validatorId,
 }) => {
   const bg = useColorModeValue("#f6f7fa", "#15172c")
-  const bg = useColorModeValue("#f6f7fa", "#15172c")
 
   const { accountId, selector } = useWalletSelector()
 
