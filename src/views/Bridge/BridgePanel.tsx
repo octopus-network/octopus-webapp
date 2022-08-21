@@ -100,7 +100,7 @@ export const BridgePanel: React.FC = () => {
     [appchainId, pathname]
   )
 
-  const { currentAccount } = useAccounts(isEvm, isEvm)
+  const { currentAccount } = useAccounts(isEvm, !!appchainId)
 
   const [appchainApi, setAppchainApi] = useState<ApiPromise>()
 

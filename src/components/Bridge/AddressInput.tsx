@@ -58,7 +58,7 @@ export default function AddressInpput({
   const [isDepositingStorage, setIsDepositingStorage] = useBoolean()
   const { accounts, currentAccount, setCurrentAccount } = useAccounts(
     isEvm,
-    isEvm
+    !!chain
   )
   const isNear = chain === "NEAR"
   const isFrom = label === "From"
