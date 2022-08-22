@@ -292,6 +292,7 @@ export const RegisterForm: React.FC = () => {
         initialValues={{
           appchainId: "",
           website: "",
+          templateType: "Barnacle",
         }}
         onSubmit={onSubmit}
       >
@@ -522,8 +523,12 @@ export const RegisterForm: React.FC = () => {
                     <FormLabel htmlFor="templateType">Template Type</FormLabel>
                     <RadioGroup {...field} defaultValue="Barnacle">
                       <Stack>
-                        <Radio value="Barnacle">Barnacle</Radio>
-                        <Radio value="BarnacleEvm">BarnacleEvm</Radio>
+                        <Radio {...field} value="Barnacle">
+                          Barnacle
+                        </Radio>
+                        <Radio {...field} value="BarnacleEvm">
+                          BarnacleEvm
+                        </Radio>
                       </Stack>
                     </RadioGroup>
                   </FormControl>
