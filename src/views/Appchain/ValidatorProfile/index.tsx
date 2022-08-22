@@ -423,7 +423,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                     anchor={anchor}
                     deposit={delegatedDeposits}
                     validatorId={validatorId}
-                    helper={`Your decreased stakes will be claimable after 21 days`}
+                    helper={`Your decreased stake will be claimable after 21 days`}
                     validator={validator}
                     appchain={appchain}
                   />
@@ -578,7 +578,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
         title="Unbond Validator"
         confirmButtonText="Unbond"
         isConfirming={isUnbonding}
-        message={`Your unbonded stakes will be claimable after 21 days. Destroy your node after next rewards claimed, or your AWS/GCP will still be charged.Are you confirm to unbond?`}
+        message={`Your unbonded stake will be claimable after 21 days. Destroy your node after next rewards claimed, or your AWS/GCP will still be charged.Are you confirm to unbond?`}
         onConfirm={onUnbondValidator}
         confirmButtonColor="red"
       />
@@ -589,7 +589,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
         title="Unbond Delegation"
         confirmButtonText="Unbond"
         isConfirming={isUnbondingDelegation}
-        message={`Are you confirm to unbond delegation? (Your unbonded stakes will be claimable after 21 days)`}
+        message={`Are you confirm to unbond delegation? (Your unbonded stake will be claimable after 21 days)`}
         onConfirm={onUnbondDelegation}
         confirmButtonColor="red"
       />

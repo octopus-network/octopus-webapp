@@ -245,7 +245,7 @@ export const MyStaking: React.FC<MyStakingProps> = ({
                   deposit={deposit}
                   type="decrease"
                   anchor={anchor}
-                  helper={`Your decreased stakes will be claimable after 21 days`}
+                  helper={`Your decreased stake will be claimable after 21 days`}
                   appchain={appchain}
                   validator={validator}
                 />
