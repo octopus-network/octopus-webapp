@@ -71,8 +71,10 @@ export default function DelegateInput({
               .minus(validatorDeposited)
 
             const max = Math.min(
-              DecimalUtil.shift(maximumAllowedIncreased, OCT_TOKEN_DECIMALS) -
-                deposited.toNumber(),
+              DecimalUtil.shift(
+                maximumAllowedIncreased,
+                OCT_TOKEN_DECIMALS
+              ).toNumber() - deposited.toNumber(),
               octBalance.toNumber()
             )
 

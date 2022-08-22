@@ -323,6 +323,7 @@ export const BridgePanel: React.FC = () => {
         asset: tokenAsset,
         fromAccount: from!,
         appchainId: appchainId!,
+        bridgeConfig,
         updateTxn,
       })
     }
@@ -399,7 +400,6 @@ export const BridgePanel: React.FC = () => {
           })
         }
       } else if (!isNearToAppchain && !isEvm) {
-        console.log("web3Enabling", from)
         await web3Enable("Octopus Network")
         const injected = await web3FromSource(currentAccount?.meta.source || "")
         appchainApi?.setSigner(injected.signer)

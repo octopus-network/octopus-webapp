@@ -36,8 +36,12 @@ export class DecimalUtil {
     return shiftedValue
   }
 
-  public static shift(input: Decimal, shift = 0): number {
-    return input.div(new Decimal(10).pow(new Decimal(shift))).toNumber()
+  public static shift(input: Decimal, shift = 0): Decimal {
+    return input.div(new Decimal(10).pow(new Decimal(shift)))
+  }
+
+  public static power(input: Decimal, shift = 0): Decimal {
+    return input.mul(new Decimal(10).pow(new Decimal(shift)))
   }
 
   public static beautify(input: Decimal, fixed?: number, trim = true): string {

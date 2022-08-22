@@ -12,6 +12,7 @@ import OctopusAppchain from "./abis/OctopusAppchain.json"
 import OctopusSession from "./abis/OctopusSession.json"
 import { DecimalUtil, ZERO_DECIMAL } from "./decimal"
 import BN from "bn.js"
+import Decimal from "decimal.js"
 
 let _signer: ethers.providers.JsonRpcSigner | null = null
 
@@ -110,7 +111,7 @@ export async function getPolkaTokenBalance({
         ]
 
       if (!query) {
-        return
+        return balance
       }
 
       const res = await (bridgeConfig.tokenPallet.paramsType === "Tuple"
@@ -299,6 +300,7 @@ export async function nearBurnNft({
 export async function substrateBurn({
   api,
   asset,
+  bridgeConfig,
   amount,
   targetAccount,
   fromAccount,
@@ -307,6 +309,7 @@ export async function substrateBurn({
 }: {
   api: ApiPromise
   asset?: TokenAsset
+  bridgeConfig?: BridgeConfig
   amount: string
   targetAccount: string
   fromAccount: string
@@ -314,7 +317,7 @@ export async function substrateBurn({
   updateTxn: (key: string, value: any) => void
 }) {
   const targetAccountInHex = stringToHex(targetAccount)
-  const tx: any =
+  let tx: any =
     asset?.assetId === undefined
       ? api?.tx.octopusAppchain.lock(targetAccountInHex, amount)
       : api?.tx.octopusAppchain.burnAsset(
@@ -322,6 +325,40 @@ export async function substrateBurn({
           targetAccountInHex,
           amount
         )
+
+  console.log("amount 1", amount)
+  if (!asset?.assetId) {
+    const _balance = await getPolkaTokenBalance({
+      account: fromAccount,
+      appchainApi: api,
+      tokenAsset: asset!,
+      bridgeConfig: bridgeConfig!,
+    })
+    const balance = DecimalUtil.power(
+      _balance,
+      Array.isArray(asset?.metadata.decimals)
+        ? asset?.metadata.decimals[1]
+        : asset?.metadata.decimals
+    )
+
+    if (balance.toString() === amount) {
+      const info = await tx.paymentInfo(fromAccount)
+      const fee = info.partialFee.toString()
+
+      amount = DecimalUtil.fromString(amount)
+        .minus(new Decimal(fee).mul(2))
+        .toString()
+
+      tx =
+        asset?.assetId === undefined
+          ? api?.tx.octopusAppchain.lock(targetAccountInHex, amount)
+          : api?.tx.octopusAppchain.burnAsset(
+              asset?.assetId,
+              targetAccountInHex,
+              amount
+            )
+    }
+  }
 
   await tx.signAndSend(fromAccount, ({ events = [] }: any) => {
     events.forEach(({ event: { data, method, section } }: any) => {
@@ -380,6 +417,7 @@ export async function evmBurn({
   //   toAccount: receiver_id,
   //   tokenContractId: asset_id,
   // })
+  return hash
 }
 
 export async function evmLock(amount: string, receiver_id: string) {
