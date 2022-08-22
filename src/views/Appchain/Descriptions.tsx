@@ -174,9 +174,6 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
         <RouterLink to={`/bridge/near/${appchain?.appchain_id}`}>
           <LinkBox icon={bridgeIcon} label="Bridge" />
         </RouterLink>
-        <RouterLink to={`/bridge/near/${appchain?.appchain_id}`}>
-          <LinkBox icon={bridgeIcon} label="Bridge" />
-        </RouterLink>
         <Link
           href={toValidUrl(appchain?.appchain_metadata?.github_address)}
           isExternal
