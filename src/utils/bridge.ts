@@ -7,12 +7,18 @@ import { BigNumber, ethers } from "ethers"
 import { providers } from "near-api-js"
 import { CodeResult } from "near-api-js/lib/providers/provider"
 import { COMPLEX_CALL_GAS } from "primitives"
-import { BridgeHistoryStatus, TokenAsset, BridgeConfig } from "types"
+import {
+  BridgeHistoryStatus,
+  TokenAsset,
+  BridgeConfig,
+  BridgeHistory,
+} from "types"
 import OctopusAppchain from "./abis/OctopusAppchain.json"
 import OctopusSession from "./abis/OctopusSession.json"
 import { DecimalUtil, ZERO_DECIMAL } from "./decimal"
 import BN from "bn.js"
 import Decimal from "decimal.js"
+import { request } from "graphql-request"
 
 let _signer: ethers.providers.JsonRpcSigner | null = null
 
@@ -38,6 +44,53 @@ const getSigner = () => {
     _signer = provider.getSigner()
   }
   return _signer
+}
+
+const TX_QUERY = (hash: string) => `
+  query {
+    transaction(id: "${hash}") {
+      id
+      extrinsic {
+        id
+        hash
+        events(filter:{section:{equalTo:"octopusAppchain"}}) {
+          nodes {
+            section
+            method
+            data
+          }
+        }
+      }
+    }
+  }
+`
+
+export async function checkEvmTxSequence(tx: BridgeHistory) {
+  const result = await request(
+    `https://api.subquery.network/sq/octopus-appchains/testnet-barnacle-evm`,
+    TX_QUERY(tx.hash)
+  )
+  if (result.transaction) {
+    const extrinsic = result.transaction.extrinsic
+    if (extrinsic) {
+      const events = extrinsic.events
+      if (events) {
+        const nodes = events.nodes
+        if (nodes) {
+          const node = nodes[0]
+          if (node) {
+            const data = node.data
+            if (data) {
+              const _data = JSON.parse(data)
+              if (_data) {
+                return Number(_data.sequence)
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 export async function isValidAddress({
@@ -326,36 +379,34 @@ export async function substrateBurn({
           amount
         )
 
-  console.log("amount 1", amount)
   if (!asset?.assetId) {
-    const _balance = await getPolkaTokenBalance({
+    const balance = await getPolkaTokenBalance({
       account: fromAccount,
       appchainApi: api,
       tokenAsset: asset!,
       bridgeConfig: bridgeConfig!,
     })
-    const balance = DecimalUtil.power(
-      _balance,
-      Array.isArray(asset?.metadata.decimals)
-        ? asset?.metadata.decimals[1]
-        : asset?.metadata.decimals
-    )
 
     if (balance.toString() === amount) {
       const info = await tx.paymentInfo(fromAccount)
       const fee = info.partialFee.toString()
 
-      amount = DecimalUtil.fromString(amount)
+      const _amount = DecimalUtil.power(
+        new Decimal(amount),
+        Array.isArray(asset?.metadata.decimals)
+          ? asset?.metadata.decimals[0]
+          : asset?.metadata.decimals
+      )
         .minus(new Decimal(fee).mul(2))
         .toString()
 
       tx =
         asset?.assetId === undefined
-          ? api?.tx.octopusAppchain.lock(targetAccountInHex, amount)
+          ? api?.tx.octopusAppchain.lock(targetAccountInHex, _amount)
           : api?.tx.octopusAppchain.burnAsset(
               asset?.assetId,
               targetAccountInHex,
-              amount
+              _amount
             )
     }
   }
@@ -385,38 +436,49 @@ export async function substrateBurn({
 }
 
 export async function evmBurn({
-  asset_id,
+  asset,
   amount,
   receiver_id,
   updateTxn,
   appchainId,
   fromAccount,
 }: {
-  asset_id?: number
+  asset?: TokenAsset
   amount: string
   receiver_id: string
   updateTxn: (key: string, value: any) => void
   appchainId?: string
   fromAccount?: string
 }) {
+  const amountInU64 = DecimalUtil.toU64(
+    DecimalUtil.fromString(amount),
+    Array.isArray(asset?.metadata.decimals)
+      ? asset?.metadata.decimals[0]
+      : asset?.metadata.decimals
+  )
+
   let hash = ""
-  if (typeof asset_id === "number") {
-    hash = await evmBurnAsset(asset_id, amount, receiver_id)
+  if (typeof asset?.assetId === "number") {
+    hash = await evmBurnAsset(
+      asset?.assetId,
+      amountInU64.toString(),
+      receiver_id
+    )
   } else {
-    hash = await evmLock(amount, receiver_id)
+    hash = await evmLock(amountInU64.toString(), receiver_id)
   }
-  // updateTxn(appchainId || "", {
-  //   isAppchainSide: true,
-  //   appchainId,
-  //   hash,
-  //   sequenceId: 0,
-  //   amount,
-  //   status: BridgeHistoryStatus.Pending,
-  //   timestamp: new Date().getTime(),
-  //   fromAccount,
-  //   toAccount: receiver_id,
-  //   tokenContractId: asset_id,
-  // })
+  updateTxn(appchainId || "", {
+    isAppchainSide: true,
+    appchainId,
+    hash,
+    amount,
+    status: BridgeHistoryStatus.Pending,
+    timestamp: new Date().getTime(),
+    fromAccount,
+    toAccount: receiver_id,
+    tokenContractId: asset?.assetId,
+    isEvm: true,
+  })
   return hash
 }
 

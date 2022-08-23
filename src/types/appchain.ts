@@ -169,6 +169,7 @@ export type BridgeHistory = {
   timestamp: number
   message?: string
   tokenContractId: string
+  isEvm?: boolean
 }
 
 export type StakingFact = {

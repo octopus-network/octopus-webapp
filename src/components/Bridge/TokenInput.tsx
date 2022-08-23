@@ -23,19 +23,13 @@ import Decimal from "decimal.js"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { AiFillCloseCircle } from "react-icons/ai"
 import useSWR from "swr"
-import {
-  AppchainInfoWithAnchorStatus,
-  BridgeConfig,
-  Collectible,
-  TokenAsset,
-} from "types"
+import { BridgeConfig, Collectible, TokenAsset } from "types"
 import { DecimalUtil, ZERO_DECIMAL } from "utils"
 import { getNearTokenBalance, getPolkaTokenBalance } from "utils/bridge"
 import { SelectTokenModal } from "views/Bridge/SelectTokenModal"
 
 export default function TokenInpput({
   chain,
-  appchain,
   from,
   appchainId,
   onChangeAmount,
@@ -43,7 +37,6 @@ export default function TokenInpput({
   appchainApi,
 }: {
   chain: string
-  appchain?: AppchainInfoWithAnchorStatus
   from: string
   appchainId: string
   onChangeAmount: (value: string) => void
@@ -146,6 +139,7 @@ export default function TokenInpput({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    chain,
     tokenAsset,
     from,
     selector.options.network.nodeUrl,

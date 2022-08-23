@@ -57,6 +57,7 @@ import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
 import { CodeResult } from "near-api-js/lib/providers/provider"
 import {
+  checkEvmTxSequence,
   evmBurn,
   isValidAddress,
   isValidAmount,
@@ -65,7 +66,7 @@ import {
   substrateBurn,
 } from "utils/bridge"
 import AddressInpput from "components/Bridge/AddressInput"
-import TokenInpput from "components/Bridge/TokenInput"
+import TokenInput from "components/Bridge/TokenInput"
 
 export const BridgePanel: React.FC = () => {
   const bg = useColorModeValue("white", "#15172c")
@@ -188,6 +189,25 @@ export const BridgePanel: React.FC = () => {
     [appchainTxns]
   )
 
+  useEffect(() => {
+    pendingTxns
+      .filter((t) => t.isEvm && !t.sequenceId)
+      .forEach((t) => {
+        checkEvmTxSequence(t)
+          .then((sequenceId) => {
+            console.log("sequenceId", sequenceId)
+            if (typeof sequenceId === "number") {
+              updateTxn(t.appchainId, {
+                ...t,
+                sequenceId,
+              })
+            }
+          })
+          .catch(console.log)
+      })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingTxns])
+
   const pendingTxnsChecker = React.useRef<any>()
   const isCheckingTxns = React.useRef(false)
   pendingTxnsChecker.current = async () => {
@@ -197,6 +217,7 @@ export const BridgePanel: React.FC = () => {
 
     isCheckingTxns.current = true
 
+    // eslint-disable-next-line array-callback-return
     const promises = pendingTxns.map((txn) => {
       if (txn.isAppchainSide) {
         const provider = new providers.JsonRpcProvider({
@@ -231,24 +252,26 @@ export const BridgePanel: React.FC = () => {
             }
           })
       } else {
-        return appchainApi?.query.octopusAppchain
-          .notificationHistory(txn.sequenceId)
-          .then((res) => {
-            console.log(txn, res)
-            const jsonRes: string | null = res?.toJSON() as any
-            if (jsonRes === "Success") {
-              updateTxn(txn.appchainId, {
-                ...txn,
-                status: BridgeHistoryStatus.Succeed,
-              })
-            } else if (jsonRes !== null) {
-              updateTxn(txn.appchainId, {
-                ...txn,
-                status: BridgeHistoryStatus.Failed,
-                message: jsonRes,
-              })
-            }
-          })
+        if (!(txn.isEvm && !txn.sequenceId)) {
+          return appchainApi?.query.octopusAppchain
+            .notificationHistory(txn.sequenceId)
+            .then((res) => {
+              console.log(txn, res)
+              const jsonRes: string | null = res?.toJSON() as any
+              if (jsonRes === "Success") {
+                updateTxn(txn.appchainId, {
+                  ...txn,
+                  status: BridgeHistoryStatus.Succeed,
+                })
+              } else if (jsonRes !== null) {
+                updateTxn(txn.appchainId, {
+                  ...txn,
+                  status: BridgeHistoryStatus.Failed,
+                  message: jsonRes,
+                })
+              }
+            })
+        }
       }
     })
     try {
@@ -300,16 +323,10 @@ export const BridgePanel: React.FC = () => {
 
   const redeemToken = async () => {
     const targetAccountInHex = stringToHex(to)
-    const amountInU64 = DecimalUtil.toU64(
-      DecimalUtil.fromString(amount),
-      Array.isArray(tokenAsset?.metadata.decimals)
-        ? tokenAsset?.metadata.decimals[0]
-        : tokenAsset?.metadata.decimals
-    )
     if (isEvm) {
       await evmBurn({
-        asset_id: tokenAsset?.assetId,
-        amount: amountInU64.toString(),
+        asset: tokenAsset,
+        amount,
         receiver_id: targetAccountInHex,
         updateTxn,
         appchainId,
@@ -319,7 +336,7 @@ export const BridgePanel: React.FC = () => {
       await substrateBurn({
         api: appchainApi!,
         targetAccount: to,
-        amount: amountInU64.toString(),
+        amount,
         asset: tokenAsset,
         fromAccount: from!,
         appchainId: appchainId!,
@@ -527,9 +544,8 @@ export const BridgePanel: React.FC = () => {
               onChange={(to) => setTo(to || "")}
               tokenAsset={tokenAsset}
             />
-            <TokenInpput
+            <TokenInput
               chain={isNearToAppchain ? "NEAR" : appchainId}
-              appchain={appchain}
               appchainApi={appchainApi}
               from={from}
               appchainId={appchainId}
