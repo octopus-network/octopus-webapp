@@ -18,6 +18,8 @@ import {
   useColorModeValue,
   useBoolean,
   Link,
+  Divider,
+  Stack,
 } from "@chakra-ui/react"
 
 import { DeleteIcon } from "@chakra-ui/icons"
@@ -61,6 +63,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
 
   const [isInitializing, setIsInitializing] = useBoolean()
   const [isUpgrading, setIsUpgrading] = useBoolean()
+  const [isManuallyDeployed, setIsManuallyDeployed] = useState(false)
 
   const [nodeMetrics, setNodeMetrics] = useState<any>()
 
@@ -82,6 +85,11 @@ export const MyNode: React.FC<MyNodeProps> = ({
     window.localStorage.getItem("OCTOPUS_DEPLOYER_ACCESS_KEY") ||
     window.localStorage.getItem("accessKey") ||
     ""
+
+  useEffect(() => {
+    const ismd = localStorage.getItem(`manually-deployed-${appchainId}`)
+    setIsManuallyDeployed(ismd === "true")
+  }, [appchainId])
 
   useEffect(() => {
     if (
@@ -318,7 +326,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
           />
         )}
       </Box>
-      {isShowStaking ? (
+      {isShowStaking || isManuallyDeployed ? (
         <Box mt={4}>
           <MyStaking
             appchain={appchain}
@@ -327,7 +335,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
           />
         </Box>
       ) : (
-        <Box m={6}>
+        <Flex m={6} flexDirection="column" gap={4}>
           <Text textAlign="center">
             Learn about{" "}
             <Link
@@ -339,7 +347,23 @@ export const MyNode: React.FC<MyNodeProps> = ({
               Deploy Validator Node
             </Link>
           </Text>
-        </Box>
+          <Flex align="center">
+            <Divider />
+            <Text padding="2">OR</Text>
+            <Divider />
+          </Flex>
+
+          <Button
+            colorScheme="octo-blue"
+            variant="outline"
+            onClick={() => {
+              localStorage.setItem(`manually-deployed-${appchainId}`, "true")
+              setIsManuallyDeployed(true)
+            }}
+          >
+            I have deployed manually
+          </Button>
+        </Flex>
       )}
       <SetSessionKeyModal
         appchain={appchain}
