@@ -92,13 +92,13 @@ export default function TokenInpput({
   }, [])
   const isNear = chain === "NEAR"
   const onSetMax = () => {
-    if (!isNear && tokenAsset?.assetId === undefined) {
-      onUpdateAmount(
-        balance?.sub(0.1).gt(ZERO_DECIMAL) ? balance?.sub(0.1).toString() : ""
-      )
-    } else {
-      onUpdateAmount(balance?.toString() || "")
-    }
+    // if (!isNear && tokenAsset?.assetId === undefined) {
+    //   onUpdateAmount(
+    //     balance?.sub(0.1).gt(ZERO_DECIMAL) ? balance?.sub(0.1).toString() : ""
+    //   )
+    // } else {
+    // }
+    onUpdateAmount(balance?.toString() || "")
   }
 
   const onUpdateTokenAsset = useCallback((t: TokenAsset) => {

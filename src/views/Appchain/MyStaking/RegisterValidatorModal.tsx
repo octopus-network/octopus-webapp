@@ -181,7 +181,7 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
             id="email"
             placeholder="Contact email"
             onChange={(e) => setEmail(e.target.value)}
-            type="text"
+            type="email"
           />
         </FormControl>
 

@@ -252,7 +252,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
                     ? "#FFAA15"
                     : "#00C781"
                 }
-              >{`$${DecimalUtil.beautify(totalAsset)}`}</Heading>
+              >{`$${DecimalUtil.beautify(totalAsset, 0)}`}</Heading>
             </>
           }
         />

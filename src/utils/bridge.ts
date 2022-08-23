@@ -387,6 +387,10 @@ export async function substrateBurn({
       bridgeConfig: bridgeConfig!,
     })
 
+    if (balance.lt(amount)) {
+      amount = balance.toString()
+    }
+
     if (balance.toString() === amount) {
       const info = await tx.paymentInfo(fromAccount)
       const fee = info.partialFee.toString()
