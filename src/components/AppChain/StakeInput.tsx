@@ -65,10 +65,12 @@ export default function StakeInput({
               .minus(validator.total_stake)
 
             const max = Math.min(
-              DecimalUtil.shift(
-                maximumAllowedIncreased,
-                OCT_TOKEN_DECIMALS
-              ).toNumber(),
+              Math.floor(
+                DecimalUtil.shift(
+                  maximumAllowedIncreased,
+                  OCT_TOKEN_DECIMALS
+                ).toNumber()
+              ),
               octBalance.toNumber()
             )
 
@@ -81,10 +83,12 @@ export default function StakeInput({
               validator.total_stake
             ).minus(protocolSettings.minimum_validator_deposit)
 
-            const max = DecimalUtil.shift(
-              maximumAllowedDecreased,
-              OCT_TOKEN_DECIMALS
-            ).toNumber()
+            const max = Math.floor(
+              DecimalUtil.shift(
+                maximumAllowedDecreased,
+                OCT_TOKEN_DECIMALS
+              ).toNumber()
+            )
 
             setMax(max)
             if (max >= _step) {

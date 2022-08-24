@@ -38,8 +38,6 @@ export default function DelegateInput({
 
   useEffect(() => {
     async function initSetting() {
-      console.log("anchor", anchor)
-
       if (!anchor) return
       try {
         const protocolSettings = await anchor.get_protocol_settings()
@@ -71,10 +69,12 @@ export default function DelegateInput({
               .minus(validatorDeposited)
 
             const max = Math.min(
-              DecimalUtil.shift(
-                maximumAllowedIncreased,
-                OCT_TOKEN_DECIMALS
-              ).toNumber() - deposited.toNumber(),
+              Math.floor(
+                DecimalUtil.shift(
+                  maximumAllowedIncreased,
+                  OCT_TOKEN_DECIMALS
+                ).toNumber()
+              ) - deposited.toNumber(),
               octBalance.toNumber()
             )
 
@@ -100,7 +100,11 @@ export default function DelegateInput({
   }, [anchor, validatorId, octBalance, type])
 
   if (max < step) {
-    return <Text mt={2}>You can't {type} more</Text>
+    return (
+      <Text mt={2} textAlign="center">
+        You can't {type} more
+      </Text>
+    )
   }
   return (
     <Slider
@@ -122,7 +126,7 @@ export default function DelegateInput({
         0
       </SliderMark>
       <SliderMark value={max} mt="1" ml="-2.5" fontSize="sm">
-        {max}
+        {max.toFixed(2)}
       </SliderMark>
       <SliderTrack bg="red.100">
         <SliderFilledTrack bg="tomato" />
