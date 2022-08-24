@@ -106,7 +106,11 @@ export default function StakeInput({
   }, [anchor, validator, octBalance, type])
 
   if (max < step) {
-    return <Text mt={2}>You can't {type} more</Text>
+    return (
+      <Text mt={2} textAlign="center">
+        You can't {type} more
+      </Text>
+    )
   }
   return (
     <Slider
