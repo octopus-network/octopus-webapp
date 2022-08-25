@@ -132,7 +132,7 @@ export default function StakeInput({
         0
       </SliderMark>
       <SliderMark value={max} mt="1" ml="-2.5" fontSize="sm">
-        {max}
+        {DecimalUtil.beautify(new Decimal(max), 0)}
       </SliderMark>
       <SliderTrack bg="red.100">
         <SliderFilledTrack bg="tomato" />
