@@ -167,11 +167,13 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
             {type === "increase" && (
               <Flex mb={2} justifyContent="flex-end">
                 <Text variant="gray" size="sm">
-                  OCT balance: {octBalance.toFixed(0)}
+                  OCT balance: {DecimalUtil.beautify(octBalance, 0)}
                 </Text>
               </Flex>
             )}
-            <Heading textAlign="center">{amount} OCT</Heading>
+            <Heading textAlign="center">
+              {DecimalUtil.beautify(new Decimal(amount), 0)} OCT
+            </Heading>
             {validatorId ? (
               <DelegateInput
                 anchor={anchor}

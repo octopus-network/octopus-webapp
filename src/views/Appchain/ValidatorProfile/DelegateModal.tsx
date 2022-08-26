@@ -13,6 +13,7 @@ import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
 import DelegateInput from "components/AppChain/DelegateInput"
 import { onTxSent } from "utils/helper"
+import Decimal from "decimal.js"
 
 type DelegateModalProps = {
   isOpen: boolean
@@ -109,14 +110,13 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
     >
       <Flex mb={2} justifyContent="space-between">
         <Text variant="gray" size="sm">
-          Minimum deposit: {DecimalUtil.beautify(minimumDeposit, 0)}
-        </Text>
-        <Text variant="gray" size="sm">
-          OCT balance: {octBalance.toFixed(0)}
+          OCT balance: {DecimalUtil.beautify(octBalance, 0)}
         </Text>
       </Flex>
       <Box mt={3} p={6}>
-        <Heading textAlign="center">{amount} OCT</Heading>
+        <Heading textAlign="center">
+          {DecimalUtil.beautify(new Decimal(amount), 0)} OCT
+        </Heading>
         <DelegateInput
           anchor={anchor}
           validatorId={validatorId}
