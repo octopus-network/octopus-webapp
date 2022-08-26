@@ -333,16 +333,10 @@ export const BridgePanel: React.FC = () => {
         fromAccount: from,
       })
     } else {
-      const amountInU64 = DecimalUtil.toU64(
-        DecimalUtil.fromString(amount),
-        Array.isArray(tokenAsset?.metadata.decimals)
-          ? tokenAsset?.metadata.decimals[0]
-          : tokenAsset?.metadata.decimals
-      )
       await substrateBurn({
         api: appchainApi!,
         targetAccount: to,
-        amount: amountInU64.toString(),
+        amount,
         asset: tokenAsset,
         fromAccount: from!,
         appchainId: appchainId!,
