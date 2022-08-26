@@ -7,6 +7,8 @@ import {
   useBoolean,
   Tooltip,
   Text,
+  Box,
+  Input,
 } from "@chakra-ui/react"
 import { Toast } from "components/common/toast"
 import Decimal from "decimal.js"
@@ -99,48 +101,58 @@ export default function DelegateInput({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [anchor, validatorId, octBalance, type])
 
-  if (max < step) {
-    return (
-      <Text mt={2} textAlign="center">
-        You can't {type} more
-      </Text>
-    )
-  }
+  // if (max < step) {
+  //   return (
+  //     <Text mt={2} textAlign="center">
+  //       You can't {type} more
+  //     </Text>
+  //   )
+  // }
   return (
-    <Slider
-      aria-label="slider-ex-4"
-      defaultValue={30}
-      min={min}
-      max={max}
-      step={1}
-      onMouseEnter={setShowTooltip.on}
-      onMouseLeave={setShowTooltip.off}
-      value={value}
-      onChange={(v) => {
-        const _v = v > step ? v : step
-        setValue(_v)
-        onChange(_v)
-      }}
-    >
-      <SliderMark value={0} mt="1" ml="-2.5" fontSize="sm">
-        0
-      </SliderMark>
-      <SliderMark value={max} mt="1" ml="-2.5" fontSize="sm">
-        {DecimalUtil.beautify(new Decimal(max), 0)}
-      </SliderMark>
-      <SliderTrack bg="red.100">
-        <SliderFilledTrack bg="tomato" />
-      </SliderTrack>
-      <Tooltip
-        hasArrow
-        bg="teal.500"
-        color="white"
-        placement="top"
-        isOpen={showTooltip}
-        label={`${value}`}
+    <Box>
+      <Slider
+        aria-label="slider-ex-4"
+        defaultValue={30}
+        min={min}
+        max={max}
+        step={1}
+        onMouseEnter={setShowTooltip.on}
+        onMouseLeave={setShowTooltip.off}
+        value={value}
+        onChange={(v) => {
+          const _v = v > step ? v : step
+          setValue(_v)
+          onChange(_v)
+        }}
       >
-        <SliderThumb />
-      </Tooltip>
-    </Slider>
+        <SliderMark value={0} mt="1" ml="-2.5" fontSize="sm">
+          0
+        </SliderMark>
+        <SliderMark value={max} mt="1" ml="-2.5" fontSize="sm">
+          {DecimalUtil.beautify(new Decimal(max), 0)}
+        </SliderMark>
+        <SliderTrack bg="red.100">
+          <SliderFilledTrack bg="tomato" />
+        </SliderTrack>
+        <Tooltip
+          hasArrow
+          bg="teal.500"
+          color="white"
+          placement="top"
+          isOpen={showTooltip}
+          label={`${value}`}
+        >
+          <SliderThumb />
+        </Tooltip>
+      </Slider>
+      <Input
+        mt={2}
+        value={value}
+        onChange={(e) => {}}
+        type="number"
+        min={min}
+        max={max}
+      />
+    </Box>
   )
 }

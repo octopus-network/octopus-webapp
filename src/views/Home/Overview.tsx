@@ -89,7 +89,8 @@ export const Overview: React.FC = () => {
                   {data
                     ? "$" +
                       DecimalUtil.beautify(
-                        DecimalUtil.fromString(data.totalAnnualizedFee)
+                        DecimalUtil.fromString(data.totalAnnualizedFee),
+                        0
                       )
                     : "loading"}
                 </Heading>

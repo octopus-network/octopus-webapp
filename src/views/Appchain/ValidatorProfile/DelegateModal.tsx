@@ -1,7 +1,15 @@
 import React, { useState, useEffect, useMemo } from "react"
 import useSWR from "swr"
 
-import { Text, Button, Box, Flex, useBoolean, Heading } from "@chakra-ui/react"
+import {
+  Text,
+  Button,
+  Box,
+  Flex,
+  useBoolean,
+  Heading,
+  Input,
+} from "@chakra-ui/react"
 
 import { BaseModal } from "components"
 
@@ -28,7 +36,10 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
   validatorId,
   anchor,
 }) => {
-  const [amount, setAmount] = useState(0)
+  const [min] = useState(0)
+  const [max, setMax] = useState(0)
+  const [step, setStep] = useState(1)
+  const [amount, setAmount] = useState("")
 
   const { accountId, octToken, selector } = useWalletSelector()
 
@@ -39,13 +50,64 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
   const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null)
 
   const amountInDecimal = useMemo(
-    () => DecimalUtil.fromNumber(amount),
+    () => DecimalUtil.fromString(amount),
     [amount]
   )
   const octBalance = useMemo(
     () => DecimalUtil.fromString(balances?.["OCT"]),
     [balances]
   )
+
+  useEffect(() => {
+    async function initSetting() {
+      if (!anchor) return
+      try {
+        const protocolSettings = await anchor.get_protocol_settings()
+
+        const _step = DecimalUtil.fromString(
+          protocolSettings.minimum_delegator_deposit,
+          OCT_TOKEN_DECIMALS
+        ).toNumber()
+
+        setStep(_step)
+        if (validatorId) {
+          const validatorDeposited = await anchor.get_validator_deposit_of({
+            validator_id: validatorId,
+          })
+
+          const anchorStatus = await anchor.get_anchor_status()
+          const validatorSetInfo = await anchor.get_validator_set_info_of({
+            era_number:
+              anchorStatus.index_range_of_validator_set_history.end_index,
+          })
+
+          const maximumAllowedIncreased = new Decimal(
+            validatorSetInfo.total_stake
+          )
+            .mul(protocolSettings.maximum_validator_stake_percent)
+            .div(100)
+            .minus(validatorDeposited)
+
+          const max = Math.min(
+            Math.floor(
+              DecimalUtil.shift(
+                maximumAllowedIncreased,
+                OCT_TOKEN_DECIMALS
+              ).toNumber()
+            ),
+            octBalance.toNumber()
+          )
+
+          setMax(max)
+        }
+      } catch (error) {
+        Toast.error(error)
+      }
+    }
+
+    initSetting()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [anchor, validatorId, octBalance])
 
   useEffect(() => {
     if (isOpen) {
@@ -108,22 +170,56 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
       onClose={onClose}
       title={`Delegate on ${validatorId}`}
     >
-      <Flex mb={2} justifyContent="space-between">
-        <Text variant="gray" size="sm">
-          OCT balance: {DecimalUtil.beautify(octBalance, 0)}
-        </Text>
-      </Flex>
-      <Box mt={3} p={6}>
-        <Heading textAlign="center">
-          {DecimalUtil.beautify(new Decimal(amount), 0)} OCT
-        </Heading>
-        <DelegateInput
-          anchor={anchor}
-          validatorId={validatorId}
-          type="increase"
-          onChange={(v) => setAmount(v)}
-          octBalance={octBalance}
+      <Box mt={3} p={1}>
+        <Flex justify="flex-end">
+          <Text
+            fontSize="sm"
+            cursor="pointer"
+            variant="gray"
+            onClick={() => {
+              if (octBalance.gte(step) && octBalance.lte(max)) {
+                setAmount(octBalance.toString())
+              }
+            }}
+          >
+            Balance: {DecimalUtil.beautify(octBalance, 0)} OCT
+          </Text>
+        </Flex>
+        <Input
+          mt={2}
+          value={amount}
+          onChange={(e) => {
+            setAmount(e.target.value)
+          }}
+          type="number"
+          min={min}
+          max={max}
         />
+        <Flex justify="space-between" pt={2}>
+          <Text
+            fontSize="sm"
+            cursor="pointer"
+            onClick={() => {
+              if (octBalance.gte(step)) {
+                setAmount(String(step))
+              }
+            }}
+          >
+            Min: {DecimalUtil.beautify(new Decimal(step), 0)}
+          </Text>
+
+          <Text
+            fontSize="sm"
+            cursor="pointer"
+            onClick={() => {
+              if (octBalance.gte(max)) {
+                setAmount(String(max))
+              }
+            }}
+          >
+            Max: {max < step ? "-" : DecimalUtil.beautify(new Decimal(max), 0)}
+          </Text>
+        </Flex>
       </Box>
       <Box mt={4}>
         <Button
