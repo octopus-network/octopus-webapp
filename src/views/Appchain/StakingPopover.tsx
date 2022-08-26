@@ -310,13 +310,16 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
                 fontSize="sm"
                 cursor="pointer"
                 onClick={() => {
-                  if (octBalance.gte(max) && !isDisabled) {
+                  if (isDisabled) return
+                  if (type === "decrease") {
+                    setAmount(String(max))
+                  } else if (octBalance.gte(max)) {
                     setAmount(String(max))
                   }
                 }}
               >
                 Max:{" "}
-                {max < step ? "-" : DecimalUtil.beautify(new Decimal(max), 0)}
+                {isDisabled ? "-" : DecimalUtil.beautify(new Decimal(max), 0)}
               </Text>
             </Flex>
           </Box>
@@ -331,10 +334,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
               isLoading={isSubmitting}
               width="100%"
             >
-              {(type === "increase" && amountInDecimal.gt(octBalance)) ||
-              (type === "decrease" && amountInDecimal.gt(deposit))
-                ? `Insufficient ${type === "increase" ? "Balance" : "Deposit"}`
-                : "Confirm"}
+              Confirm
             </Button>
           </Box>
         </PopoverBody>
