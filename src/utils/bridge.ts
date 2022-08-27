@@ -369,6 +369,7 @@ export async function substrateBurn({
   appchainId: string
   updateTxn: (key: string, value: any) => void
 }) {
+  const rawAmount = amount
   const amountInDec = DecimalUtil.power(
     new Decimal(amount),
     Array.isArray(asset?.metadata.decimals)
@@ -425,7 +426,7 @@ export async function substrateBurn({
           appchainId,
           hash: tx.hash.toString(),
           sequenceId: data[method === "Locked" ? 3 : 4].toNumber(),
-          amount,
+          amount: rawAmount,
           status: BridgeHistoryStatus.Pending,
           timestamp: new Date().getTime(),
           fromAccount,
