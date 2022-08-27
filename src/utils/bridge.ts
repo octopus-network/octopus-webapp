@@ -375,15 +375,16 @@ export async function substrateBurn({
       ? asset?.metadata.decimals[0]
       : asset?.metadata.decimals
   )
+
   let rawAmount = amountInDec.toString()
   const targetAccountInHex = stringToHex(targetAccount)
   let tx: any =
     asset?.assetId === undefined
-      ? api?.tx.octopusAppchain.lock(targetAccountInHex, amountInDec.toString())
+      ? api?.tx.octopusAppchain.lock(targetAccountInHex, amountInDec.toFixed(0))
       : api?.tx.octopusAppchain.burnAsset(
           asset?.assetId,
           targetAccountInHex,
-          amountInDec.toString()
+          amountInDec.toFixed(0)
         )
 
   if (!asset?.assetId) {
@@ -402,8 +403,8 @@ export async function substrateBurn({
       const info = await tx.paymentInfo(fromAccount)
       const fee = info.partialFee.toString()
 
-      const _amount = amountInDec.minus(new Decimal(fee).mul(2)).toString()
-      rawAmount = _amount.toString()
+      const _amount = amountInDec.minus(new Decimal(fee).mul(2)).toFixed(0)
+      rawAmount = _amount
 
       tx =
         asset?.assetId === undefined
