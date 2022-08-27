@@ -369,13 +369,13 @@ export async function substrateBurn({
   appchainId: string
   updateTxn: (key: string, value: any) => void
 }) {
-  const rawAmount = amount
   const amountInDec = DecimalUtil.power(
     new Decimal(amount),
     Array.isArray(asset?.metadata.decimals)
       ? asset?.metadata.decimals[0]
       : asset?.metadata.decimals
   )
+  let rawAmount = amountInDec.toString()
   const targetAccountInHex = stringToHex(targetAccount)
   let tx: any =
     asset?.assetId === undefined
@@ -403,6 +403,7 @@ export async function substrateBurn({
       const fee = info.partialFee.toString()
 
       const _amount = amountInDec.minus(new Decimal(fee).mul(2)).toString()
+      rawAmount = _amount.toString()
 
       tx =
         asset?.assetId === undefined
