@@ -8,6 +8,9 @@ export default function OctIdenticon({
   value: string
   size: number
 }) {
+  if (!value) {
+    return null
+  }
   if (value.startsWith("0x")) {
     return <Jazzicon diameter={size} seed={jsNumberForAddress(value)} />
   }
