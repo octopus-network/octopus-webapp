@@ -37,10 +37,8 @@ import { AiOutlineMenu } from "react-icons/ai"
 import { BsThreeDots, BsCheckCircle } from "react-icons/bs"
 import { AddIcon, MinusIcon } from "@chakra-ui/icons"
 
-import myStakingBg from "assets/my-staking-bg.png"
 import empty from "assets/empty.png"
 
-import { RegisterValidatorModal } from "./RegisterValidatorModal"
 import { StakingHistoryModal } from "./StakingHistoryModal"
 import { RewardsModal } from "../RewardsModal"
 import { StakesModal } from "./StakesModal"
@@ -69,8 +67,6 @@ export const MyStaking: React.FC<MyStakingProps> = ({
   const isUnbonding = !!(validator && validator?.is_unbonding)
   const isValidator = !!(validator && !validator?.is_unbonding)
 
-  const [registerValidatorModalOpen, setRegisterValidatorModalOpen] =
-    useBoolean(false)
   const [rewardsModalOpen, setRewardsModalOpen] = useBoolean(false)
   const [stakesModalOpen, setStakesModalOpen] = useBoolean(false)
   const [stakingHistoryModalOpen, setStakingHistoryModalOpen] =
@@ -141,24 +137,9 @@ export const MyStaking: React.FC<MyStakingProps> = ({
 
   return (
     <>
-      <Box
-        bg={isValidator ? bg : whiteBg}
-        position="relative"
-        p={6}
-        pt={4}
-        pb={6}
-        borderBottomRadius="lg"
-      >
+      <Box position="relative" borderBottomRadius="lg">
         {isValidator ? (
           <>
-            <Image
-              position="absolute"
-              bottom="0"
-              right="0"
-              h="110%"
-              src={myStakingBg}
-              zIndex={0}
-            />
             <Box position="relative" zIndex={1}>
               <Flex justifyContent="space-between" alignItems="center">
                 <Heading fontSize="lg" color="white">
@@ -345,27 +326,9 @@ export const MyStaking: React.FC<MyStakingProps> = ({
                 <Image src={empty} w="100%" />
               </Box>
             </Center>
-            <Button
-              onClick={setRegisterValidatorModalOpen.on}
-              colorScheme="octo-blue"
-              isDisabled={!accountId || isUnbonding}
-              width="100%"
-            >
-              {!accountId
-                ? "Please Login"
-                : isUnbonding
-                ? "Unbonding"
-                : "Register Validator"}
-            </Button>
           </Box>
         )}
       </Box>
-      <RegisterValidatorModal
-        isOpen={registerValidatorModalOpen}
-        onClose={setRegisterValidatorModalOpen.off}
-        anchor={anchor}
-        appchain={appchain}
-      />
 
       <RewardsModal
         isOpen={rewardsModalOpen}

@@ -8,18 +8,21 @@ import {
   Icon,
   IconButton,
   Input,
+  Link,
   Select,
   Text,
   useBoolean,
   useColorModeValue,
 } from "@chakra-ui/react"
 import axios from "axios"
+import { Toast, toast } from "components/common/toast"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { API_HOST } from "config"
 import { useEffect, useState } from "react"
 import { FcGoogle } from "react-icons/fc"
 import useSWR from "swr"
-import { CLOUD_VENDOR, Validator } from "types"
+import { AnchorContract, AppchainInfo, CLOUD_VENDOR, Validator } from "types"
+import { RegisterValidatorModal } from "views/Appchain/MyStaking/RegisterValidatorModal"
 
 const OAUTH_SCOPE =
   "https://www.googleapis.com/auth/cloud-platform.read-only https://www.googleapis.com/auth/compute"
@@ -29,11 +32,17 @@ export default function NodeForm({
   appchainId,
   setNode,
   myNodeSetOAuthUser,
+  isShowRegister,
+  appchain,
+  anchor,
 }: {
   validator?: Validator
   appchainId?: string
   setNode: (node: any) => void
   myNodeSetOAuthUser: (user: any) => void
+  isShowRegister: boolean
+  appchain?: AppchainInfo
+  anchor?: AnchorContract
 }) {
   const cloudVendorInLocalStorage = window.localStorage.getItem(
     "OCTOPUS_DEPLOYER_CLOUD_VENDOR"
@@ -59,12 +68,24 @@ export default function NodeForm({
   const [isLoadingNode, setIsLoadingNode] = useBoolean()
   const [isDeploying, setIsDeploying] = useBoolean()
   const [deployRegion, setDeployRegion] = useState<string>("")
+  const [registerValidatorModalOpen, setRegisterValidatorModalOpen] =
+    useBoolean(false)
+  const [isManuallyDeployed, setIsManuallyDeployed] = useState(false)
+
+  const isUnbonding = !!(validator && validator?.is_unbonding)
 
   const { accountId } = useWalletSelector()
 
   const onOAuth = () => {
     authClient?.signIn()
   }
+
+  useEffect(() => {
+    if (appchainId) {
+      const ismd = localStorage.getItem(`manually-deployed-${appchainId}`)
+      setIsManuallyDeployed(ismd === "true")
+    }
+  }, [appchainId])
 
   useEffect(() => {
     window.gapi.load("client", () => {
@@ -162,10 +183,27 @@ export default function NodeForm({
       })
   }
 
+  let content = null
+
+  const onDeployPressed = () => {
+    if (validator || !accessKey) {
+      if (
+        !cloudVendor ||
+        isDeploying ||
+        (cloudVendor === "AWS" ? !inputAccessKey : !isAuthorized)
+      ) {
+        return Toast.error("Invalid access key")
+      }
+      onNextStep()
+    } else {
+      onDeploy()
+    }
+  }
+
   if (validator || !accessKey) {
-    return (
+    content = (
       <>
-        <Flex minH="120px" justifyContent="center" flexDirection="column">
+        <Flex pt={4} pb={4} justifyContent="center" flexDirection="column">
           <Flex bg={inputBg} p={1} borderRadius="lg">
             <Box>
               <Select
@@ -221,25 +259,11 @@ export default function NodeForm({
             </Text>
           )}
         </Flex>
-        <Button
-          colorScheme="octo-blue"
-          width="100%"
-          isDisabled={
-            !cloudVendor ||
-            isLoadingNode ||
-            (cloudVendor === "AWS" ? !inputAccessKey : !isAuthorized)
-          }
-          onClick={onNextStep}
-          isLoading={isLoadingNode}
-        >
-          {!!validator ? "Confirm" : "Deploy A Node"}
-        </Button>
       </>
     )
-  }
-  return (
-    <>
-      <Flex minH="120px" justifyContent="center" flexDirection="column">
+  } else {
+    content = (
+      <Flex pt={6} pb={6} justifyContent="center" flexDirection="column">
         {cloudVendor === "GCP" ? (
           <Flex bg={inputBg} p={1} borderRadius="lg" alignItems="center" mb={2}>
             <Box p={2}>
@@ -283,15 +307,82 @@ export default function NodeForm({
           </Box>
         </Flex>
       </Flex>
-      <Button
-        colorScheme="octo-blue"
-        width="100%"
-        onClick={onDeploy}
-        isLoading={isDeploying}
-        isDisabled={isDeploying || (cloudVendor === "GCP" && !projectId)}
-      >
-        Deploy
-      </Button>
+    )
+  }
+
+  const isDeployed = isShowRegister || isManuallyDeployed
+
+  const deployBtn = (
+    <Button
+      colorScheme="octo-blue"
+      flex={isDeployed ? "" : "1"}
+      width={isDeployed ? "100%" : ""}
+      onClick={onDeployPressed}
+      isLoading={isDeploying}
+      isDisabled={isDeploying || (cloudVendor === "GCP" && !projectId)}
+    >
+      {!!validator ? "Confirm" : "Deploy"}
+    </Button>
+  )
+
+  return (
+    <>
+      {content}
+      {isDeployed ? (
+        <Flex direction="column" mt={4} mb={2} gap={6}>
+          {deployBtn}
+          <Button
+            onClick={setRegisterValidatorModalOpen.on}
+            colorScheme="octo-blue"
+            isDisabled={!accountId || isUnbonding}
+            width="100%"
+          >
+            {!accountId
+              ? "Please Login"
+              : isUnbonding
+              ? "Unbonding"
+              : "Register Validator"}
+          </Button>
+        </Flex>
+      ) : (
+        <Flex m={2} flexDirection="column" gap={2}>
+          <Flex direction="row" gap={2}>
+            {deployBtn}
+
+            <Text padding="2">OR</Text>
+
+            <Button
+              colorScheme="octo-blue"
+              variant="outline"
+              flex="1"
+              onClick={() => {
+                localStorage.setItem(`manually-deployed-${appchainId}`, "true")
+                setIsManuallyDeployed(true)
+              }}
+            >
+              Deployed manually
+            </Button>
+          </Flex>
+          <Text textAlign="center" mt={4}>
+            Learn about{" "}
+            <Link
+              href="https://docs.oct.network/maintain/validator-deploy.html#deploy-validator-node"
+              variant="blue-underline"
+              isExternal
+              ml={2}
+            >
+              Deploy Validator Node
+            </Link>
+          </Text>
+        </Flex>
+      )}
+
+      <RegisterValidatorModal
+        isOpen={registerValidatorModalOpen}
+        onClose={setRegisterValidatorModalOpen.off}
+        anchor={anchor}
+        appchain={appchain}
+      />
     </>
   )
 }

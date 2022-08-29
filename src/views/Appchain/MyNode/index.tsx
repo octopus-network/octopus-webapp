@@ -6,7 +6,6 @@ import {
   Box,
   Heading,
   Button,
-  Text,
   Icon,
   Flex,
   Spinner,
@@ -17,13 +16,12 @@ import {
   MenuList,
   useColorModeValue,
   useBoolean,
-  Link,
-  Divider,
-  Stack,
+  Image,
 } from "@chakra-ui/react"
 
 import { DeleteIcon } from "@chakra-ui/icons"
 
+import myStakingBg from "assets/my-staking-bg.png"
 import { BsFillTerminalFill } from "react-icons/bs"
 import { HiUpload } from "react-icons/hi"
 import { TiKey } from "react-icons/ti"
@@ -58,12 +56,15 @@ export const MyNode: React.FC<MyNodeProps> = ({
   validator,
 }) => {
   const bg = useColorModeValue("white", "#15172c")
+  const validatorBg = useColorModeValue(
+    "linear-gradient(137deg,#1486ff 4%, #0c4df5)",
+    "linear-gradient(137deg,#1486ff 4%, #0c4df5)"
+  )
 
   const [node, setNode] = useState<any>()
 
   const [isInitializing, setIsInitializing] = useBoolean()
   const [isUpgrading, setIsUpgrading] = useBoolean()
-  const [isManuallyDeployed, setIsManuallyDeployed] = useState(false)
 
   const [nodeMetrics, setNodeMetrics] = useState<any>()
 
@@ -85,11 +86,6 @@ export const MyNode: React.FC<MyNodeProps> = ({
     window.localStorage.getItem("OCTOPUS_DEPLOYER_ACCESS_KEY") ||
     window.localStorage.getItem("accessKey") ||
     ""
-
-  useEffect(() => {
-    const ismd = localStorage.getItem(`manually-deployed-${appchainId}`)
-    setIsManuallyDeployed(ismd === "true")
-  }, [appchainId])
 
   useEffect(() => {
     if (
@@ -207,12 +203,33 @@ export const MyNode: React.FC<MyNodeProps> = ({
     }
   }
   // check NODE_STATE_RECORD for state meaning
-  const isShowStaking =
+  const isShowRegister =
     !!validator || ["12", "20", "21", "22", "30"].includes(node?.state)
+  const isValidator = !!(validator && !validator?.is_unbonding)
 
   return (
     <>
-      <Box position="relative" p={6} pt={4} pb={6} borderRadius="lg" bg={bg}>
+      <Box
+        position="relative"
+        mb={3}
+        p={4}
+        borderRadius="lg"
+        bg={!isValidator ? bg : validatorBg}
+      >
+        {isValidator && (
+          <Image
+            position="absolute"
+            bottom="0"
+            right="0"
+            h="110%"
+            src={myStakingBg}
+            zIndex={0}
+          />
+        )}
+        <MyStaking appchain={appchain} anchor={anchor} validator={validator} />
+      </Box>
+
+      <Box position="relative" p={4} borderRadius="lg" bg={bg}>
         <Flex justifyContent="space-between" alignItems="center">
           <Heading fontSize="lg">My Node</Heading>
           <Menu>
@@ -316,6 +333,8 @@ export const MyNode: React.FC<MyNodeProps> = ({
             setNode={setNode}
             deployAccessKey={accessKeyInLocalStorage}
             deployConfig={deployConfig}
+            anchor={anchor}
+            appchain={appchain}
           />
         ) : (
           <NodeForm
@@ -323,48 +342,12 @@ export const MyNode: React.FC<MyNodeProps> = ({
             validator={validator}
             appchainId={appchainId}
             myNodeSetOAuthUser={setOAuthUser}
+            isShowRegister={isShowRegister}
+            anchor={anchor}
+            appchain={appchain}
           />
         )}
       </Box>
-      {isShowStaking || isManuallyDeployed ? (
-        <Box mt={4}>
-          <MyStaking
-            appchain={appchain}
-            anchor={anchor}
-            validator={validator}
-          />
-        </Box>
-      ) : (
-        <Flex m={6} flexDirection="column" gap={4}>
-          <Text textAlign="center">
-            Learn about{" "}
-            <Link
-              href="https://docs.oct.network/maintain/validator-deploy.html#deploy-validator-node"
-              variant="blue-underline"
-              isExternal
-              ml={2}
-            >
-              Deploy Validator Node
-            </Link>
-          </Text>
-          <Flex align="center">
-            <Divider />
-            <Text padding="2">OR</Text>
-            <Divider />
-          </Flex>
-
-          <Button
-            colorScheme="octo-blue"
-            variant="outline"
-            onClick={() => {
-              localStorage.setItem(`manually-deployed-${appchainId}`, "true")
-              setIsManuallyDeployed(true)
-            }}
-          >
-            I have deployed manually
-          </Button>
-        </Flex>
-      )}
       <SetSessionKeyModal
         appchain={appchain}
         appchainApi={appchainApi}
