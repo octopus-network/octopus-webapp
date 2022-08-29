@@ -84,7 +84,7 @@ export const StakesModal: React.FC<RewardsModalProps> = ({
     try {
       setIsWithdrawing.on()
       const wallet = await selector.wallet()
-      wallet.signAndSendTransaction({
+      await wallet.signAndSendTransaction({
         signerId: accountId,
         receiverId: anchor?.contractId,
         actions: [
