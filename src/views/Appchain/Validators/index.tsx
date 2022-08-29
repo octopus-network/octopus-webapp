@@ -1,5 +1,4 @@
 import React, { useState, useMemo } from "react"
-import { encodeAddress } from "@polkadot/util-crypto"
 
 import {
   Flex,
@@ -29,7 +28,6 @@ import {
   AppchainInfoWithAnchorStatus,
   ValidatorSessionKey,
   RewardHistory,
-  TokenContract,
 } from "types"
 
 import { ValidatorRow } from "./ValidatorRow"
@@ -39,17 +37,17 @@ import { DecimalUtil } from "utils"
 import { OCT_TOKEN_DECIMALS } from "primitives"
 import { Empty } from "components"
 import OTTO from "../../../assets/otto.png"
-import { useGlobalStore } from "stores"
+import { formatAppChainAddress } from "utils/format"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 type ValidatorsProps = {
-  appchain: AppchainInfoWithAnchorStatus | undefined
+  appchain?: AppchainInfoWithAnchorStatus
   isLoadingValidators: boolean
   unbondedValidators?: string[]
-  validators: Validator[] | undefined
-  appchainValidators: string[] | undefined
-  validatorSessionKeys: Record<string, ValidatorSessionKey> | undefined
-  wrappedAppchainTokenContract: TokenContract | undefined
-  anchor: AnchorContract | undefined
+  validators?: Validator[]
+  appchainValidators?: string[]
+  validatorSessionKeys?: Record<string, ValidatorSessionKey>
+  anchor?: AnchorContract
 }
 
 type SortButtonProps = {
@@ -105,7 +103,6 @@ export const Validators: React.FC<ValidatorsProps> = ({
   isLoadingValidators,
   validators,
   unbondedValidators,
-  wrappedAppchainTokenContract,
   appchainValidators,
   validatorSessionKeys,
 }) => {
@@ -121,43 +118,41 @@ export const Validators: React.FC<ValidatorsProps> = ({
     useState("")
 
   const filteredValidators = useMemo(() => {
-    if (
-      showType === "all" ||
-      !validators ||
-      !appchainValidators ||
-      !validatorSessionKeys
-    ) {
-      return validators
-    } else if (showType === "validating") {
-      return validators.filter(
-        (v) =>
+    return (validators ?? []).filter((v) => {
+      const formatedAddr = formatAppChainAddress(
+        v.validator_id_in_appchain,
+        appchain
+      ).toLowerCase()
+      if (
+        showType === "all" ||
+        !validators ||
+        !appchainValidators ||
+        !validatorSessionKeys
+      ) {
+        return true
+      } else if (showType === "validating") {
+        return (
           !v.is_unbonding &&
-          appchainValidators.some(
-            (s) => s === encodeAddress(v.validator_id_in_appchain)
-          ) &&
+          appchainValidators.some((s) => s.toLowerCase() === formatedAddr) &&
           validatorSessionKeys[v.validator_id]
-      )
-    } else if (showType === "needKeys") {
-      return validators.filter(
-        (v) =>
+        )
+      } else if (showType === "needKeys") {
+        return (
           !v.is_unbonding &&
-          appchainValidators.some(
-            (s) => s === encodeAddress(v.validator_id_in_appchain)
-          ) &&
+          appchainValidators.some((s) => s.toLowerCase() === formatedAddr) &&
           !validatorSessionKeys[v.validator_id]
-      )
-    } else if (showType === "registered") {
-      return validators.filter(
-        (v) =>
+        )
+      } else if (showType === "registered") {
+        return (
           !v.is_unbonding &&
-          !appchainValidators.some(
-            (s) => s === encodeAddress(v.validator_id_in_appchain)
-          )
-      )
-    } else if (showType === "unbonding") {
-      return validators.filter((v) => v.is_unbonding)
-    }
-  }, [validators, showType, appchainValidators, validatorSessionKeys])
+          !appchainValidators.some((s) => s.toLowerCase() === formatedAddr)
+        )
+      } else if (showType === "unbonding") {
+        return v.is_unbonding
+      }
+      return false
+    })
+  }, [validators, showType, appchainValidators, validatorSessionKeys, appchain])
 
   const sortedValidators = useMemo(() => {
     if (!sortIdx || !filteredValidators?.length) {
@@ -216,8 +211,8 @@ export const Validators: React.FC<ValidatorsProps> = ({
     setClaimRewardsModalOpen.on()
   }
 
-  const { global } = useGlobalStore()
-  const isMainnet = global?.network?.near.networkId === "mainnet"
+  const { networkConfig } = useWalletSelector()
+  const isMainnet = networkConfig?.near.networkId === "mainnet"
 
   return (
     <>
@@ -227,7 +222,7 @@ export const Validators: React.FC<ValidatorsProps> = ({
           <Link
             href={
               isMainnet
-                ? "https://discord.gg/BEQrN4Ya7C"
+                ? "https://discord.gg/uVKUBSssxm"
                 : "https://discord.gg/zgcdhu5BzT"
             }
             target="_blank"
@@ -379,15 +374,13 @@ export const Validators: React.FC<ValidatorsProps> = ({
               />
             ))}
             {sortedValidators?.map((v, idx) => {
-              let ss58Address: string
-              try {
-                ss58Address = encodeAddress(v.validator_id_in_appchain)
-              } catch (err) {
-                ss58Address = ""
-              }
+              const ss58Address = formatAppChainAddress(
+                v.validator_id_in_appchain,
+                appchain
+              )
 
               const isInAppchain = !!appchainValidators?.some(
-                (s) => s === ss58Address
+                (s) => s.toLowerCase() === ss58Address.toLowerCase()
               )
               const haveSessionKey = !!validatorSessionKeys?.[v.validator_id]
 
@@ -410,6 +403,7 @@ export const Validators: React.FC<ValidatorsProps> = ({
                       ?.index_range_of_validator_set_history?.end_index
                   }
                   showType={showType}
+                  appchain={appchain}
                 />
               )
             })}
@@ -425,7 +419,6 @@ export const Validators: React.FC<ValidatorsProps> = ({
         anchor={anchor}
         appchain={appchain}
         validatorId={unbondedRewardsValidatorId}
-        wrappedAppchainTokenContract={wrappedAppchainTokenContract}
       />
     </>
   )

@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useEffect, useCallback } from "react";
-import { DecimalUtil } from "utils";
-import useSWR from "swr";
+import React, { useState, useMemo, useEffect, useCallback } from "react"
+import { DecimalUtil } from "utils"
+import useSWR from "swr"
 
 import {
   AreaChart,
@@ -10,7 +10,7 @@ import {
   YAxis,
   ResponsiveContainer,
   ReferenceLine,
-} from "recharts";
+} from "recharts"
 
 import {
   Box,
@@ -20,62 +20,62 @@ import {
   HStack,
   Skeleton,
   Text,
-} from "@chakra-ui/react";
+} from "@chakra-ui/react"
 
-import { OCT_TOKEN_DECIMALS } from "primitives";
-import Decimal from "decimal.js";
-import dayjs from "dayjs";
+import { OCT_TOKEN_DECIMALS } from "primitives"
+import Decimal from "decimal.js"
+import dayjs from "dayjs"
+import { CategoricalChartState } from "recharts/types/chart/generateCategoricalChart"
 
 const CustomTooltip = ({
   label,
   active,
   payload,
 }: {
-  label?: any;
-  active?: boolean;
-  payload?: any;
+  label?: any
+  active?: boolean
+  payload?: any
 }) => {
   if (active && payload && payload.length) {
     return (
       <Box>
         <Text>{label}</Text>
       </Box>
-    );
+    )
   }
-  return null;
-};
+  return null
+}
 
 function toUIValue(val: number) {
   if (val > 1000000) {
-    return DecimalUtil.beautify(new Decimal(val).div(1000000)) + "M";
+    return DecimalUtil.beautify(new Decimal(val).div(1000000)) + "M"
   } else if (val > 1000) {
-    return DecimalUtil.beautify(new Decimal(val).div(1000)) + "K";
+    return DecimalUtil.beautify(new Decimal(val).div(1000)) + "K"
   } else {
-    return DecimalUtil.beautify(new Decimal(val));
+    return DecimalUtil.beautify(new Decimal(val))
   }
 }
 
 export const TotalStakedChart: React.FC = () => {
-  const [days, setDays] = useState(7);
+  const [days, setDays] = useState(7)
 
-  const ticker = days;
-  const end = dayjs().format("YYYY-MM-DD");
-  let start = "";
+  const ticker = days
+  const end = dayjs().format("YYYY-MM-DD")
+  let start = ""
   if (ticker === 7) {
-    start = dayjs().subtract(365, "day").format("YYYY-MM-DD");
+    start = dayjs().subtract(365, "day").format("YYYY-MM-DD")
   } else {
-    start = dayjs().subtract(31, "day").format("YYYY-MM-DD");
+    start = dayjs().subtract(31, "day").format("YYYY-MM-DD")
   }
   const { data } = useSWR(
     `total-staked?start=${start}&end=${end}&ticker=${ticker}`
-  );
+  )
 
-  const [currentValue, setCurrentValue] = useState(0);
+  const [currentValue, setCurrentValue] = useState(0)
 
   const klineData = useMemo(() => {
-    if (!data) return [];
+    if (!data) return []
 
-    console.log(data);
     return data.map(({ date, amount, octPrice }: any) => ({
       date,
       amount,
@@ -83,54 +83,58 @@ export const TotalStakedChart: React.FC = () => {
         DecimalUtil.fromString(amount, OCT_TOKEN_DECIMALS).toNumber()
       ),
       value: DecimalUtil.fromString(amount, OCT_TOKEN_DECIMALS).toNumber(),
-    }));
-  }, [data]);
+    }))
+  }, [data])
 
   const lowestValue = useMemo(
     () =>
       klineData?.length ? Math.min(...klineData.map((k: any) => k.value)) : 0,
     [klineData]
-  );
+  )
 
   const highestValue = useMemo(
     () =>
       klineData?.length ? Math.max(...klineData.map((k: any) => k.value)) : 0,
     [klineData]
-  );
+  )
 
   useEffect(() => {
     if (klineData.length) {
-      setCurrentValue(klineData[klineData.length - 1]?.value);
+      setCurrentValue(klineData[klineData.length - 1]?.value)
     } else {
-      setCurrentValue(0);
+      setCurrentValue(0)
     }
-  }, [klineData]);
+  }, [klineData])
 
   const onAreaMouseMove = useCallback(
-    ({ isTooltipActive, activePayload }) => {
+    (nextState: CategoricalChartState, event: any) => {
+      const { isTooltipActive, activePayload } = nextState
       if (isTooltipActive) {
         if (activePayload && activePayload.length) {
-          const { value } = activePayload[0].payload;
-          setCurrentValue(value);
+          const { value } = activePayload[0].payload
+          setCurrentValue(value)
         }
       } else if (klineData.length) {
-        setCurrentValue(klineData[klineData.length - 1]?.value);
+        setCurrentValue(klineData[klineData.length - 1]?.value)
       } else {
-        setCurrentValue(0);
+        setCurrentValue(0)
       }
     },
     [klineData]
-  );
+  )
 
-  const offset = (highestValue - lowestValue) / 4;
+  const offset = (highestValue - lowestValue) / 4
 
   return (
     <Box>
       <Flex justifyContent="space-between" alignItems="flex-start">
         <Box>
           <Skeleton isLoaded={klineData.length}>
+            <Text fontSize="sm" color="gray">
+              Total Staked $OCT
+            </Text>
             <Heading fontSize="2xl">
-              {DecimalUtil.beautify(new Decimal(currentValue))}
+              {DecimalUtil.beautify(new Decimal(currentValue), 0)}
             </Heading>
           </Skeleton>
           <HStack spacing={3} mt={8}></HStack>
@@ -155,11 +159,11 @@ export const TotalStakedChart: React.FC = () => {
         </HStack>
       </Flex>
       <Skeleton isLoaded={klineData.length}>
-        <Box height="152px" mt={0}>
+        <Box height="252px" mt={0}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               width={500}
-              height={120}
+              height={300}
               data={klineData}
               onMouseMove={onAreaMouseMove}
             >
@@ -178,7 +182,7 @@ export const TotalStakedChart: React.FC = () => {
                     stroke="rgba(0,0,0,0.1)"
                     strokeDasharray="3 3"
                   />
-                );
+                )
               })}
               <XAxis
                 axisLine={false}
@@ -213,5 +217,5 @@ export const TotalStakedChart: React.FC = () => {
         </Box>
       </Skeleton>
     </Box>
-  );
-};
+  )
+}

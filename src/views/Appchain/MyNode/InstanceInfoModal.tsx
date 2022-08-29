@@ -30,7 +30,6 @@ export const InstanceInfoModal: React.FC<Props> = ({
   if (!metrics || !metrics?.cpu) {
     return null
   }
-
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} title="Instance Info">
       <Box p={4}>

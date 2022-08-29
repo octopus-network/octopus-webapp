@@ -1,48 +1,36 @@
-import React, { useEffect } from "react";
-import useSWR from "swr";
+import React from "react"
+import useSWR from "swr"
 
 import {
   Container,
-  Grid,
   BoxProps,
-  GridItem,
-  Image,
   Flex,
   Text,
   Skeleton,
   Heading,
   useColorModeValue,
   Box,
-  Icon,
-  useBoolean,
-} from "@chakra-ui/react";
+  SimpleGrid,
+} from "@chakra-ui/react"
 
-import { useSpring, animated } from "react-spring";
-
-import dotIcon from "assets/icons/dot.png";
-import dotIcon2 from "assets/icons/dot2.png";
-
-import squareIcon from "assets/icons/square.png";
-import squareIcon2 from "assets/icons/square2.png";
-
-import { HiOutlineArrowNarrowRight } from "react-icons/hi";
-
-import { TotalStakedChart } from "./TotalStakedChart";
-import { DecimalUtil } from "utils";
-import { useNavigate } from "react-router-dom";
+import { TotalStakedChart } from "./TotalStakedChart"
+import { DecimalUtil } from "utils"
+import { useNavigate } from "react-router-dom"
+import { OCT_TOKEN_DECIMALS } from "primitives"
+import Decimal from "decimal.js"
 
 const Card: React.FC<
   BoxProps & {
-    to?: string;
+    to?: string
   }
 > = ({ children, to, ...restProps }) => {
-  const bg = useColorModeValue("white", "#25263c");
-  const navigate = useNavigate();
+  const bg = useColorModeValue("white", "#25263c")
+  const navigate = useNavigate()
 
   const innerBg = useColorModeValue(
     "linear-gradient(180deg, #f4f5fb, #ffffff)",
     "linear-gradient(180deg, #0f1025 0%, #25263c)"
-  );
+  )
 
   return (
     <Box
@@ -63,159 +51,114 @@ const Card: React.FC<
         {children}
       </Box>
     </Box>
-  );
-};
+  )
+}
 
 export const Overview: React.FC = () => {
-  const { data } = useSWR("overview");
-  const [isTotalAppchainsHovering, setIsTotalAppchainsHovering] =
-    useBoolean(false);
-  const [isTotalAnnualizedFeeHovering, setIsTotalAnnualizedFeeHovering] =
-    useBoolean(false);
-
-  const [totalAppchainsHoveringProps, totalAppchainsHoveringApi] = useSpring(
-    () => ({
-      transform: "translateX(-10px)",
-      opacity: 0,
-    })
-  );
-
-  const [totalAppchainsIconHoveringProps, totalAppchainsIconHoveringApi] =
-    useSpring(() => ({
-      transform: "translate3d(0, 0, 0)",
-    }));
-
-  const [iconHoveringProps, iconHoveringApi] = useSpring(() => ({
-    transform: "translate3d(0, 0, 0)",
-  }));
-
-  useEffect(() => {
-    if (isTotalAppchainsHovering) {
-      totalAppchainsHoveringApi.start({
-        transform: "translateX(0px)",
-        opacity: 1,
-      });
-      totalAppchainsIconHoveringApi.start({
-        transform: "translate3d(3px, 3px, 0)",
-      });
-    } else {
-      totalAppchainsHoveringApi.start({
-        transform: "translateX(-10px)",
-        opacity: 0,
-      });
-      totalAppchainsIconHoveringApi.start({
-        transform: "translate3d(0px, 0px, 0px)",
-      });
-    }
-
-    if (isTotalAnnualizedFeeHovering) {
-      iconHoveringApi.start({ transform: "translate3d(3px, 3px, 0)" });
-    } else {
-      iconHoveringApi.start({ transform: "translate3d(0px, 0px, 0px)" });
-    }
-  }, [isTotalAppchainsHovering, isTotalAnnualizedFeeHovering]);
+  const { data } = useSWR("overview")
 
   return (
     <Container>
-      <Grid
-        templateColumns={{ base: "repeat(3, 1fr)", md: "repeat(9, 1fr)" }}
-        gap={6}
-      >
-        <GridItem colSpan={3}>
-          <Grid templateColumns="repeat(1, 1fr)" gap={6}>
-            <GridItem colSpan={1}>
-              <Card
-                to="/appchains"
-                onMouseEnter={setIsTotalAppchainsHovering.on}
-                onMouseLeave={setIsTotalAppchainsHovering.off}
+      <SimpleGrid gap={4} mt={1} columns={{ base: 1, md: 4 }}>
+        <Card to="/appchains">
+          <Flex alignItems="center">
+            <Box ml={5} flex={1}>
+              <Skeleton isLoaded={!!data}>
+                <Heading fontSize="3xl">
+                  {data?.runningAppchains.length || "loading"}
+                </Heading>
+              </Skeleton>
+              <Flex
+                alignItems="center"
+                mt={2}
+                justifyContent="space-between"
+                position="relative"
               >
-                <Flex alignItems="center">
-                  <Box boxSize={10} position="relative">
-                    <Box
-                      boxSize={6}
-                      position="absolute"
-                      top="-3px"
-                      left="-5px"
-                      zIndex={0}
-                    >
-                      <Image src={dotIcon} w="100%" h="100%" />
-                    </Box>
-                    <animated.div style={totalAppchainsIconHoveringProps}>
-                      <Image src={dotIcon2} w="100%" h="100%" />
-                    </animated.div>
-                  </Box>
-                  <Box ml={5} flex={1}>
-                    <Skeleton isLoaded={!!data}>
-                      <Heading fontSize="3xl">
-                        {data?.appchainsCount || "loading"}
-                      </Heading>
-                    </Skeleton>
-                    <Flex
-                      alignItems="center"
-                      mt={2}
-                      justifyContent="space-between"
-                      position="relative"
-                    >
-                      <Text variant="gray" fontSize="1xl">
-                        Total Appchains
-                      </Text>
-                      <animated.div
-                        style={totalAppchainsHoveringProps}
-                        className="octo-blue"
-                      >
-                        <Icon as={HiOutlineArrowNarrowRight} boxSize={5} />
-                      </animated.div>
-                    </Flex>
-                  </Box>
-                </Flex>
-              </Card>
-            </GridItem>
-            <GridItem colSpan={1}>
-              <Card
-                onMouseEnter={setIsTotalAnnualizedFeeHovering.on}
-                onMouseLeave={setIsTotalAnnualizedFeeHovering.off}
+                <Text variant="gray" fontSize="1xl">
+                  Living Appchains
+                </Text>
+              </Flex>
+            </Box>
+          </Flex>
+        </Card>
+        <Card>
+          <Flex alignItems="center">
+            <Box ml={5}>
+              <Skeleton isLoaded={!!data}>
+                <Heading fontSize="3xl">
+                  {data
+                    ? "$" +
+                      DecimalUtil.beautify(
+                        DecimalUtil.fromString(data.totalAnnualizedFee),
+                        0
+                      )
+                    : "loading"}
+                </Heading>
+              </Skeleton>
+              <Text variant="gray" fontSize="1xl" mt={2}>
+                Total Annualized Fee
+              </Text>
+            </Box>
+          </Flex>
+        </Card>
+
+        <Card>
+          <Flex alignItems="center">
+            <Box ml={5} flex={1}>
+              <Skeleton isLoaded={!!data}>
+                <Heading fontSize="3xl">
+                  {data?.validatorsCount || "loading"}
+                </Heading>
+              </Skeleton>
+              <Flex
+                alignItems="center"
+                mt={2}
+                justifyContent="space-between"
+                position="relative"
               >
-                <Flex alignItems="center">
-                  <Box boxSize={10} position="relative">
-                    <Box
-                      boxSize={6}
-                      position="absolute"
-                      top="-3px"
-                      left="-5px"
-                      zIndex={0}
-                    >
-                      <Image src={squareIcon} w="100%" h="100%" />
-                    </Box>
-                    <animated.div style={iconHoveringProps}>
-                      <Image src={squareIcon2} w="100%" h="100%" />
-                    </animated.div>
-                  </Box>
-                  <Box ml={5}>
-                    <Skeleton isLoaded={!!data}>
-                      <Heading fontSize="3xl">
-                        {data
-                          ? "$" +
-                            DecimalUtil.beautify(
-                              DecimalUtil.fromString(data.totalAnnualizedFee)
-                            )
-                          : "loading"}
-                      </Heading>
-                    </Skeleton>
-                    <Text variant="gray" fontSize="1xl" mt={2}>
-                      Total Annualized Fee
-                    </Text>
-                  </Box>
-                </Flex>
-              </Card>
-            </GridItem>
-          </Grid>
-        </GridItem>
-        <GridItem colSpan={{ base: 3, md: 6 }}>
-          <Card>
-            <TotalStakedChart />
-          </Card>
-        </GridItem>
-      </Grid>
+                <Text variant="gray" fontSize="1xl">
+                  Total Nodes
+                </Text>
+              </Flex>
+            </Box>
+          </Flex>
+        </Card>
+
+        <Card>
+          <Flex alignItems="center">
+            <Box ml={5} flex={1}>
+              <Skeleton isLoaded={!!data}>
+                <Heading fontSize="3xl">
+                  {!!data
+                    ? new Decimal(data.totalAnnualizedFee)
+                        .div(
+                          DecimalUtil.fromString(
+                            data.totalStakedAmount,
+                            OCT_TOKEN_DECIMALS
+                          ).mul(data.octPrice)
+                        )
+                        .mul(100)
+                        .toFixed(1) + "%"
+                    : "loading"}
+                </Heading>
+              </Skeleton>
+              <Flex
+                alignItems="center"
+                mt={2}
+                justifyContent="space-between"
+                position="relative"
+              >
+                <Text variant="gray" fontSize="1xl">
+                  Average Staking Return
+                </Text>
+              </Flex>
+            </Box>
+          </Flex>
+        </Card>
+      </SimpleGrid>
+      <Card mt={4}>
+        <TotalStakedChart />
+      </Card>
     </Container>
-  );
-};
+  )
+}

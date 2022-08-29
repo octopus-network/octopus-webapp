@@ -15,22 +15,19 @@ import {
   Td,
   Box,
   useColorModeValue,
-  useToast,
 } from "@chakra-ui/react"
 
 import { AnchorContract, UnbondedHistory } from "types"
 
 import { BaseModal, Empty } from "components"
 import { DecimalUtil, ZERO_DECIMAL } from "utils"
-import { useGlobalStore } from "stores"
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
 
-import {
-  FAILED_TO_REDIRECT_MESSAGE,
-  COMPLEX_CALL_GAS,
-  OCT_TOKEN_DECIMALS,
-} from "primitives"
+import { COMPLEX_CALL_GAS, OCT_TOKEN_DECIMALS } from "primitives"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { Toast } from "components/common/toast"
+import { onTxSent } from "utils/helper"
 
 type RewardsModalProps = {
   stakes: UnbondedHistory[] | undefined
@@ -49,8 +46,7 @@ export const StakesModal: React.FC<RewardsModalProps> = ({
 }) => {
   const bg = useColorModeValue("#f6f7fa", "#15172c")
 
-  const toast = useToast()
-  const { global } = useGlobalStore()
+  const { accountId, selector } = useWalletSelector()
 
   const [isWithdrawing, setIsWithdrawing] = useBoolean(false)
 
@@ -84,23 +80,31 @@ export const StakesModal: React.FC<RewardsModalProps> = ({
     )
   }, [stakes])
 
-  const onWithdrawStakes = () => {
-    setIsWithdrawing.on()
-    anchor
-      ?.withdraw_stake({ account_id: global.accountId }, COMPLEX_CALL_GAS)
-      .catch((err) => {
-        setIsWithdrawing.off()
-        if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
-          return
-        }
-
-        toast({
-          position: "top-right",
-          title: "Error",
-          description: err.toString(),
-          status: "error",
-        })
+  const onWithdrawStakes = async () => {
+    try {
+      setIsWithdrawing.on()
+      const wallet = await selector.wallet()
+      wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: anchor?.contractId,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: "withdraw_stake",
+              args: { account_id: accountId! },
+              gas: COMPLEX_CALL_GAS,
+              deposit: "0",
+            },
+          },
+        ],
       })
+      Toast.success("Withdrawed")
+      setIsWithdrawing.off()
+      onTxSent()
+    } catch (error) {
+      setIsWithdrawing.off()
+    }
   }
 
   return (

@@ -1,9 +1,9 @@
-import { Avatar, Flex, Link, Text } from '@chakra-ui/react'
-import { MdSyncAlt, MdTrendingFlat } from 'react-icons/md'
-import { ConversionPool, FungibleTokenMetadata } from 'types'
-import NEP141 from 'assets/icons/nep141-token.png'
-import { useGlobalStore } from 'stores'
-import { DecimalUtil } from 'utils'
+import { Avatar, Flex, Link, Text } from "@chakra-ui/react"
+import { MdSyncAlt, MdTrendingFlat } from "react-icons/md"
+import { ConversionPool, FungibleTokenMetadata } from "types"
+import NEP141 from "assets/icons/nep141-token.png"
+import { DecimalUtil } from "utils"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 export default function PoolInfo({
   pool,
@@ -12,7 +12,7 @@ export default function PoolInfo({
   pool: ConversionPool
   whitelist: FungibleTokenMetadata[]
 }) {
-  const { global } = useGlobalStore()
+  const { networkConfig } = useWalletSelector()
   const inToken = whitelist.find((t) => t.token_id === pool.in_token)
   const outToken = whitelist.find((t) => t.token_id === pool.out_token)
 
@@ -35,7 +35,7 @@ export default function PoolInfo({
       <Text color="#008cd5">
         {`#${pool.id} Owner: `}
         <Link
-          href={`${global.network?.near.explorerUrl}/accounts/${pool.creator}`}
+          href={`${networkConfig?.near.explorerUrl}/accounts/${pool.creator}`}
         >
           {pool.creator}
         </Link>

@@ -17,30 +17,20 @@ import {
   Link,
   UnorderedList,
   ListItem,
-  useToast,
-  HStack,
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  PopoverArrow,
-  PopoverCloseButton,
-  PopoverHeader,
-  PopoverBody,
-  VStack,
-} from '@chakra-ui/react'
-import { BN } from '@polkadot/util'
-import { Select, chakraComponents } from 'chakra-react-select'
-import { SIMPLE_CALL_GAS } from 'primitives'
-import { useState } from 'react'
-import { useGlobalStore } from 'stores'
-import { AccountId, FungibleTokenMetadata } from 'types'
+} from "@chakra-ui/react"
+import BN from "bn.js"
+import { Select, chakraComponents } from "chakra-react-select"
+import { SIMPLE_CALL_GAS } from "primitives"
+import { useState } from "react"
+import { AccountId, FungibleTokenMetadata } from "types"
 import {
   MdOutlineSwapVert,
   MdOutlineArrowDownward,
   MdOutlineAdd,
-  MdInfoOutline,
-} from 'react-icons/md'
-import NEP141 from 'assets/icons/nep141-token.png'
+} from "react-icons/md"
+import NEP141 from "assets/icons/nep141-token.png"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { Toast } from "components/common/toast"
 
 const customComponents = {
   Option: ({ children, ...props }: any) => {
@@ -53,14 +43,14 @@ const customComponents = {
   },
   Input: ({ children, ...props }: any) => {
     let icon = null
-    let label = ''
+    let label = ""
     if (props.hasValue) {
       const value = props.getValue()[0]
       icon = value.icon
       label = value.label
     }
     return (
-      <chakraComponents.Option {...props} selectProps={{ size: 'sm' }}>
+      <chakraComponents.Option {...props} selectProps={{ size: "sm" }}>
         {icon}
         <Text ml={2} fontSize="lg">
           {label}
@@ -82,10 +72,10 @@ interface PoolProps {
 }
 
 const DEFAULT_POOL = {
-  in_token: '',
-  out_token: '',
-  in_token_rate: '',
-  out_token_rate: '',
+  in_token: "",
+  out_token: "",
+  in_token_rate: "",
+  out_token_rate: "",
   is_reversible: false,
   in_token_decimals: 0,
   out_token_decimals: 0,
@@ -101,41 +91,49 @@ export default function CreatePool({
   const { isOpen, onOpen, onClose } = useDisclosure()
   const [pool, setPool] = useState<PoolProps>(DEFAULT_POOL)
 
-  const { global } = useGlobalStore()
-  const toast = useToast()
+  const { selector, accountId, near } = useWalletSelector()
   const onCreate = async () => {
     try {
-      const account = global.wallet?.account()
-      if (!account?.accountId) {
-        toast({
-          position: 'top-right',
-          title: 'Error',
-          description: 'Please login first',
-          status: 'error',
-        })
+      if (!accountId) {
+        Toast.error("Please login first")
         return
       }
 
-      const attachedDeposit = await account.viewFunction(
+      const account = await near?.account("dontcare")
+      const attachedDeposit = await account?.viewFunction(
         contractId,
-        'get_deposit_amount_of_pool_creation'
+        "get_deposit_amount_of_pool_creation"
       )
 
-      await account?.functionCall({
-        contractId: contractId,
-        methodName: 'create_pool',
-        args: {
-          in_token: pool.in_token,
-          out_token: pool.out_token,
-          in_token_rate: Number(pool.in_token_rate),
-          out_token_rate: Number(pool.out_token_rate),
-          is_reversible: pool.is_reversible,
-        },
-        gas: new BN(SIMPLE_CALL_GAS),
-        attachedDeposit: new BN(attachedDeposit),
+      const wallet = await selector.wallet()
+      await wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: contractId,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: "create_pool",
+              args: {
+                in_token: pool.in_token,
+                out_token: pool.out_token,
+                in_token_rate: Number(pool.in_token_rate),
+                out_token_rate: Number(pool.out_token_rate),
+                is_reversible: pool.is_reversible,
+              },
+              gas: SIMPLE_CALL_GAS,
+              deposit: (attachedDeposit as BN)!.toString(),
+            },
+          },
+        ],
+        callbackUrl: window.location.href,
       })
+
+      onClose()
+      Toast.success("Created!")
     } catch (error) {
       console.error(error)
+      Toast.error(error)
     }
   }
 
@@ -159,7 +157,7 @@ export default function CreatePool({
         Token Converter is a tool for converting one type of NEP-141 compatible
         token to another at fixed rate based on the liquidity provided by
         someone. For example, an Octopus appchain project can facilitate
-        convertion from early issued ERC20 token to appchain native token.{' '}
+        convertion from early issued ERC20 token to appchain native token.{" "}
         <Link
           href="https://bob-xsb-near.gitbook.io/nep141-token-convertor/"
           target="_blank"
@@ -229,7 +227,7 @@ export default function CreatePool({
                     onChange={(newValue) => {
                       setPool({
                         ...pool,
-                        in_token: newValue?.value || '',
+                        in_token: newValue?.value || "",
                         in_token_decimals: newValue?.decimals || 0,
                       })
                     }}
@@ -290,7 +288,7 @@ export default function CreatePool({
                     onChange={(newValue) => {
                       setPool({
                         ...pool,
-                        out_token: newValue?.value || '',
+                        out_token: newValue?.value || "",
                         out_token_decimals: newValue?.decimals || 0,
                       })
                     }}
@@ -323,7 +321,7 @@ export default function CreatePool({
               <ListItem>Conversion rate must be integer</ListItem>
               <ListItem>The decimals of pool tokens must be same</ListItem>
               <ListItem>
-                Click{' '}
+                Click{" "}
                 <Link
                   color="#008cd5"
                   target="_blank"
@@ -331,7 +329,7 @@ export default function CreatePool({
                   href="https://docs.google.com/forms/d/e/1FAIpQLSd1ZbxY70HyCH33-59DrQBT8tVBZZ1HX0MlXrxFS1GDr1zR0A/viewform"
                 >
                   here
-                </Link>{' '}
+                </Link>{" "}
                 to submit new token
               </ListItem>
             </UnorderedList>

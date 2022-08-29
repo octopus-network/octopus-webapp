@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react'
-import useSWR from 'swr'
+import React, { useState, useMemo, useEffect } from "react"
+import useSWR from "swr"
 
 import {
   List,
@@ -13,23 +13,20 @@ import {
   Switch,
   FormHelperText,
   Button,
-  useToast,
   Box,
   useBoolean,
-} from '@chakra-ui/react'
+} from "@chakra-ui/react"
 
-import {
-  OCT_TOKEN_DECIMALS,
-  COMPLEX_CALL_GAS,
-  FAILED_TO_REDIRECT_MESSAGE,
-} from 'primitives'
+import { OCT_TOKEN_DECIMALS, COMPLEX_CALL_GAS } from "primitives"
 
-import { decodeAddress } from '@polkadot/util-crypto'
-import { u8aToHex, isHex } from '@polkadot/util'
-import { BaseModal } from 'components'
-import { useGlobalStore } from 'stores'
-import { AnchorContract, AppchainInfoWithAnchorStatus } from 'types'
-import { DecimalUtil, ZERO_DECIMAL } from 'utils'
+import { decodeAddress } from "@polkadot/util-crypto"
+import { u8aToHex, isHex } from "@polkadot/util"
+import { BaseModal } from "components"
+import { AnchorContract, AppchainInfoWithAnchorStatus } from "types"
+import { DecimalUtil, ZERO_DECIMAL } from "utils"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { Toast } from "components/common/toast"
+import { onTxSent } from "utils/helper"
 
 type RegisterValidatorModalProps = {
   appchain: AppchainInfoWithAnchorStatus | undefined
@@ -42,29 +39,27 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
   isOpen,
   onClose,
   anchor,
+  appchain,
 }) => {
-  const [amount, setAmount] = useState('')
-  const [appchainAccount, setAppchainAccount] = useState('')
+  const [amount, setAmount] = useState("")
+  const [appchainAccount, setAppchainAccount] = useState("")
 
-  const { global } = useGlobalStore()
-  const toast = useToast()
-  const [email, setEmail] = useState('')
-  const [socialMediaHandle, setSocialMediaHandle] = useState('')
+  const { accountId, octToken, selector } = useWalletSelector()
+  const [email, setEmail] = useState("")
+  const [socialMediaHandle, setSocialMediaHandle] = useState("")
   const [canBeDelegatedTo, setCanBeDelegatedTo] = useState(false)
 
   const [minimumDeposit, setMinimumDeposit] = useState(ZERO_DECIMAL)
 
   const [isSubmitting, setIsSubmitting] = useBoolean()
-  const { data: balances } = useSWR(
-    global.accountId ? `balances/${global.accountId}` : null
-  )
+  const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null)
 
   const amountInDecimal = useMemo(
     () => DecimalUtil.fromString(amount),
     [amount]
   )
   const octBalance = useMemo(
-    () => DecimalUtil.fromString(balances?.['OCT']),
+    () => DecimalUtil.fromString(balances?.["OCT"]),
     [balances]
   )
 
@@ -79,62 +74,63 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
     })
   }, [anchor])
 
-  const onSubmit = () => {
-    let hexId = ''
+  const onSubmit = async () => {
+    let hexId = ""
     try {
       if (isHex(appchainAccount)) {
-        throw new Error('Invalid appchain account')
+        throw new Error("Invalid appchain account")
       }
       const u8a = decodeAddress(appchainAccount)
       hexId = u8aToHex(u8a)
     } catch (err) {
-      toast({
-        position: 'top-right',
-        title: 'Error',
-        description: 'Invalid SS58 address',
-        status: 'error',
-      })
+      Toast.error(err)
       return
     }
 
-    setIsSubmitting.on()
-
-    global.octToken
-      ?.ft_transfer_call(
-        {
-          receiver_id: anchor?.contractId || '',
-          amount: DecimalUtil.toU64(
-            amountInDecimal,
-            OCT_TOKEN_DECIMALS
-          ).toString(),
-          msg: JSON.stringify({
-            RegisterValidator: {
-              validator_id_in_appchain: hexId,
-              can_be_delegated_to: canBeDelegatedTo,
-              profile: {
-                socialMediaHandle: socialMediaHandle || '',
-                email,
+    try {
+      setIsSubmitting.on()
+      const wallet = await selector.wallet()
+      await wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: octToken?.contractId,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: "ft_transfer_call",
+              args: {
+                receiver_id: anchor?.contractId || "",
+                amount: DecimalUtil.toU64(
+                  amountInDecimal,
+                  OCT_TOKEN_DECIMALS
+                ).toString(),
+                msg: JSON.stringify({
+                  RegisterValidator: {
+                    validator_id_in_appchain: hexId,
+                    can_be_delegated_to: canBeDelegatedTo,
+                    profile: {
+                      socialMediaHandle: socialMediaHandle || "",
+                      email,
+                    },
+                  },
+                }),
               },
+              gas: COMPLEX_CALL_GAS,
+              deposit: "1",
             },
-          }),
-        },
-        COMPLEX_CALL_GAS,
-        1
-      )
-      .catch((err) => {
-        setIsSubmitting.off()
-        if (err.message === FAILED_TO_REDIRECT_MESSAGE) {
-          return
-        }
-
-        toast({
-          position: 'top-right',
-          title: 'Error',
-          description: err.toString(),
-          status: 'error',
-        })
+          },
+        ],
       })
+      Toast.success("Submitted")
+      setIsSubmitting.off()
+      onTxSent()
+    } catch (error) {
+      Toast.error(error)
+      setIsSubmitting.off()
+    }
   }
+
+  const isEvm = appchain?.appchain_metadata.template_type === "BarnacleEvm"
 
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} title="Register Validator">
@@ -153,7 +149,9 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
           <Input
             autoFocus
             id="appchainAccount"
-            placeholder="Appchain SS58 format address, eg: 5CaLqqE3..."
+            placeholder={`Appchain ${
+              isEvm ? "H160" : "SS58"
+            } format address, eg: ${isEvm ? "0x4423" : "5CaLqqE3"}...`}
             onChange={(e) => setAppchainAccount(e.target.value)}
           />
         </FormControl>
@@ -183,7 +181,7 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
             id="email"
             placeholder="Contact email"
             onChange={(e) => setEmail(e.target.value)}
-            type="text"
+            type="email"
           />
         </FormControl>
 
@@ -223,12 +221,12 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
           }
         >
           {!appchainAccount
-            ? 'Input Account'
+            ? "Input Account"
             : amountInDecimal.lt(minimumDeposit)
-            ? 'Minimum Limit'
+            ? "Minimum Limit"
             : amountInDecimal.gt(octBalance)
-            ? 'Insufficient Balance'
-            : 'Register'}
+            ? "Insufficient Balance"
+            : "Register"}
         </Button>
       </Box>
     </BaseModal>

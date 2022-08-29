@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo } from "react"
 
 import {
   DrawerHeader,
@@ -16,23 +16,23 @@ import {
   useColorModeValue,
   IconButton,
   DrawerBody,
-} from '@chakra-ui/react'
+} from "@chakra-ui/react"
 
-import { AppchainInfoWithAnchorStatus } from 'types'
+import { AppchainInfoWithAnchorStatus } from "types"
 
-import { DecimalUtil, decodeNearAccount } from 'utils'
-import Identicon from '@polkadot/react-identicon'
-import { encodeAddress } from '@polkadot/util-crypto'
-import nearLogo from 'assets/near.svg'
-import { CopyIcon, CheckIcon, ExternalLinkIcon } from '@chakra-ui/icons'
-import useSWR from 'swr'
-import { useGlobalStore } from 'stores'
-import { useParams } from 'react-router-dom'
-import { AiOutlineArrowRight } from 'react-icons/ai'
-import { Link as RouterLink } from 'react-router-dom'
+import { DecimalUtil, decodeNearAccount } from "utils"
+import nearLogo from "assets/near.svg"
+import { CopyIcon, CheckIcon, ExternalLinkIcon } from "@chakra-ui/icons"
+import useSWR from "swr"
+import { useParams } from "react-router-dom"
+import { AiOutlineArrowRight } from "react-icons/ai"
+import { Link as RouterLink } from "react-router-dom"
 
-import { ProcessFromAppchain } from './ProcessFromAppchain'
-import { ProcessFromNear } from './ProcessFromNear'
+import { ProcessFromAppchain } from "./ProcessFromAppchain"
+import { ProcessFromNear } from "./ProcessFromNear"
+import { formatAppChainAddress } from "utils/format"
+import OctIdenticon from "components/common/OctIdenticon"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 type TxDetailProps = {
   onDrawerClose: VoidFunction
@@ -40,9 +40,9 @@ type TxDetailProps = {
 
 export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
   const { txId } = useParams()
-  const { global } = useGlobalStore()
+  const { networkConfig } = useWalletSelector()
 
-  const grayBg = useColorModeValue('#f2f4f7', '#1e1f34')
+  const grayBg = useColorModeValue("#f2f4f7", "#1e1f34")
 
   const { data: transaction } = useSWR(
     txId ? `bridge-helper/bridgeTx/${txId}` : null,
@@ -55,13 +55,13 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
 
   const [isAppchainSide, appchainId] = useMemo(
     () => [
-      transaction?.summary.direction === 'appchain_to_near',
+      transaction?.summary.direction === "appchain_to_near",
       transaction?.summary.appchain_name.replace(
-        `${global.network?.near.networkId}-`,
-        ''
+        `${networkConfig?.near.networkId}-`,
+        ""
       ),
     ],
-    [transaction]
+    [transaction, networkConfig]
   )
 
   const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(
@@ -121,7 +121,7 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
                       }
                     />
                     <Text fontSize="sm">
-                      {isAppchainSide ? appchainId : 'NEAR'}
+                      {isAppchainSide ? appchainId : "NEAR"}
                     </Text>
                   </HStack>
                 </Link>
@@ -137,7 +137,7 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
                     }
                   />
                   <Text fontSize="sm">
-                    {isAppchainSide ? appchainId : 'NEAR'}
+                    {isAppchainSide ? appchainId : "NEAR"}
                   </Text>
                 </HStack>
               )}
@@ -155,7 +155,7 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
                       }
                     />
                     <Text fontSize="sm">
-                      {!isAppchainSide ? appchainId : 'NEAR'}
+                      {!isAppchainSide ? appchainId : "NEAR"}
                     </Text>
                   </HStack>
                 </Link>
@@ -171,7 +171,7 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
                     }
                   />
                   <Text fontSize="sm">
-                    {!isAppchainSide ? appchainId : 'NEAR'}
+                    {!isAppchainSide ? appchainId : "NEAR"}
                   </Text>
                 </HStack>
               )}
@@ -195,16 +195,16 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
                 {appchain
                   ? DecimalUtil.beautify(
                       DecimalUtil.fromString(
-                        transaction?.summary.amount.replaceAll(',', ''),
+                        transaction?.summary.amount.replaceAll(",", ""),
                         appchain?.appchain_metadata?.fungible_token_metadata
                           ?.decimals
                       )
                     )
-                  : '-'}
+                  : "-"}
               </Heading>
               <Text fontSize="sm" color="gray.500">
                 {appchain?.appchain_metadata?.fungible_token_metadata.symbol ||
-                  '-'}
+                  "-"}
               </Text>
             </HStack>
           </Flex>
@@ -219,17 +219,17 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
               maxW="70%"
               href={
                 isAppchainSide
-                  ? `${global.network?.octopus.explorerUrl}/${appchain?.appchain_id}/accounts/${transaction?.summary.from}`
-                  : `${global.network?.near.explorerUrl}/accounts/${transaction?.summary.from}`
+                  ? `${networkConfig?.octopus.explorerUrl}/${appchain?.appchain_id}/accounts/${transaction?.summary.from}`
+                  : `${networkConfig?.near.explorerUrl}/accounts/${transaction?.summary.from}`
               }
-              _hover={{ textDecoration: 'underline' }}
+              _hover={{ textDecoration: "underline" }}
               color="#2468f2"
               isExternal
               onClick={(e) => e.stopPropagation()}
             >
               <HStack spacing={1}>
                 {isAppchainSide ? (
-                  <Identicon value={transaction?.summary.from} size={18} />
+                  <OctIdenticon value={transaction?.summary.from} size={18} />
                 ) : null}
                 <Text
                   whiteSpace="nowrap"
@@ -237,7 +237,7 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
                   textOverflow="ellipsis"
                 >
                   {isAppchainSide && transaction?.summary.from
-                    ? encodeAddress(transaction?.summary.from)
+                    ? formatAppChainAddress(transaction?.summary.from, appchain)
                     : decodeNearAccount(transaction?.summary.from)}
                 </Text>
                 <Icon as={ExternalLinkIcon} boxSize={4} color="gray" />
@@ -255,17 +255,17 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
               maxW="70%"
               href={
                 !isAppchainSide
-                  ? `${global.network?.octopus.explorerUrl}/${appchain?.appchain_id}/accounts/${transaction?.summary.to}`
-                  : `${global.network?.near.explorerUrl}/accounts/${transaction?.summary.to}`
+                  ? `${networkConfig?.octopus.explorerUrl}/${appchain?.appchain_id}/accounts/${transaction?.summary.to}`
+                  : `${networkConfig?.near.explorerUrl}/accounts/${transaction?.summary.to}`
               }
-              _hover={{ textDecoration: 'underline' }}
+              _hover={{ textDecoration: "underline" }}
               color="#2468f2"
               isExternal
               onClick={(e) => e.stopPropagation()}
             >
               <HStack spacing={1}>
                 {!isAppchainSide ? (
-                  <Identicon value={transaction?.summary.to} size={18} />
+                  <OctIdenticon value={transaction?.summary.to} size={18} />
                 ) : null}
                 <Text
                   whiteSpace="nowrap"
@@ -273,7 +273,7 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
                   textOverflow="ellipsis"
                 >
                   {!isAppchainSide && transaction?.summary.to
-                    ? encodeAddress(transaction?.summary.to)
+                    ? formatAppChainAddress(transaction?.summary.to, appchain)
                     : decodeNearAccount(transaction?.summary.to)}
                 </Text>
                 <Icon as={ExternalLinkIcon} boxSize={4} color="gray" />
@@ -288,12 +288,9 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
         <SlideFade in={!!transaction}>
           <Box mt={6}>
             {isAppchainSide ? (
-              <ProcessFromAppchain
-                data={transaction}
-                network={global.network}
-              />
+              <ProcessFromAppchain data={transaction} network={networkConfig} />
             ) : (
-              <ProcessFromNear data={transaction} network={global.network} />
+              <ProcessFromNear data={transaction} network={networkConfig} />
             )}
           </Box>
         </SlideFade>

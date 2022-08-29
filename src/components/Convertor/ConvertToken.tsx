@@ -13,28 +13,25 @@ import {
   Icon,
   useColorModeValue,
   Avatar,
-} from '@chakra-ui/react'
-import { BN } from '@polkadot/util'
-import Decimal from 'decimal.js'
-import {
-  useConvertorContract,
-  useTokenBalance,
-} from 'hooks/useConvertorContract'
+} from "@chakra-ui/react"
+import Decimal from "decimal.js"
+import { useTokenBalance } from "hooks/useConvertorContract"
 import {
   COMPLEX_CALL_GAS,
   FT_MINIMUM_STORAGE_BALANCE,
   SIMPLE_CALL_GAS,
-} from 'primitives'
-import { useState } from 'react'
-import { MdArrowDownward, MdSwapVert } from 'react-icons/md'
-import { useGlobalStore } from 'stores'
-import { AccountId, ConversionPool, FungibleTokenMetadata } from 'types'
-import { DecimalUtil } from 'utils'
-import { isValidNumber } from 'utils/validate'
-import { createTransaction, functionCall } from 'near-api-js/lib/transaction'
-import { baseDecode } from 'borsh'
-import { PublicKey } from 'near-api-js/lib/utils'
-import NEP141 from 'assets/icons/nep141-token.png'
+} from "primitives"
+import { useState } from "react"
+import { MdArrowDownward, MdSwapVert } from "react-icons/md"
+import { AccountId, ConversionPool, FungibleTokenMetadata } from "types"
+import { DecimalUtil } from "utils"
+import { isValidNumber } from "utils/validate"
+import NEP141 from "assets/icons/nep141-token.png"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { Transaction } from "@near-wallet-selector/core"
+import { Toast } from "components/common/toast"
+import { providers } from "near-api-js"
+import { CodeResult } from "near-api-js/lib/providers/provider"
 
 const TokenInput = ({
   value,
@@ -57,7 +54,7 @@ const TokenInput = ({
   const balance = DecimalUtil.fromString(tokenBlance, token?.decimals).toFixed(
     2
   )
-  const inputBg = useColorModeValue('#f5f7fa', 'whiteAlpha.100')
+  const inputBg = useColorModeValue("#f5f7fa", "whiteAlpha.100")
 
   return (
     <Flex direction="row" align="flex-end" gap={4}>
@@ -75,7 +72,7 @@ const TokenInput = ({
           value={value}
           disabled={inputDisabled}
           autoFocus={autoFocus}
-          onFocus={() => onValueChange('')}
+          onFocus={() => onValueChange("")}
           onChange={(e) => onValueChange(e.target.value)}
         />
       </Flex>
@@ -98,16 +95,12 @@ export default function ConvertToken({
   onClose: () => void
   contractId: AccountId
 }) {
-  const [inTokenValue, setInTokenValue] = useState<string | number>('')
-  const [outTokenValue, setOutTokenValue] = useState<string | number>('')
+  const [inTokenValue, setInTokenValue] = useState<string | number>("")
+  const [outTokenValue, setOutTokenValue] = useState<string | number>("")
   const [isReversed, setIsReversed] = useState(false)
-  const { global } = useGlobalStore()
+  const { accountId, selector, near } = useWalletSelector()
 
-  const contract = useConvertorContract(
-    global.wallet?.account() as any,
-    contractId
-  )
-  const bg = useColorModeValue('white', '#15172c')
+  const bg = useColorModeValue("white", "#15172c")
 
   const inToken = whitelist.find((t) => t.token_id === pool?.in_token)
   const outToken = whitelist.find((t) => t.token_id === pool?.out_token)
@@ -143,7 +136,7 @@ export default function ConvertToken({
     )
 
   const onTokenValueChange = (value: string, _isReversed: boolean) => {
-    if (value.trim() !== '') {
+    if (value.trim() !== "") {
       if (_isReversed) {
         setOutTokenValue(value)
         setInTokenValue(
@@ -164,58 +157,81 @@ export default function ConvertToken({
         )
       }
     } else {
-      setOutTokenValue('')
-      setInTokenValue('')
+      setOutTokenValue("")
+      setInTokenValue("")
     }
   }
 
   const onConvert = async () => {
     try {
-      const account = global.wallet?.account()
-      if (!account) {
-        throw new Error('No account')
+      if (!accountId) {
+        throw new Error("No account")
       }
-      const actions = []
-      const storageFee = await contract?.get_storage_fee_gap_of({
-        account_id: global.accountId,
+      const wallet = await selector.wallet()
+      const txs: Transaction[] = []
+
+      const provider = new providers.JsonRpcProvider({
+        url: selector.options.network.nodeUrl,
       })
 
-      if (String(storageFee) !== '0') {
-        actions.push({
+      const res = await provider.query<CodeResult>({
+        request_type: "call_function",
+        account_id: contractId,
+        method_name: "get_storage_fee_gap_of",
+        args_base64: btoa(
+          JSON.stringify({
+            account_id: accountId!,
+          })
+        ),
+        finality: "optimistic",
+      })
+      const storageFee = JSON.parse(Buffer.from(res.result).toString())
+
+      if (String(storageFee) !== "0") {
+        txs.push({
+          signerId: accountId,
           receiverId: contractId,
           actions: [
-            functionCall(
-              'storage_deposit',
-              {
-                account_id: account?.accountId,
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "storage_deposit",
+                args: {
+                  account_id: accountId,
+                },
+                gas: SIMPLE_CALL_GAS,
+                deposit: String(storageFee),
               },
-              new BN(SIMPLE_CALL_GAS),
-              new BN(storageFee!)
-            ),
+            },
           ],
         })
       }
 
       const receiveTokenId = !isReversed ? pool.out_token : pool.in_token
+      const account = await near?.account("dontcare")
       const storageBalance = await account?.viewFunction(
         receiveTokenId,
-        'storage_balance_of',
-        { account_id: account.accountId }
+        "storage_balance_of",
+        { account_id: accountId }
       )
 
-      if (!storageBalance || storageBalance === '0') {
-        actions.push({
+      if (!storageBalance || storageBalance === "0") {
+        txs.push({
+          signerId: accountId,
           receiverId: receiveTokenId,
           actions: [
-            functionCall(
-              'storage_deposit',
-              {
-                registration_only: true,
-                account_id: account?.accountId,
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "storage_deposit",
+                args: {
+                  registration_only: true,
+                  account_id: accountId,
+                },
+                gas: SIMPLE_CALL_GAS,
+                deposit: FT_MINIMUM_STORAGE_BALANCE!,
               },
-              new BN(SIMPLE_CALL_GAS),
-              new BN(FT_MINIMUM_STORAGE_BALANCE!)
-            ),
+            },
           ],
         })
       }
@@ -234,58 +250,35 @@ export default function ConvertToken({
         pool_id: pool.id,
       }
 
-      actions.push({
+      txs.push({
+        signerId: accountId,
         receiverId: tokenContractId,
         actions: [
-          functionCall(
-            'ft_transfer_call',
-            {
-              receiver_id: contractId,
-              amount: _amount,
-              msg: JSON.stringify({
-                Convert: { convert_action: convertAction },
-              }),
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: "ft_transfer_call",
+              args: {
+                receiver_id: contractId,
+                amount: _amount,
+                msg: JSON.stringify({
+                  Convert: { convert_action: convertAction },
+                }),
+              },
+              gas: COMPLEX_CALL_GAS,
+              deposit: "1",
             },
-            new BN(COMPLEX_CALL_GAS),
-            new BN(1)
-          ),
+          },
         ],
       })
 
-      let localKey = await account?.connection.signer.getPublicKey(
-        account.accountId,
-        account.connection.networkId
-      )
-
-      const transactions = await Promise.all(
-        actions.map(async (t) => {
-          let accessKey = await account.accessKeyForTransaction(
-            t.receiverId,
-            t.actions,
-            localKey
-          )
-
-          const block = await account?.connection.provider.block({
-            finality: 'final',
-          })
-          const blockHash = baseDecode(block.header.hash)
-
-          const publicKey = PublicKey.from(accessKey.public_key)
-          const nonce = accessKey.access_key.nonce + 1
-
-          return createTransaction(
-            account?.accountId!,
-            publicKey,
-            t.receiverId,
-            nonce,
-            t.actions,
-            blockHash
-          )
-        })
-      )
-      await account.walletConnection.requestSignTransactions({ transactions })
+      await wallet.signAndSendTransactions({
+        transactions: txs,
+      })
+      onClose()
+      // Toast.success("Converted")
     } catch (error) {
-      console.error(error)
+      Toast.error(error)
     }
   }
 
@@ -295,8 +288,8 @@ export default function ConvertToken({
       isOpen
       onClose={() => {
         onClose()
-        setInTokenValue('')
-        setOutTokenValue('')
+        setInTokenValue("")
+        setOutTokenValue("")
       }}
       size="md"
     >
@@ -329,8 +322,8 @@ export default function ConvertToken({
               disabled={!pool.reversible}
               onClick={() => {
                 setIsReversed(!isReversed)
-                setInTokenValue('')
-                setOutTokenValue('')
+                setInTokenValue("")
+                setOutTokenValue("")
               }}
             >
               <Icon

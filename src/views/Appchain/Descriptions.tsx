@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React from "react"
 
 import relativeTime from "dayjs/plugin/relativeTime"
 import duration from "dayjs/plugin/duration"
@@ -9,7 +9,6 @@ import {
   Flex,
   HStack,
   Avatar,
-  Image,
   VStack,
   Link,
   Text,
@@ -21,7 +20,6 @@ import {
   CircularProgress,
   Skeleton,
   Icon,
-  useBoolean,
   useClipboard,
   Menu,
   MenuButton,
@@ -30,8 +28,6 @@ import {
   Button,
   Center,
 } from "@chakra-ui/react"
-
-import { useSpring, animated } from "react-spring"
 
 import { StateBadge } from "components"
 
@@ -50,64 +46,24 @@ import bridgeIcon from "assets/icons/bridge.png"
 import githubIcon from "assets/icons/github.png"
 
 import { DecimalUtil, toValidUrl } from "utils"
-import Decimal from "decimal.js"
 import { EPOCH_DURATION_MS } from "primitives"
-import { useGlobalStore } from "stores"
 import { FaUser } from "react-icons/fa"
-import useChainStats from "hooks/useChainStats"
+import useChainData from "hooks/useChainData"
 import DescItem from "components/common/DescItem"
 import { BsThreeDots } from "react-icons/bs"
 import { FiCopy, FiExternalLink } from "react-icons/fi"
+import LinkBox from "components/common/LinkBox"
+import useChainState from "hooks/useChainState"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 dayjs.extend(duration)
 dayjs.extend(relativeTime)
 
 type DescriptionsProps = {
-  appchain: AppchainInfoWithAnchorStatus | undefined
-  appchainSettings: AppchainSettings | undefined
-  wrappedAppchainToken: WrappedAppchainToken | undefined
-  appchainApi: ApiPromise | undefined
-}
-
-type LinkBoxProps = {
-  label: string
-  icon: any
-  to?: string
-  href?: string
-}
-
-const LinkBox: React.FC<LinkBoxProps> = ({ label, icon }) => {
-  const [isHovering, setIsHovering] = useBoolean(false)
-
-  const iconHoveringProps = useSpring({
-    transform: isHovering ? "translateY(-5pxpx)" : "translateY(0px)",
-  })
-
-  return (
-    <Box
-      p={2}
-      cursor="pointer"
-      onMouseEnter={setIsHovering.on}
-      onMouseLeave={setIsHovering.off}
-    >
-      <VStack spacing={1}>
-        <animated.div style={iconHoveringProps}>
-          <Box boxSize={8}>
-            <Image src={icon} w="100%" />
-          </Box>
-        </animated.div>
-        <Text
-          fontSize="sm"
-          whiteSpace="nowrap"
-          textOverflow="ellipsis"
-          overflow="hidden"
-          maxW="100%"
-        >
-          {label}
-        </Text>
-      </VStack>
-    </Box>
-  )
+  appchain?: AppchainInfoWithAnchorStatus
+  appchainSettings?: AppchainSettings
+  wrappedAppchainToken?: WrappedAppchainToken
+  appchainApi?: ApiPromise
 }
 
 export const Descriptions: React.FC<DescriptionsProps> = ({
@@ -120,68 +76,43 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
   const linksBg = useColorModeValue("#f5f7fa", "#1e1f34")
   const borderColor = useColorModeValue("#e3e3e3", "#333")
 
-  const { global } = useGlobalStore()
+  const { networkConfig } = useWalletSelector()
 
   const isSubqEnabled = !!appchainSettings?.subql_endpoint
 
-  const stats = useChainStats(
+  const chainData = useChainData(
     appchain?.appchain_id,
     appchainSettings?.subql_endpoint
   )
-
-  const [bestBlock, setBestBlock] = useState<number>()
-  const [currentEra, setCurrentEra] = useState<number>()
-  const [totalIssuance, setTotalIssuance] = useState<string>()
-
-  const [nextEraTime, setNextEraTime] = useState(0)
-  const [nextEraTimeLeft, setNextEraTimeLeft] = useState(0)
 
   const { onCopy: onCopyRpcEndpoint } = useClipboard(
     appchainSettings?.rpc_endpoint || ""
   )
 
-  useEffect(() => {
-    if (!appchainApi) {
-      return
-    }
-
-    // subscribe new head
-    let unsubNewHeads: any
-    appchainApi.rpc.chain
-      .subscribeNewHeads((lastHeader) =>
-        setBestBlock(lastHeader.number.toNumber())
-      )
-      .then((unsub) => (unsubNewHeads = unsub))
-
-    Promise.all([
-      appchainApi.query.octopusLpos.activeEra(),
-      appchainApi.query.balances?.totalIssuance(),
-    ]).then(([era, issuance]) => {
-      const eraJSON: any = era.toJSON()
-
-      setCurrentEra(eraJSON?.index)
-
-      setNextEraTime(eraJSON ? EPOCH_DURATION_MS + eraJSON.start : 0)
-      setNextEraTimeLeft(
-        eraJSON ? eraJSON.start + EPOCH_DURATION_MS - new Date().getTime() : 0
-      )
-      setTotalIssuance(issuance?.toString() || "0")
-    })
-
-    return () => unsubNewHeads && unsubNewHeads()
-  }, [appchainApi])
+  const {
+    totalAsset,
+    stakedOctValue,
+    currentEra,
+    totalIssuance,
+    nextEraTime,
+    nextEraTimeLeft,
+  } = useChainState(
+    appchainApi,
+    appchain?.appchain_anchor,
+    appchain?.total_stake
+  )
 
   return (
     <Box bg={bg} p={6} borderRadius="lg">
       <Flex alignItems="center" justifyContent="space-between" minH="68px">
         <HStack spacing={4}>
-          <SkeletonCircle size="12" isLoaded={!!appchain}>
+          <SkeletonCircle size="16" isLoaded={!!appchain}>
             <Avatar
               src={
                 appchain?.appchain_metadata?.fungible_token_metadata.icon as any
               }
               name={appchain?.appchain_id}
-              boxSize={12}
+              boxSize={16}
             />
           </SkeletonCircle>
           <VStack alignItems="flex-start" spacing={0}>
@@ -201,6 +132,9 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
                 <Text>{appchain?.appchain_owner}</Text>
               </HStack>
             ) : null}
+            <Text fontSize="sm" className="octo-gray">
+              {appchain?.appchain_metadata?.description}
+            </Text>
           </VStack>
         </HStack>
         <VStack alignItems="flex-end" spacing={0}>
@@ -232,7 +166,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
         </Link>
 
         <Link
-          href={`${global?.network?.octopus.explorerUrl}/${appchain?.appchain_id}`}
+          href={`${networkConfig?.octopus.explorerUrl}/${appchain?.appchain_id}`}
           isExternal
         >
           <LinkBox icon={explorerIcon} label="Explorer" />
@@ -260,7 +194,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
           <MenuList>
             <MenuItem>
               <Link
-                href={`${global?.network?.near.explorerUrl}/accounts/${appchain?.appchain_anchor}`}
+                href={`${networkConfig?.near.explorerUrl}/accounts/${appchain?.appchain_anchor}`}
                 isExternal
               >
                 <HStack gap={2}>
@@ -290,27 +224,36 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
       >
         <DescItem
           title="Addresses"
-          isLoaded={isSubqEnabled ? !!stats : true}
-          value={isSubqEnabled ? stats?.accounts.totalCount ?? "loading" : "-"}
+          isLoaded={isSubqEnabled ? !!chainData : true}
+          value={
+            isSubqEnabled ? chainData?.accounts.totalCount ?? "loading" : "-"
+          }
         />
 
         <DescItem
           title="Transfers"
-          isLoaded={isSubqEnabled ? !!stats : true}
+          isLoaded={isSubqEnabled ? !!chainData : true}
           value={
             isSubqEnabled
-              ? stats?.systemTokenTransfers.totalCount ?? "loading"
+              ? chainData?.systemTokenTransfers.totalCount ?? "loading"
               : "-"
           }
         />
 
         <DescItem
-          title="Block Height"
+          title="Cross-chain Asset"
           isLoaded={!!nextEraTime}
           value={
-            bestBlock !== undefined
-              ? DecimalUtil.beautify(new Decimal(bestBlock), 0)
-              : "loading"
+            <>
+              <Heading
+                fontSize="xl"
+                color={
+                  stakedOctValue.lessThan(totalAsset.mul(3))
+                    ? "#FFAA15"
+                    : "#00C781"
+                }
+              >{`$${DecimalUtil.beautify(totalAsset, 0)}`}</Heading>
+            </>
           }
         />
       </SimpleGrid>
@@ -331,7 +274,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
         />
 
         <DescItem
-          title="Next Reward"
+          title="Next Day Reward"
           isLoaded={!!nextEraTime}
           titleExtra={
             nextEraTime ? (

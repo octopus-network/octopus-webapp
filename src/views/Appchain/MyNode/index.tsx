@@ -7,35 +7,22 @@ import {
   Heading,
   Button,
   Text,
-  List,
   Icon,
   Flex,
-  SimpleGrid,
-  Select,
   Spinner,
-  useClipboard,
   Center,
-  Link,
-  HStack,
   Menu,
   MenuButton,
   MenuItem,
   MenuList,
-  Input,
-  Tag,
-  IconButton,
   useColorModeValue,
   useBoolean,
-  Skeleton,
+  Link,
+  Divider,
+  Stack,
 } from "@chakra-ui/react"
 
-import {
-  DownloadIcon,
-  DeleteIcon,
-  CheckIcon,
-  CopyIcon,
-  RepeatIcon,
-} from "@chakra-ui/icons"
+import { DeleteIcon } from "@chakra-ui/icons"
 
 import { BsFillTerminalFill } from "react-icons/bs"
 import { HiUpload } from "react-icons/hi"
@@ -43,57 +30,40 @@ import { TiKey } from "react-icons/ti"
 import { BsThreeDots } from "react-icons/bs"
 import { API_HOST } from "config"
 import { Alert } from "components"
-import { useGlobalStore } from "stores"
 import { SetSessionKeyModal } from "./SetSessionKeyModal"
 import type { ApiPromise } from "@polkadot/api"
 
 import { InstanceInfoModal } from "./InstanceInfoModal"
+import { AnchorContract, AppchainInfo, CLOUD_VENDOR, Validator } from "types"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import NodeBoard from "components/AppChain/NodeBoard"
+import { MyStaking } from "../MyStaking"
+import NodeForm from "components/AppChain/NodeForm"
 
 type MyNodeProps = {
   appchainId: string | undefined
   appchainApi: ApiPromise | undefined
   needKeys: boolean
-}
-
-const cloudVendorInLocalStorage =
-  window.localStorage.getItem("OCTOPUS_DEPLOYER_CLOUD_VENDOR") || ""
-const accessKeyInLocalStorage =
-  window.localStorage.getItem("OCTOPUS_DEPLOYER_ACCESS_KEY") ||
-  window.localStorage.getItem("accessKey") ||
-  ""
-
-const statesRecord: any = {
-  "0": { label: "Init", color: "blue", state: 0 },
-  "10": { label: "Applying", color: "teal", state: 10 },
-  "11": { label: "Apply Failed", color: "red", state: 11 },
-  "12": { label: "Running", color: "octo-blue", state: 12 },
-  "20": { label: "Destroying", color: "teal", state: 20 },
-  "21": { label: "Destroy Failed", color: "orange", state: 21 },
-  "22": { label: "Destroyed", color: "gray", state: 22 },
-  "30": { label: "Upgrading", color: "green", state: 30 },
+  appchain?: AppchainInfo
+  anchor?: AnchorContract
+  validator?: Validator
 }
 
 export const MyNode: React.FC<MyNodeProps> = ({
   appchainId,
   needKeys,
   appchainApi,
+  appchain,
+  anchor,
+  validator,
 }) => {
   const bg = useColorModeValue("white", "#15172c")
 
-  const [cloudVendor, setCloudVendor] = useState<string>(
-    cloudVendorInLocalStorage || "AWS"
-  )
-  const [accessKey, setAccessKey] = useState<string>(accessKeyInLocalStorage)
   const [node, setNode] = useState<any>()
 
   const [isInitializing, setIsInitializing] = useBoolean()
-  const [isLoadingNode, setIsLoadingNode] = useBoolean()
-  const [isDeploying, setIsDeploying] = useBoolean()
-  const [isDeleting, setIsDeleting] = useBoolean()
-  const [isApplying, setIsApplying] = useBoolean()
-  const [isRefreshing, setIsRefreshing] = useBoolean()
-  const [isDestroying, setIsDestroying] = useBoolean()
   const [isUpgrading, setIsUpgrading] = useBoolean()
+  const [isManuallyDeployed, setIsManuallyDeployed] = useState(false)
 
   const [nodeMetrics, setNodeMetrics] = useState<any>()
 
@@ -102,29 +72,31 @@ export const MyNode: React.FC<MyNodeProps> = ({
   const [instanceInfoModalOpen, setInstanceInfoModalOpen] = useBoolean()
 
   const [isImageNeedUpgrade, setIsImageNeedUpgrade] = useBoolean()
-  const [deployRegion, setDeployRegion] = useState<string>("")
-
-  const [inputAccessKey, setInputAccessKey] = useState("")
-
-  const inputBg = useColorModeValue("#f5f7fa", "whiteAlpha.100")
+  const [oauthUser, setOAuthUser] = useState<any>()
 
   const { data: deployConfig } = useSWR("deploy-config")
 
-  const { global } = useGlobalStore()
-  const { hasCopied: hasInstanceCopied, onCopy: onCopyInstance } = useClipboard(
-    node?.instance ? `${node.instance.user}@${node.instance.ip}` : ""
-  )
+  const { accountId } = useWalletSelector()
 
-  const { hasCopied: hasNodeIdCopied, onCopy: onCopyNodeId } = useClipboard(
-    node?.uuid || ""
-  )
+  const cloudVendorInLocalStorage = window.localStorage.getItem(
+    "OCTOPUS_DEPLOYER_CLOUD_VENDOR"
+  ) as CLOUD_VENDOR
+  const accessKeyInLocalStorage =
+    window.localStorage.getItem("OCTOPUS_DEPLOYER_ACCESS_KEY") ||
+    window.localStorage.getItem("accessKey") ||
+    ""
+
+  useEffect(() => {
+    const ismd = localStorage.getItem(`manually-deployed-${appchainId}`)
+    setIsManuallyDeployed(ismd === "true")
+  }, [appchainId])
 
   useEffect(() => {
     if (
       !accessKeyInLocalStorage ||
       !appchainId ||
       !cloudVendorInLocalStorage ||
-      !global.accountId
+      !accountId
     ) {
       return
     }
@@ -132,7 +104,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
     axios
       .get(
         `
-      ${API_HOST}/node/${cloudVendorInLocalStorage}/${accessKeyInLocalStorage}/${appchainId}/${global.accountId}
+      ${API_HOST}/node/${cloudVendorInLocalStorage}/${accessKeyInLocalStorage}/${appchainId}/${accountId}
     `
       )
       .then((res) => res.data)
@@ -142,18 +114,24 @@ export const MyNode: React.FC<MyNodeProps> = ({
         }
         setIsInitializing.off()
       })
-  }, [appchainId, global])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    accessKeyInLocalStorage,
+    accountId,
+    appchainId,
+    cloudVendorInLocalStorage,
+  ])
 
   useEffect(() => {
     if (!node || !deployConfig || !appchainId) {
       return
     }
 
-    if (global.accountId && node?.state === "12") {
+    if (accountId && node?.state === "12") {
       axios
         .get(
           `
-        ${API_HOST}/node-metrics/${node.uuid}/${cloudVendorInLocalStorage}/${accessKeyInLocalStorage}/${appchainId}/${global.accountId}
+        ${API_HOST}/node-metrics/${node.uuid}/${cloudVendorInLocalStorage}/${accessKeyInLocalStorage}/${appchainId}/${accountId}
       `
         )
         .then((res) => res.data)
@@ -167,67 +145,21 @@ export const MyNode: React.FC<MyNodeProps> = ({
       node.task?.base_image &&
       node.task?.base_image !== deployConfig.baseImages[appchainId].image &&
       (!deployConfig.upgradeWhitelist?.length ||
-        deployConfig.upgradeWhitelist.includes(global.accountId))
+        deployConfig.upgradeWhitelist.includes(accountId))
     ) {
       setIsImageNeedUpgrade.on()
     } else {
       setIsImageNeedUpgrade.off()
     }
-  }, [node, deployConfig, appchainId, global])
-
-  const onNextStep = () => {
-    window.localStorage.setItem("OCTOPUS_DEPLOYER_CLOUD_VENDOR", cloudVendor)
-    window.localStorage.setItem("OCTOPUS_DEPLOYER_ACCESS_KEY", inputAccessKey)
-
-    setIsLoadingNode.on()
-    axios
-      .get(
-        `${API_HOST}/node/${cloudVendor}/${inputAccessKey}/${appchainId}/${global.accountId}`
-      )
-      .then((res) => res.data)
-      .then((res) => {
-        if (res) {
-          setNode(res)
-        }
-        setAccessKey(inputAccessKey)
-        setIsLoadingNode.off()
-      })
-  }
-
-  const onDeploy = () => {
-    setIsDeploying.on()
-    axios
-      .post(`${API_HOST}/deploy-node`, {
-        appchain: appchainId,
-        cloudVendor,
-        accessKey,
-        accountId: global.accountId,
-        region: deployRegion,
-      })
-      .then((res) => res.data)
-      .then((res) => {
-        if (res) {
-          setNode(res)
-        }
-        setIsDeploying.off()
-      })
-  }
-
-  const onRefresh = () => {
-    setIsRefreshing.on()
-    axios
-      .get(
-        `${API_HOST}/node/${cloudVendor}/${accessKey}/${appchainId}/${global.accountId}`
-      )
-      .then((res) => res.data)
-      .then((res) => {
-        if (res) {
-          setNode(res)
-        }
-
-        setIsRefreshing.off()
-      })
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    node,
+    deployConfig,
+    appchainId,
+    accountId,
+    cloudVendorInLocalStorage,
+    accessKeyInLocalStorage,
+  ])
 
   const onClearCache = () => {
     window.localStorage.removeItem("OCTOPUS_DEPLOYER_CLOUD_VENDOR")
@@ -236,102 +168,47 @@ export const MyNode: React.FC<MyNodeProps> = ({
     window.location.reload()
   }
 
-  const onApplyNode = () => {
-    const secretKey = window.prompt(
-      "Please enter the secret key of your server",
-      ""
-    )
-
-    if (!secretKey) {
-      return
-    }
-
-    setIsApplying.on()
-    axios
-      .put(
-        `${deployConfig.deployApiHost}/tasks/${node?.uuid}`,
-        {
-          action: "apply",
-          secret_key: secretKey,
-        },
-        {
-          headers: { authorization: node?.user },
-        }
-      )
-      .then((res) => {
-        window.location.reload()
-      })
-  }
-
   const onUpgradeImage = () => {
     if (!appchainId) {
       return
     }
 
-    const secretKey = window.prompt(
-      "Please enter the secret key of your server",
-      ""
-    )
+    let secretKey
 
-    if (!secretKey) {
-      return
+    if (cloudVendorInLocalStorage === "AWS") {
+      secretKey = window.prompt(
+        "Please enter the secret key of your server",
+        ""
+      )
+
+      if (!secretKey) {
+        return
+      }
+    } else {
+      const { access_token } = oauthUser?.getAuthResponse()
+      secretKey = access_token
     }
 
     setIsUpgrading.on()
-    axios
-      .put(
-        `${deployConfig.deployApiHost}/tasks/${node?.uuid}`,
-        {
-          action: "update",
-          secret_key: secretKey,
-          base_image: deployConfig.baseImages[appchainId]?.image,
-        },
-        {
-          headers: { authorization: node?.user },
-        }
-      )
-      .then((res) => {
-        window.location.reload()
-      })
-  }
-
-  const onDestroyNode = () => {
-    const secretKey = window.prompt(
-      "Please enter the secret key of your server",
-      ""
+    axios.put(
+      `${deployConfig.deployApiHost}/tasks/${node?.uuid}`,
+      {
+        action: "update",
+        secret_key: secretKey,
+        base_image: deployConfig.baseImages[appchainId]?.image,
+      },
+      {
+        headers: { authorization: node?.user },
+      }
     )
 
     if (!secretKey) {
       return
     }
-
-    setIsDestroying.on()
-    axios
-      .put(
-        `${deployConfig.deployApiHost}/tasks/${node?.uuid}`,
-        {
-          action: "destroy",
-          secret_key: secretKey,
-        },
-        {
-          headers: { authorization: node?.user },
-        }
-      )
-      .then((res) => {
-        window.location.reload()
-      })
   }
-
-  const onDeleteNode = () => {
-    setIsDeleting.on()
-    axios
-      .delete(`${deployConfig.deployApiHost}/tasks/${node?.uuid}`, {
-        headers: { authorization: node?.user },
-      })
-      .then((res) => {
-        window.location.reload()
-      })
-  }
+  // check NODE_STATE_RECORD for state meaning
+  const isShowStaking =
+    !!validator || ["12", "20", "21", "22", "30"].includes(node?.state)
 
   return (
     <>
@@ -432,217 +309,64 @@ export const MyNode: React.FC<MyNodeProps> = ({
             />
           </Center>
         ) : node ? (
-          <Box mt={3}>
-            <List spacing={3}>
-              <Flex justifyContent="space-between">
-                <Text variant="gray" fontSize="sm">
-                  Status
-                </Text>
-                <Skeleton isLoaded={!isRefreshing}>
-                  <Tag colorScheme={statesRecord[node.state]?.color} size="sm">
-                    {statesRecord[node.state]?.label}
-                  </Tag>
-                </Skeleton>
-              </Flex>
-              <Flex justifyContent="space-between">
-                <Text variant="gray" fontSize="sm">
-                  Node ID
-                </Text>
-                <HStack>
-                  <Text
-                    fontSize="sm"
-                    whiteSpace="nowrap"
-                    w="calc(160px - 30px)"
-                    overflow="hidden"
-                    textOverflow="ellipsis"
-                  >
-                    {node.uuid}
-                  </Text>
-                  <IconButton
-                    aria-label="copy"
-                    onClick={onCopyNodeId}
-                    size="xs"
-                  >
-                    {hasNodeIdCopied ? <CheckIcon /> : <CopyIcon />}
-                  </IconButton>
-                </HStack>
-              </Flex>
-              <Flex justifyContent="space-between">
-                <Text variant="gray" fontSize="sm">
-                  Instance
-                </Text>
-                {node.instance ? (
-                  <HStack>
-                    <Text
-                      fontSize="sm"
-                      whiteSpace="nowrap"
-                      w="calc(160px - 30px)"
-                      overflow="hidden"
-                      textOverflow="ellipsis"
-                    >
-                      {node.instance.user}@{node.instance.ip}
-                    </Text>
-                    <IconButton
-                      aria-label="copy"
-                      onClick={onCopyInstance}
-                      size="xs"
-                    >
-                      {hasInstanceCopied ? <CheckIcon /> : <CopyIcon />}
-                    </IconButton>
-                  </HStack>
-                ) : (
-                  "-"
-                )}
-              </Flex>
-            </List>
-            <Box mt={3}>
-              {node?.state === "0" ? (
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                  <Button
-                    colorScheme="octo-blue"
-                    onClick={onApplyNode}
-                    isDisabled={isApplying}
-                    isLoading={isApplying}
-                  >
-                    Apply
-                  </Button>
-                  <Button
-                    onClick={onDeleteNode}
-                    isDisabled={isDeleting}
-                    isLoading={isDeleting}
-                  >
-                    <Icon as={DeleteIcon} mr={2} boxSize={3} /> Delete
-                  </Button>
-                </SimpleGrid>
-              ) : node?.state === "10" || node?.state === "20" ? (
-                <SimpleGrid columns={1}>
-                  <Button
-                    onClick={onRefresh}
-                    isDisabled={isRefreshing}
-                    isLoading={isRefreshing}
-                  >
-                    <RepeatIcon mr={1} /> Refresh
-                  </Button>
-                </SimpleGrid>
-              ) : node?.state === "11" || node?.state === "21" ? (
-                <SimpleGrid columns={1}>
-                  <Button
-                    colorScheme="red"
-                    onClick={onDestroyNode}
-                    isDisabled={isDestroying}
-                    isLoading={isDestroying}
-                  >
-                    <Icon as={DeleteIcon} mr={2} boxSize={3} /> Destroy
-                  </Button>
-                </SimpleGrid>
-              ) : node?.state === "12" ? (
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                  <Button as={Link} isExternal href={node.instance.ssh_key}>
-                    <Icon as={DownloadIcon} mr={2} boxSize={3} /> RSA
-                  </Button>
-                  <Button
-                    colorScheme="red"
-                    onClick={onDestroyNode}
-                    isDisabled={isDestroying}
-                    isLoading={isDestroying}
-                  >
-                    <Icon as={DeleteIcon} mr={2} boxSize={3} /> Destroy
-                  </Button>
-                </SimpleGrid>
-              ) : node?.state === "22" ? (
-                <SimpleGrid columns={1}>
-                  <Button
-                    onClick={onDeleteNode}
-                    isDisabled={isDeleting}
-                    isLoading={isDeleting}
-                  >
-                    <Icon as={DeleteIcon} mr={2} boxSize={3} /> Delete
-                  </Button>
-                </SimpleGrid>
-              ) : node?.state === "30" ? (
-                <SimpleGrid columns={1}>
-                  <Button as={Link} isExternal href={node.instance.ssh_key}>
-                    <Icon as={DownloadIcon} mr={2} boxSize={3} /> RSA
-                  </Button>
-                </SimpleGrid>
-              ) : null}
-            </Box>
-          </Box>
-        ) : accessKey ? (
-          <>
-            <Flex minH="120px" justifyContent="center" flexDirection="column">
-              <Flex bg={inputBg} p={1} borderRadius="lg" alignItems="center">
-                <Box p={2}>
-                  <Text variant="gray">Deploy Region</Text>
-                </Box>
-                <Box flex={1}>
-                  <Select
-                    variant="unstyled"
-                    p={2}
-                    defaultValue=""
-                    onChange={(e) => setDeployRegion(e.target.value)}
-                    textAlign="right"
-                  >
-                    {deployConfig?.regions.map((region: any, idx: number) => (
-                      <option value={region.value} key={`option-${idx}`}>
-                        {region.label}
-                      </option>
-                    ))}
-                  </Select>
-                </Box>
-              </Flex>
-            </Flex>
-            <Button
-              colorScheme="octo-blue"
-              width="100%"
-              onClick={onDeploy}
-              isLoading={isDeploying}
-              isDisabled={isDeploying}
-            >
-              Deploy
-            </Button>
-          </>
+          <NodeBoard
+            node={node}
+            appchainId={appchainId}
+            cloudVendor={cloudVendorInLocalStorage}
+            setNode={setNode}
+            deployAccessKey={accessKeyInLocalStorage}
+            deployConfig={deployConfig}
+          />
         ) : (
-          <>
-            <Flex minH="120px" justifyContent="center" flexDirection="column">
-              <Flex bg={inputBg} p={1} borderRadius="lg">
-                <Box>
-                  <Select
-                    variant="unstyled"
-                    p={2}
-                    defaultValue={cloudVendor}
-                    onChange={(e) => setCloudVendor(e.target.value)}
-                  >
-                    <option value="AWS">AWS</option>
-                    <option value="GCP" disabled>
-                      GCP
-                    </option>
-                  </Select>
-                </Box>
-                <Box flex={1}>
-                  <Input
-                    variant="unstyled"
-                    placeholder="Access Key"
-                    w="100%"
-                    p={2}
-                    onChange={(e) => setInputAccessKey(e.target.value)}
-                  />
-                </Box>
-              </Flex>
-            </Flex>
-            <Button
-              colorScheme="octo-blue"
-              width="100%"
-              isDisabled={!cloudVendor || !inputAccessKey || isLoadingNode}
-              onClick={onNextStep}
-              isLoading={isLoadingNode}
-            >
-              Deploy A Node
-            </Button>
-          </>
+          <NodeForm
+            setNode={setNode}
+            validator={validator}
+            appchainId={appchainId}
+            myNodeSetOAuthUser={setOAuthUser}
+          />
         )}
       </Box>
+      {isShowStaking || isManuallyDeployed ? (
+        <Box mt={4}>
+          <MyStaking
+            appchain={appchain}
+            anchor={anchor}
+            validator={validator}
+          />
+        </Box>
+      ) : (
+        <Flex m={6} flexDirection="column" gap={4}>
+          <Text textAlign="center">
+            Learn about{" "}
+            <Link
+              href="https://docs.oct.network/maintain/validator-deploy.html#deploy-validator-node"
+              variant="blue-underline"
+              isExternal
+              ml={2}
+            >
+              Deploy Validator Node
+            </Link>
+          </Text>
+          <Flex align="center">
+            <Divider />
+            <Text padding="2">OR</Text>
+            <Divider />
+          </Flex>
+
+          <Button
+            colorScheme="octo-blue"
+            variant="outline"
+            onClick={() => {
+              localStorage.setItem(`manually-deployed-${appchainId}`, "true")
+              setIsManuallyDeployed(true)
+            }}
+          >
+            I have deployed manually
+          </Button>
+        </Flex>
+      )}
       <SetSessionKeyModal
+        appchain={appchain}
         appchainApi={appchainApi}
         isOpen={setSessionKeyModalOpen}
         onClose={setSetSessionKeyModalOpen.off}

@@ -1,56 +1,52 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from "react"
 
 import {
   Input,
   Text,
   List,
-  Heading,
   Link,
   FormControl,
   FormHelperText,
   useColorModeValue,
-  HStack,
-  VStack,
   Flex,
   Box,
   Icon,
-  useToast,
   useBoolean,
   Button,
-} from '@chakra-ui/react'
+} from "@chakra-ui/react"
 
-import type { ApiPromise } from '@polkadot/api'
-import { isHex } from '@polkadot/util'
-import { ChevronRightIcon } from '@chakra-ui/icons'
-import type { InjectedAccountWithMeta } from '@polkadot/extension-inject/types'
-import {
-  web3FromSource,
-  web3Enable,
-  web3Accounts,
-} from '@polkadot/extension-dapp'
-import Identicon from '@polkadot/react-identicon'
-import { Empty } from 'components'
+import type { ApiPromise } from "@polkadot/api"
+import { isHex } from "@polkadot/util"
+import { ChevronRightIcon } from "@chakra-ui/icons"
+import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types"
+import { web3FromSource } from "@polkadot/extension-dapp"
+import { Empty } from "components"
 
-import { BaseModal } from 'components'
+import { BaseModal } from "components"
+import { AppchainInfo } from "types"
+import AccountItem from "components/common/AccountItem"
+import detectEthereumProvider from "@metamask/detect-provider"
+import useAccounts from "hooks/useAccounts"
+import { Toast } from "components/common/toast"
+import { setSessionKey } from "utils/bridge"
+import { onTxSent } from "utils/helper"
 
 type SetSessionKeyModalProps = {
   isOpen: boolean
   onClose: () => void
-  appchainApi: ApiPromise | undefined
+  appchainApi?: ApiPromise
+  appchain?: AppchainInfo
 }
 
 export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
   isOpen,
   onClose,
   appchainApi,
+  appchain,
 }) => {
-  const toast = useToast()
+  const bg = useColorModeValue("#f6f7fa", "#15172c")
 
-  const bg = useColorModeValue('#f6f7fa', '#15172c')
-  const [currentAccount, setCurrentAccount] =
-    useState<InjectedAccountWithMeta>()
-  const [accounts, setAccounts] = useState<InjectedAccountWithMeta[]>()
-  const [key, setKey] = useState('')
+  const [key, setKey] = useState("")
   const [isSubmitting, setIsSubmitting] = useBoolean(false)
 
   const [isInAccountsPage, setIsInAccountsPage] = useBoolean()
@@ -61,18 +57,11 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
     }
   }, [isOpen])
 
-  useEffect(() => {
-    if (isOpen) {
-      web3Enable('Octopus Network').then((res) => {
-        web3Accounts().then((accounts) => {
-          setAccounts(accounts)
-          if (accounts.length) {
-            setCurrentAccount(accounts[0])
-          }
-        })
-      })
-    }
-  }, [isOpen])
+  const isEvm = appchain?.appchain_metadata?.template_type === "BarnacleEvm"
+  const { accounts, currentAccount, setCurrentAccount } = useAccounts(
+    isEvm,
+    isOpen
+  )
 
   const onChooseAccount = (account: InjectedAccountWithMeta) => {
     setCurrentAccount(account)
@@ -80,50 +69,62 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
   }
 
   const onKeyChange = (key: string) => {
-    if (isHex(key) && key.length === 324) {
+    if (
+      isHex(key) &&
+      ((!isEvm && key.length === 324) || (isEvm && key.length === 326))
+    ) {
       setKey(key)
     } else {
-      setKey('')
+      setKey("")
     }
   }
 
   const onSubmit = async () => {
-    setIsSubmitting.on()
-    const injected = await web3FromSource(currentAccount?.meta.source || '')
-    appchainApi?.setSigner(injected.signer)
+    try {
+      setIsSubmitting.on()
+      if (isEvm) {
+        await setSessionKey(key)
+        Toast.success("Set session keys success")
+        onTxSent()
+      } else {
+        const injected = await web3FromSource(currentAccount?.meta.source || "")
+        appchainApi?.setSigner(injected.signer)
 
-    const tx = appchainApi?.tx.session.setKeys(key, '0x00')
-    if (!tx) {
+        const tx = appchainApi?.tx.session.setKeys(key, "0x00")
+        if (!tx) {
+          setIsSubmitting.off()
+          return
+        }
+
+        await tx.signAndSend(currentAccount?.address as any, (res: any) => {
+          if (res.isInBlock) {
+            Toast.success("Set session keys success")
+
+            setTimeout(() => {
+              onTxSent()
+            }, 500)
+          }
+        })
+      }
       setIsSubmitting.off()
+    } catch (err: any) {
+      setIsSubmitting.off()
+      Toast.error(err)
+    }
+  }
+
+  const onConnect = async () => {
+    if (!isEvm) {
       return
     }
 
     try {
-      await tx
-        .signAndSend(currentAccount?.address as any, (res: any) => {
-          if (res.isInBlock) {
-            toast({
-              title: 'Set session keys success',
-              status: 'success',
-              position: 'top-right',
-            })
-
-            setTimeout(() => {
-              window.location.reload()
-            }, 500)
-          }
-        })
-        .catch((err) => {
-          setIsSubmitting.off()
-          throw new Error(err.toString())
-        })
-    } catch (err: any) {
-      setIsSubmitting.off()
-      toast({
-        title: err.toString(),
-        status: 'error',
-        position: 'top-right',
+      const provider = await detectEthereumProvider({ mustBeMetaMask: true })
+      await (provider as any)?.request({
+        method: "eth_requestAccounts",
       })
+    } catch (error) {
+      console.log("error", error)
     }
   }
 
@@ -131,7 +132,7 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
-      title={isInAccountsPage ? 'Choose Account' : 'Set Session Key'}
+      title={isInAccountsPage ? "Choose Account" : "Set Session Key"}
       maxW="520px"
     >
       {isInAccountsPage ? (
@@ -149,24 +150,7 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
                   cursor="pointer"
                   onClick={() => onChooseAccount(account)}
                 >
-                  <HStack w="calc(100% - 100px)">
-                    <Identicon value={account.address} size={32} />
-                    <VStack spacing={0} alignItems="flex-start" w="100%">
-                      <Heading fontSize="md">
-                        {account.meta?.name || 'No Name'}
-                      </Heading>
-                      <Text
-                        variant="gray"
-                        fontSize="xs"
-                        w="100%"
-                        whiteSpace="nowrap"
-                        overflow="hidden"
-                        textOverflow="ellipsis"
-                      >
-                        {account.address}
-                      </Text>
-                    </VStack>
-                  </HStack>
+                  <AccountItem account={account} />
                 </Box>
               ))}
             </List>
@@ -182,31 +166,22 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
               cursor="pointer"
               justifyContent="space-between"
               alignItems="center"
-              onClick={setIsInAccountsPage.on}
+              onClick={() => {
+                if (isEvm && !currentAccount) {
+                  onConnect()
+                } else {
+                  setIsInAccountsPage.on()
+                }
+              }}
             >
               {!currentAccount ? (
-                <Text variant="gray">Please Install Wallet Extension</Text>
+                <Text variant="gray">
+                  {isEvm
+                    ? "Please Connect Wallet"
+                    : "Please Install Wallet Extension"}
+                </Text>
               ) : (
-                <>
-                  <HStack w="calc(100% - 100px)">
-                    <Identicon value={currentAccount.address} size={40} />
-                    <VStack spacing={1} alignItems="flex-start" w="100%">
-                      <Heading fontSize="lg">
-                        {currentAccount.meta?.name || 'No Name'}
-                      </Heading>
-                      <Text
-                        variant="gray"
-                        fontSize="sm"
-                        w="100%"
-                        whiteSpace="nowrap"
-                        overflow="hidden"
-                        textOverflow="ellipsis"
-                      >
-                        {currentAccount.address}
-                      </Text>
-                    </VStack>
-                  </HStack>
-                </>
+                <AccountItem account={currentAccount} />
               )}
               <Icon as={ChevronRightIcon} boxSize={6} />
             </Flex>

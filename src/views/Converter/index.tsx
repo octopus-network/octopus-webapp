@@ -1,33 +1,25 @@
-import { Container, Flex } from '@chakra-ui/react'
-import CreatePool from 'components/Convertor/CreatePool'
-import MyPool from 'components/Convertor/MyPool'
-import PoolList from 'components/Convertor/PoolList'
-import {
-  useConvertorContract,
-  usePools,
-  useWhitelist,
-} from 'hooks/useConvertorContract'
-import { useGlobalStore } from 'stores'
-import useSWR from 'swr'
-import { ConverterConfig, NetworkType } from 'types'
+import { Container, Flex } from "@chakra-ui/react"
+import CreatePool from "components/Convertor/CreatePool"
+import MyPool from "components/Convertor/MyPool"
+import PoolList from "components/Convertor/PoolList"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { usePools, useWhitelist } from "hooks/useConvertorContract"
+import useSWR from "swr"
+import { ConverterConfig, NetworkType } from "types"
 
 export function Converter() {
-  const { global } = useGlobalStore()
+  const { accountId, networkConfig } = useWalletSelector()
   const { data } = useSWR<ConverterConfig>(`converter-config`)
 
   const contractId = data
-    ? data[global.network?.near.networkId ?? NetworkType.TESTNET].contractId
-    : ''
+    ? data[networkConfig?.near.networkId ?? NetworkType.TESTNET].contractId
+    : ""
 
-  const contract = useConvertorContract(
-    global.wallet?.account() as any,
-    contractId
-  )
-  const { whitelist, isLoading: isLoadingWhitelist } = useWhitelist(contract)
+  const { whitelist, isLoading: isLoadingWhitelist } = useWhitelist(contractId)
 
-  const { pools, isLoading: isLoadingPools } = usePools(contract, 0, 10)
+  const { pools, isLoading: isLoadingPools } = usePools(contractId, 0, 30)
 
-  const myPools = pools.filter((p) => p.creator === global.accountId)
+  const myPools = pools.filter((p) => p.creator === accountId)
 
   return (
     <Container position="relative">

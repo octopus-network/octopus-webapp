@@ -1,6 +1,6 @@
-import React, { useMemo, useState, useEffect } from 'react'
-import useSWR from 'swr'
-import dayjs from 'dayjs'
+import React, { useMemo, useState, useEffect } from "react"
+import useSWR from "swr"
+import dayjs from "dayjs"
 
 import {
   Box,
@@ -20,59 +20,54 @@ import {
   MenuButton,
   MenuList,
   MenuItem,
-} from '@chakra-ui/react'
+} from "@chakra-ui/react"
 
 import {
   AnchorContract,
   RewardHistory,
   AppchainInfoWithAnchorStatus,
-  TokenContract,
   UnbondedHistory,
   StakingHistory,
   Validator,
-} from 'types'
+} from "types"
 
-import { OCT_TOKEN_DECIMALS } from 'primitives'
+import { OCT_TOKEN_DECIMALS } from "primitives"
 
-import { AiOutlineMenu } from 'react-icons/ai'
-import { BsThreeDots, BsCheckCircle } from 'react-icons/bs'
-import { AddIcon, MinusIcon } from '@chakra-ui/icons'
+import { AiOutlineMenu } from "react-icons/ai"
+import { BsThreeDots, BsCheckCircle } from "react-icons/bs"
+import { AddIcon, MinusIcon } from "@chakra-ui/icons"
 
-import myStakingBg from 'assets/my-staking-bg.png'
-import empty from 'assets/empty.png'
+import myStakingBg from "assets/my-staking-bg.png"
+import empty from "assets/empty.png"
 
-import { useGlobalStore } from 'stores'
-import { RegisterValidatorModal } from './RegisterValidatorModal'
-import { StakingHistoryModal } from './StakingHistoryModal'
-import { RewardsModal } from '../RewardsModal'
-import { StakesModal } from './StakesModal'
-import { StakingPopover } from '../StakingPopover'
+import { RegisterValidatorModal } from "./RegisterValidatorModal"
+import { StakingHistoryModal } from "./StakingHistoryModal"
+import { RewardsModal } from "../RewardsModal"
+import { StakesModal } from "./StakesModal"
+import { StakingPopover } from "../StakingPopover"
 
-import { DecimalUtil, ZERO_DECIMAL } from 'utils'
+import { DecimalUtil, ZERO_DECIMAL } from "utils"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 type MyStakingProps = {
-  appchain: AppchainInfoWithAnchorStatus | undefined
-  anchor: AnchorContract | undefined
-  isValidator: boolean
-  isUnbonding: boolean
-  wrappedAppchainTokenContract: TokenContract | undefined
+  appchain?: AppchainInfoWithAnchorStatus
+  anchor?: AnchorContract
   validator?: Validator
 }
 
 export const MyStaking: React.FC<MyStakingProps> = ({
   appchain,
   anchor,
-  wrappedAppchainTokenContract,
-  isValidator,
-  isUnbonding,
   validator,
 }) => {
   const bg = useColorModeValue(
-    'linear-gradient(137deg,#1486ff 4%, #0c4df5)',
-    'linear-gradient(137deg,#1486ff 4%, #0c4df5)'
+    "linear-gradient(137deg,#1486ff 4%, #0c4df5)",
+    "linear-gradient(137deg,#1486ff 4%, #0c4df5)"
   )
 
-  const whiteBg = useColorModeValue('white', '#15172c')
+  const whiteBg = useColorModeValue("white", "#15172c")
+  const isUnbonding = !!(validator && validator?.is_unbonding)
+  const isValidator = !!(validator && !validator?.is_unbonding)
 
   const [registerValidatorModalOpen, setRegisterValidatorModalOpen] =
     useBoolean(false)
@@ -81,15 +76,15 @@ export const MyStaking: React.FC<MyStakingProps> = ({
   const [stakingHistoryModalOpen, setStakingHistoryModalOpen] =
     useBoolean(false)
 
-  const { global } = useGlobalStore()
+  const { accountId } = useWalletSelector()
   const [deposit, setDeposit] = useState(ZERO_DECIMAL)
 
   const [unbonedStakes, setUnbondedStakes] = useState<UnbondedHistory[]>()
   const [stakingHistories, setStakingHistories] = useState<StakingHistory[]>()
 
   const { data: rewards } = useSWR<RewardHistory[]>(
-    appchain?.anchor_status && global.accountId
-      ? `rewards/${global.accountId}/${appchain.appchain_id}/${appchain?.anchor_status?.index_range_of_validator_set_history?.end_index}`
+    appchain?.anchor_status && accountId
+      ? `rewards/${accountId}/${appchain.appchain_id}/${appchain?.anchor_status?.index_range_of_validator_set_history?.end_index}`
       : null
   )
 
@@ -129,20 +124,20 @@ export const MyStaking: React.FC<MyStakingProps> = ({
   }, [unbonedStakes])
 
   useEffect(() => {
-    if (!anchor || !global.accountId) {
+    if (!anchor || !accountId) {
       return
     }
 
     Promise.all([
-      anchor.get_validator_deposit_of({ validator_id: global.accountId }),
-      anchor.get_unbonded_stakes_of({ account_id: global.accountId }),
-      anchor.get_user_staking_histories_of({ account_id: global.accountId }),
+      anchor.get_validator_deposit_of({ validator_id: accountId }),
+      anchor.get_unbonded_stakes_of({ account_id: accountId }),
+      anchor.get_user_staking_histories_of({ account_id: accountId }),
     ]).then(([deposit, stakes, histories]) => {
       setDeposit(DecimalUtil.fromString(deposit, OCT_TOKEN_DECIMALS))
       setUnbondedStakes(stakes)
       setStakingHistories(histories)
     })
-  }, [global, anchor])
+  }, [anchor, accountId])
 
   return (
     <>
@@ -152,7 +147,7 @@ export const MyStaking: React.FC<MyStakingProps> = ({
         p={6}
         pt={4}
         pb={6}
-        borderRadius="lg"
+        borderBottomRadius="lg"
       >
         {isValidator ? (
           <>
@@ -250,7 +245,7 @@ export const MyStaking: React.FC<MyStakingProps> = ({
                   deposit={deposit}
                   type="decrease"
                   anchor={anchor}
-                  helper={`Your decreased stakes will be claimable after 21 days`}
+                  helper={`Your decreased stake will be claimable after 21 days`}
                   appchain={appchain}
                   validator={validator}
                 />
@@ -353,14 +348,14 @@ export const MyStaking: React.FC<MyStakingProps> = ({
             <Button
               onClick={setRegisterValidatorModalOpen.on}
               colorScheme="octo-blue"
-              isDisabled={!global.accountId || isUnbonding}
+              isDisabled={!accountId || isUnbonding}
               width="100%"
             >
-              {!global.accountId
-                ? 'Please Login'
+              {!accountId
+                ? "Please Login"
                 : isUnbonding
-                ? 'Unbonding'
-                : 'Register Validator'}
+                ? "Unbonding"
+                : "Register Validator"}
             </Button>
           </Box>
         )}
@@ -377,7 +372,6 @@ export const MyStaking: React.FC<MyStakingProps> = ({
         onClose={setRewardsModalOpen.off}
         appchain={appchain}
         anchor={anchor}
-        wrappedAppchainTokenContract={wrappedAppchainTokenContract}
         rewards={rewards}
       />
 

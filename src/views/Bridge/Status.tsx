@@ -1,10 +1,8 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useState, useMemo, useEffect } from 'react'
-import useSWR from 'swr'
-import dayjs from 'dayjs'
-import relativeTime from 'dayjs/plugin/relativeTime'
-import Identicon from '@polkadot/react-identicon'
-import { encodeAddress } from '@polkadot/util-crypto'
+import React, { useState, useMemo, useEffect } from "react"
+import useSWR from "swr"
+import dayjs from "dayjs"
+import relativeTime from "dayjs/plugin/relativeTime"
 
 import {
   Box,
@@ -28,24 +26,26 @@ import {
   Flex,
   useColorModeValue,
   VStack,
-} from '@chakra-ui/react'
+} from "@chakra-ui/react"
 
-import { DecimalUtil, decodeNearAccount } from 'utils'
-import { Link as RouterLink, useParams, useNavigate } from 'react-router-dom'
+import { DecimalUtil, decodeNearAccount } from "utils"
+import { Link as RouterLink, useParams, useNavigate } from "react-router-dom"
 
 import {
   ExternalLinkIcon,
   ChevronRightIcon,
   ChevronLeftIcon,
-} from '@chakra-ui/icons'
+} from "@chakra-ui/icons"
 
-import { AppchainInfoWithAnchorStatus, NetworkConfig } from 'types'
+import { AppchainInfoWithAnchorStatus, NetworkConfig } from "types"
 
-import { BiTimeFive } from 'react-icons/bi'
-import { AiOutlineArrowRight } from 'react-icons/ai'
-import nearLogo from 'assets/near.svg'
-import { useGlobalStore } from 'stores'
-import { TxDetail } from './TxDetail'
+import { BiTimeFive } from "react-icons/bi"
+import { AiOutlineArrowRight } from "react-icons/ai"
+import nearLogo from "assets/near.svg"
+import { TxDetail } from "./TxDetail"
+import { formatAppChainAddress } from "utils/format"
+import OctIdenticon from "components/common/OctIdenticon"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 
 enum BridgeStatus {
   Pending,
@@ -83,26 +83,26 @@ const statusObj: Record<
   }
 > = {
   Pending: {
-    color: 'green',
-    label: 'Pending',
+    color: "green",
+    label: "Pending",
   },
   Success: {
-    color: 'blue',
-    label: 'Success',
+    color: "blue",
+    label: "Success",
   },
   Failed: {
-    color: 'red',
-    label: 'Failed',
+    color: "red",
+    label: "Failed",
   },
 }
 
 const Row: React.FC<RowProps> = ({ data, network }) => {
-  const bg = useColorModeValue('white', '#15172c')
+  const bg = useColorModeValue("white", "#15172c")
 
   const [isAppchainSide, appchainId] = useMemo(
     () => [
-      data.direction === 'appchain_to_near',
-      data.appchain_name.replace(`${network?.near.networkId}-`, ''),
+      data.direction === "appchain_to_near",
+      data.appchain_name.replace(`${network?.near.networkId}-`, ""),
     ],
     [data]
   )
@@ -128,7 +128,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
                   }
                 />
                 <Text fontSize="xs">
-                  {isAppchainSide ? appchainId : 'NEAR'}
+                  {isAppchainSide ? appchainId : "NEAR"}
                 </Text>
               </HStack>
               <Icon as={AiOutlineArrowRight} boxSize={3} />
@@ -143,7 +143,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
                   }
                 />
                 <Text fontSize="xs">
-                  {!isAppchainSide ? appchainId : 'NEAR'}
+                  {!isAppchainSide ? appchainId : "NEAR"}
                 </Text>
               </HStack>
             </HStack>
@@ -168,15 +168,15 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
           cursor="pointer"
           transition="all .3s ease"
           _hover={{
-            boxShadow: '0 10px 10px -5px rgba(0,0,12,.06)',
-            transform: 'translateY(-3px) scale(1.01)',
+            boxShadow: "0 10px 10px -5px rgba(0,0,12,.06)",
+            transform: "translateY(-3px) scale(1.01)",
           }}
         >
           <GridItem colSpan={2}>
             <VStack spacing={2} align="start">
               <Heading
                 fontSize="sm"
-                color={data.event === 'Burnt' ? 'green.500' : 'blue.500'}
+                color={data.event === "Burnt" ? "green.500" : "blue.500"}
               >
                 {data.event}
               </Heading>
@@ -191,17 +191,17 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
                   {appchain
                     ? DecimalUtil.beautify(
                         DecimalUtil.fromString(
-                          data.amount.replaceAll(',', ''),
+                          data.amount.replaceAll(",", ""),
                           appchain?.appchain_metadata?.fungible_token_metadata
                             ?.decimals
                         )
                       )
-                    : '-'}
+                    : "-"}
                 </Heading>
 
                 <Text fontSize="sm" color="gray.500">
                   {appchain?.appchain_metadata?.fungible_token_metadata
-                    .symbol || '-'}
+                    .symbol || "-"}
                 </Text>
               </HStack>
             </VStack>
@@ -216,19 +216,22 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
                     isAppchainSide
                       ? `${
                           network?.octopus.explorerUrl
-                        }/${appchainId}/accounts/${encodeAddress(data.from)}`
+                        }/${appchainId}/accounts/${formatAppChainAddress(
+                          data.from,
+                          appchain
+                        )}`
                       : `${
                           network?.near.explorerUrl
                         }/accounts/${decodeNearAccount(data.from)}`
                   }
-                  _hover={{ textDecoration: 'underline' }}
+                  _hover={{ textDecoration: "underline" }}
                   color="#2468f2"
                   isExternal
                   onClick={(e) => e.stopPropagation()}
                 >
                   <HStack spacing={1}>
                     {isAppchainSide ? (
-                      <Identicon value={data.from} size={18} />
+                      <OctIdenticon value={data.from} size={18} />
                     ) : null}
                     <Text
                       whiteSpace="nowrap"
@@ -237,7 +240,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
                       className="tx-hash-ellipsis"
                     >
                       {isAppchainSide && data.from
-                        ? encodeAddress(data.from)
+                        ? formatAppChainAddress(data.from, appchain)
                         : decodeNearAccount(data.from)}
                     </Text>
                     <Icon as={ExternalLinkIcon} boxSize={3} color="gray" />
@@ -253,7 +256,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
                       ? `${network?.octopus.explorerUrl}/${appchainId}/extrinsics/${data.outHash}`
                       : `${network?.near.explorerUrl}/transactions/${data.outHash}`
                   }
-                  _hover={{ textDecoration: 'underline' }}
+                  _hover={{ textDecoration: "underline" }}
                   color="#2468f2"
                   isExternal
                   onClick={(e) => e.stopPropagation()}
@@ -283,19 +286,22 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
                     !isAppchainSide
                       ? `${
                           network?.octopus.explorerUrl
-                        }/${appchainId}/accounts/${encodeAddress(data.to)}`
+                        }/${appchainId}/accounts/${formatAppChainAddress(
+                          data.to,
+                          appchain
+                        )}`
                       : `${
                           network?.near.explorerUrl
                         }/accounts/${decodeNearAccount(data.to)}`
                   }
-                  _hover={{ textDecoration: 'underline' }}
+                  _hover={{ textDecoration: "underline" }}
                   color="#2468f2"
                   isExternal
                   onClick={(e) => e.stopPropagation()}
                 >
                   <HStack spacing={1}>
                     {!isAppchainSide ? (
-                      <Identicon value={data.to} size={18} />
+                      <OctIdenticon value={data.to} size={18} />
                     ) : null}
                     <Text
                       whiteSpace="nowrap"
@@ -304,7 +310,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
                       className="tx-hash-ellipsis"
                     >
                       {!isAppchainSide && data.to
-                        ? encodeAddress(data.to)
+                        ? formatAppChainAddress(data.to, appchain)
                         : decodeNearAccount(data.to)}
                     </Text>
                     <Icon as={ExternalLinkIcon} boxSize={3} color="gray" />
@@ -322,7 +328,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
                         ? `${network?.octopus.explorerUrl}/${appchainId}/extrinsics/${data.inHashes?.[0]}`
                         : `${network?.near.explorerUrl}/transactions/${data.inHashes?.[0]}`
                     }
-                    _hover={{ textDecoration: 'underline' }}
+                    _hover={{ textDecoration: "underline" }}
                     color="#2468f2"
                     isExternal
                     onClick={(e) => e.stopPropagation()}
@@ -383,11 +389,11 @@ export const Status: React.FC = () => {
 
   const { txId } = useParams()
   const navigate = useNavigate()
-  const { global } = useGlobalStore()
+  const { networkConfig } = useWalletSelector()
 
   const pages = []
   for (let i = 1; i < page + 1; i++) {
-    pages.push(<Page page={i} key={i} network={global.network} />)
+    pages.push(<Page page={i} key={i} network={networkConfig} />)
   }
 
   useEffect(() => {
@@ -396,9 +402,9 @@ export const Status: React.FC = () => {
         setPage(page + 1)
       }
     }
-    document?.addEventListener('scroll', onScroll)
+    document?.addEventListener("scroll", onScroll)
 
-    return () => document?.removeEventListener('scroll', onScroll)
+    return () => document?.removeEventListener("scroll", onScroll)
   }, [page])
 
   const onDetailDrawerClose = () => {
@@ -424,7 +430,7 @@ export const Status: React.FC = () => {
           fontSize="sm"
         >
           <GridItem colSpan={2}>
-            <Text>Event/Token</Text>
+            <Text>Event/Event/Token</Text>
           </GridItem>
           <GridItem colSpan={4}>
             <Text>From/Hash</Text>
