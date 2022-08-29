@@ -37,7 +37,6 @@ import { AiOutlineMenu } from "react-icons/ai"
 import { BsThreeDots, BsCheckCircle } from "react-icons/bs"
 import { AddIcon, MinusIcon } from "@chakra-ui/icons"
 
-import myStakingBg from "assets/my-staking-bg.png"
 import empty from "assets/empty.png"
 
 import { StakingHistoryModal } from "./StakingHistoryModal"
@@ -138,21 +137,9 @@ export const MyStaking: React.FC<MyStakingProps> = ({
 
   return (
     <>
-      <Box
-        bg={isValidator ? bg : whiteBg}
-        position="relative"
-        borderBottomRadius="lg"
-      >
+      <Box position="relative" borderBottomRadius="lg">
         {isValidator ? (
           <>
-            <Image
-              position="absolute"
-              bottom="0"
-              right="0"
-              h="110%"
-              src={myStakingBg}
-              zIndex={0}
-            />
             <Box position="relative" zIndex={1}>
               <Flex justifyContent="space-between" alignItems="center">
                 <Heading fontSize="lg" color="white">

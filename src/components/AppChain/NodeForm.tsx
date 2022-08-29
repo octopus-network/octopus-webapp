@@ -15,6 +15,7 @@ import {
   useColorModeValue,
 } from "@chakra-ui/react"
 import axios from "axios"
+import { Toast, toast } from "components/common/toast"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { API_HOST } from "config"
 import { useEffect, useState } from "react"
@@ -182,8 +183,25 @@ export default function NodeForm({
       })
   }
 
+  let content = null
+
+  const onDeployPressed = () => {
+    if (validator || !accessKey) {
+      if (
+        !cloudVendor ||
+        isDeploying ||
+        (cloudVendor === "AWS" ? !inputAccessKey : !isAuthorized)
+      ) {
+        return Toast.error("Invalid access key")
+      }
+      onNextStep()
+    } else {
+      onDeploy()
+    }
+  }
+
   if (validator || !accessKey) {
-    return (
+    content = (
       <>
         <Flex pt={4} pb={4} justifyContent="center" flexDirection="column">
           <Flex bg={inputBg} p={1} borderRadius="lg">
@@ -241,24 +259,10 @@ export default function NodeForm({
             </Text>
           )}
         </Flex>
-        <Button
-          colorScheme="octo-blue"
-          width="100%"
-          isDisabled={
-            !cloudVendor ||
-            isLoadingNode ||
-            (cloudVendor === "AWS" ? !inputAccessKey : !isAuthorized)
-          }
-          onClick={onNextStep}
-          isLoading={isLoadingNode}
-        >
-          {!!validator ? "Confirm" : "Deploy A Node"}
-        </Button>
       </>
     )
-  }
-  return (
-    <>
+  } else {
+    content = (
       <Flex pt={6} pb={6} justifyContent="center" flexDirection="column">
         {cloudVendor === "GCP" ? (
           <Flex bg={inputBg} p={1} borderRadius="lg" alignItems="center" mb={2}>
@@ -303,17 +307,30 @@ export default function NodeForm({
           </Box>
         </Flex>
       </Flex>
-      {isShowRegister || isManuallyDeployed ? (
+    )
+  }
+
+  const isDeployed = isShowRegister || isManuallyDeployed
+
+  const deployBtn = (
+    <Button
+      colorScheme="octo-blue"
+      flex={isDeployed ? "" : "1"}
+      width={isDeployed ? "100%" : ""}
+      onClick={onDeployPressed}
+      isLoading={isDeploying}
+      isDisabled={isDeploying || (cloudVendor === "GCP" && !projectId)}
+    >
+      {!!validator ? "Confirm" : "Deploy"}
+    </Button>
+  )
+
+  return (
+    <>
+      {content}
+      {isDeployed ? (
         <Flex direction="column" mt={4} mb={2} gap={6}>
-          <Button
-            colorScheme="octo-blue"
-            width="100%"
-            onClick={onDeploy}
-            isLoading={isDeploying}
-            isDisabled={isDeploying || (cloudVendor === "GCP" && !projectId)}
-          >
-            Deploy
-          </Button>
+          {deployBtn}
           <Button
             onClick={setRegisterValidatorModalOpen.on}
             colorScheme="octo-blue"
@@ -330,15 +347,7 @@ export default function NodeForm({
       ) : (
         <Flex m={2} flexDirection="column" gap={2}>
           <Flex direction="row" gap={2}>
-            <Button
-              colorScheme="octo-blue"
-              onClick={onDeploy}
-              flex="1"
-              isLoading={isDeploying}
-              isDisabled={isDeploying || (cloudVendor === "GCP" && !projectId)}
-            >
-              Deploy
-            </Button>
+            {deployBtn}
 
             <Text padding="2">OR</Text>
 

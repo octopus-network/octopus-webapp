@@ -16,10 +16,12 @@ import {
   MenuList,
   useColorModeValue,
   useBoolean,
+  Image,
 } from "@chakra-ui/react"
 
 import { DeleteIcon } from "@chakra-ui/icons"
 
+import myStakingBg from "assets/my-staking-bg.png"
 import { BsFillTerminalFill } from "react-icons/bs"
 import { HiUpload } from "react-icons/hi"
 import { TiKey } from "react-icons/ti"
@@ -54,6 +56,10 @@ export const MyNode: React.FC<MyNodeProps> = ({
   validator,
 }) => {
   const bg = useColorModeValue("white", "#15172c")
+  const validatorBg = useColorModeValue(
+    "linear-gradient(137deg,#1486ff 4%, #0c4df5)",
+    "linear-gradient(137deg,#1486ff 4%, #0c4df5)"
+  )
 
   const [node, setNode] = useState<any>()
 
@@ -199,10 +205,27 @@ export const MyNode: React.FC<MyNodeProps> = ({
   // check NODE_STATE_RECORD for state meaning
   const isShowRegister =
     !!validator || ["12", "20", "21", "22", "30"].includes(node?.state)
+  const isValidator = !!(validator && !validator?.is_unbonding)
 
   return (
     <>
-      <Box mb={3} p={4} borderRadius="lg" bg={bg}>
+      <Box
+        position="relative"
+        mb={3}
+        p={4}
+        borderRadius="lg"
+        bg={!isValidator ? bg : validatorBg}
+      >
+        {isValidator && (
+          <Image
+            position="absolute"
+            bottom="0"
+            right="0"
+            h="110%"
+            src={myStakingBg}
+            zIndex={0}
+          />
+        )}
         <MyStaking appchain={appchain} anchor={anchor} validator={validator} />
       </Box>
 
