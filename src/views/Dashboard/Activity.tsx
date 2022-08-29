@@ -42,7 +42,7 @@ class ActivityTranslator {
     return (
       {
         TRANSFER:
-          this.data.receiver_id === this.account
+          this.data?.receiver_id === this.account
             ? "Received NEAR"
             : "Sent NEAR",
         CREATE_ACCOUNT: "New account created",
@@ -55,7 +55,7 @@ class ActivityTranslator {
   getActionConnect() {
     return (
       {
-        TRANSFER: this.data.receiver_id === this.account ? "from" : "to",
+        TRANSFER: this.data?.receiver_id === this.account ? "from" : "to",
         CREATE_ACCOUNT: "account",
         ADD_KEY: "for",
         FUNCTION_CALL: `${this.data.args?.method_name} in `,
@@ -73,9 +73,9 @@ class ActivityTranslator {
       case "ADD_KEY":
         return args.access_key.permission.permission_kind === "FULL_ACCESS"
           ? receiver_id
-          : args.access_key.permission.permission_details.receiver_id
+          : args.access_key.permission.permission_details?.receiver_id
       case "FUNCTION_CALL":
-        return args.args_json.receiver_id || receiver_id
+        return args.args_json?.receiver_id || receiver_id
     }
   }
 }
