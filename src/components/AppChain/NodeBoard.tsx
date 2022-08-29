@@ -27,7 +27,8 @@ import axios from "axios"
 import { API_HOST } from "config"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
-import { CLOUD_VENDOR } from "types"
+import { AnchorContract, AppchainInfo, CLOUD_VENDOR } from "types"
+import { RegisterValidatorModal } from "views/Appchain/MyStaking/RegisterValidatorModal"
 
 export default function NodeBoard({
   node,
@@ -36,6 +37,8 @@ export default function NodeBoard({
   deployAccessKey,
   appchainId,
   setNode,
+  appchain,
+  anchor,
 }: {
   node?: any
   cloudVendor: CLOUD_VENDOR
@@ -43,11 +46,15 @@ export default function NodeBoard({
   deployAccessKey: string
   appchainId?: string
   setNode: (node: any) => void
+  appchain?: AppchainInfo
+  anchor?: AnchorContract
 }) {
   const [isRefreshing, setIsRefreshing] = useBoolean()
   const [isApplying, setIsApplying] = useBoolean()
   const [isDeleting, setIsDeleting] = useBoolean()
   const [isDestroying, setIsDestroying] = useBoolean()
+  const [registerValidatorModalOpen, setRegisterValidatorModalOpen] =
+    useBoolean(false)
 
   const { hasCopied: hasNodeIdCopied, onCopy: onCopyNodeId } = useClipboard(
     node?.uuid || ""
@@ -283,6 +290,23 @@ export default function NodeBoard({
           </SimpleGrid>
         ) : null}
       </Box>
+
+      <Button
+        onClick={setRegisterValidatorModalOpen.on}
+        colorScheme="octo-blue"
+        isDisabled={!accountId}
+        width="100%"
+        mt={4}
+      >
+        {!accountId ? "Please Login" : "Register Validator"}
+      </Button>
+
+      <RegisterValidatorModal
+        isOpen={registerValidatorModalOpen}
+        onClose={setRegisterValidatorModalOpen.off}
+        anchor={anchor}
+        appchain={appchain}
+      />
     </Box>
   )
 }
