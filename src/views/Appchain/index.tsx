@@ -17,7 +17,6 @@ import {
   DrawerOverlay,
   DrawerContent,
   useBoolean,
-  useColorModeValue,
 } from "@chakra-ui/react"
 
 import { AnchorContract, UserVotes, WrappedAppchainToken } from "types"
@@ -38,10 +37,10 @@ import { Toast } from "components/common/toast"
 import { ANCHOR_METHODS } from "config/constants"
 import { getUnbondedValidators } from "utils/appchain"
 import { useAppChain } from "hooks/useAppChain"
+import SetupEmail from "./SetupEmail"
 
 export const Appchain: React.FC = () => {
   const { id = "", validatorId = "" } = useParams()
-  const bg = useColorModeValue("white", "#15172c")
 
   const {
     appchain,
@@ -257,6 +256,7 @@ export const Appchain: React.FC = () => {
             anchor={anchor}
           />
         </Box>
+        <SetupEmail anchor={anchor} validator={validator} />
       </Container>
       <Drawer
         placement="right"

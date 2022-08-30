@@ -1,3 +1,5 @@
+export const EMAIL_REGEX = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,15})+$/
+
 export const ANCHOR_METHODS = {
   viewMethods: [
     "get_protocol_settings",
