@@ -27,6 +27,7 @@ import { DecimalUtil, ZERO_DECIMAL } from "utils"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
 import { onTxSent } from "utils/helper"
+import { EMAIL_REGEX } from "config/constants"
 
 type RegisterValidatorModalProps = {
   appchain: AppchainInfoWithAnchorStatus | undefined
@@ -87,7 +88,7 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
       return
     }
 
-    if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/g.test(email)) {
+    if (!EMAIL_REGEX.test(email)) {
       return Toast.error("Invalid email")
     }
 

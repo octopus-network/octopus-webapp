@@ -2,6 +2,7 @@ import { Button, Flex, Input, Text } from "@chakra-ui/react"
 import { BaseModal } from "components"
 import { Toast } from "components/common/toast"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { EMAIL_REGEX } from "config/constants"
 import { SIMPLE_CALL_GAS } from "primitives"
 import { useEffect, useState } from "react"
 import { AnchorContract, Validator, ValidatorProfile } from "types"
@@ -37,7 +38,7 @@ export default function SetupEmail({
   }, [validator, anchor, oldValidatorProfile])
 
   const onConfirm = async () => {
-    if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/g.test(email)) {
+    if (!EMAIL_REGEX.test(email)) {
       return Toast.error("Invalid email")
     }
 
@@ -101,7 +102,7 @@ export default function SetupEmail({
         <Button
           colorScheme="octo-blue"
           size="lg"
-          disabled={!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/g.test(email)}
+          disabled={!EMAIL_REGEX.test(email)}
           onClick={onConfirm}
         >
           Confirm
