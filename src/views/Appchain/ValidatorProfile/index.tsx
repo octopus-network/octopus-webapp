@@ -590,13 +590,15 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
           </Box>
         </DrawerFooter>
       </>
-      <SetupEmail
-        anchor={anchor}
-        validator={validator}
-        isUpdate={updateEmail}
-        oldValidatorProfile={validatorProfile}
-        onClose={setUpdateEmail.off}
-      />
+      {updateEmail && (
+        <SetupEmail
+          anchor={anchor}
+          validator={validator}
+          isUpdate={updateEmail}
+          oldValidatorProfile={validatorProfile}
+          onClose={setUpdateEmail.off}
+        />
+      )}
       <Alert
         isOpen={unbondAlertOpen}
         onClose={setUnbondAlertOpen.off}
