@@ -370,9 +370,15 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                     {hasEmailCopied ? <CheckIcon /> : <CopyIcon />}
                   </Button>
 
-                  <Button variant="link" onClick={setUpdateEmail.on} size="sm">
-                    <EditIcon />
-                  </Button>
+                  {validator?.validator_id === accountId && (
+                    <Button
+                      variant="link"
+                      onClick={setUpdateEmail.on}
+                      size="sm"
+                    >
+                      <EditIcon />
+                    </Button>
+                  )}
                 </HStack>
               )}
 
