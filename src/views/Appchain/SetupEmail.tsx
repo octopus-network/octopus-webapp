@@ -72,7 +72,9 @@ export default function SetupEmail({
   return (
     <BaseModal
       isOpen={
-        (validatorProfile !== undefined && !validatorProfile.profile.email) ||
+        (validatorProfile !== undefined &&
+          (!validatorProfile.profile.email ||
+            !validatorProfile.profile.email.trim())) ||
         isUpdate
       }
       onClose={() => {
