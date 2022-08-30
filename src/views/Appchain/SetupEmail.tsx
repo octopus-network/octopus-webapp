@@ -1,0 +1,112 @@
+import { Button, Flex, Input, Text } from "@chakra-ui/react"
+import { BaseModal } from "components"
+import { Toast } from "components/common/toast"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { SIMPLE_CALL_GAS } from "primitives"
+import { useEffect, useState } from "react"
+import { AnchorContract, Validator, ValidatorProfile } from "types"
+
+export default function SetupEmail({
+  anchor,
+  validator,
+  isUpdate = false,
+  oldValidatorProfile,
+  onClose,
+}: {
+  anchor?: AnchorContract
+  validator?: Validator
+  isUpdate?: boolean
+  oldValidatorProfile?: ValidatorProfile
+  onClose?: () => void
+}) {
+  const { selector, accountId } = useWalletSelector()
+  const [validatorProfile, setValidatorProfile] = useState<
+    ValidatorProfile | undefined
+  >(oldValidatorProfile)
+  const [email, setEmail] = useState("")
+
+  useEffect(() => {
+    if (!(anchor && validator) || oldValidatorProfile) {
+      return
+    }
+    anchor
+      .get_validator_profile({ validator_id: validator.validator_id })
+      .then((vp) => {
+        setValidatorProfile(vp)
+      })
+  }, [validator, anchor, oldValidatorProfile])
+
+  const onConfirm = async () => {
+    if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/g.test(email)) {
+      return Toast.error("Invalid email")
+    }
+
+    try {
+      const wallet = await selector.wallet()
+      await wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: anchor?.contractId,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: "set_validator_profile",
+              args: {
+                profile: {
+                  ...validatorProfile?.profile,
+                  email,
+                },
+              },
+              gas: SIMPLE_CALL_GAS,
+              deposit: "0",
+            },
+          },
+        ],
+      })
+    } catch (error) {
+      Toast.error(error)
+    }
+  }
+
+  return (
+    <BaseModal
+      isOpen={
+        (validatorProfile !== undefined && !validatorProfile.profile.email) ||
+        isUpdate
+      }
+      onClose={() => {
+        if (isUpdate) {
+          onClose && onClose()
+        } else {
+          setValidatorProfile(undefined)
+        }
+      }}
+      title="Setup Email"
+    >
+      <Flex direction="column" gap={4}>
+        {!isUpdate && (
+          <Text>
+            We find you are a validator and your email hasn't been set up yet.
+            To get noticed once exceptions happen, please setup your email
+            first.
+          </Text>
+        )}
+        <Input
+          id="email"
+          placeholder="Contact email"
+          onChange={(e) => setEmail(e.target.value)}
+          type="email"
+          size="lg"
+        />
+        <Button
+          colorScheme="octo-blue"
+          size="lg"
+          disabled={!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/g.test(email)}
+          onClick={onConfirm}
+        >
+          Confirm
+        </Button>
+      </Flex>
+    </BaseModal>
+  )
+}

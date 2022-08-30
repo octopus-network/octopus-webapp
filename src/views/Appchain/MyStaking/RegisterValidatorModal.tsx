@@ -87,6 +87,10 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
       return
     }
 
+    if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/g.test(email)) {
+      return Toast.error("Invalid email")
+    }
+
     try {
       setIsSubmitting.on()
       const wallet = await selector.wallet()
