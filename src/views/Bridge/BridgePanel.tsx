@@ -67,6 +67,8 @@ import {
 } from "utils/bridge"
 import AddressInpput from "components/Bridge/AddressInput"
 import TokenInput from "components/Bridge/TokenInput"
+import Decimal from "decimal.js"
+import { SIMPLE_CALL_GAS } from "primitives"
 
 export const BridgePanel: React.FC = () => {
   const bg = useColorModeValue("white", "#15172c")
@@ -110,6 +112,9 @@ export const BridgePanel: React.FC = () => {
   const [from, setFrom] = useState("")
   const [to, setTo] = useState("")
   const [amount, setAmount] = useState("")
+  const [targetAccountNeedDepositStorage, setTargetAccountNeedDepositStorage] =
+    useBoolean()
+  const [isDepositingStorage, setIsDepositingStorage] = useBoolean()
 
   const filteredTokens = useMemo(() => {
     if (!tokens?.length) {
@@ -168,6 +173,51 @@ export const BridgePanel: React.FC = () => {
     }, 300)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appchainId])
+
+  useEffect(() => {
+    setTargetAccountNeedDepositStorage.off()
+    if (!to || !tokenAsset) {
+      return
+    }
+    if (isNearToAppchain) {
+      appchainApi?.query.system.account(to).then((res: any) => {
+        if (res.providers.toNumber() === 0) {
+          setTargetAccountNeedDepositStorage.on()
+        } else {
+          setTargetAccountNeedDepositStorage.off()
+        }
+      })
+    } else if (appchainApi) {
+      const provider = new providers.JsonRpcProvider({
+        url: selector.options.network.nodeUrl,
+      })
+
+      provider
+        .query<CodeResult>({
+          request_type: "call_function",
+          account_id: tokenAsset.contractId,
+          method_name: "storage_balance_of",
+          args_base64: btoa(JSON.stringify({ account_id: to })),
+          finality: "optimistic",
+        })
+        .then((res) => {
+          const storage = JSON.parse(Buffer.from(res.result).toString())
+
+          if (storage === null) {
+            setTargetAccountNeedDepositStorage.on()
+          } else {
+            setTargetAccountNeedDepositStorage.off()
+          }
+        })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    appchainApi,
+    isNearToAppchain,
+    selector.options.network.nodeUrl,
+    to,
+    tokenAsset,
+  ])
 
   const appchainTxns = useMemo(
     () =>
@@ -467,6 +517,82 @@ export const BridgePanel: React.FC = () => {
     }
   }
 
+  const onDepositStorage = async () => {
+    if (isNearToAppchain) {
+      if (!appchainApi || !currentAccount) {
+        return
+      }
+      await web3Enable("Octopus Network")
+      const injected = await web3FromSource(currentAccount.meta.source || "")
+      appchainApi.setSigner(injected.signer)
+
+      setIsDepositingStorage.on()
+
+      const res = await appchainApi?.query.system.account(to)
+      const resJSON: any = res?.toJSON()
+      const balance = DecimalUtil.fromString(
+        resJSON?.data?.free,
+        Array.isArray(tokenAsset?.metadata.decimals)
+          ? tokenAsset?.metadata.decimals[1]
+          : tokenAsset?.metadata.decimals
+      )
+      const toDepositAmount = DecimalUtil.toU64(
+        new Decimal(isEvm ? 0.0002 : 0.01),
+        appchain?.appchain_metadata?.fungible_token_metadata?.decimals
+      ).toString()
+
+      if (!balance.gte(toDepositAmount)) {
+        return Toast.error("Balance not enough")
+      }
+      const tx = appchainApi.tx.balances.transfer(to!, toDepositAmount)
+
+      tx.signAndSend(currentAccount.address, (res) => {
+        if (res.isInBlock) {
+          setIsDepositingStorage.off()
+          setTargetAccountNeedDepositStorage.off()
+        }
+      })
+
+      return
+    }
+
+    try {
+      setIsDepositingStorage.on()
+      const wallet = await selector.wallet()
+
+      const provider = new providers.JsonRpcProvider({
+        url: selector.options.network.nodeUrl,
+      })
+      const res = await provider.query<CodeResult>({
+        request_type: "call_function",
+        account_id: tokenAsset?.contractId,
+        method_name: "storage_balance_bounds",
+        args_base64: "",
+        finality: "optimistic",
+      })
+      const bounds = JSON.parse(Buffer.from(res.result).toString())
+      await wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: tokenAsset?.contractId,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: "storage_deposit",
+              args: { account_id: to },
+              gas: SIMPLE_CALL_GAS,
+              deposit: bounds.min,
+            },
+          },
+        ],
+      })
+      setIsDepositingStorage.off()
+    } catch (err) {
+      setIsDepositingStorage.off()
+      Toast.error(err)
+    }
+  }
+
   return (
     <>
       <Box bg={bg} p={6} borderRadius="lg" minH="520px">
@@ -542,7 +668,9 @@ export const BridgePanel: React.FC = () => {
               chain={!isNearToAppchain ? "NEAR" : appchainId}
               appchain={appchain}
               onChange={(to) => setTo(to || "")}
-              tokenAsset={tokenAsset}
+              isDepositingStorage={isDepositingStorage}
+              onDepositStorage={onDepositStorage}
+              targetAccountNeedDepositStorage={targetAccountNeedDepositStorage}
             />
             <TokenInput
               chain={isNearToAppchain ? "NEAR" : appchainId}
@@ -558,7 +686,12 @@ export const BridgePanel: React.FC = () => {
                 size="lg"
                 width="100%"
                 isDisabled={
-                  !from || !to || (!collectible && !amount) || isTransferring
+                  !from ||
+                  !to ||
+                  (!collectible && !amount) ||
+                  isTransferring ||
+                  targetAccountNeedDepositStorage ||
+                  isDepositingStorage
                 }
                 isLoading={isTransferring}
                 spinner={
