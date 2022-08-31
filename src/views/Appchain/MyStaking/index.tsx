@@ -223,7 +223,7 @@ export const MyStaking: React.FC<MyStakingProps> = ({
                       <Icon as={MinusIcon} mr={2} boxSize={3} /> Decrease
                     </Button>
                   }
-                  deposit={deposit}
+                  deposited={deposit}
                   type="decrease"
                   anchor={anchor}
                   helper={`Your decreased stake will be claimable after 21 days`}

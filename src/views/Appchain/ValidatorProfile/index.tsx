@@ -40,7 +40,13 @@ import {
 
 import { COMPLEX_CALL_GAS, OCT_TOKEN_DECIMALS } from "primitives"
 
-import { CheckIcon, CopyIcon, AddIcon, MinusIcon } from "@chakra-ui/icons"
+import {
+  CheckIcon,
+  CopyIcon,
+  AddIcon,
+  MinusIcon,
+  EditIcon,
+} from "@chakra-ui/icons"
 import { BiDoorOpen, BiLogOut } from "react-icons/bi"
 import { Empty, Alert } from "components"
 import { AiOutlineCloseCircle } from "react-icons/ai"
@@ -58,6 +64,7 @@ import OctIdenticon from "components/common/OctIdenticon"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
 import { onTxSent } from "utils/helper"
+import SetupEmail from "../SetupEmail"
 
 type ValidatorProfileProps = {
   appchain?: AppchainInfoWithAnchorStatus
@@ -98,6 +105,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
   const [isUnbonding, setIsUnbonding] = useBoolean()
   const [isUnbondingDelegation, setIsUnbondingDelegation] = useBoolean()
   const [delegateModalOpen, setDelegateModalOpen] = useBoolean()
+  const [updateEmail, setUpdateEmail] = useBoolean()
 
   const { accountId, selector } = useWalletSelector()
 
@@ -361,6 +369,16 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                   <Button variant="link" onClick={onEmailCopy} size="sm">
                     {hasEmailCopied ? <CheckIcon /> : <CopyIcon />}
                   </Button>
+
+                  {validator?.validator_id === accountId && (
+                    <Button
+                      variant="link"
+                      onClick={setUpdateEmail.on}
+                      size="sm"
+                    >
+                      <EditIcon />
+                    </Button>
+                  )}
                 </HStack>
               )}
 
@@ -421,7 +439,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                     }
                     type="decrease"
                     anchor={anchor}
-                    deposit={delegatedDeposits}
+                    deposited={delegatedDeposits}
                     validatorId={validatorId}
                     helper={`Your decreased stake will be claimable after 21 days`}
                     validator={validator}
@@ -444,7 +462,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                     }
                     type="increase"
                     validatorId={validatorId}
-                    deposit={delegatedDeposits}
+                    deposited={delegatedDeposits}
                     anchor={anchor}
                     validator={validator}
                     appchain={appchain}
@@ -572,6 +590,15 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
           </Box>
         </DrawerFooter>
       </>
+      {updateEmail && (
+        <SetupEmail
+          anchor={anchor}
+          validator={validator}
+          isUpdate={updateEmail}
+          oldValidatorProfile={validatorProfile}
+          onClose={setUpdateEmail.off}
+        />
+      )}
       <Alert
         isOpen={unbondAlertOpen}
         onClose={setUnbondAlertOpen.off}

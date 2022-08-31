@@ -17,7 +17,6 @@ import {
   DrawerOverlay,
   DrawerContent,
   useBoolean,
-  useColorModeValue,
 } from "@chakra-ui/react"
 
 import { AnchorContract, UserVotes, WrappedAppchainToken } from "types"
@@ -38,10 +37,10 @@ import { Toast } from "components/common/toast"
 import { ANCHOR_METHODS } from "config/constants"
 import { getUnbondedValidators } from "utils/appchain"
 import { useAppChain } from "hooks/useAppChain"
+import SetupEmail from "./SetupEmail"
 
 export const Appchain: React.FC = () => {
   const { id = "", validatorId = "" } = useParams()
-  const bg = useColorModeValue("white", "#15172c")
 
   const {
     appchain,
@@ -53,7 +52,7 @@ export const Appchain: React.FC = () => {
     appchainValidators,
   } = useAppChain(id)
 
-  const { accountId, networkConfig, registry, nearAccount } =
+  const { accountId, networkConfig, registry, nearAccount, selector } =
     useWalletSelector()
 
   const { data: userVotes } = useSWR<UserVotes>(
@@ -134,34 +133,44 @@ export const Appchain: React.FC = () => {
     navigate(`/appchains/${id}`)
   }
 
-  const onWithdrawVotes = (voteType: "upvote" | "downvote") => {
-    const method =
-      voteType === "upvote"
-        ? registry?.withdraw_upvote_deposit_of
-        : registry?.withdraw_downvote_deposit_of
+  const onWithdrawVotes = async (voteType: "upvote" | "downvote") => {
+    try {
+      ;(voteType === "upvote"
+        ? setIsWithdrawingUpvotes
+        : setIsWithdrawingDownvotes
+      ).on()
 
-    ;(voteType === "upvote"
-      ? setIsWithdrawingUpvotes
-      : setIsWithdrawingDownvotes
-    ).on()
-
-    method?.(
-      {
-        appchain_id: id,
-        amount:
-          (voteType === "upvote" ? userVotes?.upvotes : userVotes?.downvotes) ||
-          "0",
-      },
-      COMPLEX_CALL_GAS
-    )
-      .then(() => {
-        axios
-          .post(`${API_HOST}/update-appchains`)
-          .then(() => window.location.reload())
+      const wallet = await selector.wallet()
+      await wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: registry?.contractId,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName:
+                voteType === "upvote"
+                  ? "withdraw_upvote_deposit_of"
+                  : "withdraw_downvote_deposit_of",
+              args: {
+                appchain_id: id,
+                amount:
+                  (voteType === "upvote"
+                    ? userVotes?.upvotes
+                    : userVotes?.downvotes) || "0",
+              },
+              gas: COMPLEX_CALL_GAS,
+              deposit: "0",
+            },
+          },
+        ],
       })
-      .catch((err) => {
-        Toast.error(err)
-      })
+      axios
+        .post(`${API_HOST}/update-appchains`)
+        .then(() => window.location.reload())
+    } catch (error) {
+      Toast.error(error)
+    }
   }
 
   return (
@@ -257,6 +266,7 @@ export const Appchain: React.FC = () => {
             anchor={anchor}
           />
         </Box>
+        <SetupEmail anchor={anchor} validator={validator} />
       </Container>
       <Drawer
         placement="right"

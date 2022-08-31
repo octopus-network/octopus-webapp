@@ -39,6 +39,7 @@ import Decimal from "decimal.js"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
 import { onTxSent } from "utils/helper"
+import { EMAIL_REGEX } from "config/constants"
 
 export const RegisterForm: React.FC = () => {
   const bg = useColorModeValue("white", "#15172c")
@@ -94,8 +95,7 @@ export const RegisterForm: React.FC = () => {
   }
 
   const validateEmail = (value: string) => {
-    const reg = /^([a-zA-Z]|[0-9])(\w)+@[a-zA-Z0-9]+\.([a-zA-Z]{2,15})$/
-    if (!reg.test(value)) {
+    if (!EMAIL_REGEX.test(value)) {
       return "Invalid email"
     }
   }

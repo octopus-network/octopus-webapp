@@ -168,33 +168,42 @@ const VotePopover: React.FC<VotePopoverProps> = ({
     }
   }
 
-  const onWithdrawVotes = () => {
-    const method =
-      voteType === "upvote"
-        ? registry?.withdraw_upvote_deposit_of
-        : registry?.withdraw_downvote_deposit_of
-
-    setIsWithdrawing.on()
-
-    method?.(
-      {
-        appchain_id: appchainId,
-        amount: DecimalUtil.toU64(
-          DecimalUtil.fromString(amount),
-          OCT_TOKEN_DECIMALS
-        ).toString(),
-      },
-      COMPLEX_CALL_GAS
-    )
-      .then(() => {
-        axios
-          .post(`${API_HOST}/update-appchains`)
-          .then(() => window.location.reload())
+  const onWithdrawVotes = async () => {
+    try {
+      setIsWithdrawing.on()
+      const wallet = await selector.wallet()
+      await wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: registry?.contractId,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName:
+                voteType === "upvote"
+                  ? "withdraw_upvote_deposit_of"
+                  : "withdraw_downvote_deposit_of",
+              args: {
+                appchain_id: appchainId,
+                amount: DecimalUtil.toU64(
+                  DecimalUtil.fromString(amount),
+                  OCT_TOKEN_DECIMALS
+                ).toString(),
+              },
+              gas: COMPLEX_CALL_GAS,
+              deposit: "0",
+            },
+          },
+        ],
       })
-      .catch((err) => {
-        setIsWithdrawing.off()
-        Toast.error(err)
-      })
+      axios
+        .post(`${API_HOST}/update-appchains`)
+        .then(() => window.location.reload())
+      setIsWithdrawing.off()
+    } catch (error) {
+      setIsWithdrawing.off()
+      Toast.error(error)
+    }
   }
 
   const setMaxAmount = () => {
@@ -340,7 +349,7 @@ const VotePopover: React.FC<VotePopoverProps> = ({
 }
 
 export const VoteActions: React.FC<VoteActionsProps> = ({ data }) => {
-  const { accountId, registry } = useWalletSelector()
+  const { accountId, registry, selector } = useWalletSelector()
   const bg = useColorModeValue("#f6f7fa", "#15172c")
 
   const [upvotePopoverOpen, setUpvotePopoverOpen] = useBoolean(false)
@@ -362,34 +371,44 @@ export const VoteActions: React.FC<VoteActionsProps> = ({ data }) => {
   const [isWithdrawingUpvotes, setIsWithdrawingUpvotes] = useBoolean()
   const [isWithdrawingDownvotes, setIsWithdrawingDownvotes] = useBoolean()
 
-  const onWithdrawVotes = (voteType: "upvote" | "downvote") => {
-    const method =
-      voteType === "upvote"
-        ? registry?.withdraw_upvote_deposit_of
-        : registry?.withdraw_downvote_deposit_of
+  const onWithdrawVotes = async (voteType: "upvote" | "downvote") => {
+    try {
+      ;(voteType === "upvote"
+        ? setIsWithdrawingUpvotes
+        : setIsWithdrawingDownvotes
+      ).on()
 
-    ;(voteType === "upvote"
-      ? setIsWithdrawingUpvotes
-      : setIsWithdrawingDownvotes
-    ).on()
-
-    method?.(
-      {
-        appchain_id: data.appchain_id,
-        amount:
-          (voteType === "upvote" ? userVotes?.upvotes : userVotes?.downvotes) ||
-          "0",
-      },
-      COMPLEX_CALL_GAS
-    )
-      .then(() => {
-        axios
-          .post(`${API_HOST}/update-appchains`)
-          .then(() => window.location.reload())
+      const wallet = await selector.wallet()
+      await wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: registry?.contractId,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName:
+                voteType === "upvote"
+                  ? "withdraw_upvote_deposit_of"
+                  : "withdraw_downvote_deposit_of",
+              args: {
+                appchain_id: data.appchain_id,
+                amount:
+                  (voteType === "upvote"
+                    ? userVotes?.upvotes
+                    : userVotes?.downvotes) || "0",
+              },
+              gas: COMPLEX_CALL_GAS,
+              deposit: "0",
+            },
+          },
+        ],
       })
-      .catch((err) => {
-        Toast.error(err)
-      })
+      axios
+        .post(`${API_HOST}/update-appchains`)
+        .then(() => window.location.reload())
+    } catch (error) {
+      Toast.error(error)
+    }
   }
 
   return (
