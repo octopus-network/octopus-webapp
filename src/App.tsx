@@ -20,6 +20,7 @@ import {
 } from "views"
 import { WalletSelectorContextProvider } from "components/WalletSelectorContextProvider"
 import { ToastContainer } from "components/common/toast"
+import "@near-wallet-selector/modal-ui/styles.css"
 
 export const App = () => (
   <WalletSelectorContextProvider>
