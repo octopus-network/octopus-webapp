@@ -95,7 +95,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [anchor, validator, octBalance, type, deposited])
+  }, [anchor, validator, octBalance, type, deposited, validatorId])
 
   const onOpen = () => {
     setTimeout(() => {
