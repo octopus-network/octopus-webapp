@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react'
-import dayjs from 'dayjs'
+import React, { useMemo } from "react"
+import dayjs from "dayjs"
 
 import {
   Flex,
@@ -12,11 +12,11 @@ import {
   Link,
   HStack,
   Icon,
-} from '@chakra-ui/react'
+} from "@chakra-ui/react"
 
-import { NetworkConfig } from 'types'
-import { BeatLoader } from 'react-spinners'
-import { CheckIcon, CloseIcon, ExternalLinkIcon } from '@chakra-ui/icons'
+import { NetworkConfig } from "types"
+import { BeatLoader } from "react-spinners"
+import { CheckIcon, CloseIcon, ExternalLinkIcon } from "@chakra-ui/icons"
 
 type Props = {
   data: {
@@ -34,14 +34,9 @@ export const ProcessFromAppchain: React.FC<Props> = ({ data, network }) => {
   const { details, summary } = data || {}
 
   const appchainId = useMemo(
-    () => summary?.appchain_name.replace(`${network?.near.networkId}-`, ''),
+    () => summary?.appchain_name.replace(`${network?.near.networkId}-`, ""),
     [summary]
   )
-
-  const succeed = useMemo(() => summary?.status === 'Success', [summary])
-
-  console.log(data)
-
   return (
     <>
       <Flex alignItems="center">
@@ -60,7 +55,7 @@ export const ProcessFromAppchain: React.FC<Props> = ({ data, network }) => {
             <HStack>
               <Heading fontSize="lg">{appchainId}</Heading>
               <Tag
-                colorScheme={summary?.event === 'Burnt' ? 'green' : 'blue'}
+                colorScheme={summary?.event === "Burnt" ? "green" : "blue"}
                 size="sm"
               >
                 {summary?.event}
@@ -68,7 +63,7 @@ export const ProcessFromAppchain: React.FC<Props> = ({ data, network }) => {
             </HStack>
             <Text color="gray">
               {dayjs(details?.msg_in_appchain.timestamp).format(
-                'YYYY-MM-DD HH:mm:ss'
+                "YYYY-MM-DD HH:mm:ss"
               )}
             </Text>
           </Flex>
@@ -82,7 +77,7 @@ export const ProcessFromAppchain: React.FC<Props> = ({ data, network }) => {
               maxW="320px"
               isExternal
               href={`${network?.octopus.explorerUrl}/${appchainId}/extrinsics/${details?.msg_in_appchain.extrinsic_id}`}
-              _hover={{ textDecoration: 'underline' }}
+              _hover={{ textDecoration: "underline" }}
               color="#2468f2"
             >
               <HStack spacing={1}>
@@ -91,7 +86,7 @@ export const ProcessFromAppchain: React.FC<Props> = ({ data, network }) => {
                   overflow="hidden"
                   textOverflow="ellipsis"
                 >
-                  {details?.msg_in_appchain.extrinsic_id || '-'}
+                  {details?.msg_in_appchain.extrinsic_id || "-"}
                 </Text>
                 <Icon as={ExternalLinkIcon} boxSize={3} color="gray" />
               </HStack>
@@ -105,11 +100,11 @@ export const ProcessFromAppchain: React.FC<Props> = ({ data, network }) => {
             w="2px"
             h={8}
             bg={
-              summary?.status === 'Success'
-                ? 'green'
-                : summary?.status === 'Failed'
-                ? 'red'
-                : 'gray.400'
+              summary?.status === "Success"
+                ? "green"
+                : summary?.status === "Failed"
+                ? "red"
+                : "gray.400"
             }
           />
         </Center>
@@ -121,17 +116,17 @@ export const ProcessFromAppchain: React.FC<Props> = ({ data, network }) => {
             borderRadius="full"
             borderWidth="2px"
             borderColor={
-              summary?.status === 'Success'
-                ? 'green'
-                : summary?.status === 'Failed'
-                ? 'red'
-                : 'gray.400'
+              summary?.status === "Success"
+                ? "green"
+                : summary?.status === "Failed"
+                ? "red"
+                : "gray.400"
             }
           >
             <Box mt="-5px">
-              {summary?.status === 'Success' ? (
+              {summary?.status === "Success" ? (
                 <Icon as={CheckIcon} color="green" />
-              ) : summary?.status === 'Failed' ? (
+              ) : summary?.status === "Failed" ? (
                 <Icon as={CloseIcon} color="red" />
               ) : (
                 <BeatLoader size={4} margin={1} color="gray" />
@@ -161,7 +156,7 @@ export const ProcessFromAppchain: React.FC<Props> = ({ data, network }) => {
                     <Link
                       isExternal
                       maxW="220px"
-                      _hover={{ textDecoration: 'underline' }}
+                      _hover={{ textDecoration: "underline" }}
                       color="#2468f2"
                       href={`${network?.near.explorerUrl}/transactions/${item.transaction_hash}`}
                     >
@@ -171,7 +166,7 @@ export const ProcessFromAppchain: React.FC<Props> = ({ data, network }) => {
                           overflow="hidden"
                           textOverflow="ellipsis"
                         >
-                          {item.transaction_hash || '-'}
+                          {item.transaction_hash || "-"}
                         </Text>
                         <Icon as={ExternalLinkIcon} boxSize={3} color="gray" />
                       </HStack>
@@ -187,7 +182,7 @@ export const ProcessFromAppchain: React.FC<Props> = ({ data, network }) => {
                       <Text color="gray">Timestamp</Text>
                     </Box>
                     <Text>
-                      {dayjs(item.timestamp).format('YYYY-MM-DD HH:mm:ss')}
+                      {dayjs(item.timestamp).format("YYYY-MM-DD HH:mm:ss")}
                     </Text>
                   </Flex>
                   <Flex fontSize="sm" alignItems="center" p={1}>
@@ -195,7 +190,7 @@ export const ProcessFromAppchain: React.FC<Props> = ({ data, network }) => {
                       <Text color="gray">Status</Text>
                     </Box>
                     <Tag
-                      colorScheme={item.status === 'Success' ? 'green' : 'red'}
+                      colorScheme={item.status === "Success" ? "green" : "red"}
                       size="sm"
                     >
                       {item.status}

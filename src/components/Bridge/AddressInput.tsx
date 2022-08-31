@@ -138,7 +138,6 @@ export default function AddressInpput({
               variant="ghost"
               size="xs"
               isDisabled={isDepositingStorage}
-              isLoading={isDepositingStorage}
               onClick={onDepositStorage}
             >
               {accountId ? "Setup" : "Please Login"}
