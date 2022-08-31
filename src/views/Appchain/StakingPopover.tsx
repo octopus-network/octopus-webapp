@@ -24,6 +24,7 @@ import Decimal from "decimal.js"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
 import { onTxSent } from "utils/helper"
+import { getDelegateLimit, getStakeLimit } from "utils/delegate"
 
 type StakingPopoverProps = {
   type: "increase" | "decrease"
@@ -51,7 +52,6 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
   const inputRef = React.useRef<any>()
   const [min, setMin] = useState(0)
   const [max, setMax] = useState(0)
-  const [step, setStep] = useState(0)
   const [amount, setAmount] = useState("")
 
   const [isSubmitting, setIsSubmitting] = useBoolean(false)
@@ -70,131 +70,30 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
   )
 
   useEffect(() => {
-    async function initSetting() {
-      if (!anchor) return
-      try {
-        const protocolSettings = await anchor.get_protocol_settings()
-
-        let _step = 0
-        if (validatorId) {
-          _step = DecimalUtil.fromString(
-            protocolSettings.minimum_delegator_deposit_changing_amount,
-            OCT_TOKEN_DECIMALS
-          ).toNumber()
-        } else {
-          _step = DecimalUtil.fromString(
-            protocolSettings.minimum_validator_deposit_changing_amount,
-            OCT_TOKEN_DECIMALS
-          ).toNumber()
-        }
-        console.log("deposit", deposited.toNumber())
-
-        setStep(_step)
-        if (validator) {
-          if (type === "increase") {
-            if (validatorId) {
-              const validatorDeposited = await anchor.get_validator_deposit_of({
-                validator_id: validatorId,
-              })
-
-              const anchorStatus = await anchor.get_anchor_status()
-              const validatorSetInfo = await anchor.get_validator_set_info_of({
-                era_number:
-                  anchorStatus.index_range_of_validator_set_history.end_index,
-              })
-
-              const maximumAllowedIncreased = new Decimal(
-                validatorSetInfo.total_stake
-              )
-                .mul(protocolSettings.maximum_validator_stake_percent)
-                .div(100)
-                .minus(validatorDeposited)
-
-              const max = Math.min(
-                Math.floor(
-                  DecimalUtil.shift(
-                    maximumAllowedIncreased,
-                    OCT_TOKEN_DECIMALS
-                  ).toNumber()
-                ) - deposited.toNumber(),
-                octBalance.toNumber()
-              )
-
-              setMax(max)
-            } else {
-              const anchorStatus = await anchor.get_anchor_status()
-              const validatorSetInfo = await anchor.get_validator_set_info_of({
-                era_number:
-                  anchorStatus.index_range_of_validator_set_history.end_index,
-              })
-
-              const maximumAllowedIncreased = new Decimal(
-                validatorSetInfo.total_stake
-              )
-                .mul(protocolSettings.maximum_validator_stake_percent)
-                .div(100)
-                .minus(validator.total_stake)
-
-              const max = Math.min(
-                Math.floor(
-                  DecimalUtil.shift(
-                    maximumAllowedIncreased,
-                    OCT_TOKEN_DECIMALS
-                  ).toNumber()
-                ),
-                octBalance.toNumber()
-              )
-
-              setMax(max)
-            }
-            setMin(_step)
-          } else {
-            if (validatorId) {
-              const minimumDelegatorDeposit = DecimalUtil.fromString(
-                protocolSettings.minimum_delegator_deposit,
-                OCT_TOKEN_DECIMALS
-              ).toNumber()
-
-              if (deposited.toNumber() <= minimumDelegatorDeposit + _step) {
-                setMin(0)
-              } else {
-                setMin(_step)
-              }
-              const max = deposited.toNumber() - minimumDelegatorDeposit
-              setMax(max > 0 ? max : 0)
-            } else {
-              const maximumAllowedDecreased = new Decimal(
-                validator.total_stake
-              ).minus(protocolSettings.minimum_validator_deposit)
-
-              // const minimumValidatorDeposit = DecimalUtil.fromString(
-              //   protocolSettings.minimum_validator_deposit,
-              //   OCT_TOKEN_DECIMALS
-              // ).toNumber()
-
-              // if (deposit.toNumber() <= minimumValidatorDeposit + _step) {
-              //   setMin(0)
-              // } else {
-              //   setMin(_step)
-              // }
-
-              const max = Math.floor(
-                DecimalUtil.shift(
-                  maximumAllowedDecreased,
-                  OCT_TOKEN_DECIMALS
-                ).toNumber()
-              )
-
-              setMax(max)
-            }
-          }
-        }
-      } catch (error) {
-        Toast.error(error)
-      }
+    if (!anchor) return
+    if (validatorId) {
+      getDelegateLimit({
+        type,
+        validatorId,
+        anchor,
+        octBalance,
+        deposited,
+      }).then(({ min, max }) => {
+        setMin(min)
+        setMax(max)
+      })
+    } else if (validator) {
+      getStakeLimit({
+        type,
+        validatorId: validator.validator_id,
+        anchor,
+        octBalance,
+      }).then(({ min, max }) => {
+        setMin(min)
+        setMax(max)
+      })
     }
 
-    initSetting()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [anchor, validator, octBalance, type, deposited])
 
@@ -304,7 +203,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
                   cursor="pointer"
                   variant="gray"
                   onClick={() => {
-                    if (octBalance.gte(step) && octBalance.lte(max)) {
+                    if (octBalance.gte(min) && octBalance.lte(max)) {
                       setAmount(octBalance.toString())
                     }
                   }}
@@ -349,7 +248,8 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
                   }
                 }}
               >
-                Max: {DecimalUtil.beautify(new Decimal(max), 0)}
+                Max:{" "}
+                {isDisabled ? "-" : DecimalUtil.beautify(new Decimal(max), 0)}
               </Text>
             </Flex>
             <Text variant="gray" fontSize="sm" mt={2}>
@@ -363,7 +263,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
               colorScheme="octo-blue"
               isDisabled={
                 isSubmitting ||
-                !(Number(amount) >= step && Number(amount) <= max)
+                !(Number(amount) >= min && Number(amount) <= max)
               }
               onClick={onSubmit}
               isLoading={isSubmitting}

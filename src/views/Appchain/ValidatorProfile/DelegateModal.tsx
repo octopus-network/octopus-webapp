@@ -1,15 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react"
 import useSWR from "swr"
 
-import {
-  Text,
-  Button,
-  Box,
-  Flex,
-  useBoolean,
-  Heading,
-  Input,
-} from "@chakra-ui/react"
+import { Text, Button, Box, Flex, useBoolean, Input } from "@chakra-ui/react"
 
 import { BaseModal } from "components"
 
@@ -19,9 +11,9 @@ import { AnchorContract } from "types"
 import { ZERO_DECIMAL, DecimalUtil } from "utils"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
-import DelegateInput from "components/AppChain/DelegateInput"
 import { onTxSent } from "utils/helper"
 import Decimal from "decimal.js"
+import { getDelegateLimit } from "utils/delegate"
 
 type DelegateModalProps = {
   isOpen: boolean
@@ -36,9 +28,8 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
   validatorId,
   anchor,
 }) => {
-  const [min] = useState(0)
+  const [min, setMin] = useState(0)
   const [max, setMax] = useState(0)
-  const [step, setStep] = useState(1)
   const [amount, setAmount] = useState("")
 
   const { accountId, octToken, selector } = useWalletSelector()
@@ -59,53 +50,18 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
   )
 
   useEffect(() => {
-    async function initSetting() {
-      if (!anchor) return
-      try {
-        const protocolSettings = await anchor.get_protocol_settings()
-
-        const _step = DecimalUtil.fromString(
-          protocolSettings.minimum_delegator_deposit,
-          OCT_TOKEN_DECIMALS
-        ).toNumber()
-
-        setStep(_step)
-        if (validatorId) {
-          const validatorDeposited = await anchor.get_validator_deposit_of({
-            validator_id: validatorId,
-          })
-
-          const anchorStatus = await anchor.get_anchor_status()
-          const validatorSetInfo = await anchor.get_validator_set_info_of({
-            era_number:
-              anchorStatus.index_range_of_validator_set_history.end_index,
-          })
-
-          const maximumAllowedIncreased = new Decimal(
-            validatorSetInfo.total_stake
-          )
-            .mul(protocolSettings.maximum_validator_stake_percent)
-            .div(100)
-            .minus(validatorDeposited)
-
-          const max = Math.min(
-            Math.floor(
-              DecimalUtil.shift(
-                maximumAllowedIncreased,
-                OCT_TOKEN_DECIMALS
-              ).toNumber()
-            ),
-            octBalance.toNumber()
-          )
-
-          setMax(max)
-        }
-      } catch (error) {
-        Toast.error(error)
-      }
+    if (anchor && validatorId) {
+      getDelegateLimit({
+        anchor,
+        octBalance,
+        validatorId,
+        deposited: ZERO_DECIMAL,
+        type: "increase",
+      }).then(({ min, max }) => {
+        setMin(min)
+        setMax(max)
+      })
     }
-
-    initSetting()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [anchor, validatorId, octBalance])
 
@@ -164,6 +120,8 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
     }
   }
 
+  const isDisabled = max < min
+
   return (
     <BaseModal
       isOpen={isOpen}
@@ -177,7 +135,7 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
             cursor="pointer"
             variant="gray"
             onClick={() => {
-              if (octBalance.gte(step) && octBalance.lte(max)) {
+              if (octBalance.gte(min) && octBalance.lte(max)) {
                 setAmount(octBalance.toString())
               }
             }}
@@ -194,18 +152,19 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
           type="number"
           min={min}
           max={max}
+          disabled={isDisabled}
         />
         <Flex justify="space-between" pt={2}>
           <Text
             fontSize="sm"
             cursor="pointer"
             onClick={() => {
-              if (octBalance.gte(step)) {
-                setAmount(String(step))
+              if (octBalance.gte(min)) {
+                setAmount(String(min))
               }
             }}
           >
-            Min: {DecimalUtil.beautify(new Decimal(step), 0)}
+            Min: {DecimalUtil.beautify(new Decimal(min), 0)}
           </Text>
 
           <Text
@@ -217,9 +176,15 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
               }
             }}
           >
-            Max: {max < step ? "-" : DecimalUtil.beautify(new Decimal(max), 0)}
+            Max: {isDisabled ? "-" : DecimalUtil.beautify(new Decimal(max), 0)}
           </Text>
         </Flex>
+
+        <Text variant="gray" fontSize="sm" mt={2}>
+          {isDisabled
+            ? `According to the rule of staking ration, you can't delegate`
+            : ""}
+        </Text>
       </Box>
       <Box mt={4}>
         <Button
