@@ -175,7 +175,6 @@ export const BridgePanel: React.FC = () => {
   }, [appchainId])
 
   useEffect(() => {
-    setTargetAccountNeedDepositStorage.off()
     if (!to || !tokenAsset) {
       return
     }

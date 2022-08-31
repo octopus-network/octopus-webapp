@@ -38,7 +38,6 @@ import { OCT_TOKEN_DECIMALS, COMPLEX_CALL_GAS } from "primitives"
 import Decimal from "decimal.js"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
-import { onTxSent } from "utils/helper"
 import { EMAIL_REGEX } from "config/constants"
 
 export const RegisterForm: React.FC = () => {
