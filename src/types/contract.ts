@@ -138,6 +138,10 @@ export class AnchorContract extends Contract {
     return this.get_anchor_status()
   }
 
+  get_validator_list_of(): Promise<any> {
+    return this.get_validator_list_of()
+  }
+
   get_validator_set_info_of(args: { era_number: string }): Promise<any> {
     return this.get_validator_set_info_of(args)
   }

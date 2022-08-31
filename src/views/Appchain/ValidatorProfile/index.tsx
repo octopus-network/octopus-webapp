@@ -439,7 +439,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                     }
                     type="decrease"
                     anchor={anchor}
-                    deposit={delegatedDeposits}
+                    deposited={delegatedDeposits}
                     validatorId={validatorId}
                     helper={`Your decreased stake will be claimable after 21 days`}
                     validator={validator}
@@ -462,7 +462,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                     }
                     type="increase"
                     validatorId={validatorId}
-                    deposit={delegatedDeposits}
+                    deposited={delegatedDeposits}
                     anchor={anchor}
                     validator={validator}
                     appchain={appchain}
