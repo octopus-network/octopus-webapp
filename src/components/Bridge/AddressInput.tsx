@@ -18,44 +18,36 @@ import nearLogo from "assets/near.svg"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import useAccounts from "hooks/useAccounts"
 import { useCallback, useEffect, useState } from "react"
-import { AppchainInfoWithAnchorStatus, TokenAsset } from "types"
+import { AppchainInfoWithAnchorStatus } from "types"
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types"
 import { SelectWeb3AccountModal } from "views/Bridge/SelectWeb3AccountModal"
 import { Toast } from "components/common/toast"
 import { AiFillCloseCircle } from "react-icons/ai"
-import { providers } from "near-api-js"
-import { CodeResult } from "near-api-js/lib/providers/provider"
-import { ApiPromise } from "@polkadot/api"
 import { WarningIcon } from "@chakra-ui/icons"
-import { DecimalUtil } from "utils"
-import Decimal from "decimal.js"
-import { SIMPLE_CALL_GAS } from "primitives"
-import { web3Enable, web3FromSource } from "@polkadot/extension-dapp"
 
 export default function AddressInpput({
   label,
   chain,
   appchain,
   onChange,
-  tokenAsset,
-  appchainApi,
+  isDepositingStorage,
+  targetAccountNeedDepositStorage,
+  onDepositStorage,
 }: {
   label: string
   chain: string
   appchain?: AppchainInfoWithAnchorStatus
   onChange: (value: string | undefined) => void
-  tokenAsset?: TokenAsset
-  appchainApi?: ApiPromise
+  isDepositingStorage?: boolean
+  targetAccountNeedDepositStorage?: boolean
+  onDepositStorage?: () => void
 }) {
   const grayBg = useColorModeValue("#f2f4f7", "#1e1f34")
   const isEvm = appchain?.appchain_metadata.template_type === "BarnacleEvm"
 
   const [selectAccountModalOpen, setSelectAccountModalOpen] = useBoolean()
-  const [targetAccountNeedDepositStorage, setTargetAccountNeedDepositStorage] =
-    useBoolean()
   const [address, setAddress] = useState<string | undefined>()
   const { accountId, modal, selector } = useWalletSelector()
-  const [isDepositingStorage, setIsDepositingStorage] = useBoolean()
   const { accounts, currentAccount, setCurrentAccount } = useAccounts(
     isEvm,
     !!chain
@@ -85,53 +77,6 @@ export default function AddressInpput({
     onUpdateAddress(account.address)
     setSelectAccountModalOpen.off()
   }
-
-  useEffect(() => {
-    setTargetAccountNeedDepositStorage.off()
-    if (!address || isFrom || !tokenAsset) {
-      return
-    }
-    if (isNear) {
-      const provider = new providers.JsonRpcProvider({
-        url: selector.options.network.nodeUrl,
-      })
-
-      provider
-        .query<CodeResult>({
-          request_type: "call_function",
-          account_id: tokenAsset.contractId,
-          method_name: "storage_balance_of",
-          args_base64: btoa(JSON.stringify({ account_id: address })),
-          finality: "optimistic",
-        })
-        .then((res) => {
-          const storage = JSON.parse(Buffer.from(res.result).toString())
-
-          if (storage === null) {
-            setTargetAccountNeedDepositStorage.on()
-          } else {
-            setTargetAccountNeedDepositStorage.off()
-          }
-        })
-    } else if (appchainApi) {
-      appchainApi?.query.system.account(address).then((res: any) => {
-        if (res.providers.toNumber() === 0) {
-          setTargetAccountNeedDepositStorage.on()
-        } else {
-          setTargetAccountNeedDepositStorage.off()
-        }
-      })
-    }
-  }, [
-    address,
-    isNear,
-    isFrom,
-    tokenAsset,
-    selector.options.network.nodeUrl,
-    setTargetAccountNeedDepositStorage,
-    appchainApi,
-    isEvm,
-  ])
 
   const onLogin = () => {
     if (isNear) {
@@ -174,82 +119,6 @@ export default function AddressInpput({
 
   const onClear = () => {
     onUpdateAddress("")
-  }
-
-  const onDepositStorage = async () => {
-    if (!isNear) {
-      if (!appchainApi || !currentAccount) {
-        return
-      }
-      await web3Enable("Octopus Network")
-      const injected = await web3FromSource(currentAccount.meta.source || "")
-      appchainApi.setSigner(injected.signer)
-
-      setIsDepositingStorage.on()
-
-      const res = await appchainApi?.query.system.account(address)
-      const resJSON: any = res?.toJSON()
-      const balance = DecimalUtil.fromString(
-        resJSON?.data?.free,
-        Array.isArray(tokenAsset?.metadata.decimals)
-          ? tokenAsset?.metadata.decimals[1]
-          : tokenAsset?.metadata.decimals
-      )
-      const toDepositAmount = DecimalUtil.toU64(
-        new Decimal(isEvm ? 0.0002 : 0.01),
-        appchain?.appchain_metadata?.fungible_token_metadata?.decimals
-      ).toString()
-
-      if (!balance.gte(toDepositAmount)) {
-        return Toast.error("Balance not enough")
-      }
-      const tx = appchainApi.tx.balances.transfer(address!, toDepositAmount)
-
-      tx.signAndSend(currentAccount.address, (res) => {
-        if (res.isInBlock) {
-          setIsDepositingStorage.off()
-          setTargetAccountNeedDepositStorage.off()
-        }
-      })
-
-      return
-    }
-
-    try {
-      setIsDepositingStorage.on()
-      const wallet = await selector.wallet()
-
-      const provider = new providers.JsonRpcProvider({
-        url: selector.options.network.nodeUrl,
-      })
-      const res = await provider.query<CodeResult>({
-        request_type: "call_function",
-        account_id: tokenAsset?.contractId,
-        method_name: "storage_balance_bounds",
-        args_base64: "",
-        finality: "optimistic",
-      })
-      const bounds = JSON.parse(Buffer.from(res.result).toString())
-      await wallet.signAndSendTransaction({
-        signerId: accountId,
-        receiverId: tokenAsset?.contractId,
-        actions: [
-          {
-            type: "FunctionCall",
-            params: {
-              methodName: "storage_deposit",
-              args: { account_id: address },
-              gas: SIMPLE_CALL_GAS,
-              deposit: bounds.min,
-            },
-          },
-        ],
-      })
-      setIsDepositingStorage.off()
-    } catch (err) {
-      setIsDepositingStorage.off()
-      Toast.error(err)
-    }
   }
 
   return (
