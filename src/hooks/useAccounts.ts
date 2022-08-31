@@ -8,6 +8,8 @@ export default function useAccounts(isEvm: boolean, isRequest: boolean) {
   const [currentAccount, setCurrentAccount] =
     useState<InjectedAccountWithMeta>()
 
+  const storageKey = isEvm ? "currentETHAccount" : "currentSubstradeAccount"
+
   useEffect(() => {
     async function getAccounts() {
       if (!isRequest) {
@@ -15,6 +17,7 @@ export default function useAccounts(isEvm: boolean, isRequest: boolean) {
       }
 
       try {
+        const previousAccount = localStorage.getItem(storageKey)
         if (isEvm) {
           const provider = await detectEthereumProvider({
             mustBeMetaMask: true,
@@ -31,25 +34,45 @@ export default function useAccounts(isEvm: boolean, isRequest: boolean) {
               }
             })
             setAccounts(_accounts)
-            setCurrentAccount(_accounts[0])
+            const oldAccount = _accounts.find(
+              (a: InjectedAccountWithMeta) => a.address === previousAccount
+            )
+            if (previousAccount && oldAccount) {
+              setCurrentAccount(oldAccount)
+            } else {
+              setCurrentAccount(_accounts[0])
+            }
           }
         } else {
           await web3Enable("Octopus Network")
           const accounts = await web3Accounts()
           setAccounts(accounts)
+          const oldAccount = accounts.find(
+            (a: InjectedAccountWithMeta) => a.address === previousAccount
+          )
           if (accounts.length) {
-            setCurrentAccount(accounts[0])
+            if (oldAccount) {
+              setCurrentAccount(oldAccount)
+            } else {
+              setCurrentAccount(accounts[0])
+            }
           }
         }
       } catch (error) {}
     }
 
     getAccounts()
-  }, [isEvm, isRequest])
+  }, [isEvm, isRequest, storageKey])
 
   return {
     accounts,
     currentAccount,
-    setCurrentAccount,
+    setCurrentAccount: (newAccount: InjectedAccountWithMeta) => {
+      setCurrentAccount(newAccount)
+      localStorage.setItem(
+        isEvm ? "currentETHAccount" : "currentSubstradeAccount",
+        newAccount.address
+      )
+    },
   }
 }
