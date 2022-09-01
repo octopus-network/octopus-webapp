@@ -175,7 +175,11 @@ export const BridgePanel: React.FC = () => {
   }, [appchainId])
 
   useEffect(() => {
-    if (!to || !tokenAsset || isNearToAppchain) {
+    if (!to || !tokenAsset) {
+      return
+    }
+    if (isNearToAppchain) {
+      setTargetAccountNeedDepositStorage.off()
       return
     }
     const provider = new providers.JsonRpcProvider({
