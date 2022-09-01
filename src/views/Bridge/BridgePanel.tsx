@@ -179,13 +179,13 @@ export const BridgePanel: React.FC = () => {
       return
     }
     if (isNearToAppchain) {
-      appchainApi?.query.system.account(to).then((res: any) => {
-        if (res.providers.toNumber() === 0) {
-          setTargetAccountNeedDepositStorage.on()
-        } else {
-          setTargetAccountNeedDepositStorage.off()
-        }
-      })
+      // appchainApi?.query.system.account(to).then((res: any) => {
+      //   if (res.providers.toNumber() === 0) {
+      //     setTargetAccountNeedDepositStorage.on()
+      //   } else {
+      //     setTargetAccountNeedDepositStorage.off()
+      //   }
+      // })
     } else if (appchainApi) {
       const provider = new providers.JsonRpcProvider({
         url: selector.options.network.nodeUrl,
