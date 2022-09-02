@@ -215,7 +215,7 @@ export default function ConvertToken({
         { account_id: accountId }
       )
 
-      if (!storageBalance || storageBalance === "0") {
+      if (!storageBalance || storageBalance?.total === "0") {
         txs.push({
           signerId: accountId,
           receiverId: receiveTokenId,

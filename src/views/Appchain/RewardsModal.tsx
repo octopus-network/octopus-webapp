@@ -37,6 +37,7 @@ import { Toast } from "components/common/toast"
 import { useTokenContract } from "hooks/useTokenContract"
 import { onTxSent } from "utils/helper"
 import { Transaction } from "@near-wallet-selector/core"
+import Decimal from "decimal.js"
 
 type RewardsModalProps = {
   rewards?: RewardHistory[]
@@ -124,8 +125,12 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
       const storageBalance = await tokenContract.storage_balance_of({
         account_id: accountId,
       })
+      const storageBounds = await tokenContract.storage_balance_bounds()
       const txs: Transaction[] = []
-      if (!storageBalance || storageBalance?.total === "0") {
+      if (
+        !storageBalance ||
+        new Decimal(storageBalance?.total).lessThan(storageBounds.min)
+      ) {
         txs.push({
           signerId: accountId,
           receiverId: wrappedAppchainToken?.contract_account!,
@@ -136,7 +141,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
                 methodName: "storage_deposit",
                 args: { account_id: accountId },
                 gas: SIMPLE_CALL_GAS,
-                deposit: "1250000000000000000000",
+                deposit: storageBounds.min,
               },
             },
           ],

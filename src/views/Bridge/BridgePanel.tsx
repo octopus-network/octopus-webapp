@@ -182,27 +182,40 @@ export const BridgePanel: React.FC = () => {
       setTargetAccountNeedDepositStorage.off()
       return
     }
-    const provider = new providers.JsonRpcProvider({
-      url: selector.options.network.nodeUrl,
-    })
+    async function checkStorage() {
+      try {
+        const provider = new providers.JsonRpcProvider({
+          url: selector.options.network.nodeUrl,
+        })
+        const res = await provider.query<CodeResult>({
+          request_type: "call_function",
+          account_id: tokenAsset?.contractId,
+          method_name: "storage_balance_bounds",
+          args_base64: "",
+          finality: "optimistic",
+        })
+        const bounds = JSON.parse(Buffer.from(res.result).toString())
 
-    provider
-      .query<CodeResult>({
-        request_type: "call_function",
-        account_id: tokenAsset.contractId,
-        method_name: "storage_balance_of",
-        args_base64: btoa(JSON.stringify({ account_id: to })),
-        finality: "optimistic",
-      })
-      .then((res) => {
-        const storage = JSON.parse(Buffer.from(res.result).toString())
+        const res2 = await provider.query<CodeResult>({
+          request_type: "call_function",
+          account_id: tokenAsset?.contractId,
+          method_name: "storage_balance_of",
+          args_base64: btoa(JSON.stringify({ account_id: to })),
+          finality: "optimistic",
+        })
+        const storage = JSON.parse(Buffer.from(res2.result).toString())
 
-        if (storage === null) {
+        if (
+          storage === null ||
+          new Decimal(storage.total).lessThan(bounds.min)
+        ) {
           setTargetAccountNeedDepositStorage.on()
         } else {
           setTargetAccountNeedDepositStorage.off()
         }
-      })
+      } catch (error) {}
+    }
+    checkStorage()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     appchainApi,
