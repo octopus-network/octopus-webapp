@@ -17,7 +17,6 @@ import {
   Td,
   Tag,
   Box,
-  SimpleGrid,
   useColorModeValue,
 } from "@chakra-ui/react"
 
@@ -37,6 +36,7 @@ import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
 import { useTokenContract } from "hooks/useTokenContract"
 import { onTxSent } from "utils/helper"
+import { Transaction } from "@near-wallet-selector/core"
 
 type RewardsModalProps = {
   rewards?: RewardHistory[]
@@ -61,23 +61,10 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
 
   const [isClaiming, setIsClaiming] = useBoolean(false)
   const [isClaimRewardsPaused, setIsClaimRewardsPaused] = useState(false)
-  const [isDepositingStorage, setIsDepositingStorage] = useBoolean(false)
-  const [needDepositStorage, setNeedDepositStorage] = useBoolean(false)
   const [wrappedAppchainToken, setWrappedAppchainToken] =
     useState<WrappedAppchainToken>()
 
-  const [
-    wrappedAppchainTokenStorageBalance,
-    setWrappedAppchainTokenStorageBalance,
-  ] = useState(ZERO_DECIMAL)
-
   const tokenContract = useTokenContract(wrappedAppchainToken?.contract_account)
-
-  useEffect(() => {
-    if (!isOpen) {
-      setNeedDepositStorage.off()
-    }
-  }, [isOpen])
 
   useEffect(() => {
     if (!anchor) {
@@ -91,21 +78,6 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
       setWrappedAppchainToken(wrappedToken)
     })
   }, [anchor])
-
-  useEffect(() => {
-    if (!tokenContract || !accountId) {
-      return
-    }
-    tokenContract
-      .storage_balance_of({ account_id: accountId })
-      .then((storage) => {
-        setWrappedAppchainTokenStorageBalance(
-          storage?.total
-            ? DecimalUtil.fromString(storage.total, 24)
-            : ZERO_DECIMAL
-        )
-      })
-  }, [tokenContract, accountId])
 
   const unwithdrawnRewards = useMemo(() => {
     if (!rewards?.length) {
@@ -144,17 +116,36 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
   )
 
   const onClaimRewards = async () => {
-    if (!anchor) {
+    if (!anchor || !tokenContract || !accountId) {
       return
     }
 
-    if (wrappedAppchainTokenStorageBalance.lte(ZERO_DECIMAL)) {
-      setNeedDepositStorage.on()
-      return
-    }
     try {
+      const storageBalance = await tokenContract.storage_balance_of({
+        account_id: accountId,
+      })
+      const txs: Transaction[] = []
+      if (!storageBalance || storageBalance?.total === "0") {
+        txs.push({
+          signerId: accountId,
+          receiverId: wrappedAppchainToken?.contract_account!,
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "storage_deposit",
+                args: { account_id: accountId },
+                gas: SIMPLE_CALL_GAS,
+                deposit: "1250000000000000000000",
+              },
+            },
+          ],
+        })
+      }
+
       const wallet = await selector.wallet()
-      await wallet.signAndSendTransaction({
+
+      txs.push({
         signerId: accountId,
         receiverId: anchor.contractId,
         actions: [
@@ -176,175 +167,121 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
           },
         ],
       })
-
-      setIsClaiming.off()
-      onTxSent()
-    } catch (error) {
-      Toast.error(error)
-      setIsClaiming.off()
-    }
-  }
-
-  const onDepositStorage = async () => {
-    try {
-      setIsDepositingStorage.on()
-
-      const wallet = await selector.wallet()
-      await wallet.signAndSendTransaction({
-        signerId: wallet.id,
-        receiverId: wrappedAppchainToken?.contract_account,
-        actions: [
-          {
-            type: "FunctionCall",
-            params: {
-              methodName: "storage_deposit",
-              args: { account_id: accountId },
-              gas: SIMPLE_CALL_GAS,
-              deposit: "1250000000000000000000",
-            },
-          },
-        ],
+      await wallet.signAndSendTransactions({
+        transactions: txs,
       })
-      setIsDepositingStorage.off()
+
+      setIsClaiming.off()
       onTxSent()
     } catch (error) {
-      setIsDepositingStorage.off()
       Toast.error(error)
+      setIsClaiming.off()
     }
   }
 
   return (
-    <BaseModal
-      isOpen={isOpen}
-      onClose={onClose}
-      maxW="520px"
-      title={needDepositStorage ? "Tips" : "Rewards"}
-    >
-      {needDepositStorage ? (
-        <Box p={4} borderRadius="lg">
-          <Heading fontSize="lg" lineHeight="35px">
-            It seems that you haven't setup your account on wrapped{" "}
-            {appchain?.appchain_metadata?.fungible_token_metadata.symbol} token
-            yet.
-          </Heading>
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mt={6}>
-            <Button onClick={setNeedDepositStorage.off}>Maybe Later</Button>
-            <Button
-              colorScheme="octo-blue"
-              onClick={onDepositStorage}
-              isDisabled={isDepositingStorage}
-              isLoading={isDepositingStorage}
-            >
-              Setup Right Now!
-            </Button>
-          </SimpleGrid>
-        </Box>
-      ) : (
-        <>
-          <Box p={4} bg={bg} borderRadius="lg">
-            <Flex justifyContent="space-between" alignItems="center">
-              <Text variant="gray">Total Rewards</Text>
-              <Heading fontSize="md">
-                {DecimalUtil.beautify(totalRewards)}{" "}
-                {appchain?.appchain_metadata?.fungible_token_metadata.symbol}
-              </Heading>
-            </Flex>
-            <Flex justifyContent="space-between" alignItems="flex-start" mt={3}>
-              <Text variant="gray">Unclaimed Rewards</Text>
-              <VStack spacing={0} alignItems="flex-end">
-                <HStack>
-                  <Heading fontSize="md">
-                    {DecimalUtil.beautify(unwithdrawnRewards)}{" "}
-                    {
-                      appchain?.appchain_metadata?.fungible_token_metadata
-                        .symbol
-                    }
-                  </Heading>
-                  <Button
-                    colorScheme="octo-blue"
-                    size="sm"
-                    onClick={onClaimRewards}
-                    isLoading={isClaiming}
-                    isDisabled={
-                      unwithdrawnRewards.lte(ZERO_DECIMAL) ||
-                      isClaiming ||
-                      isClaimRewardsPaused
-                    }
-                  >
-                    {isClaimRewardsPaused ? "Claim Paused" : "Claim"}
-                  </Button>
+    <BaseModal isOpen={isOpen} onClose={onClose} maxW="520px" title={"Rewards"}>
+      <>
+        <Box p={4} bg={bg} borderRadius="lg">
+          <Flex justifyContent="space-between" alignItems="center">
+            <Text variant="gray">Total Rewards</Text>
+            <Heading fontSize="md">
+              {DecimalUtil.beautify(totalRewards)}{" "}
+              {appchain?.appchain_metadata?.fungible_token_metadata.symbol}
+            </Heading>
+          </Flex>
+          <Flex justifyContent="space-between" alignItems="flex-start" mt={3}>
+            <Text variant="gray">Unclaimed Rewards</Text>
+            <VStack spacing={0} alignItems="flex-end">
+              <HStack>
+                <Heading fontSize="md">
+                  {DecimalUtil.beautify(unwithdrawnRewards)}{" "}
+                  {appchain?.appchain_metadata?.fungible_token_metadata.symbol}
+                </Heading>
+                <Button
+                  colorScheme="octo-blue"
+                  size="sm"
+                  onClick={onClaimRewards}
+                  isLoading={isClaiming}
+                  isDisabled={
+                    unwithdrawnRewards.lte(ZERO_DECIMAL) ||
+                    isClaiming ||
+                    isClaimRewardsPaused
+                  }
+                >
+                  {isClaimRewardsPaused ? "Claim Paused" : "Claim"}
+                </Button>
+              </HStack>
+            </VStack>
+          </Flex>
+          {unwithdrawnRewards.gt(ZERO_DECIMAL) ? (
+            <>
+              <Divider mt={3} mb={3} />
+              <Flex>
+                <HStack color="red">
+                  <WarningTwoIcon boxSize={3} />
+                  <Text fontSize="sm">
+                    You can only claim the rewards distributed within the last
+                    84 eras(days).
+                  </Text>
                 </HStack>
-              </VStack>
-            </Flex>
-            {unwithdrawnRewards.gt(ZERO_DECIMAL) ? (
-              <>
-                <Divider mt={3} mb={3} />
-                <Flex>
-                  <HStack color="red">
-                    <WarningTwoIcon boxSize={3} />
-                    <Text fontSize="sm">
-                      You can only claim the rewards distributed within the last
-                      84 eras(days).
-                    </Text>
-                  </HStack>
-                </Flex>
-              </>
-            ) : null}
-          </Box>
-          {rewards?.length ? (
-            <Box maxH="40vh" overflow="scroll" mt={3}>
-              <Table>
-                <Thead>
-                  <Tr>
-                    <Th>Day</Th>
-                    <Th isNumeric>Reward</Th>
-                    <Th isNumeric>Unclaimed</Th>
+              </Flex>
+            </>
+          ) : null}
+        </Box>
+        {rewards?.length ? (
+          <Box maxH="40vh" overflow="scroll" mt={3}>
+            <Table>
+              <Thead>
+                <Tr>
+                  <Th>Day</Th>
+                  <Th isNumeric>Reward</Th>
+                  <Th isNumeric>Unclaimed</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {rewards?.map((r, idx) => (
+                  <Tr key={`tr-${idx}`}>
+                    <Td>{r.era_number}</Td>
+                    <Td isNumeric>
+                      {DecimalUtil.beautify(
+                        DecimalUtil.fromString(
+                          r.total_reward,
+                          appchain?.appchain_metadata?.fungible_token_metadata
+                            .decimals
+                        )
+                      )}
+                    </Td>
+                    <Td isNumeric>
+                      {DecimalUtil.beautify(
+                        DecimalUtil.fromString(
+                          r.unwithdrawn_reward,
+                          appchain?.appchain_metadata?.fungible_token_metadata
+                            .decimals
+                        )
+                      )}
+                      {DecimalUtil.fromString(r.unwithdrawn_reward).gt(
+                        ZERO_DECIMAL
+                      ) && r.expired ? (
+                        <Tag
+                          size="sm"
+                          colorScheme="red"
+                          mr={-2}
+                          transform="scale(.8)"
+                        >
+                          Expired
+                        </Tag>
+                      ) : null}
+                    </Td>
                   </Tr>
-                </Thead>
-                <Tbody>
-                  {rewards?.map((r, idx) => (
-                    <Tr key={`tr-${idx}`}>
-                      <Td>{r.era_number}</Td>
-                      <Td isNumeric>
-                        {DecimalUtil.beautify(
-                          DecimalUtil.fromString(
-                            r.total_reward,
-                            appchain?.appchain_metadata?.fungible_token_metadata
-                              .decimals
-                          )
-                        )}
-                      </Td>
-                      <Td isNumeric>
-                        {DecimalUtil.beautify(
-                          DecimalUtil.fromString(
-                            r.unwithdrawn_reward,
-                            appchain?.appchain_metadata?.fungible_token_metadata
-                              .decimals
-                          )
-                        )}
-                        {DecimalUtil.fromString(r.unwithdrawn_reward).gt(
-                          ZERO_DECIMAL
-                        ) && r.expired ? (
-                          <Tag
-                            size="sm"
-                            colorScheme="red"
-                            mr={-2}
-                            transform="scale(.8)"
-                          >
-                            Expired
-                          </Tag>
-                        ) : null}
-                      </Td>
-                    </Tr>
-                  ))}
-                </Tbody>
-              </Table>
-            </Box>
-          ) : (
-            <Empty message="No Rewards" />
-          )}
-        </>
-      )}
+                ))}
+              </Tbody>
+            </Table>
+          </Box>
+        ) : (
+          <Empty message="No Rewards" />
+        )}
+      </>
     </BaseModal>
   )
 }
