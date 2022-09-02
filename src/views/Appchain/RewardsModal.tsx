@@ -38,6 +38,8 @@ import { useTokenContract } from "hooks/useTokenContract"
 import { onTxSent } from "utils/helper"
 import { Transaction } from "@near-wallet-selector/core"
 import Decimal from "decimal.js"
+import { providers } from "near-api-js"
+import { CodeResult } from "near-api-js/lib/providers/provider"
 
 type RewardsModalProps = {
   rewards?: RewardHistory[]
@@ -125,7 +127,17 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
       const storageBalance = await tokenContract.storage_balance_of({
         account_id: accountId,
       })
-      const storageBounds = await tokenContract.storage_balance_bounds()
+      const provider = new providers.JsonRpcProvider({
+        url: selector.options.network.nodeUrl,
+      })
+      const res = await provider.query<CodeResult>({
+        request_type: "call_function",
+        account_id: tokenContract?.contractId,
+        method_name: "storage_balance_bounds",
+        args_base64: "",
+        finality: "optimistic",
+      })
+      const storageBounds = JSON.parse(Buffer.from(res.result).toString())
       const txs: Transaction[] = []
       if (
         !storageBalance ||
@@ -177,7 +189,6 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
       })
 
       setIsClaiming.off()
-      onTxSent()
     } catch (error) {
       Toast.error(error)
       setIsClaiming.off()
