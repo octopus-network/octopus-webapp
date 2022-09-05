@@ -110,13 +110,15 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
 
     setIsSubmitting.on()
 
-    const octAmount = DecimalUtil.shift(octBalance, OCT_TOKEN_DECIMALS)
+    const octAmount = DecimalUtil.power(octBalance, OCT_TOKEN_DECIMALS)
+
     let amountStr = DecimalUtil.toU64(
       amountInDecimal,
       OCT_TOKEN_DECIMALS
     ).toString()
+
     if (octAmount.lt(amountStr)) {
-      amountStr = octAmount.toString()
+      amountStr = octAmount.toFixed(0)
     }
 
     try {
