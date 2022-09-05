@@ -7,7 +7,12 @@ import type { WalletSelectorModal } from "@near-wallet-selector/modal-ui"
 import axios from "axios"
 import { API_HOST } from "config"
 import { Account, keyStores, Near, WalletConnection } from "near-api-js"
-import { NetworkConfig, RegistryContract, TokenContract } from "types"
+import {
+  NetworkConfig,
+  NetworkType,
+  RegistryContract,
+  TokenContract,
+} from "types"
 import { setupNearWallet } from "@near-wallet-selector/near-wallet"
 
 declare global {
@@ -27,6 +32,7 @@ interface WalletSelectorContextValue {
   networkConfig: NetworkConfig | null
   octToken: TokenContract | null
   nearAccount: Account | undefined
+  network: NetworkType
 }
 
 const WalletSelectorContext =
@@ -45,6 +51,7 @@ export const WalletSelectorContextProvider = ({
   const [networkConfig, setNetworkConfig] = useState<NetworkConfig | null>(null)
   const [octToken, setOctToken] = useState<TokenContract | null>(null)
   const [nearAccount, setNearAccount] = useState<Account | undefined>(undefined)
+  const [network, setNetwork] = useState<NetworkType>(NetworkType.MAINNET)
 
   const init = useCallback(async () => {
     const config = await axios
@@ -52,12 +59,12 @@ export const WalletSelectorContextProvider = ({
       .then((res) => res.data)
     setNetworkConfig(config)
 
+    setNetwork(config?.near.networkId ?? NetworkType.MAINNET)
     const _selector = await setupWalletSelector({
       network: config?.near.networkId,
       debug: false,
       modules: [
         setupNearWallet({
-          iconUrl: "/assets/near-wallet-icon.png",
           deprecated: false,
         }),
         // setupMyNearWallet({
@@ -194,6 +201,7 @@ export const WalletSelectorContextProvider = ({
         octToken,
         networkConfig,
         nearAccount,
+        network,
       }}
     >
       {children}

@@ -1,5 +1,5 @@
 import axios from "axios"
-import { NetworkConfig } from "types"
+import { CLOUD_VENDOR, NetworkConfig, NetworkType, NodeDetail } from "types"
 
 export const getUnbondedValidators = async (
   networkConfig: NetworkConfig,
@@ -26,4 +26,37 @@ export const getUnbondedValidators = async (
   } catch (error) {
     return []
   }
+}
+
+export const getNodeDetail = async ({
+  appchainId,
+  accountId,
+  network,
+  cloudVendor,
+  accessKey,
+}: {
+  appchainId: string
+  accountId: string
+  network: NetworkType
+  cloudVendor: CLOUD_VENDOR
+  accessKey: string
+}) => {
+  const authStr = `appchain-${appchainId}-network-${network}-cloud-${cloudVendor}-account-${accountId}-${accessKey}`
+
+  const res = await axios.get(
+    `https://3jd9s8zf1l.execute-api.us-west-2.amazonaws.com/api/tasks`,
+    {
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        authorization: authStr,
+      },
+    }
+  )
+
+  const nodes: NodeDetail[] = res.data
+
+  if (nodes.length) {
+    return nodes.find((t) => t?.state === "12") || nodes[0]
+  }
+  return null
 }

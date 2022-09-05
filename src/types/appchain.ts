@@ -239,3 +239,28 @@ export type ProtocolSettings = {
   validator_commission_percent: number
   maximum_allowed_unprofitable_era_count: number
 }
+
+export interface NodeDetail {
+  instance: {
+    ip: string
+    user: string
+    ssh_key: string
+  }
+  state: string
+  sync: boolean
+  task: {
+    chain_spec: string
+    cloud_vendor: string
+    volume_type: string
+    availability_zones: string[]
+    instance_count: string
+    instance_type: string
+    name: string
+    project: string
+    region: string
+    telemetry_url: string
+    volume_size: string
+  }
+  user: string
+  uuid: string
+}

@@ -37,6 +37,8 @@ import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import NodeBoard from "components/AppChain/NodeBoard"
 import { MyStaking } from "../MyStaking"
 import NodeForm from "components/AppChain/NodeForm"
+import NodeDeploy from "components/AppChain/NodeDeploy"
+import { getNodeDetail } from "utils/appchain"
 
 type MyNodeProps = {
   appchainId: string | undefined
@@ -77,7 +79,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
 
   const { data: deployConfig } = useSWR("deploy-config")
 
-  const { accountId } = useWalletSelector()
+  const { accountId, network } = useWalletSelector()
 
   const cloudVendorInLocalStorage = window.localStorage.getItem(
     "OCTOPUS_DEPLOYER_CLOUD_VENDOR"
@@ -97,19 +99,21 @@ export const MyNode: React.FC<MyNodeProps> = ({
       return
     }
     setIsInitializing.on()
-    axios
-      .get(
-        `
-      ${API_HOST}/node/${cloudVendorInLocalStorage}/${accessKeyInLocalStorage}/${appchainId}/${accountId}
-    `
-      )
-      .then((res) => res.data)
-      .then((res) => {
-        if (res) {
-          setNode(res)
-        }
+    getNodeDetail({
+      appchainId,
+      cloudVendor: cloudVendorInLocalStorage,
+      accessKey: accessKeyInLocalStorage,
+      accountId,
+      network,
+    })
+      .then((node) => {
+        setNode(node)
         setIsInitializing.off()
       })
+      .catch(() => {
+        setIsInitializing.off()
+      })
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     accessKeyInLocalStorage,
@@ -205,27 +209,49 @@ export const MyNode: React.FC<MyNodeProps> = ({
   // check NODE_STATE_RECORD for state meaning
   const isShowRegister =
     !!validator || ["12", "20", "21", "22", "30"].includes(node?.state)
-  const isValidator = !!(validator && !validator?.is_unbonding)
+
+  const menuItems = [
+    {
+      isDisabled: !appchainApi,
+      onClick: setSetSessionKeyModalOpen.on,
+      label: "Set Session Key",
+      icon: TiKey,
+      hasBadge: needKeys,
+    },
+    {
+      isDisabled: !nodeMetrics,
+      onClick: setInstanceInfoModalOpen.on,
+      label: "Instance Info",
+      icon: BsFillTerminalFill,
+      hasBadge: nodeMetrics?.filesystem?.percentage > 0.8,
+    },
+    {
+      isDisabled: !isImageNeedUpgrade,
+      onClick: setUpgradeAlertOpen.on,
+      label: "Upgrade Image",
+      icon: HiUpload,
+      hasBadge: isImageNeedUpgrade,
+    },
+    {
+      isDisabled: !accessKeyInLocalStorage,
+      onClick: onClearCache,
+      label: "Clear Access Key",
+      icon: DeleteIcon,
+      hasBadge: false,
+    },
+  ]
 
   return (
     <>
-      <Box
-        position="relative"
-        mb={3}
-        p={4}
-        borderRadius="lg"
-        bg={!isValidator ? bg : validatorBg}
-      >
-        {isValidator && (
-          <Image
-            position="absolute"
-            bottom="0"
-            right="0"
-            h="110%"
-            src={myStakingBg}
-            zIndex={0}
-          />
-        )}
+      <Box position="relative" mb={3} p={4} borderRadius="lg" bg={validatorBg}>
+        <Image
+          position="absolute"
+          bottom="0"
+          right="0"
+          h="110%"
+          src={myStakingBg}
+          zIndex={0}
+        />
         <MyStaking appchain={appchain} anchor={anchor} validator={validator} />
       </Box>
 
@@ -241,9 +267,9 @@ export const MyNode: React.FC<MyNodeProps> = ({
               position="relative"
             >
               <Icon as={BsThreeDots} boxSize={5} />
-              {needKeys ||
-              isImageNeedUpgrade ||
-              nodeMetrics?.filesystem?.percentage > 0.8 ? (
+              {(needKeys ||
+                isImageNeedUpgrade ||
+                nodeMetrics?.filesystem?.percentage > 0.8) && (
                 <Box
                   position="absolute"
                   top="0px"
@@ -252,67 +278,29 @@ export const MyNode: React.FC<MyNodeProps> = ({
                   bg="red"
                   borderRadius="full"
                 />
-              ) : null}
+              )}
             </MenuButton>
             <MenuList>
-              <MenuItem
-                position="relative"
-                onClick={setSetSessionKeyModalOpen.on}
-                isDisabled={!appchainApi}
-              >
-                <Icon as={TiKey} mr={2} boxSize={4} /> Set Session Key
-                {needKeys ? (
-                  <Box
-                    position="absolute"
-                    top="10px"
-                    right="10px"
-                    boxSize={2}
-                    bg="red"
-                    borderRadius="full"
-                  />
-                ) : null}
-              </MenuItem>
-              <MenuItem
-                position="relative"
-                onClick={setInstanceInfoModalOpen.on}
-                isDisabled={!nodeMetrics}
-              >
-                <Icon as={BsFillTerminalFill} mr={2} boxSize={4} /> Instance
-                Info
-                {nodeMetrics?.filesystem?.percentage > 0.8 ? (
-                  <Box
-                    position="absolute"
-                    top="10px"
-                    right="10px"
-                    boxSize={2}
-                    bg="red"
-                    borderRadius="full"
-                  />
-                ) : null}
-              </MenuItem>
-              <MenuItem
-                position="relative"
-                isDisabled={!isImageNeedUpgrade}
-                onClick={setUpgradeAlertOpen.on}
-              >
-                <Icon as={HiUpload} mr={2} boxSize={3} /> Upgrade Image
-                {isImageNeedUpgrade ? (
-                  <Box
-                    position="absolute"
-                    top="10px"
-                    right="10px"
-                    boxSize={2}
-                    bg="red"
-                    borderRadius="full"
-                  />
-                ) : null}
-              </MenuItem>
-              <MenuItem
-                isDisabled={!accessKeyInLocalStorage}
-                onClick={onClearCache}
-              >
-                <Icon as={DeleteIcon} mr={2} boxSize={3} /> Clear Access Key
-              </MenuItem>
+              {menuItems.map((item) => (
+                <MenuItem
+                  key={item.label}
+                  position="relative"
+                  onClick={item.onClick}
+                  isDisabled={item.isDisabled}
+                >
+                  <Icon as={item.icon} mr={2} boxSize={4} /> {item.label}
+                  {item.hasBadge && (
+                    <Box
+                      position="absolute"
+                      top="10px"
+                      right="10px"
+                      boxSize={2}
+                      bg="red"
+                      borderRadius="full"
+                    />
+                  )}
+                </MenuItem>
+              ))}
             </MenuList>
           </Menu>
         </Flex>
@@ -337,7 +325,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
             appchain={appchain}
           />
         ) : (
-          <NodeForm
+          <NodeDeploy
             setNode={setNode}
             validator={validator}
             appchainId={appchainId}

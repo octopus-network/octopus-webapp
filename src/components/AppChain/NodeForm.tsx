@@ -15,7 +15,7 @@ import {
   useColorModeValue,
 } from "@chakra-ui/react"
 import axios from "axios"
-import { Toast, toast } from "components/common/toast"
+import { Toast } from "components/common/toast"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { API_HOST } from "config"
 import { useEffect, useState } from "react"
@@ -318,7 +318,6 @@ export default function NodeForm({
       flex={isDeployed ? "" : "1"}
       width={isDeployed ? "100%" : ""}
       onClick={onDeployPressed}
-      isLoading={isDeploying}
       isDisabled={isDeploying || (cloudVendor === "GCP" && !projectId)}
     >
       {!!validator ? "Confirm" : "Deploy"}

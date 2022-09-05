@@ -47,3 +47,6 @@ export const NODE_STATE_RECORD: any = {
   "22": { label: "Destroyed", color: "gray", state: 22 },
   "30": { label: "Upgrading", color: "green", state: 30 },
 }
+
+export const OAUTH_SCOPE =
+  "https://www.googleapis.com/auth/cloud-platform.read-only https://www.googleapis.com/auth/compute"
