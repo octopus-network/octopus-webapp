@@ -28,7 +28,12 @@ export const ANCHOR_METHODS = {
 }
 
 export const TOKEN_METHODS = {
-  viewMethods: ["storage_balance_of", "ft_balance_of"],
+  viewMethods: [
+    "storage_balance_of",
+    "ft_balance_of",
+    "storage_balance_bounds",
+    "ft_metadata",
+  ],
   changeMethods: [],
 }
 
