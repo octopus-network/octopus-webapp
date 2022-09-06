@@ -110,20 +110,20 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
 
     setIsSubmitting.on()
 
-    const octAmount = DecimalUtil.power(octBalance, OCT_TOKEN_DECIMALS)
-
     let amountStr = DecimalUtil.toU64(
       amountInDecimal,
       OCT_TOKEN_DECIMALS
     ).toString()
 
-    if (octAmount.lt(amountStr)) {
-      amountStr = octAmount.toFixed(0)
-    }
-
     try {
       const wallet = await selector.wallet()
       if (type === "increase") {
+        const octAmount = DecimalUtil.power(octBalance, OCT_TOKEN_DECIMALS)
+
+        if (octAmount.lt(amountStr)) {
+          amountStr = octAmount.toFixed(0)
+        }
+
         await wallet.signAndSendTransaction({
           signerId: accountId,
           receiverId: octToken?.contractId,
