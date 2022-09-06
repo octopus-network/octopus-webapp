@@ -29,6 +29,7 @@ import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
 import { AnchorContract, AppchainInfo, CLOUD_VENDOR } from "types"
 import { RegisterValidatorModal } from "views/Appchain/MyStaking/RegisterValidatorModal"
+import { BsArrowUpRight } from "react-icons/bs"
 
 export default function NodeBoard({
   node,
@@ -58,10 +59,6 @@ export default function NodeBoard({
 
   const { hasCopied: hasNodeIdCopied, onCopy: onCopyNodeId } = useClipboard(
     node?.uuid || ""
-  )
-
-  const { hasCopied: hasInstanceCopied, onCopy: onCopyInstance } = useClipboard(
-    node?.instance ? `${node.instance.user}@${node.instance.ip}` : ""
   )
 
   const { accountId } = useWalletSelector()
@@ -207,11 +204,13 @@ export default function NodeBoard({
                 overflow="hidden"
                 textOverflow="ellipsis"
               >
-                {node.instance.user}@{node.instance.ip}
+                {node.instance.region}@{node.instance.id}
               </Text>
-              <IconButton aria-label="copy" onClick={onCopyInstance} size="xs">
-                {hasInstanceCopied ? <CheckIcon /> : <CopyIcon />}
-              </IconButton>
+              <Link href={node.instance.url} target="_blank">
+                <IconButton aria-label="link" size="xs">
+                  <BsArrowUpRight color="octo-blue" />
+                </IconButton>
+              </Link>
             </HStack>
           ) : (
             "-"

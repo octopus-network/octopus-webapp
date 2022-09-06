@@ -60,3 +60,63 @@ export const getNodeDetail = async ({
   }
   return null
 }
+
+export const deployNode = async ({
+  cloud_vendor,
+  region,
+  instance_type,
+  volume_size,
+  base_image,
+  secret_key,
+  accessKey,
+  appchainId,
+  network,
+  accountId,
+}: {
+  cloud_vendor: CLOUD_VENDOR
+  region?: string
+  instance_type?: string
+  volume_size?: string
+  base_image: string
+  secret_key: string
+  accessKey: string
+  appchainId: string
+  network: NetworkType
+  accountId: string
+}) => {
+  const authKey = `appchain-${appchainId}-network-${network}-cloud-${cloud_vendor}-account-${accountId}-${accessKey}`
+  const task = await axios.post(
+    `https://3jd9s8zf1l.execute-api.us-west-2.amazonaws.com/api/tasks`,
+    {
+      cloud_vendor,
+      region,
+      instance_type,
+      volume_size,
+      chain_spec: `octopus-${network}`,
+      base_image,
+      secret_key,
+    },
+    {
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        authorization: authKey,
+      },
+    }
+  )
+  const data = task.data
+  if (data && data.uuid) {
+    await axios.put(
+      `https://3jd9s8zf1l.execute-api.us-west-2.amazonaws.com/api/tasks/${data.uuid}`,
+      {
+        action: "rotate_key",
+        secret_key,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+          authorization: authKey,
+        },
+      }
+    )
+  }
+}

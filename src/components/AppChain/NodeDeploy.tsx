@@ -1,9 +1,11 @@
 import {
+  Box,
   Button,
   Center,
   Flex,
   Input,
   Link,
+  Select,
   Spinner,
   Text,
   useBoolean,
@@ -16,10 +18,12 @@ import { AnchorContract, AppchainInfo, CLOUD_VENDOR, Validator } from "types"
 import Initial from "./DeployStep/Initial"
 import { RegisterValidatorModal } from "views/Appchain/MyStaking/RegisterValidatorModal"
 import { Toast } from "components/common/toast"
-import { getNodeDetail } from "utils/appchain"
+import { deployNode, getNodeDetail } from "utils/appchain"
 import useSWR from "swr"
 import { API_HOST } from "config"
 import RecommendInstance from "./DeployStep/RecommendInstance"
+import axios from "axios"
+import SecretKey from "./DeployStep/SecretKey"
 
 enum DeployStep {
   NEED_ACCESS_KEY,
@@ -60,15 +64,14 @@ export default function NodeDeploy({
   const [accessKey, setAccessKey] = useState<string>(accessKeyInLocalStorage)
   const [secretKey, setSecretKey] = useState<string>("")
   const [projects, setProjects] = useState<any[]>()
+  const [deployRegion, setDeployRegion] = useState<string>("")
   const [isManuallyDeployed, setIsManuallyDeployed] = useBoolean()
   const [isDeploying, setIsDeploying] = useBoolean()
   const [projectId, setProjectId] = useState<string>()
   const [registerValidatorModalOpen, setRegisterValidatorModalOpen] =
     useBoolean(false)
 
-  const { data: instance } = useSWR(
-    appchainId ? `appchain/${appchainId}/recommend-instance` : null
-  )
+  const { data: deployConfig } = useSWR("deploy-config")
 
   const isDeployed = isShowRegister || isManuallyDeployed
 
@@ -112,6 +115,41 @@ export default function NodeDeploy({
     }
   }
 
+  let isBtnDisabled = false
+  if (step === DeployStep.NEED_ACCESS_KEY) {
+    isBtnDisabled = !accessKey || isDeploying
+  } else if (step === DeployStep.NEED_SECRECT_KEY) {
+    isBtnDisabled = !secretKey
+  } else if (step === DeployStep.CONFIRMED_ACCESS_KEY) {
+    isBtnDisabled = true
+  }
+
+  const onDeploy = async () => {
+    if (!accountId || !appchainId || !deployConfig) {
+      return
+    }
+    setIsDeploying.on()
+
+    try {
+      const res = await deployNode({
+        appchainId,
+        cloud_vendor: cloudVendor,
+        accountId,
+        network,
+        region: deployRegion,
+        base_image: deployConfig.baseImage,
+        secret_key: secretKey,
+        accessKey,
+      })
+      setIsDeploying.off()
+      window.location.reload()
+    } catch (error) {
+      setIsDeploying.off()
+
+      Toast.error(error)
+    }
+  }
+
   return (
     <>
       {step === DeployStep.NEED_ACCESS_KEY && (
@@ -133,22 +171,12 @@ export default function NodeDeploy({
       )}
 
       {step === DeployStep.NEED_SECRECT_KEY && (
-        <>
-          <Flex pt={4} pb={4} justifyContent="center" flexDirection="column">
-            <Flex bg={inputBg} p={1} borderRadius="lg">
-              <Input
-                variant="unstyled"
-                placeholder="Secret Key"
-                w="100%"
-                p={2}
-                value={secretKey}
-                onChange={(e) => setSecretKey(e.target.value)}
-              />
-            </Flex>
-
-            <RecommendInstance appchainId={appchainId} />
-          </Flex>
-        </>
+        <SecretKey
+          appchainId={appchainId}
+          secretKey={secretKey}
+          setSecretKey={setSecretKey}
+          setDeployRegion={setDeployRegion}
+        />
       )}
 
       {isDeployed ? (
@@ -171,20 +199,17 @@ export default function NodeDeploy({
           <Flex direction="row" gap={2}>
             <Button
               colorScheme="octo-blue"
-              flex={isDeployed ? "" : "1"}
-              width={isDeployed ? "100%" : ""}
+              flex={"1"}
               onClick={() => {
                 if (step === DeployStep.NEED_ACCESS_KEY && accessKey) {
                   onConfirmAccessKey()
+                } else if (step === DeployStep.NEED_SECRECT_KEY && secretKey) {
+                  onDeploy()
                 }
               }}
-              isDisabled={
-                isDeploying ||
-                !accessKey ||
-                (cloudVendor === "GCP" && !projectId)
-              }
+              isDisabled={isBtnDisabled}
             >
-              {!!validator ? "Confirm" : "Deploy"}
+              {step === DeployStep.NEED_SECRECT_KEY ? "Confirm" : "Deploy"}
             </Button>
 
             {step === DeployStep.NEED_ACCESS_KEY && [
