@@ -1,3 +1,5 @@
+import { NodeState } from "types"
+
 export const EMAIL_REGEX = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,15})+$/
 
 export const ANCHOR_METHODS = {
@@ -37,15 +39,19 @@ export const TOKEN_METHODS = {
   changeMethods: [],
 }
 
-export const NODE_STATE_RECORD: any = {
-  "0": { label: "Init", color: "blue", state: 0 },
-  "10": { label: "Applying", color: "teal", state: 10 },
-  "11": { label: "Apply Failed", color: "red", state: 11 },
-  "12": { label: "Running", color: "octo-blue", state: 12 },
-  "20": { label: "Destroying", color: "teal", state: 20 },
-  "21": { label: "Destroy Failed", color: "orange", state: 21 },
-  "22": { label: "Destroyed", color: "gray", state: 22 },
-  "30": { label: "Upgrading", color: "green", state: 30 },
+export const NODE_STATE_RECORD: Record<NodeState, any> = {
+  [NodeState.INIT]: { label: "Init", color: "blue", state: 0 },
+  [NodeState.APPLYING]: { label: "Applying", color: "teal", state: 10 },
+  [NodeState.APPLY_FAILED]: { label: "Apply Failed", color: "red", state: 11 },
+  [NodeState.RUNNING]: { label: "Running", color: "octo-blue", state: 12 },
+  [NodeState.DESTROYING]: { label: "Destroying", color: "teal", state: 20 },
+  [NodeState.DESTROY_FAILED]: {
+    label: "Destroy Failed",
+    color: "orange",
+    state: 21,
+  },
+  [NodeState.DESTROYED]: { label: "Destroyed", color: "gray", state: 22 },
+  [NodeState.UPGRADING]: { label: "Upgrading", color: "green", state: 30 },
 }
 
 export const OAUTH_SCOPE =

@@ -1,16 +1,11 @@
 import {
-  Box,
   Button,
   Center,
   Flex,
-  Input,
   Link,
-  Select,
   Spinner,
   Text,
   useBoolean,
-  useColorMode,
-  useColorModeValue,
 } from "@chakra-ui/react"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { useEffect, useState } from "react"
@@ -18,12 +13,9 @@ import { AnchorContract, AppchainInfo, CLOUD_VENDOR, Validator } from "types"
 import Initial from "./DeployStep/Initial"
 import { RegisterValidatorModal } from "views/Appchain/MyStaking/RegisterValidatorModal"
 import { Toast } from "components/common/toast"
-import { deployNode, getNodeDetail } from "utils/appchain"
 import useSWR from "swr"
-import { API_HOST } from "config"
-import RecommendInstance from "./DeployStep/RecommendInstance"
-import axios from "axios"
 import SecretKey from "./DeployStep/SecretKey"
+import NodeManager from "utils/NodeManager"
 
 enum DeployStep {
   NEED_ACCESS_KEY,
@@ -39,6 +31,7 @@ export default function NodeDeploy({
   isShowRegister,
   appchain,
   anchor,
+  fetchNode,
 }: {
   validator?: Validator
   appchainId?: string
@@ -47,8 +40,8 @@ export default function NodeDeploy({
   isShowRegister: boolean
   appchain?: AppchainInfo
   anchor?: AnchorContract
+  fetchNode: () => void
 }) {
-  const inputBg = useColorModeValue("#f5f7fa", "whiteAlpha.100")
   const cloudVendorInLocalStorage = window.localStorage.getItem(
     "OCTOPUS_DEPLOYER_CLOUD_VENDOR"
   ) as CLOUD_VENDOR
@@ -100,7 +93,7 @@ export default function NodeDeploy({
     window.localStorage.setItem("OCTOPUS_DEPLOYER_CLOUD_VENDOR", cloudVendor)
 
     try {
-      const node = await getNodeDetail({
+      const node = await NodeManager.getNodeDetail({
         cloudVendor,
         accessKey,
         appchainId: appchainId!,
@@ -131,18 +124,19 @@ export default function NodeDeploy({
     setIsDeploying.on()
 
     try {
-      const res = await deployNode({
+      await NodeManager.deployNode({
         appchainId,
         cloud_vendor: cloudVendor,
         accountId,
         network,
         region: deployRegion,
-        base_image: deployConfig.baseImage,
+        base_image: deployConfig.baseImages[appchainId].image,
         secret_key: secretKey,
         accessKey,
       })
       setIsDeploying.off()
-      window.location.reload()
+      fetchNode()
+      // window.location.reload()
     } catch (error) {
       setIsDeploying.off()
 

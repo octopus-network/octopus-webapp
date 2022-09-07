@@ -15,7 +15,7 @@ export default function RecommendInstance({
   }
 
   return (
-    <Flex direction="column" gap={2} mt={4}>
+    <Flex direction="column" gap={2}>
       <Text fontWeight="bold">Recommend Instance</Text>
       <Flex direction="row" justify="space-between" gap={2}>
         <Flex direction="row" gap={2}>

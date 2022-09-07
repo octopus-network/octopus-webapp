@@ -23,22 +23,29 @@ import { DeleteIcon } from "@chakra-ui/icons"
 
 import myStakingBg from "assets/my-staking-bg.png"
 import { BsFillTerminalFill } from "react-icons/bs"
-import { HiUpload } from "react-icons/hi"
 import { TiKey } from "react-icons/ti"
 import { BsThreeDots } from "react-icons/bs"
 import { API_HOST } from "config"
-import { Alert } from "components"
-import { SetSessionKeyModal } from "./SetSessionKeyModal"
 import type { ApiPromise } from "@polkadot/api"
 
 import { InstanceInfoModal } from "./InstanceInfoModal"
-import { AnchorContract, AppchainInfo, CLOUD_VENDOR, Validator } from "types"
+import {
+  AnchorContract,
+  AppchainInfo,
+  CLOUD_VENDOR,
+  NodeState,
+  Validator,
+} from "types"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import NodeBoard from "components/AppChain/NodeBoard"
 import { MyStaking } from "../MyStaking"
-import NodeForm from "components/AppChain/NodeForm"
 import NodeDeploy from "components/AppChain/NodeDeploy"
-import { getNodeDetail } from "utils/appchain"
+import NodeManager from "utils/NodeManager"
+import { Toast } from "components/common/toast"
+import { web3FromSource } from "@polkadot/extension-dapp"
+import useAccounts from "hooks/useAccounts"
+import { onTxSent } from "utils/helper"
+import { setSessionKey } from "utils/bridge"
 
 type MyNodeProps = {
   appchainId: string | undefined
@@ -66,15 +73,11 @@ export const MyNode: React.FC<MyNodeProps> = ({
   const [node, setNode] = useState<any>()
 
   const [isInitializing, setIsInitializing] = useBoolean()
-  const [isUpgrading, setIsUpgrading] = useBoolean()
 
   const [nodeMetrics, setNodeMetrics] = useState<any>()
 
-  const [upgradeAlertOpen, setUpgradeAlertOpen] = useBoolean()
-  const [setSessionKeyModalOpen, setSetSessionKeyModalOpen] = useBoolean()
+  const [isSubmitting, setIsSubmitting] = useBoolean()
   const [instanceInfoModalOpen, setInstanceInfoModalOpen] = useBoolean()
-
-  const [isImageNeedUpgrade, setIsImageNeedUpgrade] = useBoolean()
   const [oauthUser, setOAuthUser] = useState<any>()
 
   const { data: deployConfig } = useSWR("deploy-config")
@@ -89,21 +92,20 @@ export const MyNode: React.FC<MyNodeProps> = ({
     window.localStorage.getItem("accessKey") ||
     ""
 
-  useEffect(() => {
-    if (
-      !accessKeyInLocalStorage ||
-      !appchainId ||
-      !cloudVendorInLocalStorage ||
-      !accountId
-    ) {
-      return
-    }
+  const fetchNode = async () => {
     setIsInitializing.on()
-    getNodeDetail({
-      appchainId,
-      cloudVendor: cloudVendorInLocalStorage,
-      accessKey: accessKeyInLocalStorage,
-      accountId,
+    const cloudVendor = window.localStorage.getItem(
+      "OCTOPUS_DEPLOYER_CLOUD_VENDOR"
+    ) as CLOUD_VENDOR
+    const accessKey =
+      window.localStorage.getItem("OCTOPUS_DEPLOYER_ACCESS_KEY") ||
+      window.localStorage.getItem("accessKey") ||
+      ""
+    NodeManager.getNodeDetail({
+      appchainId: appchainId!,
+      cloudVendor,
+      accessKey,
+      accountId: accountId!,
       network,
     })
       .then((node) => {
@@ -113,7 +115,18 @@ export const MyNode: React.FC<MyNodeProps> = ({
       .catch(() => {
         setIsInitializing.off()
       })
+  }
 
+  useEffect(() => {
+    if (
+      !accessKeyInLocalStorage ||
+      !appchainId ||
+      !cloudVendorInLocalStorage ||
+      !accountId
+    ) {
+      return
+    }
+    fetchNode()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     accessKeyInLocalStorage,
@@ -123,7 +136,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
   ])
 
   useEffect(() => {
-    if (!node || !deployConfig || !appchainId) {
+    if (!node || !appchainId) {
       return
     }
 
@@ -139,22 +152,9 @@ export const MyNode: React.FC<MyNodeProps> = ({
           setNodeMetrics(res)
         })
     }
-
-    if (
-      deployConfig.baseImages[appchainId]?.image &&
-      node.task?.base_image &&
-      node.task?.base_image !== deployConfig.baseImages[appchainId].image &&
-      (!deployConfig.upgradeWhitelist?.length ||
-        deployConfig.upgradeWhitelist.includes(accountId))
-    ) {
-      setIsImageNeedUpgrade.on()
-    } else {
-      setIsImageNeedUpgrade.off()
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     node,
-    deployConfig,
     appchainId,
     accountId,
     cloudVendorInLocalStorage,
@@ -168,52 +168,59 @@ export const MyNode: React.FC<MyNodeProps> = ({
     window.location.reload()
   }
 
-  const onUpgradeImage = () => {
-    if (!appchainId) {
-      return
-    }
+  const isEvm = appchain?.appchain_metadata?.template_type === "BarnacleEvm"
 
-    let secretKey
+  const { currentAccount } = useAccounts(isEvm, true)
 
-    if (cloudVendorInLocalStorage === "AWS") {
-      secretKey = window.prompt(
-        "Please enter the secret key of your server",
-        ""
-      )
-
-      if (!secretKey) {
+  const onSetSessionKey = async () => {
+    try {
+      if (isSubmitting) {
         return
       }
-    } else {
-      const { access_token } = oauthUser?.getAuthResponse()
-      secretKey = access_token
-    }
+      setIsSubmitting.on()
+      if (isEvm) {
+        await setSessionKey(node?.skey)
+        Toast.success("Set session keys success")
+        onTxSent()
+      } else {
+        const injected = await web3FromSource(currentAccount?.meta.source || "")
+        appchainApi?.setSigner(injected.signer)
 
-    setIsUpgrading.on()
-    axios.put(
-      `${deployConfig.deployApiHost}/tasks/${node?.uuid}`,
-      {
-        action: "update",
-        secret_key: secretKey,
-        base_image: deployConfig.baseImages[appchainId]?.image,
-      },
-      {
-        headers: { authorization: node?.user },
+        const tx = appchainApi?.tx.session.setKeys(node.skey, "0x00")
+        if (!tx) {
+          setIsSubmitting.off()
+          return
+        }
+
+        await tx.signAndSend(currentAccount?.address as any, (res: any) => {
+          if (res.isInBlock) {
+            Toast.success("Set session keys success")
+            onTxSent()
+          }
+        })
       }
-    )
-
-    if (!secretKey) {
-      return
+      setIsSubmitting.off()
+    } catch (err: any) {
+      setIsSubmitting.off()
+      Toast.error(err)
     }
   }
+
   // check NODE_STATE_RECORD for state meaning
   const isShowRegister =
-    !!validator || ["12", "20", "21", "22", "30"].includes(node?.state)
+    !!validator ||
+    [
+      NodeState.RUNNING,
+      NodeState.DESTROYED,
+      NodeState.DESTROYING,
+      NodeState.DESTROY_FAILED,
+      NodeState.UPGRADING,
+    ].includes(node?.state)
 
   const menuItems = [
     {
-      isDisabled: !appchainApi,
-      onClick: setSetSessionKeyModalOpen.on,
+      isDisabled: !appchainApi || !node?.skey,
+      onClick: onSetSessionKey,
       label: "Set Session Key",
       icon: TiKey,
       hasBadge: needKeys,
@@ -226,13 +233,6 @@ export const MyNode: React.FC<MyNodeProps> = ({
       hasBadge: nodeMetrics?.filesystem?.percentage > 0.8,
     },
     {
-      isDisabled: !isImageNeedUpgrade,
-      onClick: setUpgradeAlertOpen.on,
-      label: "Upgrade Image",
-      icon: HiUpload,
-      hasBadge: isImageNeedUpgrade,
-    },
-    {
       isDisabled: !accessKeyInLocalStorage,
       onClick: onClearCache,
       label: "Clear Access Key",
@@ -240,6 +240,8 @@ export const MyNode: React.FC<MyNodeProps> = ({
       hasBadge: false,
     },
   ]
+
+  console.log("validator", validator)
 
   return (
     <>
@@ -267,9 +269,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
               position="relative"
             >
               <Icon as={BsThreeDots} boxSize={5} />
-              {(needKeys ||
-                isImageNeedUpgrade ||
-                nodeMetrics?.filesystem?.percentage > 0.8) && (
+              {(needKeys || nodeMetrics?.filesystem?.percentage > 0.8) && (
                 <Box
                   position="absolute"
                   top="0px"
@@ -323,6 +323,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
             deployConfig={deployConfig}
             anchor={anchor}
             appchain={appchain}
+            validator={validator}
           />
         ) : (
           <NodeDeploy
@@ -333,31 +334,15 @@ export const MyNode: React.FC<MyNodeProps> = ({
             isShowRegister={isShowRegister}
             anchor={anchor}
             appchain={appchain}
+            fetchNode={fetchNode}
           />
         )}
       </Box>
-      <SetSessionKeyModal
-        appchain={appchain}
-        appchainApi={appchainApi}
-        isOpen={setSessionKeyModalOpen}
-        onClose={setSetSessionKeyModalOpen.off}
-      />
 
       <InstanceInfoModal
         metrics={nodeMetrics}
         isOpen={instanceInfoModalOpen}
         onClose={setInstanceInfoModalOpen.off}
-      />
-
-      <Alert
-        isOpen={upgradeAlertOpen}
-        onClose={setUpgradeAlertOpen.off}
-        title="Upgrade Image"
-        confirmButtonText="Upgrade"
-        isConfirming={isUpgrading}
-        message="Are you sure to upgrade your node image?"
-        onConfirm={onUpgradeImage}
-        confirmButtonColor="red"
       />
     </>
   )

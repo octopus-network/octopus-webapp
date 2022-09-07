@@ -264,3 +264,14 @@ export interface NodeDetail {
   user: string
   uuid: string
 }
+
+export enum NodeState {
+  INIT = "0",
+  APPLYING = "10",
+  APPLY_FAILED = "11",
+  RUNNING = "12",
+  DESTROYING = "20",
+  DESTROY_FAILED = "21",
+  DESTROYED = "22",
+  UPGRADING = "30",
+}
