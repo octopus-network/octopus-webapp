@@ -15,11 +15,12 @@ import { BaseModal } from "components"
 import { FiCpu } from "react-icons/fi"
 import { FaMemory } from "react-icons/fa"
 import { GrStorage } from "react-icons/gr"
+import { NodeMetric } from "types"
 
 type Props = {
   isOpen: boolean
   onClose: VoidFunction
-  metrics: any
+  metrics?: NodeMetric
 }
 
 export const InstanceInfoModal: React.FC<Props> = ({

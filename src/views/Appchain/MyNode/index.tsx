@@ -23,20 +23,31 @@ import { DeleteIcon } from "@chakra-ui/icons"
 
 import myStakingBg from "assets/my-staking-bg.png"
 import { BsFillTerminalFill } from "react-icons/bs"
-import { HiUpload } from "react-icons/hi"
 import { TiKey } from "react-icons/ti"
 import { BsThreeDots } from "react-icons/bs"
 import { API_HOST } from "config"
-import { Alert } from "components"
-import { SetSessionKeyModal } from "./SetSessionKeyModal"
 import type { ApiPromise } from "@polkadot/api"
 
 import { InstanceInfoModal } from "./InstanceInfoModal"
-import { AnchorContract, AppchainInfo, CLOUD_VENDOR, Validator } from "types"
+import {
+  AnchorContract,
+  AppchainInfo,
+  CLOUD_VENDOR,
+  NodeDetail,
+  NodeMetric,
+  NodeState,
+  Validator,
+} from "types"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import NodeBoard from "components/AppChain/NodeBoard"
 import { MyStaking } from "../MyStaking"
-import NodeForm from "components/AppChain/NodeForm"
+import NodeDeploy from "components/AppChain/NodeDeploy"
+import NodeManager from "utils/NodeManager"
+import { Toast } from "components/common/toast"
+import { web3FromSource } from "@polkadot/extension-dapp"
+import useAccounts from "hooks/useAccounts"
+import { onTxSent } from "utils/helper"
+import { setSessionKey } from "utils/bridge"
 
 type MyNodeProps = {
   appchainId: string | undefined
@@ -61,23 +72,19 @@ export const MyNode: React.FC<MyNodeProps> = ({
     "linear-gradient(137deg,#1486ff 4%, #0c4df5)"
   )
 
-  const [node, setNode] = useState<any>()
+  const [node, setNode] = useState<NodeDetail>()
 
   const [isInitializing, setIsInitializing] = useBoolean()
-  const [isUpgrading, setIsUpgrading] = useBoolean()
 
-  const [nodeMetrics, setNodeMetrics] = useState<any>()
+  const [nodeMetrics, setNodeMetrics] = useState<NodeMetric>()
 
-  const [upgradeAlertOpen, setUpgradeAlertOpen] = useBoolean()
-  const [setSessionKeyModalOpen, setSetSessionKeyModalOpen] = useBoolean()
+  const [isSubmitting, setIsSubmitting] = useBoolean()
   const [instanceInfoModalOpen, setInstanceInfoModalOpen] = useBoolean()
-
-  const [isImageNeedUpgrade, setIsImageNeedUpgrade] = useBoolean()
   const [oauthUser, setOAuthUser] = useState<any>()
 
   const { data: deployConfig } = useSWR("deploy-config")
 
-  const { accountId } = useWalletSelector()
+  const { accountId, network } = useWalletSelector()
 
   const cloudVendorInLocalStorage = window.localStorage.getItem(
     "OCTOPUS_DEPLOYER_CLOUD_VENDOR"
@@ -86,6 +93,65 @@ export const MyNode: React.FC<MyNodeProps> = ({
     window.localStorage.getItem("OCTOPUS_DEPLOYER_ACCESS_KEY") ||
     window.localStorage.getItem("accessKey") ||
     ""
+
+  const fetchNode = async () => {
+    setIsInitializing.on()
+    const cloudVendor = window.localStorage.getItem(
+      "OCTOPUS_DEPLOYER_CLOUD_VENDOR"
+    ) as CLOUD_VENDOR
+    const accessKey =
+      window.localStorage.getItem("OCTOPUS_DEPLOYER_ACCESS_KEY") ||
+      window.localStorage.getItem("accessKey") ||
+      ""
+    NodeManager.getNodeDetail({
+      appchainId: appchainId!,
+      cloudVendor,
+      accessKey,
+      accountId: accountId!,
+      network,
+    })
+      .then((node) => {
+        if (node) {
+          setNode(node)
+          if (
+            node?.state &&
+            [NodeState.APPLYING, NodeState.DESTROYING].includes(
+              node?.state as NodeState
+            )
+          ) {
+            setTimeout(() => {
+              fetchNode()
+            }, 3000)
+          }
+          fetchMetrics(node)
+        }
+        setIsInitializing.off()
+      })
+      .catch(() => {
+        setIsInitializing.off()
+      })
+  }
+
+  const fetchMetrics = async (node: NodeDetail | undefined) => {
+    if (!node || !appchainId) {
+      return
+    }
+
+    if (accountId && node.state === NodeState.RUNNING) {
+      axios
+        .get(
+          `
+        ${API_HOST}/node-metrics/${node.uuid}/${cloudVendorInLocalStorage}/${accessKeyInLocalStorage}/${appchainId}/${accountId}
+      `
+        )
+        .then((res) => res.data)
+        .then((res) => {
+          if (res?.memory) {
+            setNodeMetrics(res)
+          }
+        })
+    }
+  }
 
   useEffect(() => {
     if (
@@ -96,20 +162,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
     ) {
       return
     }
-    setIsInitializing.on()
-    axios
-      .get(
-        `
-      ${API_HOST}/node/${cloudVendorInLocalStorage}/${accessKeyInLocalStorage}/${appchainId}/${accountId}
-    `
-      )
-      .then((res) => res.data)
-      .then((res) => {
-        if (res) {
-          setNode(res)
-        }
-        setIsInitializing.off()
-      })
+    fetchNode()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     accessKeyInLocalStorage,
@@ -119,38 +172,10 @@ export const MyNode: React.FC<MyNodeProps> = ({
   ])
 
   useEffect(() => {
-    if (!node || !deployConfig || !appchainId) {
-      return
-    }
-
-    if (accountId && node?.state === "12") {
-      axios
-        .get(
-          `
-        ${API_HOST}/node-metrics/${node.uuid}/${cloudVendorInLocalStorage}/${accessKeyInLocalStorage}/${appchainId}/${accountId}
-      `
-        )
-        .then((res) => res.data)
-        .then((res) => {
-          setNodeMetrics(res)
-        })
-    }
-
-    if (
-      deployConfig.baseImages[appchainId]?.image &&
-      node.task?.base_image &&
-      node.task?.base_image !== deployConfig.baseImages[appchainId].image &&
-      (!deployConfig.upgradeWhitelist?.length ||
-        deployConfig.upgradeWhitelist.includes(accountId))
-    ) {
-      setIsImageNeedUpgrade.on()
-    } else {
-      setIsImageNeedUpgrade.off()
-    }
+    fetchMetrics(node)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     node,
-    deployConfig,
     appchainId,
     accountId,
     cloudVendorInLocalStorage,
@@ -164,68 +189,101 @@ export const MyNode: React.FC<MyNodeProps> = ({
     window.location.reload()
   }
 
-  const onUpgradeImage = () => {
-    if (!appchainId) {
-      return
-    }
+  const isEvm = appchain?.appchain_metadata?.template_type === "BarnacleEvm"
 
-    let secretKey
+  const { currentAccount } = useAccounts(isEvm, true)
 
-    if (cloudVendorInLocalStorage === "AWS") {
-      secretKey = window.prompt(
-        "Please enter the secret key of your server",
-        ""
-      )
-
-      if (!secretKey) {
+  const onSetSessionKey = async () => {
+    try {
+      if (isSubmitting || !node) {
         return
       }
-    } else {
-      const { access_token } = oauthUser?.getAuthResponse()
-      secretKey = access_token
-    }
+      setIsSubmitting.on()
+      if (isEvm) {
+        await setSessionKey(node.skey)
+        Toast.success("Set session keys success")
+        onTxSent()
+      } else {
+        const res = await appchainApi?.query.system.account(
+          currentAccount?.address
+        )
+        const resJSON: any = res?.toJSON()
+        if (resJSON?.data.free === 0) {
+          throw new Error("Insufficient balance")
+        }
 
-    setIsUpgrading.on()
-    axios.put(
-      `${deployConfig.deployApiHost}/tasks/${node?.uuid}`,
-      {
-        action: "update",
-        secret_key: secretKey,
-        base_image: deployConfig.baseImages[appchainId]?.image,
-      },
-      {
-        headers: { authorization: node?.user },
+        const injected = await web3FromSource(currentAccount?.meta.source || "")
+        appchainApi?.setSigner(injected.signer)
+
+        const tx = appchainApi?.tx.session.setKeys(node.skey, "0x00")
+        if (!tx) {
+          setIsSubmitting.off()
+          return
+        }
+
+        await tx.signAndSend(currentAccount?.address as any, (res: any) => {
+          if (res.isInBlock) {
+            Toast.success("Set session keys success")
+            onTxSent()
+          }
+        })
       }
-    )
-
-    if (!secretKey) {
-      return
+      setIsSubmitting.off()
+    } catch (err: any) {
+      setIsSubmitting.off()
+      Toast.error(err)
     }
   }
+
   // check NODE_STATE_RECORD for state meaning
   const isShowRegister =
-    !!validator || ["12", "20", "21", "22", "30"].includes(node?.state)
-  const isValidator = !!(validator && !validator?.is_unbonding)
+    !!validator ||
+    [
+      NodeState.RUNNING,
+      NodeState.DESTROYED,
+      NodeState.DESTROYING,
+      NodeState.DESTROY_FAILED,
+      NodeState.UPGRADING,
+    ].includes(node?.state as NodeState)
+
+  const skeyBadge = needKeys && !!node?.skey
+  const metricBadge = nodeMetrics && nodeMetrics?.filesystem?.percentage > 0.8
+
+  const menuItems = [
+    {
+      isDisabled: !appchainApi || !node?.skey || !validator,
+      onClick: onSetSessionKey,
+      label: "Set Session Key",
+      icon: TiKey,
+      hasBadge: skeyBadge,
+    },
+    {
+      isDisabled: !nodeMetrics,
+      onClick: setInstanceInfoModalOpen.on,
+      label: "Instance Info",
+      icon: BsFillTerminalFill,
+      hasBadge: metricBadge,
+    },
+    {
+      isDisabled: !accessKeyInLocalStorage,
+      onClick: onClearCache,
+      label: "Clear Access Key",
+      icon: DeleteIcon,
+      hasBadge: false,
+    },
+  ]
 
   return (
     <>
-      <Box
-        position="relative"
-        mb={3}
-        p={4}
-        borderRadius="lg"
-        bg={!isValidator ? bg : validatorBg}
-      >
-        {isValidator && (
-          <Image
-            position="absolute"
-            bottom="0"
-            right="0"
-            h="110%"
-            src={myStakingBg}
-            zIndex={0}
-          />
-        )}
+      <Box position="relative" mb={3} p={4} borderRadius="lg" bg={validatorBg}>
+        <Image
+          position="absolute"
+          bottom="0"
+          right="0"
+          h="110%"
+          src={myStakingBg}
+          zIndex={0}
+        />
         <MyStaking appchain={appchain} anchor={anchor} validator={validator} />
       </Box>
 
@@ -241,9 +299,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
               position="relative"
             >
               <Icon as={BsThreeDots} boxSize={5} />
-              {needKeys ||
-              isImageNeedUpgrade ||
-              nodeMetrics?.filesystem?.percentage > 0.8 ? (
+              {(skeyBadge || metricBadge) && (
                 <Box
                   position="absolute"
                   top="0px"
@@ -252,71 +308,33 @@ export const MyNode: React.FC<MyNodeProps> = ({
                   bg="red"
                   borderRadius="full"
                 />
-              ) : null}
+              )}
             </MenuButton>
             <MenuList>
-              <MenuItem
-                position="relative"
-                onClick={setSetSessionKeyModalOpen.on}
-                isDisabled={!appchainApi}
-              >
-                <Icon as={TiKey} mr={2} boxSize={4} /> Set Session Key
-                {needKeys ? (
-                  <Box
-                    position="absolute"
-                    top="10px"
-                    right="10px"
-                    boxSize={2}
-                    bg="red"
-                    borderRadius="full"
-                  />
-                ) : null}
-              </MenuItem>
-              <MenuItem
-                position="relative"
-                onClick={setInstanceInfoModalOpen.on}
-                isDisabled={!nodeMetrics}
-              >
-                <Icon as={BsFillTerminalFill} mr={2} boxSize={4} /> Instance
-                Info
-                {nodeMetrics?.filesystem?.percentage > 0.8 ? (
-                  <Box
-                    position="absolute"
-                    top="10px"
-                    right="10px"
-                    boxSize={2}
-                    bg="red"
-                    borderRadius="full"
-                  />
-                ) : null}
-              </MenuItem>
-              <MenuItem
-                position="relative"
-                isDisabled={!isImageNeedUpgrade}
-                onClick={setUpgradeAlertOpen.on}
-              >
-                <Icon as={HiUpload} mr={2} boxSize={3} /> Upgrade Image
-                {isImageNeedUpgrade ? (
-                  <Box
-                    position="absolute"
-                    top="10px"
-                    right="10px"
-                    boxSize={2}
-                    bg="red"
-                    borderRadius="full"
-                  />
-                ) : null}
-              </MenuItem>
-              <MenuItem
-                isDisabled={!accessKeyInLocalStorage}
-                onClick={onClearCache}
-              >
-                <Icon as={DeleteIcon} mr={2} boxSize={3} /> Clear Access Key
-              </MenuItem>
+              {menuItems.map((item) => (
+                <MenuItem
+                  key={item.label}
+                  position="relative"
+                  onClick={item.onClick}
+                  isDisabled={item.isDisabled}
+                >
+                  <Icon as={item.icon} mr={2} boxSize={4} /> {item.label}
+                  {item.hasBadge && (
+                    <Box
+                      position="absolute"
+                      top="10px"
+                      right="10px"
+                      boxSize={2}
+                      bg="red"
+                      borderRadius="full"
+                    />
+                  )}
+                </MenuItem>
+              ))}
             </MenuList>
           </Menu>
         </Flex>
-        {isInitializing ? (
+        {isInitializing && !node && (
           <Center minH="160px">
             <Spinner
               size="md"
@@ -325,7 +343,8 @@ export const MyNode: React.FC<MyNodeProps> = ({
               color="octo-blue.500"
             />
           </Center>
-        ) : node ? (
+        )}
+        {node && (
           <NodeBoard
             node={node}
             appchainId={appchainId}
@@ -335,9 +354,12 @@ export const MyNode: React.FC<MyNodeProps> = ({
             deployConfig={deployConfig}
             anchor={anchor}
             appchain={appchain}
+            validator={validator}
+            isInitializing={isInitializing}
           />
-        ) : (
-          <NodeForm
+        )}
+        {!node && !isInitializing && (
+          <NodeDeploy
             setNode={setNode}
             validator={validator}
             appchainId={appchainId}
@@ -345,31 +367,15 @@ export const MyNode: React.FC<MyNodeProps> = ({
             isShowRegister={isShowRegister}
             anchor={anchor}
             appchain={appchain}
+            fetchNode={fetchNode}
           />
         )}
       </Box>
-      <SetSessionKeyModal
-        appchain={appchain}
-        appchainApi={appchainApi}
-        isOpen={setSessionKeyModalOpen}
-        onClose={setSetSessionKeyModalOpen.off}
-      />
 
       <InstanceInfoModal
         metrics={nodeMetrics}
         isOpen={instanceInfoModalOpen}
         onClose={setInstanceInfoModalOpen.off}
-      />
-
-      <Alert
-        isOpen={upgradeAlertOpen}
-        onClose={setUpgradeAlertOpen.off}
-        title="Upgrade Image"
-        confirmButtonText="Upgrade"
-        isConfirming={isUpgrading}
-        message="Are you sure to upgrade your node image?"
-        onConfirm={onUpgradeImage}
-        confirmButtonColor="red"
       />
     </>
   )
