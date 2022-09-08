@@ -1,6 +1,7 @@
 import {
   Box,
   Button,
+  Center,
   Flex,
   HStack,
   Icon,
@@ -9,6 +10,7 @@ import {
   List,
   SimpleGrid,
   Skeleton,
+  Spinner,
   Tag,
   Text,
   useBoolean,
@@ -24,7 +26,6 @@ import {
 } from "@chakra-ui/icons"
 import { NODE_STATE_RECORD } from "config/constants"
 import axios from "axios"
-import { API_HOST } from "config"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { Toast } from "components/common/toast"
 import {
@@ -48,6 +49,7 @@ export default function NodeBoard({
   appchain,
   anchor,
   validator,
+  isInitializing,
 }: {
   node?: any
   cloudVendor: CLOUD_VENDOR
@@ -58,8 +60,8 @@ export default function NodeBoard({
   appchain?: AppchainInfo
   anchor?: AnchorContract
   validator?: Validator
+  isInitializing: boolean
 }) {
-  const [isRefreshing, setIsRefreshing] = useBoolean()
   const [isApplying, setIsApplying] = useBoolean()
   const [isDeleting, setIsDeleting] = useBoolean()
   const [isDestroying, setIsDestroying] = useBoolean()
@@ -103,25 +105,6 @@ export default function NodeBoard({
     window.location.reload()
   }
 
-  const onRefresh = () => {
-    setIsRefreshing.on()
-    NodeManager.getNodeDetail({
-      appchainId: appchainId!,
-      cloudVendor,
-      accessKey: deployAccessKey,
-      accountId: accountId!,
-      network,
-    })
-      .then((res) => {
-        setNode(res)
-        setIsRefreshing.off()
-      })
-      .catch((err) => {
-        setIsRefreshing.off()
-        Toast.error(err)
-      })
-  }
-
   const onDestroyNode = () => {
     let secretKey
 
@@ -159,14 +142,12 @@ export default function NodeBoard({
           <Text variant="gray" fontSize="sm">
             Status
           </Text>
-          <Skeleton isLoaded={!isRefreshing}>
-            <Tag
-              colorScheme={NODE_STATE_RECORD[node.state as NodeState]?.color}
-              size="sm"
-            >
-              {NODE_STATE_RECORD[node.state as NodeState]?.label}
-            </Tag>
-          </Skeleton>
+          <Tag
+            colorScheme={NODE_STATE_RECORD[node.state as NodeState]?.color}
+            size="sm"
+          >
+            {NODE_STATE_RECORD[node.state as NodeState]?.label}
+          </Tag>
         </Flex>
         <Flex justifyContent="space-between">
           <Text variant="gray" fontSize="sm">
@@ -214,7 +195,7 @@ export default function NodeBoard({
         </Flex>
       </List>
       <Box mt={3}>
-        {node?.state === "0" ? (
+        {node?.state === NodeState.INIT ? (
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
             <Button
               colorScheme="octo-blue"
@@ -232,17 +213,23 @@ export default function NodeBoard({
               <Icon as={DeleteIcon} mr={2} boxSize={3} /> Delete
             </Button>
           </SimpleGrid>
-        ) : node?.state === "10" || node?.state === "20" ? (
+        ) : node?.state === NodeState.APPLYING ||
+          node?.state === NodeState.DESTROYING ? (
           <SimpleGrid columns={1}>
-            <Button
-              onClick={onRefresh}
-              isDisabled={isRefreshing}
-              isLoading={isRefreshing}
-            >
-              <RepeatIcon mr={1} /> Refresh
-            </Button>
+            <Center gap={4}>
+              <Spinner
+                size="md"
+                thickness="4px"
+                speed="1s"
+                color="octo-blue.500"
+              />
+              <Text fontSize="sm" color="gray">
+                {NODE_STATE_RECORD[node.state as NodeState].label}
+              </Text>
+            </Center>
           </SimpleGrid>
-        ) : node?.state === "11" || node?.state === "21" ? (
+        ) : node?.state === NodeState.APPLY_FAILED ||
+          node?.state === NodeState.DESTROY_FAILED ? (
           <SimpleGrid columns={1}>
             <Button
               colorScheme="red"
@@ -253,7 +240,7 @@ export default function NodeBoard({
               <Icon as={DeleteIcon} mr={2} boxSize={3} /> Destroy
             </Button>
           </SimpleGrid>
-        ) : node?.state === "12" ? (
+        ) : node?.state === NodeState.RUNNING ? (
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
             <Button as={Link} isExternal href={node.instance.ssh_key}>
               <Icon as={DownloadIcon} mr={2} boxSize={3} /> RSA
@@ -267,7 +254,7 @@ export default function NodeBoard({
               <Icon as={DeleteIcon} mr={2} boxSize={3} /> Destroy
             </Button>
           </SimpleGrid>
-        ) : node?.state === "22" ? (
+        ) : node?.state === NodeState.DESTROYED ? (
           <SimpleGrid columns={1}>
             <Button
               onClick={onDeleteNode}
@@ -277,7 +264,7 @@ export default function NodeBoard({
               <Icon as={DeleteIcon} mr={2} boxSize={3} /> Delete
             </Button>
           </SimpleGrid>
-        ) : node?.state === "30" ? (
+        ) : node?.state === NodeState.UPGRADING ? (
           <SimpleGrid columns={1}>
             <Button as={Link} isExternal href={node.instance.ssh_key}>
               <Icon as={DownloadIcon} mr={2} boxSize={3} /> RSA

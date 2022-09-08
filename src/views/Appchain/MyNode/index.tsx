@@ -33,6 +33,8 @@ import {
   AnchorContract,
   AppchainInfo,
   CLOUD_VENDOR,
+  NodeDetail,
+  NodeMetric,
   NodeState,
   Validator,
 } from "types"
@@ -70,11 +72,11 @@ export const MyNode: React.FC<MyNodeProps> = ({
     "linear-gradient(137deg,#1486ff 4%, #0c4df5)"
   )
 
-  const [node, setNode] = useState<any>()
+  const [node, setNode] = useState<NodeDetail>()
 
   const [isInitializing, setIsInitializing] = useBoolean()
 
-  const [nodeMetrics, setNodeMetrics] = useState<any>()
+  const [nodeMetrics, setNodeMetrics] = useState<NodeMetric>()
 
   const [isSubmitting, setIsSubmitting] = useBoolean()
   const [instanceInfoModalOpen, setInstanceInfoModalOpen] = useBoolean()
@@ -109,12 +111,46 @@ export const MyNode: React.FC<MyNodeProps> = ({
       network,
     })
       .then((node) => {
-        setNode(node)
+        if (node) {
+          setNode(node)
+          if (
+            node?.state &&
+            [NodeState.APPLYING, NodeState.DESTROYING].includes(
+              node?.state as NodeState
+            )
+          ) {
+            setTimeout(() => {
+              fetchNode()
+            }, 3000)
+          }
+          fetchMetrics(node)
+        }
         setIsInitializing.off()
       })
       .catch(() => {
         setIsInitializing.off()
       })
+  }
+
+  const fetchMetrics = async (node: NodeDetail | undefined) => {
+    if (!node || !appchainId) {
+      return
+    }
+
+    if (accountId && node.state === NodeState.RUNNING) {
+      axios
+        .get(
+          `
+        ${API_HOST}/node-metrics/${node.uuid}/${cloudVendorInLocalStorage}/${accessKeyInLocalStorage}/${appchainId}/${accountId}
+      `
+        )
+        .then((res) => res.data)
+        .then((res) => {
+          if (res?.memory) {
+            setNodeMetrics(res)
+          }
+        })
+    }
   }
 
   useEffect(() => {
@@ -136,22 +172,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
   ])
 
   useEffect(() => {
-    if (!node || !appchainId) {
-      return
-    }
-
-    if (accountId && node?.state === "12") {
-      axios
-        .get(
-          `
-        ${API_HOST}/node-metrics/${node.uuid}/${cloudVendorInLocalStorage}/${accessKeyInLocalStorage}/${appchainId}/${accountId}
-      `
-        )
-        .then((res) => res.data)
-        .then((res) => {
-          setNodeMetrics(res)
-        })
-    }
+    fetchMetrics(node)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     node,
@@ -174,15 +195,23 @@ export const MyNode: React.FC<MyNodeProps> = ({
 
   const onSetSessionKey = async () => {
     try {
-      if (isSubmitting) {
+      if (isSubmitting || !node) {
         return
       }
       setIsSubmitting.on()
       if (isEvm) {
-        await setSessionKey(node?.skey)
+        await setSessionKey(node.skey)
         Toast.success("Set session keys success")
         onTxSent()
       } else {
+        const res = await appchainApi?.query.system.account(
+          currentAccount?.address
+        )
+        const resJSON: any = res?.toJSON()
+        if (resJSON?.data.free === 0) {
+          throw new Error("Insufficient balance")
+        }
+
         const injected = await web3FromSource(currentAccount?.meta.source || "")
         appchainApi?.setSigner(injected.signer)
 
@@ -215,22 +244,25 @@ export const MyNode: React.FC<MyNodeProps> = ({
       NodeState.DESTROYING,
       NodeState.DESTROY_FAILED,
       NodeState.UPGRADING,
-    ].includes(node?.state)
+    ].includes(node?.state as NodeState)
+
+  const skeyBadge = needKeys && !!node?.skey
+  const metricBadge = nodeMetrics && nodeMetrics?.filesystem?.percentage > 0.8
 
   const menuItems = [
     {
-      isDisabled: !appchainApi || !node?.skey,
+      isDisabled: !appchainApi || !node?.skey || !validator,
       onClick: onSetSessionKey,
       label: "Set Session Key",
       icon: TiKey,
-      hasBadge: needKeys,
+      hasBadge: skeyBadge,
     },
     {
       isDisabled: !nodeMetrics,
       onClick: setInstanceInfoModalOpen.on,
       label: "Instance Info",
       icon: BsFillTerminalFill,
-      hasBadge: nodeMetrics?.filesystem?.percentage > 0.8,
+      hasBadge: metricBadge,
     },
     {
       isDisabled: !accessKeyInLocalStorage,
@@ -240,8 +272,6 @@ export const MyNode: React.FC<MyNodeProps> = ({
       hasBadge: false,
     },
   ]
-
-  console.log("validator", validator)
 
   return (
     <>
@@ -269,7 +299,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
               position="relative"
             >
               <Icon as={BsThreeDots} boxSize={5} />
-              {(needKeys || nodeMetrics?.filesystem?.percentage > 0.8) && (
+              {(skeyBadge || metricBadge) && (
                 <Box
                   position="absolute"
                   top="0px"
@@ -304,7 +334,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
             </MenuList>
           </Menu>
         </Flex>
-        {isInitializing ? (
+        {isInitializing && !node && (
           <Center minH="160px">
             <Spinner
               size="md"
@@ -313,7 +343,8 @@ export const MyNode: React.FC<MyNodeProps> = ({
               color="octo-blue.500"
             />
           </Center>
-        ) : node ? (
+        )}
+        {node && (
           <NodeBoard
             node={node}
             appchainId={appchainId}
@@ -324,8 +355,10 @@ export const MyNode: React.FC<MyNodeProps> = ({
             anchor={anchor}
             appchain={appchain}
             validator={validator}
+            isInitializing={isInitializing}
           />
-        ) : (
+        )}
+        {!node && !isInitializing && (
           <NodeDeploy
             setNode={setNode}
             validator={validator}

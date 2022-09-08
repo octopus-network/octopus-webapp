@@ -263,6 +263,7 @@ export interface NodeDetail {
   }
   user: string
   uuid: string
+  skey: string
 }
 
 export enum NodeState {
@@ -274,4 +275,32 @@ export enum NodeState {
   DESTROY_FAILED = "21",
   DESTROYED = "22",
   UPGRADING = "30",
+}
+
+export interface NodeMetric {
+  memory: {
+    avail: number
+    buff: number
+    cache: number
+    free: number
+    percentage: number
+    total: number
+    used: number
+  }
+  filesystem: {
+    avail: number
+    percentage: number
+    total: number
+  }
+  cpu: {
+    hi: number
+    id: number
+    ni: number
+    percentage: number
+    si: number
+    st: number
+    sy: number
+    us: number
+    wa: number
+  }[]
 }
