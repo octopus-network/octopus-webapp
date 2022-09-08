@@ -59,7 +59,7 @@ export const Appchains: React.FC = () => {
             <Link
               href={
                 isMainnet
-                  ? "https://discord.gg/uVKUBSssxm"
+                  ? "https://discord.gg/BEQrN4Ya7C"
                   : "https://discord.gg/zgcdhu5BzT"
               }
               target="_blank"

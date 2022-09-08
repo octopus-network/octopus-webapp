@@ -179,36 +179,43 @@ export const BridgePanel: React.FC = () => {
       return
     }
     if (isNearToAppchain) {
-      appchainApi?.query.system.account(to).then((res: any) => {
-        if (res.providers.toNumber() === 0) {
-          setTargetAccountNeedDepositStorage.on()
-        } else {
-          setTargetAccountNeedDepositStorage.off()
-        }
-      })
-    } else if (appchainApi) {
-      const provider = new providers.JsonRpcProvider({
-        url: selector.options.network.nodeUrl,
-      })
-
-      provider
-        .query<CodeResult>({
+      setTargetAccountNeedDepositStorage.off()
+      return
+    }
+    async function checkStorage() {
+      try {
+        const provider = new providers.JsonRpcProvider({
+          url: selector.options.network.nodeUrl,
+        })
+        const res = await provider.query<CodeResult>({
           request_type: "call_function",
-          account_id: tokenAsset.contractId,
+          account_id: tokenAsset?.contractId,
+          method_name: "storage_balance_bounds",
+          args_base64: "",
+          finality: "optimistic",
+        })
+        const bounds = JSON.parse(Buffer.from(res.result).toString())
+
+        const res2 = await provider.query<CodeResult>({
+          request_type: "call_function",
+          account_id: tokenAsset?.contractId,
           method_name: "storage_balance_of",
           args_base64: btoa(JSON.stringify({ account_id: to })),
           finality: "optimistic",
         })
-        .then((res) => {
-          const storage = JSON.parse(Buffer.from(res.result).toString())
+        const storage = JSON.parse(Buffer.from(res2.result).toString())
 
-          if (storage === null) {
-            setTargetAccountNeedDepositStorage.on()
-          } else {
-            setTargetAccountNeedDepositStorage.off()
-          }
-        })
+        if (
+          storage === null ||
+          new Decimal(storage.total).lessThan(bounds.min)
+        ) {
+          setTargetAccountNeedDepositStorage.on()
+        } else {
+          setTargetAccountNeedDepositStorage.off()
+        }
+      } catch (error) {}
     }
+    checkStorage()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     appchainApi,
@@ -518,40 +525,6 @@ export const BridgePanel: React.FC = () => {
 
   const onDepositStorage = async () => {
     if (isNearToAppchain) {
-      if (!appchainApi || !currentAccount) {
-        return
-      }
-      await web3Enable("Octopus Network")
-      const injected = await web3FromSource(currentAccount.meta.source || "")
-      appchainApi.setSigner(injected.signer)
-
-      setIsDepositingStorage.on()
-
-      const res = await appchainApi?.query.system.account(to)
-      const resJSON: any = res?.toJSON()
-      const balance = DecimalUtil.fromString(
-        resJSON?.data?.free,
-        Array.isArray(tokenAsset?.metadata.decimals)
-          ? tokenAsset?.metadata.decimals[1]
-          : tokenAsset?.metadata.decimals
-      )
-      const toDepositAmount = DecimalUtil.toU64(
-        new Decimal(isEvm ? 0.0002 : 0.01),
-        appchain?.appchain_metadata?.fungible_token_metadata?.decimals
-      ).toString()
-
-      if (!balance.gte(toDepositAmount)) {
-        return Toast.error("Balance not enough")
-      }
-      const tx = appchainApi.tx.balances.transfer(to!, toDepositAmount)
-
-      tx.signAndSend(currentAccount.address, (res) => {
-        if (res.isInBlock) {
-          setIsDepositingStorage.off()
-          setTargetAccountNeedDepositStorage.off()
-        }
-      })
-
       return
     }
 
