@@ -22,6 +22,16 @@ import {
   DrawerCloseButton,
   DrawerBody,
   VStack,
+  useBoolean,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalCloseButton,
+  ModalBody,
+  ModalFooter,
+  Button,
+  Text,
 } from "@chakra-ui/react"
 
 import { ColorModeSwitcher, LoginButton } from "components"
@@ -34,6 +44,7 @@ import octoAvatar from "assets/icons/avatar.png"
 
 import { MdMenu } from "react-icons/md"
 import { useWalletSelector } from "./WalletSelectorContextProvider"
+import { Toast } from "./common/toast"
 
 type NavLinkProps = {
   path: string
@@ -75,12 +86,19 @@ export const Header: React.FC = () => {
   } = useDisclosure()
 
   const { isOpen, onOpen, onClose } = useDisclosure()
+  const [confirmModal, setConfirmModal] = useBoolean()
 
   const onLogout = async () => {
     const wallet = await selector.wallet()
-    wallet.signOut().catch((err) => {
-      console.error(err)
-    })
+    wallet
+      .signOut()
+      .then(() => {
+        setConfirmModal.off()
+        window.location.reload()
+      })
+      .catch((err) => {
+        Toast.error(err)
+      })
   }
 
   return (
@@ -123,7 +141,10 @@ export const Header: React.FC = () => {
                   </RouterLink>
                 </MenuGroup>
                 <MenuDivider />
-                <MenuItem onClick={onLogout} icon={<AiOutlinePoweroff />}>
+                <MenuItem
+                  onClick={setConfirmModal.on}
+                  icon={<AiOutlinePoweroff />}
+                >
                   Logout
                 </MenuItem>
               </MenuList>
@@ -182,6 +203,27 @@ export const Header: React.FC = () => {
           </HStack>
         </HStack>
       </Flex>
+      <Modal
+        isCentered
+        onClose={setConfirmModal.off}
+        size="md"
+        isOpen={confirmModal}
+      >
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Wallet</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Text>Confirm logout?</Text>
+          </ModalBody>
+          <ModalFooter>
+            <Button onClick={setConfirmModal.off}>Cancel</Button>
+            <Button colorScheme="octo-blue" ml={3} onClick={onLogout}>
+              Confirm
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Container>
   )
 }
