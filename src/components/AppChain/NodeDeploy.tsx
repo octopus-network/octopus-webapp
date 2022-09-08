@@ -102,6 +102,8 @@ export default function NodeDeploy({
       })
       if (!node) {
         setStep(DeployStep.NEED_SECRECT_KEY)
+      } else {
+        fetchNode()
       }
     } catch (error) {
       Toast.error(error)
@@ -173,22 +175,7 @@ export default function NodeDeploy({
         />
       )}
 
-      {isDeployed ? (
-        <Flex direction="column" mt={4} mb={2} gap={6}>
-          <Button
-            onClick={setRegisterValidatorModalOpen.on}
-            colorScheme="octo-blue"
-            isDisabled={!accountId || isUnbonding}
-            width="100%"
-          >
-            {!accountId
-              ? "Please Login"
-              : isUnbonding
-              ? "Unbonding"
-              : "Register Validator"}
-          </Button>
-        </Flex>
-      ) : (
+      {!isDeployed && (
         <Flex m={2} flexDirection="column" gap={2}>
           <Flex direction="row" gap={2}>
             <Button
@@ -238,6 +225,30 @@ export default function NodeDeploy({
               Deploy Validator Node
             </Link>
           </Text>
+        </Flex>
+      )}
+
+      {validator && step === DeployStep.NEED_ACCESS_KEY ? (
+        <Flex direction="column" mt={2} mb={2} gap={6}>
+          <Button
+            onClick={onConfirmAccessKey}
+            colorScheme="octo-blue"
+            isDisabled={!accountId || isUnbonding}
+            width="100%"
+          >
+            Confirm Your Access Key
+          </Button>
+        </Flex>
+      ) : (
+        <Flex direction="column" mt={2} mb={2} gap={6}>
+          <Button
+            onClick={setRegisterValidatorModalOpen.on}
+            colorScheme="octo-blue"
+            isDisabled={!accountId || isUnbonding}
+            width="100%"
+          >
+            Register Validator
+          </Button>
         </Flex>
       )}
 
