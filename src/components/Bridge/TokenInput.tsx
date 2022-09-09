@@ -40,7 +40,7 @@ export default function TokenInpput({
   from: string
   appchainId: string
   onChangeAmount: (value: string) => void
-  onChangeTokenAsset: (value: TokenAsset) => void
+  onChangeTokenAsset: (value: any, isCollectible: boolean) => void
   appchainApi?: ApiPromise
 }) {
   const { accountId, selector } = useWalletSelector()
@@ -92,18 +92,12 @@ export default function TokenInpput({
   }, [])
   const isNear = chain === "NEAR"
   const onSetMax = () => {
-    // if (!isNear && tokenAsset?.assetId === undefined) {
-    //   onUpdateAmount(
-    //     balance?.sub(0.1).gt(ZERO_DECIMAL) ? balance?.sub(0.1).toString() : ""
-    //   )
-    // } else {
-    // }
     onUpdateAmount(balance?.toString() || "")
   }
 
   const onUpdateTokenAsset = useCallback((t: TokenAsset) => {
     setTokenAsset(t)
-    onChangeTokenAsset(t)
+    onChangeTokenAsset(t, false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   useEffect(() => {
@@ -154,6 +148,8 @@ export default function TokenInpput({
   ) => {
     if (isCollectible) {
       setCollectible(token as Collectible)
+      onChangeTokenAsset(token as Collectible, true)
+      setTokenAsset(undefined)
     } else {
       setCollectible(undefined)
       onUpdateTokenAsset(token as TokenAsset)
