@@ -14,6 +14,7 @@ import {
   Text,
   useBoolean,
   useClipboard,
+  Tooltip,
 } from "@chakra-ui/react"
 
 import { DownloadIcon, DeleteIcon, CheckIcon, CopyIcon } from "@chakra-ui/icons"
@@ -265,16 +266,28 @@ export default function NodeBoard({
         ) : null}
       </Box>
 
-      {!validator && node?.skey && (
-        <Button
-          onClick={setRegisterValidatorModalOpen.on}
-          colorScheme="octo-blue"
-          isDisabled={!accountId}
-          width="100%"
-          mt={4}
+      {!validator && (
+        <Tooltip
+          label={
+            !node?.sync
+              ? "You will be able to register validator after node synced"
+              : ""
+          }
+          bg="gray.300"
+          color="black"
+          p={4}
         >
-          {!accountId ? "Please Login" : "Register Validator"}
-        </Button>
+          <Button
+            onClick={node?.sync ? setRegisterValidatorModalOpen.on : undefined}
+            colorScheme="octo-blue"
+            isDisabled={!accountId}
+            width="100%"
+            opacity={node?.sync ? 1 : 0.5}
+            mt={4}
+          >
+            {!accountId ? "Please Login" : "Register Validator"}
+          </Button>
+        </Tooltip>
       )}
 
       <RegisterValidatorModal
