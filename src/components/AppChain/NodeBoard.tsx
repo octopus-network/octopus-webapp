@@ -9,7 +9,6 @@ import {
   Link,
   List,
   SimpleGrid,
-  Skeleton,
   Spinner,
   Tag,
   Text,
@@ -17,17 +16,10 @@ import {
   useClipboard,
 } from "@chakra-ui/react"
 
-import {
-  DownloadIcon,
-  DeleteIcon,
-  CheckIcon,
-  CopyIcon,
-  RepeatIcon,
-} from "@chakra-ui/icons"
+import { DownloadIcon, DeleteIcon, CheckIcon, CopyIcon } from "@chakra-ui/icons"
 import { NODE_STATE_RECORD } from "config/constants"
 import axios from "axios"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
-import { Toast } from "components/common/toast"
 import {
   AnchorContract,
   AppchainInfo,
@@ -273,7 +265,7 @@ export default function NodeBoard({
         ) : null}
       </Box>
 
-      {!validator && (
+      {!validator && node?.skey && (
         <Button
           onClick={setRegisterValidatorModalOpen.on}
           colorScheme="octo-blue"

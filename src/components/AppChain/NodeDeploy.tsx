@@ -146,6 +146,18 @@ export default function NodeDeploy({
     }
   }
 
+  if (validator && isManuallyDeployed) {
+    return (
+      <>
+        <Center minH="175px">
+          <Text fontSize="md" color="gray.500">
+            You have deployed a node for this appchain manually.
+          </Text>
+        </Center>
+      </>
+    )
+  }
+
   return (
     <>
       {step === DeployStep.NEED_ACCESS_KEY && (
@@ -228,7 +240,7 @@ export default function NodeDeploy({
         </Flex>
       )}
 
-      {validator && step === DeployStep.NEED_ACCESS_KEY ? (
+      {validator && step === DeployStep.NEED_ACCESS_KEY && (
         <Flex direction="column" mt={2} mb={2} gap={6}>
           <Button
             onClick={onConfirmAccessKey}
@@ -239,7 +251,9 @@ export default function NodeDeploy({
             Confirm Your Access Key
           </Button>
         </Flex>
-      ) : (
+      )}
+
+      {((!validator && !accessKey) || isManuallyDeployed) && (
         <Flex direction="column" mt={2} mb={2} gap={6}>
           <Button
             onClick={setRegisterValidatorModalOpen.on}

@@ -48,6 +48,7 @@ import { web3FromSource } from "@polkadot/extension-dapp"
 import useAccounts from "hooks/useAccounts"
 import { onTxSent } from "utils/helper"
 import { setSessionKey } from "utils/bridge"
+import { SetSessionKeyModal } from "./SetSessionKeyModal"
 
 type MyNodeProps = {
   appchainId: string | undefined
@@ -81,6 +82,8 @@ export const MyNode: React.FC<MyNodeProps> = ({
   const [isSubmitting, setIsSubmitting] = useBoolean()
   const [instanceInfoModalOpen, setInstanceInfoModalOpen] = useBoolean()
   const [oauthUser, setOAuthUser] = useState<any>()
+  const [isManuallyDeployed, setIsManuallyDeployed] = useBoolean()
+  const [setSessionKeyModalOpen, setSetSessionKeyModalOpen] = useBoolean(false)
 
   const { data: deployConfig } = useSWR("deploy-config")
 
@@ -93,6 +96,14 @@ export const MyNode: React.FC<MyNodeProps> = ({
     window.localStorage.getItem("OCTOPUS_DEPLOYER_ACCESS_KEY") ||
     window.localStorage.getItem("accessKey") ||
     ""
+
+  useEffect(() => {
+    if (appchainId) {
+      const ismd = localStorage.getItem(`manually-deployed-${appchainId}`)
+      ismd === "true" && setIsManuallyDeployed.on()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appchainId])
 
   const fetchNode = async () => {
     setIsInitializing.on()
@@ -195,6 +206,10 @@ export const MyNode: React.FC<MyNodeProps> = ({
 
   const onSetSessionKey = async () => {
     try {
+      if (isManuallyDeployed) {
+        setSetSessionKeyModalOpen.on()
+        return
+      }
       if (isSubmitting || !node) {
         return
       }
@@ -251,7 +266,9 @@ export const MyNode: React.FC<MyNodeProps> = ({
 
   const menuItems = [
     {
-      isDisabled: !appchainApi || !node?.skey || !validator,
+      isDisabled: isManuallyDeployed
+        ? false
+        : !appchainApi || !node?.skey || !validator,
       onClick: onSetSessionKey,
       label: "Set Session Key",
       icon: TiKey,
@@ -376,6 +393,13 @@ export const MyNode: React.FC<MyNodeProps> = ({
         metrics={nodeMetrics}
         isOpen={instanceInfoModalOpen}
         onClose={setInstanceInfoModalOpen.off}
+      />
+
+      <SetSessionKeyModal
+        isOpen={setSessionKeyModalOpen}
+        onClose={setSetSessionKeyModalOpen.off}
+        appchain={appchain}
+        appchainApi={appchainApi}
       />
     </>
   )
