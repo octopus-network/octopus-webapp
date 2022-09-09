@@ -4,12 +4,10 @@ import dayjs from "dayjs"
 
 import {
   Box,
-  Image,
   Heading,
   SimpleGrid,
   Text,
   HStack,
-  Center,
   VStack,
   Button,
   Icon,
@@ -36,8 +34,6 @@ import { AiOutlineMenu } from "react-icons/ai"
 import { BsThreeDots, BsCheckCircle } from "react-icons/bs"
 import { AddIcon, MinusIcon } from "@chakra-ui/icons"
 
-import empty from "assets/empty.png"
-
 import { StakingHistoryModal } from "./StakingHistoryModal"
 import { RewardsModal } from "../RewardsModal"
 import { StakesModal } from "./StakesModal"
@@ -45,6 +41,11 @@ import { StakingPopover } from "../StakingPopover"
 
 import { DecimalUtil, ZERO_DECIMAL } from "utils"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import {
+  calcUnwithdrawnReward,
+  getDelegatorUnbondedValidators,
+} from "utils/appchain"
+import { API_HOST } from "config"
 
 type MyStakingProps = {
   appchain?: AppchainInfoWithAnchorStatus
@@ -57,44 +58,82 @@ export const MyStaking: React.FC<MyStakingProps> = ({
   anchor,
   validator,
 }) => {
-  const isUnbonding = !!(validator && validator?.is_unbonding)
   const isValidator = !!(validator && !validator?.is_unbonding)
 
   const [rewardsModalOpen, setRewardsModalOpen] = useBoolean(false)
   const [stakesModalOpen, setStakesModalOpen] = useBoolean(false)
   const [stakingHistoryModalOpen, setStakingHistoryModalOpen] =
     useBoolean(false)
-
-  const { accountId } = useWalletSelector()
+  const [delegatorRewards, setDelegatorRewards] = useState<{
+    [key: string]: RewardHistory[]
+  }>({})
+  const { accountId, networkConfig } = useWalletSelector()
   const [deposit, setDeposit] = useState(ZERO_DECIMAL)
 
   const [unbonedStakes, setUnbondedStakes] = useState<UnbondedHistory[]>()
   const [stakingHistories, setStakingHistories] = useState<StakingHistory[]>()
 
-  const { data: rewards } = useSWR<RewardHistory[]>(
+  const { data: validatorRewards } = useSWR<RewardHistory[]>(
     appchain?.anchor_status && accountId
       ? `rewards/${accountId}/${appchain.appchain_id}/${appchain?.anchor_status?.index_range_of_validator_set_history?.end_index}`
       : null
   )
 
-  const unwithdrawnRewards = useMemo(() => {
-    if (!rewards?.length) {
-      return ZERO_DECIMAL
+  useEffect(() => {
+    async function fetchDelegatorRewards() {
+      // ;`rewards/${validator?.validator_id}/${appchain?.appchain_id}/${accountId}/${appchain?.anchor_status?.index_range_of_validator_set_history?.end_index}`
+      if (!(appchain && accountId && networkConfig)) {
+        return
+      }
+      try {
+        const unbondedValidatorIds = await getDelegatorUnbondedValidators(
+          networkConfig,
+          appchain.appchain_anchor,
+          accountId
+        )
+        const delegatorRewards = await Promise.all(
+          unbondedValidatorIds.map(async (id) => {
+            return await fetch(
+              `${API_HOST}/rewards/${id}/${appchain.appchain_id}/${accountId}/${appchain?.anchor_status?.index_range_of_validator_set_history?.end_index}`
+            ).then((res) => res.json())
+          })
+        )
+        console.log("delegatorRewards", delegatorRewards)
+        const rewards: { [key: string]: RewardHistory[] } = {}
+        delegatorRewards.forEach((reward, idx) => {
+          rewards[unbondedValidatorIds[idx]] = reward
+        })
+        setDelegatorRewards(rewards)
+      } catch (error) {
+        console.log("error", error)
+      }
     }
 
-    return rewards.reduce(
-      (total, next) =>
-        total.plus(
-          next.expired
-            ? ZERO_DECIMAL
-            : DecimalUtil.fromString(
-                next.unwithdrawn_reward,
-                appchain?.appchain_metadata?.fungible_token_metadata.decimals
-              )
-        ),
-      ZERO_DECIMAL
+    fetchDelegatorRewards()
+  }, [appchain, accountId, networkConfig])
+
+  const decimals = appchain?.appchain_metadata?.fungible_token_metadata.decimals
+  const hasNewReward = useMemo(() => {
+    const unwithdrawnValidatorReward = calcUnwithdrawnReward(
+      validatorRewards || [],
+      decimals
     )
-  }, [rewards])
+    if (!unwithdrawnValidatorReward.isZero()) {
+      return true
+    }
+
+    const unwithdrawnDelegatorRewards = Object.values(delegatorRewards).map(
+      (t) => {
+        return calcUnwithdrawnReward(t, decimals)
+      }
+    )
+
+    if (unwithdrawnDelegatorRewards.some((t) => t.isZero())) {
+      return true
+    }
+
+    return false
+  }, [validatorRewards, delegatorRewards, decimals])
 
   const withdrawableStakes = useMemo(() => {
     if (!unbonedStakes?.length) {
@@ -145,7 +184,7 @@ export const MyStaking: React.FC<MyStakingProps> = ({
                 >
                   Rewards
                 </Button>
-                {unwithdrawnRewards.gt(ZERO_DECIMAL) ? (
+                {hasNewReward ? (
                   <Box
                     boxSize={2}
                     borderRadius="full"
@@ -242,7 +281,8 @@ export const MyStaking: React.FC<MyStakingProps> = ({
         onClose={setRewardsModalOpen.off}
         appchain={appchain}
         anchor={anchor}
-        rewards={rewards}
+        validatorRewards={validatorRewards}
+        delegatorRewards={delegatorRewards}
       />
 
       <StakesModal

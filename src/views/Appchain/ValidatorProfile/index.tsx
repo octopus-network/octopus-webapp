@@ -107,7 +107,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
   const [delegateModalOpen, setDelegateModalOpen] = useBoolean()
   const [updateEmail, setUpdateEmail] = useBoolean()
 
-  const { accountId, selector } = useWalletSelector()
+  const { accountId, selector, networkConfig } = useWalletSelector()
 
   const { data: delegators } = useSWR<Delegator[]>(
     appchain && validatorId
@@ -634,7 +634,10 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
         appchain={appchain}
         anchor={anchor}
         validatorId={validatorId}
-        rewards={delegatorRewards}
+        delegatorRewards={{
+          [validatorId]: delegatorRewards || [],
+        }}
+        validatorRewards={[]}
       />
     </>
   )
