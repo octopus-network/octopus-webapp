@@ -66,7 +66,7 @@ type Token = {
 type BridgeHistory = {
   id: string;
   direction: string;
-  appchain_name: string;
+  appchain_id: string;
   event: string;
   amount: string;
   from: string;
@@ -119,7 +119,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
   const [isAppchainSide, appchainId] = useMemo(
     () => [
       data.direction === "appchain_to_near",
-      data.appchain_name.replace(`${network?.near.networkId}-`, ""),
+      data.appchain_id.replace(`${network?.near.networkId}-`, ""),
     ],
     [data]
   );
@@ -128,6 +128,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
     `appchain/${appchainId}`
   );
 
+  console.log("data", data);
   return (
     <Skeleton isLoaded={!!appchain || !network}>
       <Box left={0} top={0} right={0} pb={1} opacity={0.6}>
@@ -205,7 +206,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
                   textOverflow="ellipsis"
                   className="tx-hash-ellipsis"
                 >
-                  {appchain
+                  {appchain && data.token
                     ? DecimalUtil.beautify(
                         DecimalUtil.fromString(
                           data.amount.replaceAll(",", ""),
@@ -216,7 +217,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
                 </Heading>
 
                 <Text fontSize="sm" color="gray.500">
-                  {data.token.symbol}
+                  {data.token?.symbol}
                 </Text>
               </HStack>
             </VStack>
