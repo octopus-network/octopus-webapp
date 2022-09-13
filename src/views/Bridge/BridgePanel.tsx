@@ -416,6 +416,9 @@ export const BridgePanel: React.FC = () => {
         if (section === "octopusAppchain" && method === "NftLocked") {
           setIsTransferring.off()
           setCollectible(undefined)
+          setTimeout(() => {
+            window.location.reload()
+          }, 1000)
         }
       })
     })
@@ -513,9 +516,6 @@ export const BridgePanel: React.FC = () => {
 
       setIsTransferring.off()
       Toast.success("Bridging")
-      if (!isNearToAppchain) {
-        window.location.reload()
-      }
     } catch (error) {
       setIsTransferring.off()
       Toast.error(error)

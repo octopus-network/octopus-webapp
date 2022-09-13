@@ -435,7 +435,9 @@ export async function substrateBurn({
           toAccount: targetAccount,
           tokenContractId: asset?.contractId,
         })
-        window.location.reload()
+        setTimeout(() => {
+          window.location.reload()
+        }, 1000)
       }
     })
   })
