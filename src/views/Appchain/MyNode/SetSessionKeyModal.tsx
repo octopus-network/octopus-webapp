@@ -68,16 +68,8 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
     setIsInAccountsPage.off()
   }
 
-  const onKeyChange = (key: string) => {
-    if (
-      isHex(key) &&
+  const isValidKey = isHex(key) &&
       ((!isEvm && key.length === 324) || (isEvm && key.length === 326))
-    ) {
-      setKey(key)
-    } else {
-      setKey("")
-    }
-  }
 
   const onSubmit = async () => {
     try {
@@ -127,6 +119,9 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
       console.log("error", error)
     }
   }
+
+  console.log('isValidKey', isValidKey);
+  
 
   return (
     <BaseModal
@@ -190,8 +185,10 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
                 type="text"
                 placeholder="Session key"
                 autoFocus
-                onChange={(e) => onKeyChange(e.target.value)}
+                value={key}
+                onChange={(e) => setKey(e.target.value)}
               />
+              <Text color="red">{key && !isValidKey ? "Invalid key":"\u00a0"}</Text>
               <FormHelperText>
                 Session Key is usually a set of hex strings, you can get it from
                 the node you deployed
@@ -211,7 +208,7 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
               colorScheme="octo-blue"
               onClick={onSubmit}
               width="100%"
-              isDisabled={!key || !currentAccount}
+              isDisabled={!isValidKey || !currentAccount}
               isLoading={isSubmitting}
             >
               Set

@@ -15,22 +15,22 @@ import {
   useBoolean,
   useClipboard,
   Tooltip,
-} from "@chakra-ui/react"
+} from '@chakra-ui/react'
 
-import { DownloadIcon, DeleteIcon, CheckIcon, CopyIcon } from "@chakra-ui/icons"
-import { NODE_STATE_RECORD } from "config/constants"
-import axios from "axios"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { DownloadIcon, DeleteIcon, CheckIcon, CopyIcon } from '@chakra-ui/icons'
+import { NODE_STATE_RECORD } from 'config/constants'
+import axios from 'axios'
+import { useWalletSelector } from 'components/WalletSelectorContextProvider'
 import {
   AnchorContract,
   AppchainInfo,
   CLOUD_VENDOR,
   NodeState,
   Validator,
-} from "types"
-import { RegisterValidatorModal } from "views/Appchain/MyStaking/RegisterValidatorModal"
-import { BsArrowUpRight } from "react-icons/bs"
-import NodeManager from "utils/NodeManager"
+} from 'types'
+import { RegisterValidatorModal } from 'views/Appchain/MyStaking/RegisterValidatorModal'
+import { BsArrowUpRight } from 'react-icons/bs'
+import NodeManager from 'utils/NodeManager'
 
 export default function NodeBoard({
   node,
@@ -62,17 +62,17 @@ export default function NodeBoard({
     useBoolean(false)
 
   const { hasCopied: hasNodeIdCopied, onCopy: onCopyNodeId } = useClipboard(
-    node?.uuid || ""
+    node?.uuid || ''
   )
 
   const { accountId, network } = useWalletSelector()
 
   const onApplyNode = async () => {
-    let secretKey = ""
+    let secretKey = ''
 
     if (cloudVendor === CLOUD_VENDOR.AWS) {
       secretKey =
-        window.prompt("Please enter the secret key of your server", "") ?? ""
+        window.prompt('Please enter the secret key of your server', '') ?? ''
 
       if (!secretKey) {
         return
@@ -103,8 +103,8 @@ export default function NodeBoard({
 
     if (cloudVendor === CLOUD_VENDOR.AWS) {
       secretKey = window.prompt(
-        "Please enter the secret key of your server",
-        ""
+        'Please enter the secret key of your server',
+        ''
       )
 
       if (!secretKey) {
@@ -139,7 +139,9 @@ export default function NodeBoard({
             colorScheme={NODE_STATE_RECORD[node.state as NodeState]?.color}
             size="sm"
           >
-            {NODE_STATE_RECORD[node.state as NodeState]?.label}
+            {node.state === NodeState.RUNNING && !node.sync
+              ? 'Syncing'
+              : NODE_STATE_RECORD[node.state as NodeState]?.label}
           </Tag>
         </Flex>
         <Flex justifyContent="space-between">
@@ -183,7 +185,7 @@ export default function NodeBoard({
               </Link>
             </HStack>
           ) : (
-            "-"
+            '-'
           )}
         </Flex>
       </List>
@@ -234,10 +236,15 @@ export default function NodeBoard({
             </Button>
           </SimpleGrid>
         ) : node?.state === NodeState.RUNNING ? (
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-            <Button as={Link} isExternal href={node.instance.ssh_key}>
-              <Icon as={DownloadIcon} mr={2} boxSize={3} /> RSA
-            </Button>
+          <SimpleGrid
+            columns={{ base: 1, md: node.instance?.ssh_key ? 2 : 1 }}
+            spacing={4}
+          >
+            {node.instance?.ssh_key && (
+              <Button as={Link} isExternal href={node.instance.ssh_key}>
+                <Icon as={DownloadIcon} mr={2} boxSize={3} /> RSA
+              </Button>
+            )}
             <Button
               colorScheme="red"
               onClick={onDestroyNode}
@@ -259,9 +266,11 @@ export default function NodeBoard({
           </SimpleGrid>
         ) : node?.state === NodeState.UPGRADING ? (
           <SimpleGrid columns={1}>
-            <Button as={Link} isExternal href={node.instance.ssh_key}>
-              <Icon as={DownloadIcon} mr={2} boxSize={3} /> RSA
-            </Button>
+            {node.instance.ssh_key && (
+              <Button as={Link} isExternal href={node.instance.ssh_key}>
+                <Icon as={DownloadIcon} mr={2} boxSize={3} /> RSA
+              </Button>
+            )}
           </SimpleGrid>
         ) : null}
       </Box>
@@ -270,8 +279,8 @@ export default function NodeBoard({
         <Tooltip
           label={
             !node?.sync
-              ? "You will be able to register validator after node synced"
-              : ""
+              ? 'You will be able to register validator after node synced'
+              : ''
           }
           bg="gray.300"
           color="black"
@@ -285,7 +294,7 @@ export default function NodeBoard({
             opacity={node?.sync ? 1 : 0.5}
             mt={4}
           >
-            {!accountId ? "Please Login" : "Register Validator"}
+            {!accountId ? 'Please Login' : 'Register Validator'}
           </Button>
         </Tooltip>
       )}

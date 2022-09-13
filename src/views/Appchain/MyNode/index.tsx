@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react"
-import axios from "axios"
-import useSWR from "swr"
+import React, { useState, useEffect } from 'react'
+import axios from 'axios'
+import useSWR from 'swr'
 
 import {
   Box,
@@ -17,18 +17,18 @@ import {
   useColorModeValue,
   useBoolean,
   Image,
-} from "@chakra-ui/react"
+} from '@chakra-ui/react'
 
-import { DeleteIcon } from "@chakra-ui/icons"
+import { DeleteIcon } from '@chakra-ui/icons'
 
-import myStakingBg from "assets/my-staking-bg.png"
-import { BsFillTerminalFill } from "react-icons/bs"
-import { TiKey } from "react-icons/ti"
-import { BsThreeDots } from "react-icons/bs"
-import { API_HOST } from "config"
-import type { ApiPromise } from "@polkadot/api"
+import myStakingBg from 'assets/my-staking-bg.png'
+import { BsFillTerminalFill } from 'react-icons/bs'
+import { TiKey } from 'react-icons/ti'
+import { BsThreeDots } from 'react-icons/bs'
+import { API_HOST } from 'config'
+import type { ApiPromise } from '@polkadot/api'
 
-import { InstanceInfoModal } from "./InstanceInfoModal"
+import { InstanceInfoModal } from './InstanceInfoModal'
 import {
   AnchorContract,
   AppchainInfo,
@@ -37,18 +37,19 @@ import {
   NodeMetric,
   NodeState,
   Validator,
-} from "types"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
-import NodeBoard from "components/AppChain/NodeBoard"
-import { MyStaking } from "../MyStaking"
-import NodeDeploy from "components/AppChain/NodeDeploy"
-import NodeManager from "utils/NodeManager"
-import { Toast } from "components/common/toast"
-import { web3FromSource } from "@polkadot/extension-dapp"
-import useAccounts from "hooks/useAccounts"
-import { onTxSent } from "utils/helper"
-import { setSessionKey } from "utils/bridge"
-import { SetSessionKeyModal } from "./SetSessionKeyModal"
+  ValidatorSessionKey,
+} from 'types'
+import { useWalletSelector } from 'components/WalletSelectorContextProvider'
+import NodeBoard from 'components/AppChain/NodeBoard'
+import { MyStaking } from '../MyStaking'
+import NodeDeploy from 'components/AppChain/NodeDeploy'
+import NodeManager from 'utils/NodeManager'
+import { Toast } from 'components/common/toast'
+import { web3FromSource } from '@polkadot/extension-dapp'
+import useAccounts from 'hooks/useAccounts'
+import { onTxSent } from 'utils/helper'
+import { setSessionKey } from 'utils/bridge'
+import { SetSessionKeyModal } from './SetSessionKeyModal'
 
 type MyNodeProps = {
   appchainId: string | undefined
@@ -57,6 +58,7 @@ type MyNodeProps = {
   appchain?: AppchainInfo
   anchor?: AnchorContract
   validator?: Validator
+  validatorSessionKeys?: Record<string, ValidatorSessionKey>
 }
 
 export const MyNode: React.FC<MyNodeProps> = ({
@@ -66,11 +68,12 @@ export const MyNode: React.FC<MyNodeProps> = ({
   appchain,
   anchor,
   validator,
+  validatorSessionKeys,
 }) => {
-  const bg = useColorModeValue("white", "#15172c")
+  const bg = useColorModeValue('white', '#15172c')
   const validatorBg = useColorModeValue(
-    "linear-gradient(137deg,#1486ff 4%, #0c4df5)",
-    "linear-gradient(137deg,#1486ff 4%, #0c4df5)"
+    'linear-gradient(137deg,#1486ff 4%, #0c4df5)',
+    'linear-gradient(137deg,#1486ff 4%, #0c4df5)'
   )
 
   const [node, setNode] = useState<NodeDetail>()
@@ -85,22 +88,22 @@ export const MyNode: React.FC<MyNodeProps> = ({
   const [isManuallyDeployed, setIsManuallyDeployed] = useBoolean()
   const [setSessionKeyModalOpen, setSetSessionKeyModalOpen] = useBoolean(false)
 
-  const { data: deployConfig } = useSWR("deploy-config")
+  const { data: deployConfig } = useSWR('deploy-config')
 
   const { accountId, network } = useWalletSelector()
 
   const cloudVendorInLocalStorage = window.localStorage.getItem(
-    "OCTOPUS_DEPLOYER_CLOUD_VENDOR"
+    'OCTOPUS_DEPLOYER_CLOUD_VENDOR'
   ) as CLOUD_VENDOR
   const accessKeyInLocalStorage =
-    window.localStorage.getItem("OCTOPUS_DEPLOYER_ACCESS_KEY") ||
-    window.localStorage.getItem("accessKey") ||
-    ""
+    window.localStorage.getItem('OCTOPUS_DEPLOYER_ACCESS_KEY') ||
+    window.localStorage.getItem('accessKey') ||
+    ''
 
   useEffect(() => {
     if (appchainId) {
       const ismd = localStorage.getItem(`manually-deployed-${appchainId}`)
-      ismd === "true" && setIsManuallyDeployed.on()
+      ismd === 'true' && setIsManuallyDeployed.on()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appchainId])
@@ -108,12 +111,12 @@ export const MyNode: React.FC<MyNodeProps> = ({
   const fetchNode = async () => {
     setIsInitializing.on()
     const cloudVendor = window.localStorage.getItem(
-      "OCTOPUS_DEPLOYER_CLOUD_VENDOR"
+      'OCTOPUS_DEPLOYER_CLOUD_VENDOR'
     ) as CLOUD_VENDOR
     const accessKey =
-      window.localStorage.getItem("OCTOPUS_DEPLOYER_ACCESS_KEY") ||
-      window.localStorage.getItem("accessKey") ||
-      ""
+      window.localStorage.getItem('OCTOPUS_DEPLOYER_ACCESS_KEY') ||
+      window.localStorage.getItem('accessKey') ||
+      ''
     NodeManager.getNodeDetail({
       appchainId: appchainId!,
       cloudVendor,
@@ -194,13 +197,13 @@ export const MyNode: React.FC<MyNodeProps> = ({
   ])
 
   const onClearCache = () => {
-    window.localStorage.removeItem("OCTOPUS_DEPLOYER_CLOUD_VENDOR")
-    window.localStorage.removeItem("OCTOPUS_DEPLOYER_ACCESS_KEY")
-    window.localStorage.removeItem("accessKey")
+    window.localStorage.removeItem('OCTOPUS_DEPLOYER_CLOUD_VENDOR')
+    window.localStorage.removeItem('OCTOPUS_DEPLOYER_ACCESS_KEY')
+    window.localStorage.removeItem('accessKey')
     window.location.reload()
   }
 
-  const isEvm = appchain?.appchain_metadata?.template_type === "BarnacleEvm"
+  const isEvm = appchain?.appchain_metadata?.template_type === 'BarnacleEvm'
 
   const { currentAccount } = useAccounts(isEvm, true)
 
@@ -216,7 +219,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
       setIsSubmitting.on()
       if (isEvm) {
         await setSessionKey(node.skey)
-        Toast.success("Set session keys success")
+        Toast.success('Set session keys success')
         onTxSent()
       } else {
         const res = await appchainApi?.query.system.account(
@@ -224,13 +227,13 @@ export const MyNode: React.FC<MyNodeProps> = ({
         )
         const resJSON: any = res?.toJSON()
         if (resJSON?.data.free === 0) {
-          throw new Error("Insufficient balance")
+          throw new Error('Insufficient balance')
         }
 
-        const injected = await web3FromSource(currentAccount?.meta.source || "")
+        const injected = await web3FromSource(currentAccount?.meta.source || '')
         appchainApi?.setSigner(injected.signer)
 
-        const tx = appchainApi?.tx.session.setKeys(node.skey, "0x00")
+        const tx = appchainApi?.tx.session.setKeys(node.skey, '0x00')
         if (!tx) {
           setIsSubmitting.off()
           return
@@ -238,7 +241,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
 
         await tx.signAndSend(currentAccount?.address as any, (res: any) => {
           if (res.isInBlock) {
-            Toast.success("Set session keys success")
+            Toast.success('Set session keys success')
             onTxSent()
           }
         })
@@ -263,28 +266,32 @@ export const MyNode: React.FC<MyNodeProps> = ({
 
   const skeyBadge = needKeys && !!node?.skey
   const metricBadge = nodeMetrics && nodeMetrics?.filesystem?.percentage > 0.8
+  let isSessionKeyAlreadySet = false
+  if (validator && validatorSessionKeys && node) {
+    isSessionKeyAlreadySet = !!validatorSessionKeys[validator.validator_id]
+  }
 
   const menuItems = [
     {
       isDisabled: isManuallyDeployed
         ? false
-        : !appchainApi || !node?.skey || !validator,
+        : !appchainApi || !node?.skey || !validator || isSessionKeyAlreadySet,
       onClick: onSetSessionKey,
-      label: "Set Session Key",
+      label: 'Set Session Key',
       icon: TiKey,
       hasBadge: skeyBadge,
     },
     {
       isDisabled: !nodeMetrics,
       onClick: setInstanceInfoModalOpen.on,
-      label: "Instance Info",
+      label: 'Instance Info',
       icon: BsFillTerminalFill,
       hasBadge: metricBadge,
     },
     {
       isDisabled: !accessKeyInLocalStorage,
       onClick: onClearCache,
-      label: "Clear Access Key",
+      label: 'Clear Access Key',
       icon: DeleteIcon,
       hasBadge: false,
     },

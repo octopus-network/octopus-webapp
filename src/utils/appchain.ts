@@ -35,7 +35,7 @@ export const getDelegatorUnbondedValidators = async (
   delegatorId: string
 ): Promise<string[]> => {
   try {
-    const res = await axios.post(`${networkConfig?.near.restApiUrl}/explorer`, {
+    const unbond_delegation = await axios.post(`${networkConfig?.near.restApiUrl}/explorer`, {
       user: "public_readonly",
       host: `${networkConfig?.near.networkId}.db.explorer.indexer.near.dev`,
       database: `${networkConfig?.near.networkId}_explorer`,
@@ -51,7 +51,23 @@ export const getDelegatorUnbondedValidators = async (
         `,
     })
 
-    const tmpArr = res.data.map((r: any) => r.args.args_json.validator_id)
+    // const bond_delegation = await axios.post(`${networkConfig?.near.restApiUrl}/explorer`, {
+    //   user: "public_readonly",
+    //   host: `${networkConfig?.near.networkId}.db.explorer.indexer.near.dev`,
+    //   database: `${networkConfig?.near.networkId}_explorer`,
+    //   password: "nearprotocol",
+    //   port: 5432,
+    //   parameters: [appchain_anchor, delegatorId],
+    //   query: `
+    //       SELECT * FROM public.action_receipt_actions 
+    //       WHERE receipt_receiver_account_id = $1
+    //       AND receipt_predecessor_account_id = $2
+    //       AND args->>'method_name' = 'unbond_delegation'
+    //       LIMIT 100;
+    //     `,
+    // })
+
+    const tmpArr = unbond_delegation.data.map((r: any) => r.args.args_json.validator_id)
     return Array.from(new Set(tmpArr))
   } catch (error) {
     return []

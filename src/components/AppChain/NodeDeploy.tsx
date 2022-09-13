@@ -6,16 +6,16 @@ import {
   Spinner,
   Text,
   useBoolean,
-} from "@chakra-ui/react"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
-import { useEffect, useState } from "react"
-import { AnchorContract, AppchainInfo, CLOUD_VENDOR, Validator } from "types"
-import Initial from "./DeployStep/Initial"
-import { RegisterValidatorModal } from "views/Appchain/MyStaking/RegisterValidatorModal"
-import { Toast } from "components/common/toast"
-import useSWR from "swr"
-import SecretKey from "./DeployStep/SecretKey"
-import NodeManager from "utils/NodeManager"
+} from '@chakra-ui/react'
+import { useWalletSelector } from 'components/WalletSelectorContextProvider'
+import { useEffect, useState } from 'react'
+import { AnchorContract, AppchainInfo, CLOUD_VENDOR, Validator } from 'types'
+import Initial from './DeployStep/Initial'
+import { RegisterValidatorModal } from 'views/Appchain/MyStaking/RegisterValidatorModal'
+import { Toast } from 'components/common/toast'
+import useSWR from 'swr'
+import SecretKey from './DeployStep/SecretKey'
+import NodeManager from 'utils/NodeManager'
 
 enum DeployStep {
   NEED_ACCESS_KEY,
@@ -43,35 +43,38 @@ export default function NodeDeploy({
   fetchNode: () => void
 }) {
   const cloudVendorInLocalStorage = window.localStorage.getItem(
-    "OCTOPUS_DEPLOYER_CLOUD_VENDOR"
+    'OCTOPUS_DEPLOYER_CLOUD_VENDOR'
   ) as CLOUD_VENDOR
   const accessKeyInLocalStorage =
-    window.localStorage.getItem("OCTOPUS_DEPLOYER_ACCESS_KEY") ||
-    window.localStorage.getItem("accessKey") ||
-    ""
+    window.localStorage.getItem('OCTOPUS_DEPLOYER_ACCESS_KEY') ||
+    window.localStorage.getItem('accessKey') ||
+    ''
 
   const [step, setStep] = useState<DeployStep>(DeployStep.NEED_ACCESS_KEY)
   const [cloudVendor, setCloudVendor] = useState<CLOUD_VENDOR>(
     cloudVendorInLocalStorage || CLOUD_VENDOR.AWS
   )
   const [accessKey, setAccessKey] = useState<string>(accessKeyInLocalStorage)
-  const [secretKey, setSecretKey] = useState<string>("")
+  const [secretKey, setSecretKey] = useState<string>('')
   const [projects, setProjects] = useState<any[]>()
-  const [deployRegion, setDeployRegion] = useState<string>("")
+  const [deployRegion, setDeployRegion] = useState<string>('')
   const [isManuallyDeployed, setIsManuallyDeployed] = useBoolean()
   const [isDeploying, setIsDeploying] = useBoolean()
-  const [projectId, setProjectId] = useState<string>()
+  // const [projectId, setProjectId] = useState<string>()
   const [registerValidatorModalOpen, setRegisterValidatorModalOpen] =
     useBoolean(false)
 
-  const { data: deployConfig } = useSWR("deploy-config")
+  const { data: deployConfig } = useSWR('deploy-config')
+  const { data: instance } = useSWR(
+    appchainId ? `appchain/${appchainId}/recommend-instance` : null
+  )
 
   const isDeployed = isShowRegister || isManuallyDeployed
 
   useEffect(() => {
     if (appchainId) {
       const ismd = localStorage.getItem(`manually-deployed-${appchainId}`)
-      ismd === "true" && setIsManuallyDeployed.on()
+      ismd === 'true' && setIsManuallyDeployed.on()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appchainId])
@@ -82,15 +85,15 @@ export default function NodeDeploy({
 
   const onConfirmAccessKey = async () => {
     if (!accessKey) {
-      return Toast.error("Please input access key")
+      return Toast.error('Please input access key')
     }
     if (!accountId) {
-      return Toast.error("Please connect wallet")
+      return Toast.error('Please connect wallet')
     }
 
     setStep(DeployStep.CONFIRMED_ACCESS_KEY)
-    window.localStorage.setItem("OCTOPUS_DEPLOYER_ACCESS_KEY", accessKey)
-    window.localStorage.setItem("OCTOPUS_DEPLOYER_CLOUD_VENDOR", cloudVendor)
+    window.localStorage.setItem('OCTOPUS_DEPLOYER_ACCESS_KEY', accessKey)
+    window.localStorage.setItem('OCTOPUS_DEPLOYER_CLOUD_VENDOR', cloudVendor)
 
     try {
       const node = await NodeManager.getNodeDetail({
@@ -120,7 +123,7 @@ export default function NodeDeploy({
   }
 
   const onDeploy = async () => {
-    if (!accountId || !appchainId || !deployConfig) {
+    if (!accountId || !appchainId || !deployConfig || !instance) {
       return
     }
     setIsDeploying.on()
@@ -135,6 +138,8 @@ export default function NodeDeploy({
         base_image: deployConfig.baseImages[appchainId].image,
         secret_key: secretKey,
         accessKey,
+        instance_type: instance.instance_type,
+        volume_size: instance.volume_size,
       })
       setIsDeploying.off()
       fetchNode()
@@ -160,7 +165,7 @@ export default function NodeDeploy({
 
   return (
     <>
-      {step === DeployStep.NEED_ACCESS_KEY && (
+      {step === DeployStep.NEED_ACCESS_KEY && !isManuallyDeployed && (
         <Initial
           validator={validator}
           cloudVendor={cloudVendor}
@@ -192,7 +197,7 @@ export default function NodeDeploy({
           <Flex direction="row" gap={2}>
             <Button
               colorScheme="octo-blue"
-              flex={"1"}
+              flex={'1'}
               onClick={() => {
                 if (step === DeployStep.NEED_ACCESS_KEY && accessKey) {
                   onConfirmAccessKey()
@@ -202,7 +207,7 @@ export default function NodeDeploy({
               }}
               isDisabled={isBtnDisabled}
             >
-              {step === DeployStep.NEED_SECRECT_KEY ? "Confirm" : "Deploy"}
+              {step === DeployStep.NEED_SECRECT_KEY ? 'Confirm' : 'Deploy'}
             </Button>
 
             {step === DeployStep.NEED_ACCESS_KEY && [
@@ -217,7 +222,7 @@ export default function NodeDeploy({
                 onClick={() => {
                   localStorage.setItem(
                     `manually-deployed-${appchainId}`,
-                    "true"
+                    'true'
                   )
                   setIsManuallyDeployed.on()
                 }}
@@ -227,7 +232,7 @@ export default function NodeDeploy({
             ]}
           </Flex>
           <Text textAlign="center" mt={4}>
-            Learn about{" "}
+            Learn about{' '}
             <Link
               href="https://docs.oct.network/maintain/validator-deploy.html#deploy-validator-node"
               variant="blue-underline"
@@ -253,7 +258,7 @@ export default function NodeDeploy({
         </Flex>
       )}
 
-      {((!validator && !accessKey) || isManuallyDeployed) && (
+      {isManuallyDeployed && (
         <Flex direction="column" mt={2} mb={2} gap={6}>
           <Button
             onClick={setRegisterValidatorModalOpen.on}

@@ -1,5 +1,5 @@
-import axios from "axios"
-import { CLOUD_VENDOR, NetworkType, NodeDetail } from "types"
+import axios from 'axios'
+import { CLOUD_VENDOR, NetworkType, NodeDetail } from 'types'
 
 const API_HOST = {
   testnet: `https://3jd9s8zf1l.execute-api.us-west-2.amazonaws.com/api/tasks`,
@@ -19,19 +19,30 @@ export default class NodeManager {
     cloudVendor: CLOUD_VENDOR
     accessKey: string
   }) {
+    const oldAuthStr = `appchain-${appchainId}-network-${network}-cloud-${cloudVendor}-${accessKey}`
     const authStr = `appchain-${appchainId}-network-${network}-cloud-${cloudVendor}-account-${accountId}-${accessKey}`
 
-    const res = await axios.get(`${API_HOST[network]}`, {
-      headers: {
-        "Content-Type": "application/json; charset=utf-8",
-        authorization: authStr,
-      },
-    })
+    let res = { data: [] }
+    try {
+      res = await axios.get(`${API_HOST[network]}`, {
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          authorization: authStr,
+        },
+      })
+    } catch (error) {
+      res = await axios.get(`${API_HOST[network]}`, {
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          authorization: oldAuthStr,
+        },
+      })
+    }
 
     const nodes: NodeDetail[] = res.data
 
     if (nodes.length) {
-      return nodes.find((t) => t?.state === "12") || nodes[0]
+      return nodes.find((t) => t?.state === '12') || nodes[0]
     }
     return null
   }
@@ -73,7 +84,7 @@ export default class NodeManager {
       },
       {
         headers: {
-          "Content-Type": "application/json; charset=utf-8",
+          'Content-Type': 'application/json; charset=utf-8',
           authorization: authKey,
         },
       }
@@ -97,7 +108,7 @@ export default class NodeManager {
     return await axios.put(
       `${API_HOST[network]}/${uuid}`,
       {
-        action: "update_image",
+        action: 'update_image',
         secret_key: secret_key,
         image: image,
       },
@@ -135,7 +146,7 @@ export default class NodeManager {
     await axios.put(
       `${API_HOST[network]}/${uuid}`,
       {
-        action: "apply",
+        action: 'apply',
         secret_key: secretKey,
       },
       {
