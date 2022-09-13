@@ -222,18 +222,20 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
               <Text color="red">
                 {key && !isValidKey ? "Invalid key" : "\u00a0"}
               </Text>
-              <FormHelperText>
-                Session Key is usually a set of hex strings, you can get it from
-                the node you deployed
-                <Link
-                  href="https://docs.oct.network/maintain/validator-set-session-keys.html"
-                  variant="blue-underline"
-                  isExternal
-                  ml={2}
-                >
-                  How to get?
-                </Link>
-              </FormHelperText>
+              {!skey && (
+                <FormHelperText>
+                  Session Key is usually a set of hex strings, you can get it
+                  from the node you deployed
+                  <Link
+                    href="https://docs.oct.network/maintain/validator-set-session-keys.html"
+                    variant="blue-underline"
+                    isExternal
+                    ml={2}
+                  >
+                    How to get?
+                  </Link>
+                </FormHelperText>
+              )}
             </FormControl>
           </List>
           <Box mt={8}>
