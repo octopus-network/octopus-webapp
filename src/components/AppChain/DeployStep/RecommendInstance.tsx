@@ -16,7 +16,7 @@ export default function RecommendInstance({
 
   return (
     <Flex direction="column" gap={2}>
-      <Text fontWeight="bold">Recommend Instance</Text>
+      <Text fontWeight="bold">Instance</Text>
       <Flex direction="row" justify="space-between" gap={2}>
         <Flex direction="row" gap={2}>
           <Text variant="gray">Type:</Text>
@@ -48,7 +48,7 @@ export default function RecommendInstance({
       </Flex>
       <Divider />
       <Flex direction="row" justify="flex-end" gap={2}>
-        <Text variant="gray">Total:</Text>
+        <Text variant="gray">Estimated cost:</Text>
         <Text>
           ${instance.total.price}/{instance.total.unit}
         </Text>
