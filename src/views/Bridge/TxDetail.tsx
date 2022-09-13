@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useMemo } from "react";
 
 import {
   DrawerHeader,
@@ -16,57 +16,57 @@ import {
   useColorModeValue,
   IconButton,
   DrawerBody,
-} from "@chakra-ui/react"
+} from "@chakra-ui/react";
 
-import { AppchainInfoWithAnchorStatus } from "types"
+import { AppchainInfoWithAnchorStatus } from "types";
 
-import { DecimalUtil, decodeNearAccount } from "utils"
-import nearLogo from "assets/near.svg"
-import { CopyIcon, CheckIcon, ExternalLinkIcon } from "@chakra-ui/icons"
-import useSWR from "swr"
-import { useParams } from "react-router-dom"
-import { AiOutlineArrowRight } from "react-icons/ai"
-import { Link as RouterLink } from "react-router-dom"
+import { DecimalUtil, decodeNearAccount } from "utils";
+import nearLogo from "assets/near.svg";
+import { CopyIcon, CheckIcon, ExternalLinkIcon } from "@chakra-ui/icons";
+import useSWR from "swr";
+import { useParams } from "react-router-dom";
+import { AiOutlineArrowRight } from "react-icons/ai";
+import { Link as RouterLink } from "react-router-dom";
 
-import { ProcessFromAppchain } from "./ProcessFromAppchain"
-import { ProcessFromNear } from "./ProcessFromNear"
-import { formatAppChainAddress } from "utils/format"
-import OctIdenticon from "components/common/OctIdenticon"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { ProcessFromAppchain } from "./ProcessFromAppchain";
+import { ProcessFromNear } from "./ProcessFromNear";
+import { formatAppChainAddress } from "utils/format";
+import OctIdenticon from "components/common/OctIdenticon";
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
 
 type TxDetailProps = {
-  onDrawerClose: VoidFunction
-}
+  onDrawerClose: VoidFunction;
+};
 
 export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
-  const { txId } = useParams()
-  const { networkConfig } = useWalletSelector()
+  const { txId } = useParams();
+  const { networkConfig } = useWalletSelector();
 
-  const grayBg = useColorModeValue("#f2f4f7", "#1e1f34")
+  const grayBg = useColorModeValue("#f2f4f7", "#1e1f34");
 
   const { data: transaction } = useSWR(
     txId ? `bridge-helper/bridgeTx/${txId}` : null,
     { refreshInterval: 1000 }
-  )
+  );
 
   const { hasCopied: hasTxIdCopied, onCopy: onTxIdCopy } = useClipboard(
     transaction?.summary.id
-  )
+  );
 
   const [isAppchainSide, appchainId] = useMemo(
     () => [
       transaction?.summary.direction === "appchain_to_near",
-      transaction?.summary.appchain_name.replace(
+      transaction?.summary.appchain_id.replace(
         `${networkConfig?.near.networkId}-`,
         ""
       ),
     ],
     [transaction, networkConfig]
-  )
+  );
 
   const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(
     `appchain/${appchainId}`
-  )
+  );
 
   return (
     <>
@@ -296,5 +296,5 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
         </SlideFade>
       </DrawerBody>
     </>
-  )
-}
+  );
+};

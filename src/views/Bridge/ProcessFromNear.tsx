@@ -1,5 +1,5 @@
-import React, { useMemo } from "react"
-import dayjs from "dayjs"
+import React, { useMemo } from "react";
+import dayjs from "dayjs";
 
 import {
   Flex,
@@ -12,30 +12,27 @@ import {
   Link,
   HStack,
   Icon,
-} from "@chakra-ui/react"
+} from "@chakra-ui/react";
 
-import { NetworkConfig } from "types"
-import { BeatLoader } from "react-spinners"
-import { CheckIcon, CloseIcon, ExternalLinkIcon } from "@chakra-ui/icons"
+import { NetworkConfig } from "types";
+import { BeatLoader } from "react-spinners";
+import { CheckIcon, CloseIcon, ExternalLinkIcon } from "@chakra-ui/icons";
 
 type Props = {
   data: {
     details: {
-      notification_in_near: any
-      notifications_in_appchain: any[]
-    }
-    summary: any
-  }
-  network: NetworkConfig | null
-}
+      notification_in_near: any;
+      notifications_in_appchain: any[];
+    };
+    summary: any;
+  };
+  network: NetworkConfig | null;
+};
 
 export const ProcessFromNear: React.FC<Props> = ({ data, network }) => {
-  const { details, summary } = data || {}
+  const { details, summary } = data || {};
 
-  const appchainId = useMemo(
-    () => summary?.appchain_name.replace(`${network?.near.networkId}-`, ""),
-    [summary]
-  )
+  const appchainId = useMemo(() => summary?.appchain_id, [summary]);
 
   return (
     <>
@@ -200,5 +197,5 @@ export const ProcessFromNear: React.FC<Props> = ({ data, network }) => {
         </Box>
       </Flex>
     </>
-  )
-}
+  );
+};
