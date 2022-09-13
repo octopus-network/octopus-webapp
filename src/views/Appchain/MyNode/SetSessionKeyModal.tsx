@@ -23,7 +23,7 @@ import { web3FromSource } from "@polkadot/extension-dapp"
 import { Empty } from "components"
 
 import { BaseModal } from "components"
-import { AppchainInfo } from "types"
+import { AppchainInfo, ValidatorSessionKey } from "types"
 import AccountItem from "components/common/AccountItem"
 import detectEthereumProvider from "@metamask/detect-provider"
 import useAccounts from "hooks/useAccounts"
@@ -36,6 +36,8 @@ type SetSessionKeyModalProps = {
   onClose: () => void
   appchainApi?: ApiPromise
   appchain?: AppchainInfo
+  skey?: string
+  validatorSessionKey?: ValidatorSessionKey
 }
 
 export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
@@ -43,10 +45,12 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
   onClose,
   appchainApi,
   appchain,
+  skey,
+  validatorSessionKey,
 }) => {
   const bg = useColorModeValue("#f6f7fa", "#15172c")
 
-  const [key, setKey] = useState("")
+  const [key, setKey] = useState(skey ?? "")
   const [isSubmitting, setIsSubmitting] = useBoolean(false)
 
   const [isInAccountsPage, setIsInAccountsPage] = useBoolean()
@@ -56,6 +60,10 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
       setIsInAccountsPage.off()
     }
   }, [isOpen])
+
+  useEffect(() => {
+    setKey(skey ?? "")
+  }, [skey])
 
   const isEvm = appchain?.appchain_metadata?.template_type === "BarnacleEvm"
   const { accounts, currentAccount, setCurrentAccount } = useAccounts(
@@ -68,12 +76,21 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
     setIsInAccountsPage.off()
   }
 
-  const isValidKey = isHex(key) &&
-      ((!isEvm && key.length === 324) || (isEvm && key.length === 326))
+  const isValidKey =
+    isHex(key) &&
+    ((!isEvm && key.length === 324) || (isEvm && key.length === 326))
 
   const onSubmit = async () => {
     try {
       setIsSubmitting.on()
+      const res = await appchainApi?.query.system.account(
+        currentAccount?.address
+      )
+      const resJSON: any = res?.toJSON()
+      if (resJSON?.data.free === 0) {
+        throw new Error("Insufficient balance")
+      }
+
       if (isEvm) {
         await setSessionKey(key)
         Toast.success("Set session keys success")
@@ -85,16 +102,13 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
         const tx = appchainApi?.tx.session.setKeys(key, "0x00")
         if (!tx) {
           setIsSubmitting.off()
-          return
+          throw new Error("Set session keys failed")
         }
 
         await tx.signAndSend(currentAccount?.address as any, (res: any) => {
           if (res.isInBlock) {
             Toast.success("Set session keys success")
-
-            setTimeout(() => {
-              onTxSent()
-            }, 500)
+            onTxSent()
           }
         })
       }
@@ -120,8 +134,9 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
     }
   }
 
-  console.log('isValidKey', isValidKey);
-  
+  if (!isOpen) {
+    return null
+  }
 
   return (
     <BaseModal
@@ -181,14 +196,32 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
               <Icon as={ChevronRightIcon} boxSize={6} />
             </Flex>
             <FormControl mt={2}>
-              <Input
-                type="text"
-                placeholder="Session key"
-                autoFocus
-                value={key}
-                onChange={(e) => setKey(e.target.value)}
-              />
-              <Text color="red">{key && !isValidKey ? "Invalid key":"\u00a0"}</Text>
+              {skey ? (
+                <Box>
+                  <Text variant="gray">Session Key</Text>
+                  <Box bg={bg} p={4} mt={2} borderRadius="md">
+                    <Text fontFamily="monospace" fontSize="md">
+                      {skey}
+                    </Text>
+                  </Box>
+                  {!!validatorSessionKey && (
+                    <Text mt={2} variant="gray">
+                      You already set up session key on chain.
+                    </Text>
+                  )}
+                </Box>
+              ) : (
+                <Input
+                  type="text"
+                  placeholder="Session key"
+                  autoFocus
+                  value={key}
+                  onChange={(e) => setKey(e.target.value)}
+                />
+              )}
+              <Text color="red">
+                {key && !isValidKey ? "Invalid key" : "\u00a0"}
+              </Text>
               <FormHelperText>
                 Session Key is usually a set of hex strings, you can get it from
                 the node you deployed
