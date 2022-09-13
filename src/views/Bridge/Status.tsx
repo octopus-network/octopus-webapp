@@ -117,10 +117,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
   const bg = useColorModeValue("white", "#15172c");
 
   const [isAppchainSide, appchainId] = useMemo(
-    () => [
-      data.direction === "appchain_to_near",
-      data.appchain_id.replace(`${network?.near.networkId}-`, ""),
-    ],
+    () => [data.direction === "appchain_to_near", data.appchain_id],
     [data]
   );
 
