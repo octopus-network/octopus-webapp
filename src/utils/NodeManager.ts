@@ -52,7 +52,6 @@ export default class NodeManager {
     region,
     instance_type,
     volume_size,
-    base_image,
     secret_key,
     accessKey,
     appchainId,
@@ -63,7 +62,6 @@ export default class NodeManager {
     region?: string
     instance_type?: string
     volume_size?: string
-    base_image: string
     secret_key: string
     accessKey: string
     appchainId: string
@@ -79,7 +77,6 @@ export default class NodeManager {
         instance_type,
         volume_size,
         chain_spec: `octopus-${network}`,
-        base_image,
         secret_key,
       },
       {
