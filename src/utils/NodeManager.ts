@@ -1,9 +1,9 @@
-import axios from 'axios'
-import { CLOUD_VENDOR, NetworkType, NodeDetail } from 'types'
+import axios from "axios"
+import { CLOUD_VENDOR, NetworkType, NodeDetail } from "types"
 
 const API_HOST = {
   testnet: `https://3jd9s8zf1l.execute-api.us-west-2.amazonaws.com/api/tasks`,
-  mainnet: ``,
+  mainnet: `https://3jd9s8zf1l.execute-api.us-west-2.amazonaws.com/api/tasks`, // https://1fus85rip4.execute-api.ap-northeast-1.amazonaws.com/api
 }
 export default class NodeManager {
   static async getNodeDetail({
@@ -26,14 +26,14 @@ export default class NodeManager {
     try {
       res = await axios.get(`${API_HOST[network]}`, {
         headers: {
-          'Content-Type': 'application/json; charset=utf-8',
+          "Content-Type": "application/json; charset=utf-8",
           authorization: authStr,
         },
       })
     } catch (error) {
       res = await axios.get(`${API_HOST[network]}`, {
         headers: {
-          'Content-Type': 'application/json; charset=utf-8',
+          "Content-Type": "application/json; charset=utf-8",
           authorization: oldAuthStr,
         },
       })
@@ -42,7 +42,7 @@ export default class NodeManager {
     const nodes: NodeDetail[] = res.data
 
     if (nodes.length) {
-      return nodes.find((t) => t?.state === '12') || nodes[0]
+      return nodes.find((t) => t?.state === "12") || nodes[0]
     }
     return null
   }
@@ -84,7 +84,7 @@ export default class NodeManager {
       },
       {
         headers: {
-          'Content-Type': 'application/json; charset=utf-8',
+          "Content-Type": "application/json; charset=utf-8",
           authorization: authKey,
         },
       }
@@ -108,7 +108,7 @@ export default class NodeManager {
     return await axios.put(
       `${API_HOST[network]}/${uuid}`,
       {
-        action: 'update_image',
+        action: "update_image",
         secret_key: secret_key,
         image: image,
       },
@@ -146,7 +146,7 @@ export default class NodeManager {
     await axios.put(
       `${API_HOST[network]}/${uuid}`,
       {
-        action: 'apply',
+        action: "apply",
         secret_key: secretKey,
       },
       {
