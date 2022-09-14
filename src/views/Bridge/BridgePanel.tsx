@@ -416,6 +416,9 @@ export const BridgePanel: React.FC = () => {
         if (section === "octopusAppchain" && method === "NftLocked") {
           setIsTransferring.off()
           setCollectible(undefined)
+          setTimeout(() => {
+            window.location.reload()
+          }, 1000)
         }
       })
     })
@@ -479,9 +482,15 @@ export const BridgePanel: React.FC = () => {
       }
 
       // check amount
-      console.log("tokenAsset", tokenAsset)
+      console.log("tokenAsset", tokenAsset, collectible)
 
-      if (tokenAsset) {
+      if (collectible) {
+        if (isNearToAppchain) {
+          await burnCollectible()
+        } else {
+          await redeemCollectible()
+        }
+      } else if (tokenAsset) {
         const amountInU64 = DecimalUtil.toU64(
           DecimalUtil.fromString(amount),
           Array.isArray(tokenAsset?.metadata.decimals)
@@ -505,18 +514,8 @@ export const BridgePanel: React.FC = () => {
         }
       }
 
-      if (collectible) {
-        if (isNearToAppchain) {
-          await burnCollectible()
-        } else {
-          await redeemCollectible()
-        }
-      }
       setIsTransferring.off()
       Toast.success("Bridging")
-      if (isNearToAppchain) {
-        window.location.reload()
-      }
     } catch (error) {
       setIsTransferring.off()
       Toast.error(error)
@@ -650,7 +649,15 @@ export const BridgePanel: React.FC = () => {
               from={from}
               appchainId={appchainId}
               onChangeAmount={(amount) => setAmount(amount)}
-              onChangeTokenAsset={(ta) => setTokenAsset(ta)}
+              onChangeTokenAsset={(ta, isCollectible) => {
+                if (isCollectible) {
+                  setCollectible(ta)
+                  setTokenAsset(undefined)
+                } else {
+                  setTokenAsset(ta)
+                  setCollectible(undefined)
+                }
+              }}
             />
             <Box mt={8}>
               <Button

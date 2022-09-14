@@ -1,6 +1,7 @@
 import {
   Box,
   Button,
+  Center,
   Flex,
   HStack,
   Icon,
@@ -8,27 +9,28 @@ import {
   Link,
   List,
   SimpleGrid,
-  Skeleton,
+  Spinner,
   Tag,
   Text,
   useBoolean,
   useClipboard,
-} from "@chakra-ui/react"
+  Tooltip,
+} from '@chakra-ui/react'
 
+import { DownloadIcon, DeleteIcon, CheckIcon, CopyIcon } from '@chakra-ui/icons'
+import { NODE_STATE_RECORD } from 'config/constants'
+import axios from 'axios'
+import { useWalletSelector } from 'components/WalletSelectorContextProvider'
 import {
-  DownloadIcon,
-  DeleteIcon,
-  CheckIcon,
-  CopyIcon,
-  RepeatIcon,
-} from "@chakra-ui/icons"
-import { NODE_STATE_RECORD } from "config/constants"
-import axios from "axios"
-import { API_HOST } from "config"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
-import { Toast } from "components/common/toast"
-import { AnchorContract, AppchainInfo, CLOUD_VENDOR } from "types"
-import { RegisterValidatorModal } from "views/Appchain/MyStaking/RegisterValidatorModal"
+  AnchorContract,
+  AppchainInfo,
+  CLOUD_VENDOR,
+  NodeState,
+  Validator,
+} from 'types'
+import { RegisterValidatorModal } from 'views/Appchain/MyStaking/RegisterValidatorModal'
+import { BsArrowUpRight } from 'react-icons/bs'
+import NodeManager from 'utils/NodeManager'
 
 export default function NodeBoard({
   node,
@@ -39,6 +41,8 @@ export default function NodeBoard({
   setNode,
   appchain,
   anchor,
+  validator,
+  isInitializing,
 }: {
   node?: any
   cloudVendor: CLOUD_VENDOR
@@ -48,8 +52,9 @@ export default function NodeBoard({
   setNode: (node: any) => void
   appchain?: AppchainInfo
   anchor?: AnchorContract
+  validator?: Validator
+  isInitializing: boolean
 }) {
-  const [isRefreshing, setIsRefreshing] = useBoolean()
   const [isApplying, setIsApplying] = useBoolean()
   const [isDeleting, setIsDeleting] = useBoolean()
   const [isDestroying, setIsDestroying] = useBoolean()
@@ -57,23 +62,17 @@ export default function NodeBoard({
     useBoolean(false)
 
   const { hasCopied: hasNodeIdCopied, onCopy: onCopyNodeId } = useClipboard(
-    node?.uuid || ""
+    node?.uuid || ''
   )
 
-  const { hasCopied: hasInstanceCopied, onCopy: onCopyInstance } = useClipboard(
-    node?.instance ? `${node.instance.user}@${node.instance.ip}` : ""
-  )
+  const { accountId, network } = useWalletSelector()
 
-  const { accountId } = useWalletSelector()
-
-  const onApplyNode = () => {
-    let secretKey
+  const onApplyNode = async () => {
+    let secretKey = ''
 
     if (cloudVendor === CLOUD_VENDOR.AWS) {
-      secretKey = window.prompt(
-        "Please enter the secret key of your server",
-        ""
-      )
+      secretKey =
+        window.prompt('Please enter the secret key of your server', '') ?? ''
 
       if (!secretKey) {
         return
@@ -84,48 +83,19 @@ export default function NodeBoard({
     }
 
     setIsApplying.on()
-    axios
-      .put(
-        `${deployConfig.deployApiHost}/tasks/${node?.uuid}`,
-        {
-          action: "apply",
-          secret_key: secretKey,
-        },
-        {
-          headers: { authorization: node?.user },
-        }
-      )
-      .then((res) => {
-        window.location.reload()
-      })
+    await NodeManager.applyNode({
+      uuid: node?.uuid,
+      network,
+      secretKey,
+      user: node?.user,
+    })
+    window.location.reload()
   }
 
-  const onDeleteNode = () => {
+  const onDeleteNode = async () => {
     setIsDeleting.on()
-    axios
-      .delete(`${deployConfig.deployApiHost}/tasks/${node?.uuid}`, {
-        headers: { authorization: node?.user },
-      })
-      .then((res) => {
-        window.location.reload()
-      })
-  }
-
-  const onRefresh = () => {
-    setIsRefreshing.on()
-    axios
-      .get(
-        `${API_HOST}/node/${cloudVendor}/${deployAccessKey}/${appchainId}/${accountId}`
-      )
-      .then((res) => res.data)
-      .then((res) => {
-        if (res) {
-          setNode(res)
-        }
-
-        setIsRefreshing.off()
-      })
-      .catch(Toast.error)
+    await NodeManager.deleteNode({ uuid: node.uuid, user: node.user, network })
+    window.location.reload()
   }
 
   const onDestroyNode = () => {
@@ -133,8 +103,8 @@ export default function NodeBoard({
 
     if (cloudVendor === CLOUD_VENDOR.AWS) {
       secretKey = window.prompt(
-        "Please enter the secret key of your server",
-        ""
+        'Please enter the secret key of your server',
+        ''
       )
 
       if (!secretKey) {
@@ -147,16 +117,12 @@ export default function NodeBoard({
 
     setIsDestroying.on()
     axios
-      .put(
-        `${deployConfig.deployApiHost}/tasks/${node?.uuid}`,
-        {
-          action: "destroy",
+      .delete(`${deployConfig.deployApiHost}/tasks/${node?.uuid}`, {
+        data: {
           secret_key: secretKey,
         },
-        {
-          headers: { authorization: node?.user },
-        }
-      )
+        headers: { authorization: node?.user },
+      })
       .then((res) => {
         window.location.reload()
       })
@@ -169,11 +135,14 @@ export default function NodeBoard({
           <Text variant="gray" fontSize="sm">
             Status
           </Text>
-          <Skeleton isLoaded={!isRefreshing}>
-            <Tag colorScheme={NODE_STATE_RECORD[node.state]?.color} size="sm">
-              {NODE_STATE_RECORD[node.state]?.label}
-            </Tag>
-          </Skeleton>
+          <Tag
+            colorScheme={NODE_STATE_RECORD[node.state as NodeState]?.color}
+            size="sm"
+          >
+            {node.state === NodeState.RUNNING && !node.sync
+              ? 'Syncing'
+              : NODE_STATE_RECORD[node.state as NodeState]?.label}
+          </Tag>
         </Flex>
         <Flex justifyContent="space-between">
           <Text variant="gray" fontSize="sm">
@@ -207,19 +176,21 @@ export default function NodeBoard({
                 overflow="hidden"
                 textOverflow="ellipsis"
               >
-                {node.instance.user}@{node.instance.ip}
+                {node.instance.region}@{node.instance.id}
               </Text>
-              <IconButton aria-label="copy" onClick={onCopyInstance} size="xs">
-                {hasInstanceCopied ? <CheckIcon /> : <CopyIcon />}
-              </IconButton>
+              <Link href={node.instance.url} target="_blank">
+                <IconButton aria-label="link" size="xs">
+                  <BsArrowUpRight color="octo-blue" />
+                </IconButton>
+              </Link>
             </HStack>
           ) : (
-            "-"
+            '-'
           )}
         </Flex>
       </List>
       <Box mt={3}>
-        {node?.state === "0" ? (
+        {node?.state === NodeState.INIT ? (
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
             <Button
               colorScheme="octo-blue"
@@ -237,17 +208,23 @@ export default function NodeBoard({
               <Icon as={DeleteIcon} mr={2} boxSize={3} /> Delete
             </Button>
           </SimpleGrid>
-        ) : node?.state === "10" || node?.state === "20" ? (
+        ) : node?.state === NodeState.APPLYING ||
+          node?.state === NodeState.DESTROYING ? (
           <SimpleGrid columns={1}>
-            <Button
-              onClick={onRefresh}
-              isDisabled={isRefreshing}
-              isLoading={isRefreshing}
-            >
-              <RepeatIcon mr={1} /> Refresh
-            </Button>
+            <Center gap={4}>
+              <Spinner
+                size="md"
+                thickness="4px"
+                speed="1s"
+                color="octo-blue.500"
+              />
+              <Text fontSize="sm" color="gray">
+                {NODE_STATE_RECORD[node.state as NodeState].label}
+              </Text>
+            </Center>
           </SimpleGrid>
-        ) : node?.state === "11" || node?.state === "21" ? (
+        ) : node?.state === NodeState.APPLY_FAILED ||
+          node?.state === NodeState.DESTROY_FAILED ? (
           <SimpleGrid columns={1}>
             <Button
               colorScheme="red"
@@ -258,11 +235,16 @@ export default function NodeBoard({
               <Icon as={DeleteIcon} mr={2} boxSize={3} /> Destroy
             </Button>
           </SimpleGrid>
-        ) : node?.state === "12" ? (
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-            <Button as={Link} isExternal href={node.instance.ssh_key}>
-              <Icon as={DownloadIcon} mr={2} boxSize={3} /> RSA
-            </Button>
+        ) : node?.state === NodeState.RUNNING ? (
+          <SimpleGrid
+            columns={{ base: 1, md: node.instance?.ssh_key ? 2 : 1 }}
+            spacing={4}
+          >
+            {node.instance?.ssh_key && (
+              <Button as={Link} isExternal href={node.instance.ssh_key}>
+                <Icon as={DownloadIcon} mr={2} boxSize={3} /> RSA
+              </Button>
+            )}
             <Button
               colorScheme="red"
               onClick={onDestroyNode}
@@ -272,7 +254,7 @@ export default function NodeBoard({
               <Icon as={DeleteIcon} mr={2} boxSize={3} /> Destroy
             </Button>
           </SimpleGrid>
-        ) : node?.state === "22" ? (
+        ) : node?.state === NodeState.DESTROYED ? (
           <SimpleGrid columns={1}>
             <Button
               onClick={onDeleteNode}
@@ -282,24 +264,40 @@ export default function NodeBoard({
               <Icon as={DeleteIcon} mr={2} boxSize={3} /> Delete
             </Button>
           </SimpleGrid>
-        ) : node?.state === "30" ? (
+        ) : node?.state === NodeState.UPGRADING ? (
           <SimpleGrid columns={1}>
-            <Button as={Link} isExternal href={node.instance.ssh_key}>
-              <Icon as={DownloadIcon} mr={2} boxSize={3} /> RSA
-            </Button>
+            {node.instance.ssh_key && (
+              <Button as={Link} isExternal href={node.instance.ssh_key}>
+                <Icon as={DownloadIcon} mr={2} boxSize={3} /> RSA
+              </Button>
+            )}
           </SimpleGrid>
         ) : null}
       </Box>
 
-      <Button
-        onClick={setRegisterValidatorModalOpen.on}
-        colorScheme="octo-blue"
-        isDisabled={!accountId}
-        width="100%"
-        mt={4}
-      >
-        {!accountId ? "Please Login" : "Register Validator"}
-      </Button>
+      {!validator && (
+        <Tooltip
+          label={
+            !node?.sync
+              ? 'You will be able to register validator after node synced'
+              : ''
+          }
+          bg="gray.300"
+          color="black"
+          p={4}
+        >
+          <Button
+            onClick={node?.sync ? setRegisterValidatorModalOpen.on : undefined}
+            colorScheme="octo-blue"
+            isDisabled={!accountId}
+            width="100%"
+            opacity={node?.sync ? 1 : 0.5}
+            mt={4}
+          >
+            {!accountId ? 'Please Login' : 'Register Validator'}
+          </Button>
+        </Tooltip>
+      )}
 
       <RegisterValidatorModal
         isOpen={registerValidatorModalOpen}

@@ -415,7 +415,7 @@ export const Validators: React.FC<ValidatorsProps> = ({
       <RewardsModal
         isOpen={claimRewardsModalOpen}
         onClose={setClaimRewardsModalOpen.off}
-        rewards={unbondedDelegatorRewards}
+        validatorRewards={unbondedDelegatorRewards}
         anchor={anchor}
         appchain={appchain}
         validatorId={unbondedRewardsValidatorId}

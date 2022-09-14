@@ -69,36 +69,48 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
 
     if (isReverse) {
       const promises = collectibleClasses.map((classId) => {
-        const contract = new CollectibleContract(
-          nearAccount!,
-          `${classId}.${appchainId}.${registry?.contractId}`,
-          {
-            viewMethods: ["nft_tokens_for_owner"],
-            changeMethods: [],
-          }
-        )
-
-        return contract
-          .nft_tokens_for_owner({
-            account_id: fromAccount,
-            from_index: "0",
-          })
-          .then((res) =>
-            res ? res.map((item: any) => ({ ...item, class: classId })) : null
+        try {
+          const contract = new CollectibleContract(
+            nearAccount!,
+            `${classId}.${appchainId}.${registry?.contractId}`,
+            {
+              viewMethods: ["nft_tokens_for_owner"],
+              changeMethods: [],
+            }
           )
+
+          return contract
+            .nft_tokens_for_owner({
+              account_id: fromAccount,
+              from_index: "0",
+            })
+            .then((res) => {
+              console.log("#res", res)
+
+              return res
+                ? res.map((item: any) => ({ ...item, class: classId }))
+                : null
+            })
+            .catch(console.error)
+        } catch (error) {
+          return null
+        }
       })
 
       Promise.all(promises).then((res) => {
         const tmpArr: any[] = res?.length
-          ? res.flat(Infinity).map((item: any) => ({
-              id: item.token_id,
-              class: item.class,
-              owner: item.owner_id,
-              metadata: {
-                name: item.metadata?.title,
-                mediaUri: item.metadata?.media,
-              },
-            }))
+          ? res
+              .filter((t) => t)
+              .flat(Infinity)
+              .map((item: any) => ({
+                id: item.token_id,
+                class: item.class,
+                owner: item.owner_id,
+                metadata: {
+                  name: item.metadata?.title,
+                  mediaUri: item.metadata?.media,
+                },
+              }))
           : []
 
         setCollectibles(tmpArr)
@@ -126,14 +138,26 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                           classId,
                           i
                         )
+                      const unique = res.toJSON() as any
 
-                      const data = JSON.parse((_res.toHuman() as any).data)
+                      if (!(unique && unique.owner === fromAccount)) {
+                        return null
+                      }
+
+                      const metadataHuman = _res.toHuman() as any
+                      if (!metadataHuman) {
+                        return null
+                      }
+                      const metadata = JSON.parse((_res.toHuman() as any).data)
+                      if (!metadata || !unique) {
+                        return null
+                      }
 
                       return {
-                        ...(res.toJSON() as any),
+                        ...(unique as any),
                         id: i,
                         class: classId,
-                        metadata: data,
+                        metadata: metadata,
                       }
                     }
                   } catch (error) {
@@ -145,9 +169,9 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
             )
           }
 
-          return Promise.all(tmpPromises).then((res) =>
-            res?.filter((item) => !!item && item.owner === fromAccount)
-          )
+          return Promise.all(tmpPromises as any).then((res) => {
+            return res?.filter((item) => !!item)
+          })
         })
       })
 
@@ -191,7 +215,7 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
           >
             Token
           </Button>
-          {/* <Button
+          <Button
             size="sm"
             variant="ghost"
             onClick={() => setTabIdx(1)}
@@ -199,7 +223,7 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
             opacity={tabIdx === 1 ? 1 : 0.5}
           >
             Collectible
-          </Button> */}
+          </Button>
         </HStack>
       </HStack>
       {tabIdx === 0 ? (

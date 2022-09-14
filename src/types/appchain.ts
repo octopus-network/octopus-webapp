@@ -239,3 +239,68 @@ export type ProtocolSettings = {
   validator_commission_percent: number
   maximum_allowed_unprofitable_era_count: number
 }
+
+export interface NodeDetail {
+  instance: {
+    ip: string
+    user: string
+    ssh_key: string
+  }
+  state: string
+  sync: boolean
+  task: {
+    chain_spec: string
+    cloud_vendor: string
+    volume_type: string
+    availability_zones: string[]
+    instance_count: string
+    instance_type: string
+    name: string
+    project: string
+    region: string
+    telemetry_url: string
+    volume_size: string
+  }
+  user: string
+  uuid: string
+  skey: string
+}
+
+export enum NodeState {
+  INIT = "0",
+  APPLYING = "10",
+  APPLY_FAILED = "11",
+  RUNNING = "12",
+  DESTROYING = "20",
+  DESTROY_FAILED = "21",
+  DESTROYED = "22",
+  UPGRADING = "30",
+}
+
+export interface NodeMetric {
+  memory: {
+    avail: number
+    buff: number
+    cache: number
+    free: number
+    percentage: number
+    total: number
+    used: number
+  }
+  filesystem: {
+    avail: number
+    percentage: number
+    total: number
+  }
+  cpu: {
+    hi: number
+    id: number
+    ni: number
+    percentage: number
+    si: number
+    st: number
+    sy: number
+    us: number
+    wa: number
+  }[]
+}
