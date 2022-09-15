@@ -3,7 +3,7 @@ import { CLOUD_VENDOR, NetworkType, NodeDetail } from "types"
 
 const API_HOST = {
   testnet: `https://3jd9s8zf1l.execute-api.us-west-2.amazonaws.com/api/tasks`,
-  mainnet: `https://1fus85rip4.execute-api.ap-northeast-1.amazonaws.com/api`,
+  mainnet: `https://1fus85rip4.execute-api.ap-northeast-1.amazonaws.com/api/tasks`,
 }
 export default class NodeManager {
   static async getNodeDetail({
