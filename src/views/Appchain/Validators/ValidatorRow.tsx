@@ -22,16 +22,17 @@ import {
   RewardHistory,
   Delegator,
   AppchainInfo,
+  ValidatorStatus,
 } from "types"
 
 import { OCT_TOKEN_DECIMALS } from "primitives"
 import { RippleDot } from "components"
 import { ChevronRightIcon } from "@chakra-ui/icons"
-import { StateBadge } from "components"
 import { useNavigate } from "react-router-dom"
 import { formatAppChainAddress } from "utils/format"
 import OctIdenticon from "components/common/OctIdenticon"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import ValidatorStatusTag from "components/Validator/Tag"
 
 type ValidatorRowProps = {
   validator: Validator
@@ -42,11 +43,12 @@ type ValidatorRowProps = {
   isInAppchain: boolean
   haveSessionKey: boolean
   validatorSetHistoryEndIndex?: string
-  showType: string
   appchain?: AppchainInfo
+  validatorsHasEraPoints: string[]
 }
 
 export const ValidatorRow: React.FC<ValidatorRowProps> = ({
+  anchor,
   appchain,
   validator,
   ftMetadata,
@@ -55,6 +57,7 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
   haveSessionKey,
   appchainId,
   validatorSetHistoryEndIndex,
+  validatorsHasEraPoints,
 }) => {
   const { accountId } = useWalletSelector()
 
@@ -121,6 +124,18 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
     [rewards]
   )
 
+  let status = ValidatorStatus.Registered
+  if (validator.is_unbonding) {
+    status = ValidatorStatus.Unstaking
+  } else if (validatorsHasEraPoints.includes(ss58Address)) {
+    status = ValidatorStatus.Validating
+  } else if (isInAppchain) {
+    status = ValidatorStatus.Validating_N_Not_Producing
+  } else if (haveSessionKey) {
+    status = ValidatorStatus.New
+  }
+  console.log("status", status)
+
   return (
     <Grid
       transition="transform 0.2s ease-in-out 0s, box-shadow 0.2s ease-in-out 0s"
@@ -144,12 +159,12 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
         navigate(`/appchains/${appchainId}/validator/${validator.validator_id}`)
       }
     >
-      <GridItem colSpan={2} w="100%">
+      <GridItem colSpan={3} w="100%">
         <VStack spacing={1} alignItems="flex-start">
           <HStack w="100%">
             <OctIdenticon value={ss58Address} size={24} />
             <Heading
-              fontSize="md"
+              fontSize="lg"
               whiteSpace="nowrap"
               textOverflow="ellipsis"
               overflow="hidden"
@@ -157,58 +172,47 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
               {validator.validator_id}
             </Heading>
           </HStack>
-          <Skeleton isLoaded={!!rewards}>
-            <Text
-              fontSize="xs"
-              variant="gray"
-              whiteSpace="nowrap"
-              textOverflow="ellipsis"
-              overflow="hidden"
-              w="100%"
-            >
-              Rewards: {DecimalUtil.beautify(totalRewards)} {ftMetadata?.symbol}
-            </Text>
-          </Skeleton>
+
+          <Flex justifyContent="center">
+            {isLoading ? (
+              <RippleDot size={24} color="#2468f2" />
+            ) : (
+              <ValidatorStatusTag status={status} />
+            )}
+          </Flex>
         </VStack>
       </GridItem>
-      <GridItem colSpan={2} display={{ base: "none", md: "table-cell" }}>
-        <Flex justifyContent="center">
-          {isLoading ? (
-            <RippleDot size={24} color="#2468f2" />
-          ) : (
-            <StateBadge
-              state={
-                validator?.is_unbonding
-                  ? "Unbonding"
-                  : isInAppchain && haveSessionKey
-                  ? "Validating"
-                  : isInAppchain
-                  ? "Need Keys"
-                  : "Registered"
-              }
-            />
-          )}
-        </Flex>
-      </GridItem>
-      <GridItem colSpan={2} textAlign="center">
-        <Heading fontSize="md">
-          {DecimalUtil.beautify(
-            DecimalUtil.fromString(validator.total_stake, OCT_TOKEN_DECIMALS)
-          )}{" "}
-          OCT
-        </Heading>
+      <GridItem colSpan={3} textAlign="center">
+        <HStack justify="center">
+          <Heading fontSize="md">
+            {DecimalUtil.beautify(
+              DecimalUtil.fromString(
+                validator.deposit_amount,
+                OCT_TOKEN_DECIMALS
+              ),
+              0
+            )}{" "}
+            /
+          </Heading>
+          <Heading fontSize="md">
+            {DecimalUtil.beautify(
+              DecimalUtil.fromString(validator.total_stake, OCT_TOKEN_DECIMALS),
+              0
+            )}{" "}
+            OCT
+          </Heading>
+        </HStack>
       </GridItem>
       <GridItem
         colSpan={2}
         display={{ base: "none", lg: "table-cell" }}
         textAlign="center"
       >
-        <Heading fontSize="md">
-          {DecimalUtil.beautify(
-            DecimalUtil.fromString(validator.deposit_amount, OCT_TOKEN_DECIMALS)
-          )}{" "}
-          OCT
-        </Heading>
+        <Skeleton isLoaded={!!rewards}>
+          <Heading fontSize="md">
+            {DecimalUtil.beautify(totalRewards, 0)} {ftMetadata?.symbol}
+          </Heading>
+        </Skeleton>
       </GridItem>
       <GridItem
         colSpan={1}
