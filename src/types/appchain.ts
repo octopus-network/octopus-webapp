@@ -304,3 +304,11 @@ export interface NodeMetric {
     wa: number
   }[]
 }
+
+export enum ValidatorStatus {
+  Registered = "Registered",
+  New = "New",
+  Validating = "Validating",
+  Validating_N_Not_Producing = "Validating_N_Not_Producing",
+  Unstaking = "Unstaking",
+}
