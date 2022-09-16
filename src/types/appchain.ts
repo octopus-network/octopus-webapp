@@ -10,9 +10,9 @@ export enum AppchainState {
   Active = "Active",
 }
 
-export enum CLOUD_VENDOR {
+export enum CloudVendor {
   AWS = "AWS",
-  GCP = "GCP",
+  DO = "DO",
 }
 
 export type AppchainInfo = {

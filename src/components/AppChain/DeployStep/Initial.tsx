@@ -1,21 +1,42 @@
-import {
-  Box,
-  Button,
-  CloseButton,
-  Flex,
-  Heading,
-  HStack,
-  Icon,
-  IconButton,
-  Input,
-  Select,
-  Text,
-  useColorModeValue,
-} from "@chakra-ui/react"
-import { OAUTH_SCOPE } from "config/constants"
-import { useEffect, useState } from "react"
-import { FcGoogle } from "react-icons/fc"
-import { CLOUD_VENDOR, Validator } from "types"
+import { Box, Flex, Input, Text, useColorModeValue } from "@chakra-ui/react"
+import { CloudVendor, Validator } from "types"
+import { Select, chakraComponents } from "chakra-react-select"
+import { FaAws, FaDigitalOcean } from "react-icons/fa"
+
+const customComponents = {
+  Option: ({ children, ...props }: any) => {
+    return (
+      <chakraComponents.Option {...props}>
+        {props.data.icon}
+        <Box ml={2}>{children}</Box>
+      </chakraComponents.Option>
+    )
+  },
+  Input: ({ children, ...props }: any) => {
+    let icon = null
+    let label = ""
+    if (props.hasValue) {
+      const value = props.getValue()[0]
+      icon =
+        CloudVendor.AWS === value.label ? (
+          <FaAws size={20} />
+        ) : (
+          <FaDigitalOcean size={20} />
+        )
+      label = value.label
+    }
+
+    return (
+      <chakraComponents.Option {...props} selectProps={{ size: "md" }}>
+        {icon}
+        <Text ml={2} fontSize="md">
+          {label}
+        </Text>
+      </chakraComponents.Option>
+    )
+  },
+  SingleValue: () => null,
+}
 
 export default function Initial({
   cloudAccessKey,
@@ -23,80 +44,14 @@ export default function Initial({
   cloudVendor,
   setCloudVendor,
   setInputAccessKey,
-  setProjects,
-  myNodeSetOAuthUser,
 }: {
   cloudAccessKey: string
   validator?: Validator
-  cloudVendor: CLOUD_VENDOR
-  setCloudVendor: (cloudVendor: CLOUD_VENDOR) => void
+  cloudVendor: CloudVendor
+  setCloudVendor: (cloudVendor: CloudVendor) => void
   setInputAccessKey: (inputAccessKey: string) => void
-  setProjects: (projects: any) => void
-  myNodeSetOAuthUser: (user: any) => void
 }) {
   const inputBg = useColorModeValue("#f5f7fa", "whiteAlpha.100")
-
-  const [isAuthorized, setIsAuthorized] = useState(false)
-  const [oauthUser, setOAuthUser] = useState<any>()
-  const [authClient, setAuthClient] = useState<any>()
-
-  const onOAuth = () => {
-    authClient?.signIn()
-  }
-
-  useEffect(() => {
-    window.gapi.load("client", () => {
-      window.gapi.client
-        .init({
-          apiKey: "AIzaSyCXBs_7uR9X7wNIWgNuD5D7nvTniKsfjGU",
-          clientId:
-            "398338012986-f9ge03gubuvksee6rsmtorrpgtrsppf2.apps.googleusercontent.com",
-          scope: OAUTH_SCOPE,
-          discoveryDocs: [
-            "https://www.googleapis.com/discovery/v1/apis/compute/v1/rest",
-            "https://cloudresourcemanager.googleapis.com/$discovery/rest?version=v1",
-          ],
-        })
-        .then(() => {
-          const client = window.gapi.auth2.getAuthInstance()
-          setAuthClient(client)
-        })
-    })
-  }, [])
-
-  useEffect(() => {
-    if (!authClient) {
-      return
-    }
-
-    const checkStatus = () => {
-      const user = authClient.currentUser.get()
-
-      const authorized = user.hasGrantedScopes(OAUTH_SCOPE)
-      setIsAuthorized(authorized)
-      if (authorized) {
-        setOAuthUser(user)
-        myNodeSetOAuthUser(user)
-
-        const request = window.gapi.client.request({
-          method: "GET",
-          path: "https://cloudresourcemanager.googleapis.com/v1/projects",
-        })
-
-        request.execute((res: any) => {
-          setProjects(res?.projects)
-          console.log(res)
-        })
-      }
-    }
-
-    if (authClient.isSignedIn.get()) {
-      checkStatus()
-    }
-
-    authClient.isSignedIn.listen(checkStatus)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authClient])
 
   return (
     <>
@@ -104,49 +59,50 @@ export default function Initial({
         <Flex bg={inputBg} p={1} borderRadius="lg">
           <Box>
             <Select
-              variant="unstyled"
-              p={2}
-              defaultValue={cloudVendor}
-              onChange={(e) => setCloudVendor(e.target.value as CLOUD_VENDOR)}
-            >
-              <option value="AWS">AWS</option>
-              {/* <option value="GCP">GCP</option> */}
-            </Select>
+              value={{
+                label: cloudVendor,
+                value: cloudVendor,
+                icon:
+                  CloudVendor.AWS === cloudVendor ? (
+                    <FaAws />
+                  ) : (
+                    <FaDigitalOcean />
+                  ),
+              }}
+              options={[CloudVendor.AWS, CloudVendor.DO].map((t) => {
+                return {
+                  label: t,
+                  value: t,
+                  icon:
+                    CloudVendor.AWS === t ? (
+                      <FaAws size={26} />
+                    ) : (
+                      <FaDigitalOcean size={26} />
+                    ),
+                }
+              })}
+              onChange={(newValue) => {
+                if (newValue) {
+                  setCloudVendor(newValue.value as CloudVendor)
+                }
+              }}
+              components={customComponents}
+            />
           </Box>
           <Flex flex={1} alignItems="center">
-            {cloudVendor === "AWS" ? (
+            {[CloudVendor.AWS, CloudVendor.DO].includes(cloudVendor) && (
               <Input
                 variant="unstyled"
-                placeholder="Access Key"
+                placeholder={
+                  cloudVendor === CloudVendor.AWS
+                    ? "Access Key"
+                    : "Digital Ocean Token Name"
+                }
                 w="100%"
                 p={2}
                 value={cloudAccessKey}
                 onChange={(e) => setInputAccessKey(e.target.value)}
               />
-            ) : isAuthorized ? (
-              <HStack>
-                <Heading fontSize="md">
-                  {oauthUser?.getBasicProfile()?.getEmail()}
-                </Heading>
-                <IconButton
-                  size="xs"
-                  aria-label="logout"
-                  isRound
-                  onClick={authClient?.signOut}
-                  disabled={!authClient}
-                  icon={<CloseButton boxSize="10px" />}
-                />
-              </HStack>
-            ) : (
-              <Button
-                size="sm"
-                onClick={onOAuth}
-                disabled={!authClient}
-                variant="ghost"
-                colorScheme="octo-blue"
-              >
-                <Icon as={FcGoogle} mr={1} /> Sign in with Google
-              </Button>
             )}
           </Flex>
         </Flex>
