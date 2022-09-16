@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react"
+import React, { useState, useMemo, useEffect } from "react"
 
 import {
   Flex,
@@ -6,7 +6,6 @@ import {
   HStack,
   Center,
   Spinner,
-  Button,
   Box,
   Text,
   useColorModeValue,
@@ -39,6 +38,7 @@ import { Empty } from "components"
 import OTTO from "../../../assets/otto.png"
 import { formatAppChainAddress } from "utils/format"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { useAppChain } from "hooks/useAppChain"
 
 type ValidatorsProps = {
   appchain?: AppchainInfoWithAnchorStatus
@@ -108,7 +108,6 @@ export const Validators: React.FC<ValidatorsProps> = ({
 }) => {
   const bg = useColorModeValue("white", "#15172c")
 
-  const [showType, setShowType] = useState("all")
   const [sortIdx, setSortIdx] = useState(1)
 
   const [claimRewardsModalOpen, setClaimRewardsModalOpen] = useBoolean()
@@ -116,91 +115,61 @@ export const Validators: React.FC<ValidatorsProps> = ({
     useState<RewardHistory[]>()
   const [unbondedRewardsValidatorId, setUnbondedRewardsValidatorId] =
     useState("")
+  const [validatorsHasEraPoints, setValidatorsHasEraPoints] = useState<
+    string[]
+  >([])
 
-  const filteredValidators = useMemo(() => {
-    return (validators ?? []).filter((v) => {
-      const formatedAddr = formatAppChainAddress(
-        v.validator_id_in_appchain,
-        appchain
-      ).toLowerCase()
-      if (
-        showType === "all" ||
-        !validators ||
-        !appchainValidators ||
-        !validatorSessionKeys
-      ) {
-        return true
-      } else if (showType === "validating") {
-        return (
-          !v.is_unbonding &&
-          appchainValidators.some((s) => s.toLowerCase() === formatedAddr) &&
-          validatorSessionKeys[v.validator_id]
-        )
-      } else if (showType === "needKeys") {
-        return (
-          !v.is_unbonding &&
-          appchainValidators.some((s) => s.toLowerCase() === formatedAddr) &&
-          !validatorSessionKeys[v.validator_id]
-        )
-      } else if (showType === "registered") {
-        return (
-          !v.is_unbonding &&
-          !appchainValidators.some((s) => s.toLowerCase() === formatedAddr)
-        )
-      } else if (showType === "unbonding") {
-        return v.is_unbonding
+  const { appchainApi } = useAppChain(appchain?.appchain_id)
+
+  useEffect(() => {
+    async function fetchEraPoints() {
+      if (!appchainApi) {
+        return
       }
-      return false
-    })
-  }, [validators, showType, appchainValidators, validatorSessionKeys, appchain])
 
-  const sortedValidators = useMemo(() => {
-    if (!sortIdx || !filteredValidators?.length) {
-      return filteredValidators
+      try {
+        const activeEra = await appchainApi.query.octopusLpos.activeEra()
+        const eraJson: any = activeEra.toJSON()
+        if (eraJson) {
+          const eraPoints =
+            await appchainApi.query.octopusLpos.erasRewardPoints(eraJson.index)
+          const pointsJson = eraPoints.toJSON()
+          pointsJson &&
+            setValidatorsHasEraPoints(
+              Object.keys((pointsJson as any).individual)
+            )
+        }
+      } catch (error) {}
     }
 
-    let tmpArr: Validator[] = [...filteredValidators]
+    fetchEraPoints()
+  }, [appchainApi])
 
-    if (sortIdx === 1) {
-      tmpArr.sort((a, b) =>
-        DecimalUtil.fromString(a.total_stake, OCT_TOKEN_DECIMALS)
+  const sortedValidators = useMemo(() => {
+    if (!sortIdx || !validators?.length) {
+      return validators
+    }
+
+    let tmpArr: Validator[] = [...validators]
+
+    if ([1, 2, 3, 4].includes(sortIdx)) {
+      tmpArr.sort((a, b) => {
+        const offset = DecimalUtil.fromString(a.total_stake, OCT_TOKEN_DECIMALS)
           .sub(DecimalUtil.fromString(b.total_stake, OCT_TOKEN_DECIMALS))
           .toNumber()
-      )
-    } else if (sortIdx === 2) {
-      tmpArr.sort((a, b) =>
-        DecimalUtil.fromString(b.total_stake, OCT_TOKEN_DECIMALS)
-          .sub(DecimalUtil.fromString(a.total_stake, OCT_TOKEN_DECIMALS))
-          .toNumber()
-      )
-    } else if (sortIdx === 3) {
-      tmpArr.sort((a, b) =>
-        DecimalUtil.fromString(a.deposit_amount, OCT_TOKEN_DECIMALS)
-          .sub(DecimalUtil.fromString(b.deposit_amount, OCT_TOKEN_DECIMALS))
-          .toNumber()
-      )
-    } else if (sortIdx === 4) {
-      tmpArr.sort((a, b) =>
-        DecimalUtil.fromString(b.deposit_amount, OCT_TOKEN_DECIMALS)
-          .sub(DecimalUtil.fromString(a.deposit_amount, OCT_TOKEN_DECIMALS))
-          .toNumber()
-      )
-    } else if (sortIdx === 5) {
-      tmpArr.sort((a, b) =>
-        DecimalUtil.fromString(a.delegators_count)
+        return sortIdx % 2 === 1 ? offset : -offset
+      })
+    } else if ([5, 6].includes(sortIdx)) {
+      tmpArr.sort((a, b) => {
+        const offset = DecimalUtil.fromString(a.delegators_count)
           .sub(DecimalUtil.fromString(b.delegators_count))
           .toNumber()
-      )
-    } else if (sortIdx === 6) {
-      tmpArr.sort((a, b) =>
-        DecimalUtil.fromString(b.delegators_count)
-          .sub(DecimalUtil.fromString(a.delegators_count))
-          .toNumber()
-      )
+        return sortIdx % 2 === 1 ? offset : -offset
+      })
     }
 
     return tmpArr
-  }, [filteredValidators, sortIdx])
+  }, [validators, sortIdx])
 
   const onClaimUnbondedDelegatorRewards = (
     validator: string,
@@ -253,45 +222,6 @@ export const Validators: React.FC<ValidatorsProps> = ({
             </HStack>
           </Link>
         </HStack>
-        <Box display={{ base: "none", md: "block" }}>
-          <HStack>
-            <Button
-              variant={showType === "registered" ? "octo-blue" : "octo-white"}
-              size="sm"
-              onClick={() => setShowType("registered")}
-            >
-              Registered
-            </Button>
-            <Button
-              variant={showType === "needKeys" ? "octo-blue" : "octo-white"}
-              size="sm"
-              onClick={() => setShowType("needKeys")}
-            >
-              Need Keys
-            </Button>
-            <Button
-              variant={showType === "validating" ? "octo-blue" : "octo-white"}
-              size="sm"
-              onClick={() => setShowType("validating")}
-            >
-              Validating
-            </Button>
-            <Button
-              variant={showType === "unbonding" ? "octo-blue" : "octo-white"}
-              size="sm"
-              onClick={() => setShowType("unbonding")}
-            >
-              Unbonding
-            </Button>
-            <Button
-              variant={showType === "all" ? "octo-blue" : "octo-white"}
-              size="sm"
-              onClick={() => setShowType("all")}
-            >
-              All
-            </Button>
-          </HStack>
-        </Box>
       </Flex>
       <Box p={2} bg={bg} mt={4} borderRadius="lg" pb={6} minH="320px">
         <Box p={6}>
@@ -303,19 +233,12 @@ export const Validators: React.FC<ValidatorsProps> = ({
             }}
             gap={2}
           >
-            <GridItem colSpan={2}>
+            <GridItem colSpan={3}>
               <Text variant="gray">Validator ID</Text>
             </GridItem>
-            <GridItem
-              colSpan={2}
-              display={{ base: "none", md: "table-cell" }}
-              textAlign="center"
-            >
-              <Text variant="gray">Status</Text>
-            </GridItem>
-            <GridItem colSpan={2}>
+            <GridItem colSpan={3}>
               <SortButton
-                label="Total Staked"
+                label="Own/Total Staked"
                 sortIdx={sortIdx}
                 indexArr={[1, 2]}
                 onChange={(v) => setSortIdx(v)}
@@ -327,7 +250,7 @@ export const Validators: React.FC<ValidatorsProps> = ({
               textAlign="center"
             >
               <SortButton
-                label="Own Staked"
+                label="Rewards"
                 sortIdx={sortIdx}
                 indexArr={[3, 4]}
                 onChange={(v) => setSortIdx(v)}
@@ -359,7 +282,7 @@ export const Validators: React.FC<ValidatorsProps> = ({
               color="octo-blue.500"
             />
           </Center>
-        ) : filteredValidators?.length || unbondedValidators?.length ? (
+        ) : validators?.length || unbondedValidators?.length ? (
           <List spacing={3} mt={2}>
             {unbondedValidators?.map((id) => (
               <UnbondedValidatorRow
@@ -391,7 +314,9 @@ export const Validators: React.FC<ValidatorsProps> = ({
                   anchor={anchor}
                   appchainId={appchain?.appchain_id}
                   isLoading={
-                    !appchainValidators?.length || !validatorSessionKeys
+                    !appchainValidators?.length ||
+                    !validatorSessionKeys ||
+                    !validatorsHasEraPoints.length
                   }
                   isInAppchain={isInAppchain}
                   haveSessionKey={haveSessionKey}
@@ -402,8 +327,8 @@ export const Validators: React.FC<ValidatorsProps> = ({
                     appchain?.anchor_status
                       ?.index_range_of_validator_set_history?.end_index
                   }
-                  showType={showType}
                   appchain={appchain}
+                  validatorsHasEraPoints={validatorsHasEraPoints}
                 />
               )
             })}

@@ -194,6 +194,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
     window.localStorage.removeItem("OCTOPUS_DEPLOYER_CLOUD_VENDOR")
     window.localStorage.removeItem("OCTOPUS_DEPLOYER_ACCESS_KEY")
     window.localStorage.removeItem("accessKey")
+    window.localStorage.removeItem(`manually-deployed-${appchainId}`)
     window.location.reload()
   }
 
@@ -235,7 +236,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
     {
       isDisabled: !accessKeyInLocalStorage,
       onClick: onClearCache,
-      label: "Clear Access Key",
+      label: "Clear Local Configure",
       icon: DeleteIcon,
       hasBadge: false,
     },
