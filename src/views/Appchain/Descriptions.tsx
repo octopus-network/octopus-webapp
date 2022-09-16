@@ -269,7 +269,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
       >
         <DescItem
           title="Online Days"
-          isLoaded={!!currentEra}
+          isLoaded={currentEra !== undefined}
           value={currentEra !== undefined ? currentEra : "loading"}
         />
 

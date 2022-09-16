@@ -4,7 +4,7 @@ import { ValidatorStatus } from "types"
 
 const validatorStatusConfig = {
   [ValidatorStatus.Registered]: {
-    label: "Register",
+    label: "Registered",
     desc: "missing session keys",
     color: "#00739D",
   },
