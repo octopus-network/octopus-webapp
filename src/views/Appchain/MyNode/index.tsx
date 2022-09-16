@@ -234,7 +234,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
       hasBadge: metricBadge,
     },
     {
-      isDisabled: !accessKeyInLocalStorage,
+      isDisabled: !accessKeyInLocalStorage || !isManuallyDeployed,
       onClick: onClearCache,
       label: "Clear Local Configure",
       icon: DeleteIcon,
