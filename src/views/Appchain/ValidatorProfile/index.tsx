@@ -605,7 +605,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
         title="Unbond Validator"
         confirmButtonText="Unbond"
         isConfirming={isUnbonding}
-        message={`Your unbonded stake will be claimable after 21 days. Destroy your node after next rewards claimed, or your AWS/GCP will still be charged.Are you confirm to unbond?`}
+        message={`Your unbonded stake will be claimable after 21 days. Destroy your node after next rewards claimed, or your AWS/DO will still be charged.Are you confirm to unbond?`}
         onConfirm={onUnbondValidator}
         confirmButtonColor="red"
       />

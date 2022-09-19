@@ -32,7 +32,7 @@ import { InstanceInfoModal } from "./InstanceInfoModal"
 import {
   AnchorContract,
   AppchainInfo,
-  CLOUD_VENDOR,
+  CloudVendor,
   NodeDetail,
   NodeMetric,
   NodeState,
@@ -78,7 +78,6 @@ export const MyNode: React.FC<MyNodeProps> = ({
   const [nodeMetrics, setNodeMetrics] = useState<NodeMetric>()
 
   const [instanceInfoModalOpen, setInstanceInfoModalOpen] = useBoolean()
-  const [oauthUser, setOAuthUser] = useState<any>()
   const [isManuallyDeployed, setIsManuallyDeployed] = useBoolean()
   const [setSessionKeyModalOpen, setSetSessionKeyModalOpen] = useBoolean(false)
 
@@ -87,8 +86,8 @@ export const MyNode: React.FC<MyNodeProps> = ({
   const { accountId, network } = useWalletSelector()
 
   const cloudVendorInLocalStorage = window.localStorage.getItem(
-    "OCTOPUS_DEPLOYER_CLOUD_VENDOR"
-  ) as CLOUD_VENDOR
+    "OCTOPUS_DEPLOYER_CloudVendor"
+  ) as CloudVendor
   const accessKeyInLocalStorage =
     window.localStorage.getItem("OCTOPUS_DEPLOYER_ACCESS_KEY") ||
     window.localStorage.getItem("accessKey") ||
@@ -105,8 +104,8 @@ export const MyNode: React.FC<MyNodeProps> = ({
   const fetchNode = async () => {
     setIsInitializing.on()
     const cloudVendor = window.localStorage.getItem(
-      "OCTOPUS_DEPLOYER_CLOUD_VENDOR"
-    ) as CLOUD_VENDOR
+      "OCTOPUS_DEPLOYER_CloudVendor"
+    ) as CloudVendor
     const accessKey =
       window.localStorage.getItem("OCTOPUS_DEPLOYER_ACCESS_KEY") ||
       window.localStorage.getItem("accessKey") ||
@@ -191,7 +190,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
   ])
 
   const onClearCache = () => {
-    window.localStorage.removeItem("OCTOPUS_DEPLOYER_CLOUD_VENDOR")
+    window.localStorage.removeItem("OCTOPUS_DEPLOYER_CloudVendor")
     window.localStorage.removeItem("OCTOPUS_DEPLOYER_ACCESS_KEY")
     window.localStorage.removeItem("accessKey")
     window.localStorage.removeItem(`manually-deployed-${appchainId}`)
@@ -234,9 +233,9 @@ export const MyNode: React.FC<MyNodeProps> = ({
       hasBadge: metricBadge,
     },
     {
-      isDisabled: !accessKeyInLocalStorage || !isManuallyDeployed,
+      isDisabled: false,
       onClick: onClearCache,
-      label: "Clear Local Configure",
+      label: "Clear Local Storage",
       icon: DeleteIcon,
       hasBadge: false,
     },
@@ -332,7 +331,6 @@ export const MyNode: React.FC<MyNodeProps> = ({
             setNode={setNode}
             validator={validator}
             appchainId={appchainId}
-            myNodeSetOAuthUser={setOAuthUser}
             isShowRegister={isShowRegister}
             anchor={anchor}
             appchain={appchain}
