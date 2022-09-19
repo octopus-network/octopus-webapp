@@ -88,7 +88,9 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
       )
       const resJSON: any = res?.toJSON()
       if (resJSON?.data.free === 0) {
-        throw new Error("Insufficient balance")
+        throw new Error(
+          "Insufficient balance, need to wait for a few minutes to receive gas airdrop."
+        )
       }
 
       if (isEvm) {

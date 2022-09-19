@@ -19,7 +19,6 @@ import {
 import Initial from "./DeployStep/Initial"
 import { RegisterValidatorModal } from "views/Appchain/MyStaking/RegisterValidatorModal"
 import { Toast } from "components/common/toast"
-import useSWR from "swr"
 import SecretKey from "./DeployStep/SecretKey"
 import NodeManager from "utils/NodeManager"
 import { CLOUD_NODE_INSTANCES } from "config/constants"
