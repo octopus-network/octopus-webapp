@@ -9,13 +9,20 @@ import {
 } from "@chakra-ui/react"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { useEffect, useState } from "react"
-import { AnchorContract, AppchainInfo, CloudVendor, Validator } from "types"
+import {
+  AnchorContract,
+  AppchainInfo,
+  CloudVendor,
+  OCTNetwork,
+  Validator,
+} from "types"
 import Initial from "./DeployStep/Initial"
 import { RegisterValidatorModal } from "views/Appchain/MyStaking/RegisterValidatorModal"
 import { Toast } from "components/common/toast"
 import useSWR from "swr"
 import SecretKey from "./DeployStep/SecretKey"
 import NodeManager from "utils/NodeManager"
+import { CLOUD_NODE_INSTANCES } from "config/constants"
 
 enum DeployStep {
   NEED_ACCESS_KEY,
@@ -60,11 +67,6 @@ export default function NodeDeploy({
   // const [projectId, setProjectId] = useState<string>()
   const [registerValidatorModalOpen, setRegisterValidatorModalOpen] =
     useBoolean(false)
-
-  const { data: instance } = useSWR(
-    appchainId ? `appchain/${appchainId}/recommend-instance` : null
-  )
-
   const isDeployed = isShowRegister || isManuallyDeployed
 
   useEffect(() => {
@@ -119,10 +121,13 @@ export default function NodeDeploy({
   }
 
   const onDeploy = async () => {
-    if (!accountId || !appchainId || !instance) {
+    if (!accountId || !appchainId) {
       return
     }
     setIsDeploying.on()
+
+    const instance = (CLOUD_NODE_INSTANCES[appchainId] ||
+      CLOUD_NODE_INSTANCES[OCTNetwork.BARNANCLE_0918])[cloudVendor]
 
     try {
       await NodeManager.deployNode({

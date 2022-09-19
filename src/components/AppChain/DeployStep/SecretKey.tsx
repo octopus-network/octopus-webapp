@@ -27,7 +27,7 @@ export default function SecretKey({
   const { data: deployConfig } = useSWR("deploy-config")
   return (
     <Flex pt={2} pb={4} justifyContent="center" flexDirection="column" gap={4}>
-      <RecommendInstance appchainId={appchainId} />
+      <RecommendInstance appchainId={appchainId} cloudVendor={cloudVendor} />
       <Flex bg={inputBg} p={1} borderRadius="lg">
         <Input
           variant="unstyled"

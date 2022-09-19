@@ -1,18 +1,19 @@
 import { Divider, Flex, Text } from "@chakra-ui/react"
-import useSWR from "swr"
+import { CLOUD_NODE_INSTANCES } from "config/constants"
+import { CloudVendor, OCTNetwork } from "types"
 
 export default function RecommendInstance({
   appchainId,
+  cloudVendor,
 }: {
   appchainId?: string
+  cloudVendor: CloudVendor
 }) {
-  const { data: instance } = useSWR(
-    appchainId ? `appchain/${appchainId}/recommend-instance` : null
-  )
-
-  if (!instance) {
+  if (!appchainId) {
     return null
   }
+  const instance = (CLOUD_NODE_INSTANCES[appchainId] ||
+    CLOUD_NODE_INSTANCES[OCTNetwork.BARNANCLE_0918])[cloudVendor]
 
   return (
     <Flex direction="column" gap={2}>
