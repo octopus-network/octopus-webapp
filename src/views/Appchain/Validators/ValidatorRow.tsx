@@ -134,7 +134,6 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
   } else if (haveSessionKey) {
     status = ValidatorStatus.New
   }
-  console.log("status", status)
 
   return (
     <Grid
