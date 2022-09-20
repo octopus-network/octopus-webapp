@@ -149,6 +149,8 @@ export default function NodeDeploy({
     }
   }
 
+  console.log("isDeployed", step)
+
   if (validator && isManuallyDeployed) {
     return (
       <>
@@ -189,7 +191,7 @@ export default function NodeDeploy({
         />
       )}
 
-      {!isDeployed && (
+      {!isManuallyDeployed && (
         <Flex m={2} flexDirection="column" gap={2}>
           <Flex direction="row" gap={2}>
             <Button
@@ -242,7 +244,7 @@ export default function NodeDeploy({
         </Flex>
       )}
 
-      {validator && step === DeployStep.NEED_ACCESS_KEY && (
+      {validator && step === DeployStep.NEED_ACCESS_KEY && isManuallyDeployed && (
         <Flex direction="column" mt={2} mb={2} gap={6}>
           <Button
             onClick={onConfirmAccessKey}
