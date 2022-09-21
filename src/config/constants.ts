@@ -147,7 +147,7 @@ const INSTANCES: Record<
     volume_size: "250",
     type: {
       desc: "s-4vcpu-8gb-intel",
-      price: "28",
+      price: "56",
       unit: "m",
     },
     storage: {
