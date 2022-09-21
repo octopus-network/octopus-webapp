@@ -151,12 +151,12 @@ const INSTANCES: Record<
       unit: "m",
     },
     storage: {
-      desc: "500GB",
+      desc: "250GB",
       price: "25",
       unit: "m",
     },
     dataTransfer: {
-      desc: "4500GB",
+      desc: "5TB",
       price: "0.0",
       unit: "G",
     },
