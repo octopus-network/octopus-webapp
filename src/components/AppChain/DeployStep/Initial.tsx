@@ -108,8 +108,11 @@ export default function Initial({
         </Flex>
         {!!validator && (
           <Text fontSize="sm" variant="gray" mt={1}>
-            It seems you're a validator already, enter Access Key to check your
-            node status
+            It seems you're a validator already, enter{" "}
+            {cloudVendor === CloudVendor.AWS
+              ? "Access Key"
+              : "Digital Ocean Token Name"}{" "}
+            to check your node status
           </Text>
         )}
       </Flex>

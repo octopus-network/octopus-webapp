@@ -82,7 +82,12 @@ export default function NodeDeploy({
 
   const onConfirmAccessKey = async () => {
     if (!accessKey) {
-      return Toast.error("Please input access key")
+      //
+      return Toast.error(
+        `Please input ${
+          cloudVendor === CloudVendor.AWS ? "Access Key" : "Token Name"
+        }`
+      )
     }
     if (!accountId) {
       return Toast.error("Please connect wallet")
@@ -252,7 +257,8 @@ export default function NodeDeploy({
             isDisabled={!accountId || isUnbonding}
             width="100%"
           >
-            Confirm Your Access Key
+            Confirm Your{" "}
+            {cloudVendor === CloudVendor.AWS ? "Access Key" : "Token Name"}
           </Button>
         </Flex>
       )}

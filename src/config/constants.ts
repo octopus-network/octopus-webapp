@@ -142,11 +142,11 @@ const INSTANCES: Record<
       unit: "m",
     },
   },
-  "s-2vcpu-4gb-intel": {
-    instance_type: "s-2vcpu-4gb-intel",
+  "s-4vcpu-8gb-intel": {
+    instance_type: "s-4vcpu-8gb-intel",
     volume_size: "250",
     type: {
-      desc: "s-2vcpu-4gb-intel",
+      desc: "s-4vcpu-8gb-intel",
       price: "28",
       unit: "m",
     },
@@ -190,7 +190,7 @@ export const CLOUD_NODE_INSTANCES: Record<string, any> = {
   },
   [OCTNetwork.FUSOTAO]: {
     [CloudVendor.AWS]: INSTANCES["t5"],
-    [CloudVendor.DO]: INSTANCES["s-2vcpu-4gb-intel"],
+    [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb-intel"],
   },
   [OCTNetwork.DISCOVOL]: {
     [CloudVendor.AWS]: INSTANCES["t3"],
