@@ -102,7 +102,7 @@ const INSTANCES: Record<
       unit: "m",
     },
     dataTransfer: {
-      desc: "1600GB",
+      desc: "4500GB",
       price: "0.09",
       unit: "G",
     },
@@ -111,7 +111,7 @@ const INSTANCES: Record<
       ram: "4.0 GiB",
     },
     total: {
-      price: "250",
+      price: "509",
       unit: "m",
     },
   },
@@ -151,12 +151,12 @@ const INSTANCES: Record<
       unit: "m",
     },
     storage: {
-      desc: "250GB",
+      desc: "500GB",
       price: "25",
       unit: "m",
     },
     dataTransfer: {
-      desc: "3000GB",
+      desc: "4500GB",
       price: "0.0",
       unit: "G",
     },
@@ -165,7 +165,7 @@ const INSTANCES: Record<
       ram: "4.0 GiB",
     },
     total: {
-      price: "53",
+      price: "81",
       unit: "m",
     },
   },
