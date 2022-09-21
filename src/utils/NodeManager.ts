@@ -102,7 +102,7 @@ export default class NodeManager {
       {
         cloud_vendor: cloudVendor,
         region,
-        instance_type: cloudVendor === CloudVendor.DO ? "" : instance_type,
+        instance_type,
         volume_size,
         chain_spec: `octopus-${network}`,
         secret_key,
