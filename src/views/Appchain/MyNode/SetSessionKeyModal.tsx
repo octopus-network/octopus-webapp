@@ -23,13 +23,14 @@ import { web3FromSource } from "@polkadot/extension-dapp"
 import { Empty } from "components"
 
 import { BaseModal } from "components"
-import { AppchainInfo, ValidatorSessionKey } from "types"
+import { AppchainInfo, Validator, ValidatorSessionKey } from "types"
 import AccountItem from "components/common/AccountItem"
 import detectEthereumProvider from "@metamask/detect-provider"
 import useAccounts from "hooks/useAccounts"
 import { Toast } from "components/common/toast"
 import { setSessionKey } from "utils/bridge"
 import { onTxSent } from "utils/helper"
+import { formatAppChainAddress } from "utils/format"
 
 type SetSessionKeyModalProps = {
   isOpen: boolean
@@ -38,6 +39,7 @@ type SetSessionKeyModalProps = {
   appchain?: AppchainInfo
   skey?: string
   validatorSessionKey?: ValidatorSessionKey
+  validator?: Validator
 }
 
 export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
@@ -46,6 +48,7 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
   appchainApi,
   appchain,
   skey,
+  validator,
   validatorSessionKey,
 }) => {
   const bg = useColorModeValue("#f6f7fa", "#15172c")
@@ -75,6 +78,23 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
     setCurrentAccount(account)
     setIsInAccountsPage.off()
   }
+
+  useEffect(() => {
+    if (validator && appchain) {
+      const ss58Address = formatAppChainAddress(
+        validator?.validator_id_in_appchain,
+        appchain
+      )
+
+      const account = accounts.find(
+        (account) => account.address === ss58Address
+      )
+      if (account) {
+        setCurrentAccount(account)
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [validator, appchain, accounts])
 
   const isValidKey =
     isHex(key) &&

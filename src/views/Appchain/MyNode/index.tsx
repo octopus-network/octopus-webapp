@@ -351,6 +351,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
         appchain={appchain}
         appchainApi={appchainApi}
         skey={node?.skey}
+        validator={validator}
         validatorSessionKey={validatorSessionKey}
       />
     </>
