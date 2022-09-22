@@ -67,10 +67,6 @@ type TokensMap = {
   [key: string]: Token[];
 };
 
-type TokenMap = {
-  [key: string]: Token[];
-};
-
 type BridgeHistory = {
   id: string;
   direction: string;
