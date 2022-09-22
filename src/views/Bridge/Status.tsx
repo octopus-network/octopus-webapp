@@ -394,7 +394,7 @@ function Page({
   const pageSize = 20;
   const { appchian, direction, token } = filters;
   const { data: txns } = useSWR<any[]>(
-    `bridge-helper/bridge_txs?start=${
+    `bridge-helper/bridgeTxs?start=${
       (page - 1) * pageSize
     }&size=${pageSize}&appchain=${appchian}&direction=${direction}&token=${token}`
   );
@@ -458,7 +458,7 @@ export const Status: React.FC = () => {
   };
 
   const { data: appchains } = useSWR<any[]>("appchains/running");
-  const { data: tokensMap } = useSWR<TokensMap>(`bridge-helper/bridge_tokens`);
+  const { data: tokensMap } = useSWR<TokensMap>(`bridge-helper/bridgeTokens`);
 
   const appchainNames = appchains?.map(({ appchain_id }) => appchain_id);
   const appchainOptions = [
