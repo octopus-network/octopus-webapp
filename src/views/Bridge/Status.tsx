@@ -63,6 +63,10 @@ type Token = {
   contract_id: string;
 };
 
+type TokensMap = {
+  [key: string]: Token[];
+};
+
 type BridgeHistory = {
   id: string;
   direction: string;
@@ -125,7 +129,6 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
     `appchain/${appchainId}`
   );
 
-  console.log("data", data);
   return (
     <Skeleton isLoaded={!!appchain || !network}>
       <Box left={0} top={0} right={0} pb={1} opacity={0.6}>
@@ -455,6 +458,7 @@ export const Status: React.FC = () => {
   };
 
   const { data: appchains } = useSWR<any[]>("appchains/running");
+  const { data: tokensMap } = useSWR<TokensMap>(`bridge-helper/bridge_tokens`);
 
   const appchainNames = appchains?.map(({ appchain_id }) => appchain_id);
   const appchainOptions = [
@@ -492,19 +496,32 @@ export const Status: React.FC = () => {
       label: "all tokens",
       value: "all",
     },
-    {
-      label: "native token",
-      value: "native_token",
-    },
-    {
-      label: "nep141 token",
-      value: "nep141_token",
-    },
-    {
-      label: "nft",
-      value: "nft",
-    },
   ];
+
+  if (tokensMap) {
+    const totalTokens: Token[] = [];
+    Object.values(tokensMap as TokensMap).forEach((tokens) => {
+      tokens.forEach((token) => {
+        if (totalTokens.findIndex((tk: Token) => tk?.name === token.name) < 0) {
+          totalTokens.push(...tokens);
+        }
+      });
+    });
+
+    const tokensForOption: Token[] =
+      selectedAppchain === "all"
+        ? totalTokens
+        : (tokensMap as TokensMap)[selectedAppchain];
+
+    if (tokensForOption && tokensForOption.length > 0) {
+      tokenOptions.push(
+        ...tokensForOption.map(({ name, symbol }) => ({
+          label: symbol,
+          value: name,
+        }))
+      );
+    }
+  }
 
   const onApplyFilter = () => {
     setIsApplying.on();
