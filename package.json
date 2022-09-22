@@ -94,5 +94,8 @@
     "react-app-rewired": "^2.2.1",
     "typescript": "^4.3.5",
     "web-vitals": "^2.1.4"
+  },
+  "prettier": {
+    "arrowParens": "always"
   }
 }
