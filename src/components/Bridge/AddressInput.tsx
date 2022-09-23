@@ -202,7 +202,7 @@ export default function AddressInpput({
         onClose={setSelectAccountModalOpen.off}
         accounts={accounts}
         onChooseAccount={onSelectAccount}
-        selectedAccount={address}
+        selectedAccount={currentAccount}
       />
     </Box>
   )

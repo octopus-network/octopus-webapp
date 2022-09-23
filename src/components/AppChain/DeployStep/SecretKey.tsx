@@ -31,7 +31,11 @@ export default function SecretKey({
       <Flex bg={inputBg} p={1} borderRadius="lg">
         <Input
           variant="unstyled"
-          placeholder={cloudVendor === CloudVendor.AWS ? "Secret Key" : "Token"}
+          placeholder={
+            cloudVendor === CloudVendor.AWS
+              ? "Secret Key"
+              : "Token (e.g., dop_v1_***)"
+          }
           w="100%"
           p={2}
           value={secretKey}
