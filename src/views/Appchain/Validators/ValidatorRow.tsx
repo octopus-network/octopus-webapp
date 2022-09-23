@@ -125,9 +125,14 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
   )
 
   let status = ValidatorStatus.Registered
+
   if (validator.is_unbonding) {
     status = ValidatorStatus.Unstaking
-  } else if (validatorsHasEraPoints.includes(ss58Address)) {
+  } else if (
+    validatorsHasEraPoints.some(
+      (t) => t.toLowerCase() === ss58Address.toLowerCase()
+    )
+  ) {
     status = ValidatorStatus.Validating
   } else if (isInAppchain) {
     status = ValidatorStatus.Validating_N_Not_Producing
