@@ -9,13 +9,19 @@ import {
 } from "@chakra-ui/react"
 import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import { useEffect, useState } from "react"
-import { AnchorContract, AppchainInfo, CLOUD_VENDOR, Validator } from "types"
+import {
+  AnchorContract,
+  AppchainInfo,
+  CloudVendor,
+  OCTNetwork,
+  Validator,
+} from "types"
 import Initial from "./DeployStep/Initial"
 import { RegisterValidatorModal } from "views/Appchain/MyStaking/RegisterValidatorModal"
 import { Toast } from "components/common/toast"
-import useSWR from "swr"
 import SecretKey from "./DeployStep/SecretKey"
 import NodeManager from "utils/NodeManager"
+import { CLOUD_NODE_INSTANCES } from "config/constants"
 
 enum DeployStep {
   NEED_ACCESS_KEY,
@@ -27,7 +33,6 @@ export default function NodeDeploy({
   validator,
   appchainId,
   setNode,
-  myNodeSetOAuthUser,
   isShowRegister,
   appchain,
   anchor,
@@ -36,38 +41,31 @@ export default function NodeDeploy({
   validator?: Validator
   appchainId?: string
   setNode: (node: any) => void
-  myNodeSetOAuthUser: (user: any) => void
   isShowRegister: boolean
   appchain?: AppchainInfo
   anchor?: AnchorContract
   fetchNode: () => void
 }) {
   const cloudVendorInLocalStorage = window.localStorage.getItem(
-    "OCTOPUS_DEPLOYER_CLOUD_VENDOR"
-  ) as CLOUD_VENDOR
+    "OCTOPUS_DEPLOYER_CloudVendor"
+  ) as CloudVendor
   const accessKeyInLocalStorage =
     window.localStorage.getItem("OCTOPUS_DEPLOYER_ACCESS_KEY") ||
     window.localStorage.getItem("accessKey") ||
     ""
 
   const [step, setStep] = useState<DeployStep>(DeployStep.NEED_ACCESS_KEY)
-  const [cloudVendor, setCloudVendor] = useState<CLOUD_VENDOR>(
-    cloudVendorInLocalStorage || CLOUD_VENDOR.AWS
+  const [cloudVendor, setCloudVendor] = useState<CloudVendor>(
+    cloudVendorInLocalStorage || CloudVendor.AWS
   )
   const [accessKey, setAccessKey] = useState<string>(accessKeyInLocalStorage)
   const [secretKey, setSecretKey] = useState<string>("")
-  const [projects, setProjects] = useState<any[]>()
   const [deployRegion, setDeployRegion] = useState<string>("")
   const [isManuallyDeployed, setIsManuallyDeployed] = useBoolean()
   const [isDeploying, setIsDeploying] = useBoolean()
   // const [projectId, setProjectId] = useState<string>()
   const [registerValidatorModalOpen, setRegisterValidatorModalOpen] =
     useBoolean(false)
-
-  const { data: instance } = useSWR(
-    appchainId ? `appchain/${appchainId}/recommend-instance` : null
-  )
-
   const isDeployed = isShowRegister || isManuallyDeployed
 
   useEffect(() => {
@@ -84,7 +82,12 @@ export default function NodeDeploy({
 
   const onConfirmAccessKey = async () => {
     if (!accessKey) {
-      return Toast.error("Please input access key")
+      //
+      return Toast.error(
+        `Please input ${
+          cloudVendor === CloudVendor.AWS ? "Access Key" : "Token Name"
+        }`
+      )
     }
     if (!accountId) {
       return Toast.error("Please connect wallet")
@@ -92,7 +95,7 @@ export default function NodeDeploy({
 
     setStep(DeployStep.CONFIRMED_ACCESS_KEY)
     window.localStorage.setItem("OCTOPUS_DEPLOYER_ACCESS_KEY", accessKey)
-    window.localStorage.setItem("OCTOPUS_DEPLOYER_CLOUD_VENDOR", cloudVendor)
+    window.localStorage.setItem("OCTOPUS_DEPLOYER_CloudVendor", cloudVendor)
 
     try {
       const node = await NodeManager.getNodeDetail({
@@ -122,15 +125,18 @@ export default function NodeDeploy({
   }
 
   const onDeploy = async () => {
-    if (!accountId || !appchainId || !instance) {
+    if (!accountId || !appchainId) {
       return
     }
     setIsDeploying.on()
 
+    const instance = (CLOUD_NODE_INSTANCES[appchainId] ||
+      CLOUD_NODE_INSTANCES[OCTNetwork.BARNANCLE_0918])[cloudVendor]
+
     try {
       await NodeManager.deployNode({
         appchainId,
-        cloud_vendor: cloudVendor,
+        cloudVendor,
         accountId,
         network,
         region: deployRegion,
@@ -147,6 +153,8 @@ export default function NodeDeploy({
       Toast.error(error)
     }
   }
+
+  console.log("isDeployed", step)
 
   if (validator && isManuallyDeployed) {
     return (
@@ -168,8 +176,6 @@ export default function NodeDeploy({
           cloudVendor={cloudVendor}
           setCloudVendor={setCloudVendor}
           setInputAccessKey={setAccessKey}
-          setProjects={setProjects}
-          myNodeSetOAuthUser={myNodeSetOAuthUser}
           cloudAccessKey={accessKey}
         />
       )}
@@ -186,10 +192,11 @@ export default function NodeDeploy({
           secretKey={secretKey}
           setSecretKey={setSecretKey}
           setDeployRegion={setDeployRegion}
+          cloudVendor={cloudVendor}
         />
       )}
 
-      {!isDeployed && (
+      {!isManuallyDeployed && (
         <Flex m={2} flexDirection="column" gap={2}>
           <Flex direction="row" gap={2}>
             <Button
@@ -242,7 +249,7 @@ export default function NodeDeploy({
         </Flex>
       )}
 
-      {validator && step === DeployStep.NEED_ACCESS_KEY && (
+      {validator && step === DeployStep.NEED_ACCESS_KEY && isManuallyDeployed && (
         <Flex direction="column" mt={2} mb={2} gap={6}>
           <Button
             onClick={onConfirmAccessKey}
@@ -250,7 +257,8 @@ export default function NodeDeploy({
             isDisabled={!accountId || isUnbonding}
             width="100%"
           >
-            Confirm Your Access Key
+            Confirm Your{" "}
+            {cloudVendor === CloudVendor.AWS ? "Access Key" : "Token Name"}
           </Button>
         </Flex>
       )}

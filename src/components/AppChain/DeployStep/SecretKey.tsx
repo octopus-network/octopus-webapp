@@ -7,6 +7,7 @@ import {
   useColorModeValue,
 } from "@chakra-ui/react"
 import useSWR from "swr"
+import { CloudVendor } from "types"
 import RecommendInstance from "./RecommendInstance"
 
 export default function SecretKey({
@@ -14,21 +15,23 @@ export default function SecretKey({
   secretKey,
   setSecretKey,
   setDeployRegion,
+  cloudVendor,
 }: {
   appchainId?: string
   secretKey: string
   setSecretKey: (key: string) => void
   setDeployRegion: (region: string) => void
+  cloudVendor: CloudVendor
 }) {
   const inputBg = useColorModeValue("#f5f7fa", "whiteAlpha.100")
   const { data: deployConfig } = useSWR("deploy-config")
   return (
     <Flex pt={2} pb={4} justifyContent="center" flexDirection="column" gap={4}>
-      <RecommendInstance appchainId={appchainId} />
+      <RecommendInstance appchainId={appchainId} cloudVendor={cloudVendor} />
       <Flex bg={inputBg} p={1} borderRadius="lg">
         <Input
           variant="unstyled"
-          placeholder="Secret Key"
+          placeholder={cloudVendor === CloudVendor.AWS ? "Secret Key" : "Token"}
           w="100%"
           p={2}
           value={secretKey}

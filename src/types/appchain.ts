@@ -10,9 +10,9 @@ export enum AppchainState {
   Active = "Active",
 }
 
-export enum CLOUD_VENDOR {
+export enum CloudVendor {
   AWS = "AWS",
-  GCP = "GCP",
+  DO = "DO",
 }
 
 export type AppchainInfo = {
@@ -311,4 +311,16 @@ export enum ValidatorStatus {
   Validating = "Validating",
   Validating_N_Not_Producing = "Validating_N_Not_Producing",
   Unstaking = "Unstaking",
+}
+
+export enum OCTNetwork {
+  DEBIO_NETWORK = "debionetwork",
+  MYRIAD = "myriad",
+  FUSOTAO = "fusotao",
+  ATOCHA = "atocha",
+  DEIP = "deip",
+  BARNANCLE_0918 = "barnancle0918",
+  UCHAIN = "uchain",
+  DISCOVOL = "discovol",
+  BARNACLE_EVM = "barnacle-evm",
 }

@@ -15,22 +15,23 @@ import {
   useBoolean,
   useClipboard,
   Tooltip,
-} from '@chakra-ui/react'
+} from "@chakra-ui/react"
 
-import { DownloadIcon, DeleteIcon, CheckIcon, CopyIcon } from '@chakra-ui/icons'
-import { NODE_STATE_RECORD } from 'config/constants'
-import axios from 'axios'
-import { useWalletSelector } from 'components/WalletSelectorContextProvider'
+import { DownloadIcon, DeleteIcon, CheckIcon, CopyIcon } from "@chakra-ui/icons"
+import { NODE_STATE_RECORD } from "config/constants"
+import axios from "axios"
+import { useWalletSelector } from "components/WalletSelectorContextProvider"
 import {
   AnchorContract,
   AppchainInfo,
-  CLOUD_VENDOR,
+  CloudVendor,
   NodeState,
   Validator,
-} from 'types'
-import { RegisterValidatorModal } from 'views/Appchain/MyStaking/RegisterValidatorModal'
-import { BsArrowUpRight } from 'react-icons/bs'
-import NodeManager from 'utils/NodeManager'
+} from "types"
+import { RegisterValidatorModal } from "views/Appchain/MyStaking/RegisterValidatorModal"
+import { BsArrowUpRight } from "react-icons/bs"
+import NodeManager from "utils/NodeManager"
+import { FaAws, FaDigitalOcean } from "react-icons/fa"
 
 export default function NodeBoard({
   node,
@@ -45,7 +46,7 @@ export default function NodeBoard({
   isInitializing,
 }: {
   node?: any
-  cloudVendor: CLOUD_VENDOR
+  cloudVendor: CloudVendor
   deployConfig?: any
   deployAccessKey: string
   appchainId?: string
@@ -62,17 +63,17 @@ export default function NodeBoard({
     useBoolean(false)
 
   const { hasCopied: hasNodeIdCopied, onCopy: onCopyNodeId } = useClipboard(
-    node?.uuid || ''
+    node?.uuid || ""
   )
 
   const { accountId, network } = useWalletSelector()
 
   const onApplyNode = async () => {
-    let secretKey = ''
+    let secretKey = ""
 
-    if (cloudVendor === CLOUD_VENDOR.AWS) {
+    if (cloudVendor === CloudVendor.AWS) {
       secretKey =
-        window.prompt('Please enter the secret key of your server', '') ?? ''
+        window.prompt("Please enter the secret key of your server", "") ?? ""
 
       if (!secretKey) {
         return
@@ -101,18 +102,18 @@ export default function NodeBoard({
   const onDestroyNode = () => {
     let secretKey
 
-    if (cloudVendor === CLOUD_VENDOR.AWS) {
+    if ([CloudVendor.AWS, CloudVendor.DO].includes(cloudVendor)) {
       secretKey = window.prompt(
-        'Please enter the secret key of your server',
-        ''
+        CloudVendor.AWS === cloudVendor
+          ? "Please enter the secret key of your server"
+          : "Please enter the personal access token of your server",
+        ""
       )
 
       if (!secretKey) {
         return
       }
     } else {
-      // const { access_token } = oauthUser.getAuthResponse()
-      // secretKey = access_token
     }
 
     setIsDestroying.on()
@@ -130,7 +131,23 @@ export default function NodeBoard({
 
   return (
     <Box mt={3}>
-      <List spacing={3}>
+      <List spacing={2}>
+        <Flex justifyContent="space-between">
+          <Text variant="gray" fontSize="sm">
+            Cloud Vendor
+          </Text>
+          {node.task.cloud_vendor === CloudVendor.AWS ? (
+            <Flex alignItems="center" gap={2}>
+              <Text fontSize="sm">AWS</Text>
+              <FaAws size={18} />
+            </Flex>
+          ) : (
+            <Flex alignItems="center" gap={2}>
+              <Text fontSize="sm">Digital Ocean</Text>
+              <FaDigitalOcean size={18} />
+            </Flex>
+          )}
+        </Flex>
         <Flex justifyContent="space-between">
           <Text variant="gray" fontSize="sm">
             Status
@@ -140,7 +157,7 @@ export default function NodeBoard({
             size="sm"
           >
             {node.state === NodeState.RUNNING && !node.sync
-              ? 'Syncing'
+              ? "Syncing"
               : NODE_STATE_RECORD[node.state as NodeState]?.label}
           </Tag>
         </Flex>
@@ -185,7 +202,7 @@ export default function NodeBoard({
               </Link>
             </HStack>
           ) : (
-            '-'
+            "-"
           )}
         </Flex>
       </List>
@@ -279,8 +296,8 @@ export default function NodeBoard({
         <Tooltip
           label={
             !node?.sync
-              ? 'You will be able to register validator after node synced'
-              : ''
+              ? "You will be able to register validator after node synced"
+              : ""
           }
           bg="gray.300"
           color="black"
@@ -294,7 +311,7 @@ export default function NodeBoard({
             opacity={node?.sync ? 1 : 0.5}
             mt={4}
           >
-            {!accountId ? 'Please Login' : 'Register Validator'}
+            {!accountId ? "Please Login" : "Register Validator"}
           </Button>
         </Tooltip>
       )}

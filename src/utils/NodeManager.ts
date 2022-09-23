@@ -1,5 +1,5 @@
 import axios from "axios"
-import { CLOUD_VENDOR, NetworkType, NodeDetail } from "types"
+import { CloudVendor, NetworkType, NodeDetail } from "types"
 
 const API_HOST = {
   testnet: `https://3jd9s8zf1l.execute-api.us-west-2.amazonaws.com/api/tasks`,
@@ -16,11 +16,29 @@ export default class NodeManager {
     appchainId: string
     accountId: string
     network: NetworkType
-    cloudVendor: CLOUD_VENDOR
+    cloudVendor: CloudVendor
     accessKey: string
   }) {
-    const oldAuthStr = `appchain-${appchainId}-network-${network}-cloud-${cloudVendor}-${accessKey}`
-    const authStr = `appchain-${appchainId}-network-${network}-cloud-${cloudVendor}-account-${accountId}-${accessKey}`
+    const oldAuthStr = [
+      "appchain",
+      appchainId,
+      "network",
+      network,
+      "cloud",
+      cloudVendor,
+      accessKey,
+    ].join("-")
+    const authStr = [
+      "appchain",
+      appchainId,
+      "network",
+      network,
+      "cloud",
+      cloudVendor,
+      "account",
+      accountId,
+      accessKey,
+    ].join("-")
 
     let res = { data: [] }
     try {
@@ -48,7 +66,7 @@ export default class NodeManager {
   }
 
   static async deployNode({
-    cloud_vendor,
+    cloudVendor,
     region,
     instance_type,
     volume_size,
@@ -58,7 +76,7 @@ export default class NodeManager {
     network,
     accountId,
   }: {
-    cloud_vendor: CLOUD_VENDOR
+    cloudVendor: CloudVendor
     region?: string
     instance_type?: string
     volume_size?: string
@@ -68,11 +86,21 @@ export default class NodeManager {
     network: NetworkType
     accountId: string
   }) {
-    const authKey = `appchain-${appchainId}-network-${network}-cloud-${cloud_vendor}-account-${accountId}-${accessKey}`
+    const authKey = [
+      "appchain",
+      appchainId,
+      "network",
+      network,
+      "cloud",
+      cloudVendor,
+      "account",
+      accountId,
+      accessKey,
+    ].join("-")
     const task = await axios.post(
       `${API_HOST[network]}`,
       {
-        cloud_vendor,
+        cloud_vendor: cloudVendor,
         region,
         instance_type,
         volume_size,
