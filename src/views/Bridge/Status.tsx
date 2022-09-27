@@ -503,7 +503,7 @@ export const Status: React.FC = () => {
     Object.values(tokensMap as TokensMap).forEach((tokens) => {
       tokens.forEach((token) => {
         if (totalTokens.findIndex((tk: Token) => tk?.name === token.name) < 0) {
-          totalTokens.push(...tokens);
+          totalTokens.push(token);
         }
       });
     });
