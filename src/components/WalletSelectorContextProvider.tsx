@@ -15,6 +15,7 @@ import {
   TokenContract,
 } from "types";
 import { setupNearWallet } from "@near-wallet-selector/near-wallet";
+import posthog from "posthog-js";
 
 declare global {
   interface Window {
@@ -65,6 +66,12 @@ export const WalletSelectorContextProvider = ({
     setNetworkConfig(config);
 
     setNetwork(config?.near.networkId ?? NetworkType.MAINNET);
+
+    if (config?.near.networkId === NetworkType.MAINNET) {
+      posthog.init("phc_CG8GjxmGGO5GXbBYuQ8THW0lR9szjTNp05ox5VLkX1z", {
+        api_host: "https://app.posthog.com",
+      });
+    }
     const _selector = await setupWalletSelector({
       network: config?.near.networkId,
       debug: false,
