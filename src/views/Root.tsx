@@ -32,6 +32,7 @@ import XothBannerBg from "assets/xoth-banner.png";
 import AvatarBannerBg from "assets/avatar-banner.png";
 import Carousel from "nuka-carousel/lib/carousel";
 import useLocalStorage from "hooks/useLocalStorage";
+import posthog from "posthog-js";
 
 export const Root: React.FC = () => {
   const headerBg = useColorModeValue("whiteAlpha.800", "whiteAlpha.50");
@@ -291,7 +292,12 @@ export const Root: React.FC = () => {
               dragging
               wrapAround
             >
-              <a href="https://xoth.app" target="_blank" rel="noreferrer">
+              <a
+                href="https://xoth.app"
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => posthog.capture("click_xoth")}
+              >
                 <Img
                   src={XothBannerBg}
                   width="300px"
@@ -304,6 +310,7 @@ export const Root: React.FC = () => {
                 href="https://chrome.google.com/webstore/detail/avatar-wallet/ckfhnogibicdkfkijinnacpmmobbhbjk"
                 target="_blank"
                 rel="noreferrer"
+                onClick={() => posthog.capture("click_avatar")}
               >
                 <Img
                   src={AvatarBannerBg}
