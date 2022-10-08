@@ -1,8 +1,8 @@
-import React from "react"
+import React from "react";
 
-import { HStack, Box, Heading, Flex } from "@chakra-ui/react"
+import { HStack, Box, Heading, Flex } from "@chakra-ui/react";
 
-import { RippleDot } from "components"
+import { RippleDot } from "components";
 
 const state2color: Record<string, string> = {
   Unknown: "#718096",
@@ -17,7 +17,8 @@ const state2color: Record<string, string> = {
   "Need Keys": "#319795",
   Validating: "#2468f2",
   Unbonding: "#e53e3e",
-}
+  Frozen: "#718096",
+};
 
 const state2label: Record<string, string> = {
   Unknown: "unknown",
@@ -32,13 +33,14 @@ const state2label: Record<string, string> = {
   "Need Keys": "Need Keys",
   Validating: "Validating",
   Unbonding: "Unbonding",
-}
+  Frozen: "Frozen",
+};
 
-const rappleStates: string[] = ["Validating", "Running"]
+const rappleStates: string[] = ["Validating", "Running"];
 
 type StateBadgeProps = {
-  state: string
-}
+  state?: string;
+};
 
 export const StateBadge: React.FC<StateBadgeProps> = ({ state }) => {
   return state ? (
@@ -54,5 +56,5 @@ export const StateBadge: React.FC<StateBadgeProps> = ({ state }) => {
         </Heading>
       </HStack>
     </Flex>
-  ) : null
-}
+  ) : null;
+};

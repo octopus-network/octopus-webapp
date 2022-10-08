@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react"
-import useSWR from "swr"
-import dayjs from "dayjs"
-import Decimal from "decimal.js"
+import React, { useState, useEffect } from "react";
+import useSWR from "swr";
+import dayjs from "dayjs";
+import Decimal from "decimal.js";
 
 import {
   DrawerHeader,
@@ -17,43 +17,43 @@ import {
   DrawerFooter,
   VStack,
   useColorModeValue,
-} from "@chakra-ui/react"
+} from "@chakra-ui/react";
 
-import { AppchainInfo } from "types"
-import { StateBadge, LoginButton } from "components"
-import { FaUser } from "react-icons/fa"
+import { AppchainInfo } from "types";
+import { StateBadge, LoginButton } from "components";
+import { FaUser } from "react-icons/fa";
 
-import { Links } from "./Links"
-import { Descriptions } from "./Descriptions"
-import { UserPanel } from "./UserPanel"
-import { AdminPanel } from "./AdminPanel"
-import { DecimalUtil } from "utils"
+import { Links } from "./Links";
+import { Descriptions } from "./Descriptions";
+import { UserPanel } from "./UserPanel";
+import { AdminPanel } from "./AdminPanel";
+import { DecimalUtil } from "utils";
 
-import octoAvatar from "assets/icons/avatar.png"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import octoAvatar from "assets/icons/avatar.png";
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
 
 type OverviewProps = {
-  appchainId: string | undefined
-  onDrawerClose: VoidFunction
-}
+  appchainId: string | undefined;
+  onDrawerClose: VoidFunction;
+};
 
 export const Overview: React.FC<OverviewProps> = ({
   appchainId,
   onDrawerClose,
 }) => {
-  const { registry, accountId } = useWalletSelector()
-  const [isAdmin, setIsAdmin] = useState(false)
+  const { registry, accountId } = useWalletSelector();
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  const { data: appchain } = useSWR<AppchainInfo>(`appchain/${appchainId}`)
-  const footerBg = useColorModeValue("#f6f7fa", "#15172c")
+  const { data: appchain } = useSWR<AppchainInfo>(`appchain/${appchainId}`);
+  const footerBg = useColorModeValue("#f6f7fa", "#15172c");
 
-  const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null)
+  const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null);
 
   useEffect(() => {
     registry?.get_owner().then((owner) => {
-      setIsAdmin(owner === accountId)
-    })
-  }, [accountId, registry])
+      setIsAdmin(owner === accountId);
+    });
+  }, [accountId, registry]);
 
   return (
     <>
@@ -138,5 +138,5 @@ export const Overview: React.FC<OverviewProps> = ({
         </Box>
       </DrawerFooter>
     </>
-  )
-}
+  );
+};
