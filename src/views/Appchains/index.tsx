@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from "react"
+import React, { useMemo, useEffect } from "react";
 
 import {
   Container,
@@ -9,44 +9,45 @@ import {
   SimpleGrid,
   Image,
   Link,
-} from "@chakra-ui/react"
+} from "@chakra-ui/react";
 
-import { RunningAppchains } from "components"
+import { RunningAppchains } from "components";
 
-import { Statistics } from "./Statistics"
-import { Booting } from "./Booting"
-import { Voting } from "./Voting"
-import { Established } from "./Established"
+import { Statistics } from "./Statistics";
+import { Booting } from "./Booting";
+import { Voting } from "./Voting";
+import { Established } from "./Established";
 
-import { Overview } from "./Overview"
-import { useParams, useNavigate } from "react-router-dom"
-import JOIN_DISCORD from "../../assets/join-discord.png"
-import JOIN_ACCELERATOR from "../../assets/join-accelerator.png"
-import JOIN_OCTOPUS from "../../assets/join-octopus.png"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { Overview } from "./Overview";
+import { useParams, useNavigate } from "react-router-dom";
+import JOIN_DISCORD from "../../assets/join-discord.png";
+import JOIN_ACCELERATOR from "../../assets/join-accelerator.png";
+import JOIN_OCTOPUS from "../../assets/join-octopus.png";
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
+import { FrozenAppchains } from "components/FrozenAppchains";
 
 export const Appchains: React.FC = () => {
-  const { appchainId } = useParams()
-  const navigate = useNavigate()
+  const { appchainId } = useParams();
+  const navigate = useNavigate();
 
-  const drawerIOpen = useMemo(() => !!appchainId, [appchainId])
+  const drawerIOpen = useMemo(() => !!appchainId, [appchainId]);
 
   useEffect(() => {
     if (drawerIOpen) {
-      ;(document.getElementById("root") as any).style =
-        "transition: all .3s ease-in-out; transform: translateX(-15%)"
+      (document.getElementById("root") as any).style =
+        "transition: all .3s ease-in-out; transform: translateX(-15%)";
     } else {
-      ;(document.getElementById("root") as any).style =
-        "transition: all .15s ease-in-out; transform: translateX(0)"
+      (document.getElementById("root") as any).style =
+        "transition: all .15s ease-in-out; transform: translateX(0)";
     }
-  }, [drawerIOpen])
+  }, [drawerIOpen]);
 
   const onDrawerClose = () => {
-    navigate(`/appchains`)
-  }
+    navigate(`/appchains`);
+  };
 
-  const { networkConfig } = useWalletSelector()
-  const isMainnet = networkConfig?.near.networkId === "mainnet"
+  const { networkConfig } = useWalletSelector();
+  const isMainnet = networkConfig?.near.networkId === "mainnet";
 
   return (
     <>
@@ -81,6 +82,9 @@ export const Appchains: React.FC = () => {
           <Booting />
         </Box>
         <Box mt={10}>
+          <FrozenAppchains showMore={false} />
+        </Box>
+        <Box mt={10}>
           <Voting />
         </Box>
         <Box mt={10}>
@@ -99,5 +103,5 @@ export const Appchains: React.FC = () => {
         </DrawerContent>
       </Drawer>
     </>
-  )
-}
+  );
+};
