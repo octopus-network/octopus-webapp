@@ -18,6 +18,7 @@ const state2color: Record<string, string> = {
   Validating: "#2468f2",
   Unbonding: "#e53e3e",
   Frozen: "#718096",
+  Broken: "#718096",
 };
 
 const state2label: Record<string, string> = {
@@ -34,6 +35,7 @@ const state2label: Record<string, string> = {
   Validating: "Validating",
   Unbonding: "Unbonding",
   Frozen: "Frozen",
+  Broken: "Broken",
 };
 
 const rappleStates: string[] = ["Validating", "Running"];

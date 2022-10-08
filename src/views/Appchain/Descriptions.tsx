@@ -138,13 +138,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
           </VStack>
         </HStack>
         <VStack alignItems="flex-end" spacing={0}>
-          <StateBadge
-            state={
-              appchain?.anchor_status?.asset_transfer_is_paused
-                ? "Frozen"
-                : appchain?.appchain_state
-            }
-          />
+          <StateBadge state={appchain?.appchain_state} />
           <HStack className="octo-gray" fontSize="sm">
             <Text variant="gray">
               {appchain
