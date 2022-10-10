@@ -6,22 +6,22 @@ import {
   Spinner,
   Text,
   useBoolean,
-} from "@chakra-ui/react"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
-import { useEffect, useState } from "react"
+} from "@chakra-ui/react";
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
+import { useEffect, useState } from "react";
 import {
   AnchorContract,
   AppchainInfo,
   CloudVendor,
   OCTNetwork,
   Validator,
-} from "types"
-import Initial from "./DeployStep/Initial"
-import { RegisterValidatorModal } from "views/Appchain/MyStaking/RegisterValidatorModal"
-import { Toast } from "components/common/toast"
-import SecretKey from "./DeployStep/SecretKey"
-import NodeManager from "utils/NodeManager"
-import { CLOUD_NODE_INSTANCES } from "config/constants"
+} from "types";
+import Initial from "./DeployStep/Initial";
+import { RegisterValidatorModal } from "views/Appchain/MyStaking/RegisterValidatorModal";
+import { Toast } from "components/common/toast";
+import SecretKey from "./DeployStep/SecretKey";
+import NodeManager from "utils/NodeManager";
+import { CLOUD_NODE_INSTANCES } from "config/constants";
 
 enum DeployStep {
   NEED_ACCESS_KEY,
@@ -38,47 +38,47 @@ export default function NodeDeploy({
   anchor,
   fetchNode,
 }: {
-  validator?: Validator
-  appchainId?: string
-  setNode: (node: any) => void
-  isShowRegister: boolean
-  appchain?: AppchainInfo
-  anchor?: AnchorContract
-  fetchNode: () => void
+  validator?: Validator;
+  appchainId?: string;
+  setNode: (node: any) => void;
+  isShowRegister: boolean;
+  appchain?: AppchainInfo;
+  anchor?: AnchorContract;
+  fetchNode: () => void;
 }) {
   const cloudVendorInLocalStorage = window.localStorage.getItem(
     "OCTOPUS_DEPLOYER_CloudVendor"
-  ) as CloudVendor
+  ) as CloudVendor;
   const accessKeyInLocalStorage =
     window.localStorage.getItem("OCTOPUS_DEPLOYER_ACCESS_KEY") ||
     window.localStorage.getItem("accessKey") ||
-    ""
+    "";
 
-  const [step, setStep] = useState<DeployStep>(DeployStep.NEED_ACCESS_KEY)
+  const [step, setStep] = useState<DeployStep>(DeployStep.NEED_ACCESS_KEY);
   const [cloudVendor, setCloudVendor] = useState<CloudVendor>(
     cloudVendorInLocalStorage || CloudVendor.AWS
-  )
-  const [accessKey, setAccessKey] = useState<string>(accessKeyInLocalStorage)
-  const [secretKey, setSecretKey] = useState<string>("")
-  const [deployRegion, setDeployRegion] = useState<string>("")
-  const [isManuallyDeployed, setIsManuallyDeployed] = useBoolean()
-  const [isDeploying, setIsDeploying] = useBoolean()
+  );
+  const [accessKey, setAccessKey] = useState<string>(accessKeyInLocalStorage);
+  const [secretKey, setSecretKey] = useState<string>("");
+  const [deployRegion, setDeployRegion] = useState<string>("");
+  const [isManuallyDeployed, setIsManuallyDeployed] = useBoolean();
+  const [isDeploying, setIsDeploying] = useBoolean();
   // const [projectId, setProjectId] = useState<string>()
   const [registerValidatorModalOpen, setRegisterValidatorModalOpen] =
-    useBoolean(false)
-  const isDeployed = isShowRegister || isManuallyDeployed
+    useBoolean(false);
+  const isDeployed = isShowRegister || isManuallyDeployed;
 
   useEffect(() => {
     if (appchainId) {
-      const ismd = localStorage.getItem(`manually-deployed-${appchainId}`)
-      ismd === "true" && setIsManuallyDeployed.on()
+      const ismd = localStorage.getItem(`manually-deployed-${appchainId}`);
+      ismd === "true" && setIsManuallyDeployed.on();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appchainId])
+  }, [appchainId]);
 
-  const isUnbonding = !!(validator && validator?.is_unbonding)
+  const isUnbonding = !!(validator && validator?.is_unbonding);
 
-  const { accountId, network } = useWalletSelector()
+  const { accountId, network } = useWalletSelector();
 
   const onConfirmAccessKey = async () => {
     if (!accessKey) {
@@ -87,15 +87,15 @@ export default function NodeDeploy({
         `Please input ${
           cloudVendor === CloudVendor.AWS ? "Access Key" : "Token Name"
         }`
-      )
+      );
     }
     if (!accountId) {
-      return Toast.error("Please connect wallet")
+      return Toast.error("Please connect wallet");
     }
 
-    setStep(DeployStep.CONFIRMED_ACCESS_KEY)
-    window.localStorage.setItem("OCTOPUS_DEPLOYER_ACCESS_KEY", accessKey)
-    window.localStorage.setItem("OCTOPUS_DEPLOYER_CloudVendor", cloudVendor)
+    setStep(DeployStep.CONFIRMED_ACCESS_KEY);
+    window.localStorage.setItem("OCTOPUS_DEPLOYER_ACCESS_KEY", accessKey);
+    window.localStorage.setItem("OCTOPUS_DEPLOYER_CloudVendor", cloudVendor);
 
     try {
       const node = await NodeManager.getNodeDetail({
@@ -104,34 +104,34 @@ export default function NodeDeploy({
         appchainId: appchainId!,
         accountId,
         network,
-      })
+      });
       if (!node) {
-        setStep(DeployStep.NEED_SECRECT_KEY)
+        setStep(DeployStep.NEED_SECRECT_KEY);
       } else {
-        fetchNode()
+        fetchNode();
       }
     } catch (error) {
-      Toast.error(error)
+      Toast.error(error);
     }
-  }
+  };
 
-  let isBtnDisabled = false
+  let isBtnDisabled = false;
   if (step === DeployStep.NEED_ACCESS_KEY) {
-    isBtnDisabled = !accessKey || isDeploying
+    isBtnDisabled = !accessKey || isDeploying;
   } else if (step === DeployStep.NEED_SECRECT_KEY) {
-    isBtnDisabled = !secretKey
+    isBtnDisabled = !secretKey;
   } else if (step === DeployStep.CONFIRMED_ACCESS_KEY) {
-    isBtnDisabled = true
+    isBtnDisabled = true;
   }
 
   const onDeploy = async () => {
     if (!accountId || !appchainId) {
-      return
+      return;
     }
-    setIsDeploying.on()
+    setIsDeploying.on();
 
     const instance = (CLOUD_NODE_INSTANCES[appchainId] ||
-      CLOUD_NODE_INSTANCES[OCTNetwork.BARNANCLE_0918])[cloudVendor]
+      CLOUD_NODE_INSTANCES[OCTNetwork.BARNANCLE_0918])[cloudVendor];
 
     try {
       await NodeManager.deployNode({
@@ -144,17 +144,15 @@ export default function NodeDeploy({
         accessKey,
         instance_type: instance.instance_type,
         volume_size: instance.volume_size,
-      })
-      setIsDeploying.off()
-      fetchNode()
+      });
+      setIsDeploying.off();
+      fetchNode();
     } catch (error) {
-      setIsDeploying.off()
+      setIsDeploying.off();
 
-      Toast.error(error)
+      Toast.error(error);
     }
-  }
-
-  console.log("isDeployed", step)
+  };
 
   if (validator && isManuallyDeployed) {
     return (
@@ -165,7 +163,7 @@ export default function NodeDeploy({
           </Text>
         </Center>
       </>
-    )
+    );
   }
 
   return (
@@ -204,9 +202,9 @@ export default function NodeDeploy({
               flex={"1"}
               onClick={() => {
                 if (step === DeployStep.NEED_ACCESS_KEY && accessKey) {
-                  onConfirmAccessKey()
+                  onConfirmAccessKey();
                 } else if (step === DeployStep.NEED_SECRECT_KEY && secretKey) {
-                  onDeploy()
+                  onDeploy();
                 }
               }}
               isDisabled={isBtnDisabled}
@@ -227,8 +225,8 @@ export default function NodeDeploy({
                   localStorage.setItem(
                     `manually-deployed-${appchainId}`,
                     "true"
-                  )
-                  setIsManuallyDeployed.on()
+                  );
+                  setIsManuallyDeployed.on();
                 }}
               >
                 Deployed manually
@@ -283,5 +281,5 @@ export default function NodeDeploy({
         appchain={appchain}
       />
     </>
-  )
+  );
 }

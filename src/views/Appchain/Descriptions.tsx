@@ -1,8 +1,8 @@
-import React from "react"
+import React from "react";
 
-import relativeTime from "dayjs/plugin/relativeTime"
-import duration from "dayjs/plugin/duration"
-import dayjs from "dayjs"
+import relativeTime from "dayjs/plugin/relativeTime";
+import duration from "dayjs/plugin/duration";
+import dayjs from "dayjs";
 
 import {
   Box,
@@ -27,44 +27,44 @@ import {
   MenuItem,
   Button,
   Center,
-} from "@chakra-ui/react"
+} from "@chakra-ui/react";
 
-import { StateBadge } from "components"
+import { StateBadge } from "components";
 
 import {
   AppchainInfoWithAnchorStatus,
   AppchainSettings,
   WrappedAppchainToken,
-} from "types"
+} from "types";
 
-import type { ApiPromise } from "@polkadot/api"
-import { Link as RouterLink } from "react-router-dom"
+import type { ApiPromise } from "@polkadot/api";
+import { Link as RouterLink } from "react-router-dom";
 
-import websiteIcon from "assets/icons/website.png"
-import explorerIcon from "assets/icons/explorer.png"
-import bridgeIcon from "assets/icons/bridge.png"
-import githubIcon from "assets/icons/github.png"
+import websiteIcon from "assets/icons/website.png";
+import explorerIcon from "assets/icons/explorer.png";
+import bridgeIcon from "assets/icons/bridge.png";
+import githubIcon from "assets/icons/github.png";
 
-import { DecimalUtil, toValidUrl } from "utils"
-import { EPOCH_DURATION_MS } from "primitives"
-import { FaUser } from "react-icons/fa"
-import useChainData from "hooks/useChainData"
-import DescItem from "components/common/DescItem"
-import { BsThreeDots } from "react-icons/bs"
-import { FiCopy, FiExternalLink } from "react-icons/fi"
-import LinkBox from "components/common/LinkBox"
-import useChainState from "hooks/useChainState"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { DecimalUtil, toValidUrl } from "utils";
+import { EPOCH_DURATION_MS } from "primitives";
+import { FaUser } from "react-icons/fa";
+import useChainData from "hooks/useChainData";
+import DescItem from "components/common/DescItem";
+import { BsThreeDots } from "react-icons/bs";
+import { FiCopy, FiExternalLink } from "react-icons/fi";
+import LinkBox from "components/common/LinkBox";
+import useChainState from "hooks/useChainState";
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
 
-dayjs.extend(duration)
-dayjs.extend(relativeTime)
+dayjs.extend(duration);
+dayjs.extend(relativeTime);
 
 type DescriptionsProps = {
-  appchain?: AppchainInfoWithAnchorStatus
-  appchainSettings?: AppchainSettings
-  wrappedAppchainToken?: WrappedAppchainToken
-  appchainApi?: ApiPromise
-}
+  appchain?: AppchainInfoWithAnchorStatus;
+  appchainSettings?: AppchainSettings;
+  wrappedAppchainToken?: WrappedAppchainToken;
+  appchainApi?: ApiPromise;
+};
 
 export const Descriptions: React.FC<DescriptionsProps> = ({
   appchain,
@@ -72,22 +72,22 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
   appchainSettings,
   wrappedAppchainToken,
 }) => {
-  const bg = useColorModeValue("white", "#15172c")
-  const linksBg = useColorModeValue("#f5f7fa", "#1e1f34")
-  const borderColor = useColorModeValue("#e3e3e3", "#333")
+  const bg = useColorModeValue("white", "#15172c");
+  const linksBg = useColorModeValue("#f5f7fa", "#1e1f34");
+  const borderColor = useColorModeValue("#e3e3e3", "#333");
 
-  const { networkConfig } = useWalletSelector()
+  const { networkConfig } = useWalletSelector();
 
-  const isSubqEnabled = !!appchainSettings?.subql_endpoint
+  const isSubqEnabled = !!appchainSettings?.subql_endpoint;
 
   const chainData = useChainData(
     appchain?.appchain_id,
     appchainSettings?.subql_endpoint
-  )
+  );
 
   const { onCopy: onCopyRpcEndpoint } = useClipboard(
     appchainSettings?.rpc_endpoint || ""
-  )
+  );
 
   const {
     totalAsset,
@@ -100,7 +100,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
     appchainApi,
     appchain?.appchain_anchor,
     appchain?.total_stake
-  )
+  );
 
   return (
     <Box bg={bg} p={6} borderRadius="lg">
@@ -138,7 +138,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
           </VStack>
         </HStack>
         <VStack alignItems="flex-end" spacing={0}>
-          <StateBadge state={appchain?.appchain_state || ""} />
+          <StateBadge state={appchain?.appchain_state} />
           <HStack className="octo-gray" fontSize="sm">
             <Text variant="gray">
               {appchain
@@ -369,5 +369,5 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
         />
       </SimpleGrid>
     </Box>
-  )
-}
+  );
+};

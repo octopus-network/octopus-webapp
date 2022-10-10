@@ -1,4 +1,4 @@
-import React from "react"
+import React from "react";
 
 import {
   Container,
@@ -32,26 +32,26 @@ import {
   ModalFooter,
   Button,
   Text,
-} from "@chakra-ui/react"
+} from "@chakra-ui/react";
 
-import { ColorModeSwitcher, LoginButton } from "components"
+import { ColorModeSwitcher, LoginButton } from "components";
 
-import { AiOutlinePoweroff, AiOutlineDashboard } from "react-icons/ai"
+import { AiOutlinePoweroff, AiOutlineDashboard } from "react-icons/ai";
 
-import { Link as RouterLink, useLocation } from "react-router-dom"
-import logo from "assets/logo.png"
-import octoAvatar from "assets/icons/avatar.png"
+import { Link as RouterLink, useLocation } from "react-router-dom";
+import logo from "assets/logo.png";
+import octoAvatar from "assets/icons/avatar.png";
 
-import { MdMenu } from "react-icons/md"
-import { useWalletSelector } from "./WalletSelectorContextProvider"
-import { Toast } from "./common/toast"
+import { MdMenu } from "react-icons/md";
+import { useWalletSelector } from "./WalletSelectorContextProvider";
+import { Toast } from "./common/toast";
 
 type NavLinkProps = {
-  path: string
-  label: string
-  fontSize?: string
-  onClick?: () => void
-}
+  path: string;
+  label: string;
+  fontSize?: string;
+  onClick?: () => void;
+};
 
 const NavLink: React.FC<NavLinkProps> = ({
   path,
@@ -59,8 +59,8 @@ const NavLink: React.FC<NavLinkProps> = ({
   fontSize = "sm",
   onClick,
 }) => {
-  const location = useLocation()
-  const locationPath = location.pathname
+  const location = useLocation();
+  const locationPath = location.pathname;
 
   return (
     <Link
@@ -73,33 +73,33 @@ const NavLink: React.FC<NavLinkProps> = ({
         {label}
       </Heading>
     </Link>
-  )
-}
+  );
+};
 
 export const Header: React.FC = () => {
-  const { accountId, selector } = useWalletSelector()
+  const { accountId, selector } = useWalletSelector();
 
   const {
     isOpen: isMenuOpen,
     onOpen: onMenuOpen,
     onClose: onMenuClose,
-  } = useDisclosure()
+  } = useDisclosure();
 
-  const { isOpen, onOpen, onClose } = useDisclosure()
-  const [confirmModal, setConfirmModal] = useBoolean()
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [confirmModal, setConfirmModal] = useBoolean();
 
   const onLogout = async () => {
-    const wallet = await selector.wallet()
+    const wallet = await selector.wallet();
     wallet
       .signOut()
       .then(() => {
-        setConfirmModal.off()
-        window.location.reload()
+        setConfirmModal.off();
+        window.location.reload();
       })
       .catch((err) => {
-        Toast.error(err)
-      })
-  }
+        Toast.error(err);
+      });
+  };
 
   return (
     <Container pt={4} pb={4}>
@@ -112,7 +112,7 @@ export const Header: React.FC = () => {
             <NavLink path="/home" label="Home" />
             <NavLink path="/appchains" label="Appchains" />
             <NavLink path="/bridge" label="Bridge" />
-            <NavLink path="/converter" label="Token converter" />
+            {/* <NavLink path="/converter" label="Token converter" /> */}
             <Link href="https://docs.oct.network/" isExternal>
               <Heading fontSize="sm" fontWeight={600}>
                 Docs
@@ -184,12 +184,12 @@ export const Header: React.FC = () => {
                       fontSize="lg"
                       onClick={onClose}
                     />
-                    <NavLink
+                    {/* <NavLink
                       path="/converter"
                       label="Token converter"
                       fontSize="lg"
                       onClick={onClose}
-                    />
+                    /> */}
                     <Link href="https://docs.oct.network/" isExternal>
                       <Heading fontSize="lg" fontWeight={600}>
                         Docs
@@ -225,5 +225,5 @@ export const Header: React.FC = () => {
         </ModalContent>
       </Modal>
     </Container>
-  )
-}
+  );
+};

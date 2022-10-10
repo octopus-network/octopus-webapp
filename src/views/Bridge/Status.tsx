@@ -1,8 +1,8 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useState, useMemo, useEffect } from "react"
-import useSWR from "swr"
-import dayjs from "dayjs"
-import relativeTime from "dayjs/plugin/relativeTime"
+import React, { useState, useMemo, useEffect } from "react";
+import useSWR from "swr";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 
 import {
   Box,
@@ -27,28 +27,28 @@ import {
   useColorModeValue,
   VStack,
   useBoolean,
-} from "@chakra-ui/react"
+} from "@chakra-ui/react";
 
-import { Select } from "chakra-react-select"
+import { Select, chakraComponents } from "chakra-react-select";
 
-import { DecimalUtil, decodeNearAccount } from "utils"
-import { Link as RouterLink, useParams, useNavigate } from "react-router-dom"
+import { DecimalUtil, decodeNearAccount } from "utils";
+import { Link as RouterLink, useParams, useNavigate } from "react-router-dom";
 
 import {
   ExternalLinkIcon,
   ChevronRightIcon,
   ChevronLeftIcon,
-} from "@chakra-ui/icons"
+} from "@chakra-ui/icons";
 
-import { AppchainInfoWithAnchorStatus, NetworkConfig } from "types"
+import { AppchainInfoWithAnchorStatus, NetworkConfig } from "types";
 
-import { BiTimeFive } from "react-icons/bi"
-import { AiOutlineArrowRight } from "react-icons/ai"
-import nearLogo from "assets/near.svg"
-import { TxDetail } from "./TxDetail"
-import { formatAppChainAddress } from "utils/format"
-import OctIdenticon from "components/common/OctIdenticon"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { BiTimeFive } from "react-icons/bi";
+import { AiOutlineArrowRight } from "react-icons/ai";
+import nearLogo from "assets/near.svg";
+import { TxDetail } from "./TxDetail";
+import { formatAppChainAddress } from "utils/format";
+import OctIdenticon from "components/common/OctIdenticon";
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
 
 enum BridgeStatus {
   Pending,
@@ -57,46 +57,50 @@ enum BridgeStatus {
 }
 
 type Token = {
-  name: string
-  symbol: string
-  decimals: number
-  contract_id: string
-}
+  name: string;
+  symbol: string;
+  decimals: number;
+  contract_id: string;
+};
+
+type TokensMap = {
+  [key: string]: Token[];
+};
 
 type BridgeHistory = {
-  id: string
-  direction: string
-  appchain_id: string
-  event: string
-  amount: string
-  from: string
-  to: string
-  outHash: string
-  inHashes: (string | null)[]
-  status: BridgeStatus
-  timestamp: number
-  token: Token
-  message?: string
-}
+  id: string;
+  direction: string;
+  appchain_id: string;
+  event: string;
+  amount: string;
+  from: string;
+  to: string;
+  outHash: string;
+  inHashes: (string | null)[];
+  status: BridgeStatus;
+  timestamp: number;
+  token: Token;
+  message?: string;
+};
 
 type RowProps = {
-  data: BridgeHistory
-  network: NetworkConfig | null
-}
+  data: BridgeHistory;
+  network: NetworkConfig | null;
+};
 
 type Filters = {
-  appchian: string
-  direction: string
-  token: string
-}
+  appchian: string;
+  direction: string;
+  token: string;
+};
 
-dayjs.extend(relativeTime)
+dayjs.extend(relativeTime);
 
 const statusObj: Record<
   string,
   {
-    color: string
-    label: string
+    color: string;
+    label: string;
   }
 > = {
   Pending: {
@@ -111,21 +115,20 @@ const statusObj: Record<
     color: "red",
     label: "Failed",
   },
-}
+};
 
 const Row: React.FC<RowProps> = ({ data, network }) => {
-  const bg = useColorModeValue("white", "#15172c")
+  const bg = useColorModeValue("white", "#15172c");
 
   const [isAppchainSide, appchainId] = useMemo(
     () => [data.direction === "appchain_to_near", data.appchain_id],
     [data]
-  )
+  );
 
   const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(
     `appchain/${appchainId}`
-  )
+  );
 
-  console.log("data", data)
   return (
     <Skeleton isLoaded={!!appchain || !network}>
       <Box left={0} top={0} right={0} pb={1} opacity={0.6}>
@@ -374,8 +377,8 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
         </Grid>
       </RouterLink>
     </Skeleton>
-  )
-}
+  );
+};
 
 function Page({
   page,
@@ -383,21 +386,21 @@ function Page({
   filters,
   loaded,
 }: {
-  page: number
-  filters: Filters
-  network: NetworkConfig | null
-  loaded: Function
+  page: number;
+  filters: Filters;
+  network: NetworkConfig | null;
+  loaded: Function;
 }) {
-  const pageSize = 20
-  const { appchian, direction, token } = filters
+  const pageSize = 20;
+  const { appchian, direction, token } = filters;
   const { data: txns } = useSWR<any[]>(
     `bridge-helper/bridge_txs?start=${
       (page - 1) * pageSize
     }&size=${pageSize}&appchain=${appchian}&direction=${direction}&token=${token}`
-  )
+  );
 
   if (txns) {
-    loaded()
+    loaded();
   }
 
   return (
@@ -406,25 +409,25 @@ function Page({
         <Row data={tx} key={`row-${idx}`} network={network} />
       ))}
     </>
-  )
+  );
 }
 
 export const Status: React.FC = () => {
-  const [page, setPage] = useState(1)
-  const [selectedAppchain, setSlectedAppchain] = useState("all")
-  const [selectedDirection, setSlectedDirection] = useState("all")
-  const [selectedTokenType, setSlectedTokenType] = useState("all")
+  const [page, setPage] = useState(1);
+  const [selectedAppchain, setSlectedAppchain] = useState("all");
+  const [selectedDirection, setSlectedDirection] = useState("all");
+  const [selectedTokenType, setSlectedTokenType] = useState("all");
   const [filters, setFilters] = useState({
     appchian: "all",
     direction: "all",
     token: "all",
-  })
-  const [isApplying, setIsApplying] = useBoolean()
-  const { txId } = useParams()
-  const navigate = useNavigate()
-  const { networkConfig } = useWalletSelector()
+  });
+  const [isApplying, setIsApplying] = useBoolean();
+  const { txId } = useParams();
+  const navigate = useNavigate();
+  const { networkConfig } = useWalletSelector();
 
-  const pages: any[] = []
+  const pages: any[] = [];
   for (let i = 1; i < page + 1; i++) {
     pages.push(
       <Page
@@ -433,43 +436,44 @@ export const Status: React.FC = () => {
         network={networkConfig}
         filters={filters}
         loaded={() => {
-          setIsApplying.off()
+          setIsApplying.off();
         }}
       />
-    )
+    );
   }
 
   useEffect(() => {
     const onScroll = (e: any) => {
       if (document.body.getBoundingClientRect().bottom <= window.innerHeight) {
-        setPage(page + 1)
+        setPage(page + 1);
       }
-    }
-    document?.addEventListener("scroll", onScroll)
+    };
+    document?.addEventListener("scroll", onScroll);
 
-    return () => document?.removeEventListener("scroll", onScroll)
-  }, [page])
+    return () => document?.removeEventListener("scroll", onScroll);
+  }, [page]);
 
   const onDetailDrawerClose = () => {
-    navigate(`/bridge/txs`)
-  }
+    navigate(`/bridge/txs`);
+  };
 
-  const { data: appchains } = useSWR<any[]>("appchains/running")
+  const { data: appchains } = useSWR<any[]>("appchains/running");
+  const { data: tokensMap } = useSWR<TokensMap>(`bridge-helper/bridge_tokens`);
 
-  const appchainNames = appchains?.map(({ appchain_id }) => appchain_id)
+  const appchainNames = appchains?.map(({ appchain_id }) => appchain_id);
   const appchainOptions = [
     {
       label: "all appchains",
       value: "all",
     },
-  ]
+  ];
   if (appchainNames && appchainNames.length > 0) {
     appchainOptions.push(
       ...appchainNames.map((appchainName) => ({
         label: appchainName,
         value: appchainName,
       }))
-    )
+    );
   }
 
   const directionOptions = [
@@ -485,36 +489,49 @@ export const Status: React.FC = () => {
       label: "near to appchain",
       value: "near_to_appchain",
     },
-  ]
+  ];
 
   const tokenOptions = [
     {
       label: "all tokens",
       value: "all",
     },
-    {
-      label: "native token",
-      value: "native_token",
-    },
-    {
-      label: "nep141 token",
-      value: "nep141_token",
-    },
-    {
-      label: "nft",
-      value: "nft",
-    },
-  ]
+  ];
+
+  if (tokensMap) {
+    const totalTokens: Token[] = [];
+    Object.values(tokensMap as TokensMap).forEach((tokens) => {
+      tokens.forEach((token) => {
+        if (totalTokens.findIndex((tk: Token) => tk?.name === token.name) < 0) {
+          totalTokens.push(token);
+        }
+      });
+    });
+
+    const tokensForOption: Token[] =
+      selectedAppchain === "all"
+        ? totalTokens
+        : (tokensMap as TokensMap)[selectedAppchain];
+
+    if (tokensForOption && tokensForOption.length > 0) {
+      tokenOptions.push(
+        ...tokensForOption.map(({ name, symbol }) => ({
+          label: symbol,
+          value: name,
+        }))
+      );
+    }
+  }
 
   const onApplyFilter = () => {
-    setIsApplying.on()
-    setPage(1)
+    setIsApplying.on();
+    setPage(1);
     setFilters({
       appchian: selectedAppchain,
       direction: selectedDirection,
       token: selectedTokenType,
-    })
-  }
+    });
+  };
 
   return (
     <>
@@ -533,7 +550,7 @@ export const Status: React.FC = () => {
               placeholder="Select appchains"
               options={appchainOptions}
               onChange={(newValue) => {
-                setSlectedAppchain(newValue?.value as string)
+                setSlectedAppchain(newValue?.value as string);
               }}
             />
           </GridItem>
@@ -542,7 +559,7 @@ export const Status: React.FC = () => {
               placeholder="Select directions"
               options={directionOptions}
               onChange={(newValue) => {
-                setSlectedDirection(newValue?.value as string)
+                setSlectedDirection(newValue?.value as string);
               }}
             />
           </GridItem>
@@ -551,7 +568,7 @@ export const Status: React.FC = () => {
               placeholder="Select token type"
               options={tokenOptions}
               onChange={(newValue) => {
-                setSlectedTokenType(newValue?.value as string)
+                setSlectedTokenType(newValue?.value as string);
               }}
             />
           </GridItem>
@@ -616,5 +633,5 @@ export const Status: React.FC = () => {
         </DrawerContent>
       </Drawer>
     </>
-  )
-}
+  );
+};
