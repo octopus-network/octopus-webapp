@@ -95,6 +95,7 @@ export const MyStaking: React.FC<MyStakingProps> = ({
           })
         );
         const rewards: { [key: string]: RewardHistory[] } = {};
+
         delegatorRewards.forEach((reward, idx) => {
           rewards[delegatedValidatorIds[idx]] = reward;
         });
