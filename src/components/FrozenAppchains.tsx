@@ -19,22 +19,22 @@ import {
 import { useNavigate } from "react-router-dom";
 import { ChevronRightIcon } from "@chakra-ui/icons";
 import { Link as RouterLink } from "react-router-dom";
-import { DecimalUtil, ZERO_DECIMAL } from "utils";
+import { DecimalUtil } from "utils";
 
 import { OCT_TOKEN_DECIMALS } from "primitives";
 
-import { AppchainInfo, AppchainSettings, Delegator, Validator } from "types";
+import { AppchainInfo, Delegator, Validator } from "types";
 
 type RunningAppchainsProps = {
   showMore?: boolean;
 };
 
-type RunningItemProps = {
+type FrozenItemProps = {
   whiteBg?: boolean;
   data: AppchainInfo;
 };
 
-const RunningItem: React.FC<RunningItemProps> = ({ whiteBg = false, data }) => {
+const FrozenItem: React.FC<FrozenItemProps> = ({ whiteBg = false, data }) => {
   const bg = useColorModeValue(whiteBg ? "white" : "#f6f7fa", "#15172c");
   const iconBg = useColorModeValue("white", "whiteAlpha.100");
 
@@ -43,13 +43,6 @@ const RunningItem: React.FC<RunningItemProps> = ({ whiteBg = false, data }) => {
   const icon = useMemo(
     () => data.appchain_metadata?.fungible_token_metadata?.icon || "",
     [data]
-  );
-
-  const { data: prices } = useSWR(
-    `prices/OCT,${data.appchain_metadata?.fungible_token_metadata?.symbol}`
-  );
-  const { data: appchainSettings } = useSWR<AppchainSettings>(
-    `appchain-settings/${data.appchain_id}`
   );
   const { data: validators } = useSWR<Validator[]>(
     `validators/${data.appchain_id}`
@@ -67,25 +60,6 @@ const RunningItem: React.FC<RunningItemProps> = ({ whiteBg = false, data }) => {
     () => delegatorsArr?.flat(Infinity).length,
     [delegatorsArr]
   );
-
-  const apy = useMemo(() => {
-    if (!appchainSettings || !prices) return ZERO_DECIMAL;
-    const { fungible_token_metadata } = data.appchain_metadata || {};
-    const rewardsPerYear = DecimalUtil.fromString(
-      appchainSettings.era_reward,
-      fungible_token_metadata.decimals
-    )
-      .mul(365)
-      .mul(prices[fungible_token_metadata.symbol]);
-
-    return rewardsPerYear
-      .mul(100)
-      .div(
-        DecimalUtil.fromString(data.total_stake, OCT_TOKEN_DECIMALS).mul(
-          prices["OCT"]
-        )
-      );
-  }, [prices, data, appchainSettings]);
 
   return (
     <Box
@@ -122,9 +96,15 @@ const RunningItem: React.FC<RunningItemProps> = ({ whiteBg = false, data }) => {
           <Text variant="gray" fontSize="sm">
             Delegators
           </Text>
-          <Skeleton isLoaded={delegatorsCount !== undefined}>
+          <Skeleton
+            isLoaded={validators?.length ? delegatorsCount !== undefined : true}
+          >
             <Heading fontSize="lg">
-              {delegatorsCount === undefined ? "loading" : delegatorsCount}
+              {validators?.length
+                ? delegatorsCount === undefined
+                  ? "loading"
+                  : delegatorsCount
+                : "0"}
             </Heading>
           </Skeleton>
         </VStack>
@@ -143,16 +123,14 @@ const RunningItem: React.FC<RunningItemProps> = ({ whiteBg = false, data }) => {
           <Text variant="gray" fontSize="sm">
             APY
           </Text>
-          <Heading fontSize="lg">
-            {apy.gt(ZERO_DECIMAL) ? `${DecimalUtil.beautify(apy, 2)}%` : "-"}
-          </Heading>
+          <Heading fontSize="lg">{"0%"}</Heading>
         </VStack>
       </Flex>
     </Box>
   );
 };
 
-const BlankItem: React.FC<Omit<RunningItemProps, "data">> = ({ whiteBg }) => {
+const BlankItem: React.FC<Omit<FrozenItemProps, "data">> = ({ whiteBg }) => {
   const bg = useColorModeValue(whiteBg ? "white" : "#f6f7fa", "#15172c");
 
   return (
@@ -241,7 +219,7 @@ export const FrozenAppchains: React.FC<RunningAppchainsProps> = ({
           </>
         ) : (
           data.map((item: any, idx: number) => (
-            <RunningItem key={`item-${idx}`} whiteBg={!showMore} data={item} />
+            <FrozenItem key={`item-${idx}`} whiteBg={!showMore} data={item} />
           ))
         )}
       </SimpleGrid>
