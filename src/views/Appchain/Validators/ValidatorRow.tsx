@@ -85,26 +85,6 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
     [delegators, accountId]
   );
 
-  const { data: delegatorRewards } = useSWR<RewardHistory[]>(
-    isDelegated && appchainId && validatorSetHistoryEndIndex
-      ? `rewards/${validator.validator_id}/${appchainId}/${accountId}/${validatorSetHistoryEndIndex}`
-      : null
-  );
-
-  const unwithdrawnDelegatorRewards = useMemo(() => {
-    if (!delegatorRewards?.length || !ftMetadata) {
-      return ZERO_DECIMAL;
-    }
-
-    return delegatorRewards.reduce(
-      (total, next) =>
-        total.plus(
-          DecimalUtil.fromString(next.unwithdrawn_reward, ftMetadata?.decimals)
-        ),
-      ZERO_DECIMAL
-    );
-  }, [delegatorRewards, ftMetadata]);
-
   const ss58Address = formatAppChainAddress(
     validator.validator_id_in_appchain,
     appchain

@@ -8,6 +8,7 @@ import { setupMyNearWallet } from "@near-wallet-selector/my-near-wallet";
 import axios from "axios";
 import { API_HOST } from "config";
 import { Account, keyStores, Near, WalletConnection } from "near-api-js";
+// import { setupWalletConnect } from "@near-wallet-selector/wallet-connect";
 import {
   NetworkConfig,
   NetworkType,
@@ -73,7 +74,16 @@ export const WalletSelectorContextProvider = ({
       });
     }
     const _selector = await setupWalletSelector({
-      network: config?.near.networkId,
+      network:
+        config?.near.networkId === NetworkType.MAINNET
+          ? "mainnet"
+          : {
+              networkId: NetworkType.TESTNET,
+              nodeUrl: "https://public-rpc.blockpi.io/http/near-testnet",
+              helperUrl: "https://helper.testnet.near.org",
+              explorerUrl: "https://explorer.testnet.near.org",
+              indexerUrl: "https://testnet-api.kitwallet.app",
+            },
       debug: false,
       modules: [
         setupNearWallet({
@@ -88,7 +98,6 @@ export const WalletSelectorContextProvider = ({
         //   iconUrl: "/assets/sender-icon.png",
         // }),
         // setupWalletConnect({
-        //   iconUrl: "/assets/wallet-connect-icon.png",
         //   projectId: "1799b9adf32c8cef373a6a41699fe8bf",
         //   metadata: {
         //     name: "Octopus Network",

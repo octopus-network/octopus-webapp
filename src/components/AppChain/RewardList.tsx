@@ -18,21 +18,15 @@ import {
   useColorModeValue,
   VStack,
 } from "@chakra-ui/react";
-import { Action, Transaction } from "@near-wallet-selector/core";
-import { Toast } from "components/common/toast";
+import { Action } from "@near-wallet-selector/core";
 import { Empty } from "components/Empty";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
-import Decimal from "decimal.js";
-import { useTokenContract } from "hooks/useTokenContract";
-import { providers } from "near-api-js";
-import { CodeResult } from "near-api-js/lib/providers/provider";
-import { COMPLEX_CALL_GAS, SIMPLE_CALL_GAS } from "primitives";
-import { useEffect, useMemo, useState } from "react";
+import { COMPLEX_CALL_GAS } from "primitives";
+import { useEffect, useMemo } from "react";
 import {
   AnchorContract,
   AppchainInfoWithAnchorStatus,
   RewardHistory,
-  WrappedAppchainToken,
 } from "types";
 import { DecimalUtil, ZERO_DECIMAL } from "utils";
 import { calcUnwithdrawnReward } from "utils/appchain";
