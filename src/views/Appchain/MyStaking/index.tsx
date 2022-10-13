@@ -87,6 +87,8 @@ export const MyStaking: React.FC<MyStakingProps> = ({
           appchain.appchain_anchor,
           accountId
         );
+        console.log("appchain", appchain);
+
         const delegatorRewards = await Promise.all(
           delegatedValidatorIds.map(async (id) => {
             return await fetch(
@@ -95,6 +97,7 @@ export const MyStaking: React.FC<MyStakingProps> = ({
           })
         );
         const rewards: { [key: string]: RewardHistory[] } = {};
+
         delegatorRewards.forEach((reward, idx) => {
           rewards[delegatedValidatorIds[idx]] = reward;
         });
@@ -124,7 +127,7 @@ export const MyStaking: React.FC<MyStakingProps> = ({
       }
     );
 
-    if (unwithdrawnDelegatorRewards.some((t) => t.isZero())) {
+    if (unwithdrawnDelegatorRewards.some((t) => !t.isZero())) {
       return true;
     }
 

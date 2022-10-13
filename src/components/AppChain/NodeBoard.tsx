@@ -15,23 +15,28 @@ import {
   useBoolean,
   useClipboard,
   Tooltip,
-} from "@chakra-ui/react"
+} from "@chakra-ui/react";
 
-import { DownloadIcon, DeleteIcon, CheckIcon, CopyIcon } from "@chakra-ui/icons"
-import { NODE_STATE_RECORD } from "config/constants"
-import axios from "axios"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import {
+  DownloadIcon,
+  DeleteIcon,
+  CheckIcon,
+  CopyIcon,
+} from "@chakra-ui/icons";
+import { NODE_STATE_RECORD } from "config/constants";
+import axios from "axios";
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
 import {
   AnchorContract,
   AppchainInfo,
   CloudVendor,
   NodeState,
   Validator,
-} from "types"
-import { RegisterValidatorModal } from "views/Appchain/MyStaking/RegisterValidatorModal"
-import { BsArrowUpRight } from "react-icons/bs"
-import NodeManager from "utils/NodeManager"
-import { FaAws, FaDigitalOcean } from "react-icons/fa"
+} from "types";
+import { RegisterValidatorModal } from "views/Appchain/MyStaking/RegisterValidatorModal";
+import { BsArrowUpRight } from "react-icons/bs";
+import NodeManager from "utils/NodeManager";
+import { FaAws, FaDigitalOcean } from "react-icons/fa";
 
 export default function NodeBoard({
   node,
@@ -45,62 +50,62 @@ export default function NodeBoard({
   validator,
   isInitializing,
 }: {
-  node?: any
-  cloudVendor: CloudVendor
-  deployConfig?: any
-  deployAccessKey: string
-  appchainId?: string
-  setNode: (node: any) => void
-  appchain?: AppchainInfo
-  anchor?: AnchorContract
-  validator?: Validator
-  isInitializing: boolean
+  node?: any;
+  cloudVendor: CloudVendor;
+  deployConfig?: any;
+  deployAccessKey: string;
+  appchainId?: string;
+  setNode: (node: any) => void;
+  appchain?: AppchainInfo;
+  anchor?: AnchorContract;
+  validator?: Validator;
+  isInitializing: boolean;
 }) {
-  const [isApplying, setIsApplying] = useBoolean()
-  const [isDeleting, setIsDeleting] = useBoolean()
-  const [isDestroying, setIsDestroying] = useBoolean()
+  const [isApplying, setIsApplying] = useBoolean();
+  const [isDeleting, setIsDeleting] = useBoolean();
+  const [isDestroying, setIsDestroying] = useBoolean();
   const [registerValidatorModalOpen, setRegisterValidatorModalOpen] =
-    useBoolean(false)
+    useBoolean(false);
 
   const { hasCopied: hasNodeIdCopied, onCopy: onCopyNodeId } = useClipboard(
     node?.uuid || ""
-  )
+  );
 
-  const { accountId, network } = useWalletSelector()
+  const { accountId, network } = useWalletSelector();
 
   const onApplyNode = async () => {
-    let secretKey = ""
+    let secretKey = "";
 
     if (cloudVendor === CloudVendor.AWS) {
       secretKey =
-        window.prompt("Please enter the secret key of your server", "") ?? ""
+        window.prompt("Please enter the secret key of your server", "") ?? "";
 
       if (!secretKey) {
-        return
+        return;
       }
     } else {
       // const { access_token } = oauthUser.getAuthResponse()
       // secretKey = access_token
     }
 
-    setIsApplying.on()
+    setIsApplying.on();
     await NodeManager.applyNode({
       uuid: node?.uuid,
       network,
       secretKey,
       user: node?.user,
-    })
-    window.location.reload()
-  }
+    });
+    window.location.reload();
+  };
 
   const onDeleteNode = async () => {
-    setIsDeleting.on()
-    await NodeManager.deleteNode({ uuid: node.uuid, user: node.user, network })
-    window.location.reload()
-  }
+    setIsDeleting.on();
+    await NodeManager.deleteNode({ uuid: node.uuid, user: node.user, network });
+    window.location.reload();
+  };
 
   const onDestroyNode = () => {
-    let secretKey
+    let secretKey;
 
     if ([CloudVendor.AWS, CloudVendor.DO].includes(cloudVendor)) {
       secretKey = window.prompt(
@@ -108,15 +113,15 @@ export default function NodeBoard({
           ? "Please enter the secret key of your server"
           : "Please enter the personal access token of your server",
         ""
-      )
+      );
 
       if (!secretKey) {
-        return
+        return;
       }
     } else {
     }
 
-    setIsDestroying.on()
+    setIsDestroying.on();
     axios
       .delete(`${deployConfig.deployApiHost}/tasks/${node?.uuid}`, {
         data: {
@@ -125,16 +130,16 @@ export default function NodeBoard({
         headers: { authorization: node?.user },
       })
       .then((res) => {
-        window.location.reload()
-      })
-  }
+        window.location.reload();
+      });
+  };
 
   return (
     <Box mt={3}>
       <List spacing={2}>
         <Flex justifyContent="space-between">
           <Text variant="gray" fontSize="sm">
-            Cloud Vendor
+            Cloud
           </Text>
           {node.task.cloud_vendor === CloudVendor.AWS ? (
             <Flex alignItems="center" gap={2}>
@@ -323,5 +328,5 @@ export default function NodeBoard({
         appchain={appchain}
       />
     </Box>
-  )
+  );
 }
