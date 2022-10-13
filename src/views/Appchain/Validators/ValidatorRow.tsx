@@ -1,6 +1,6 @@
-import React, { useMemo } from "react"
-import useSWR from "swr"
-import { DecimalUtil, ZERO_DECIMAL } from "utils"
+import React, { useMemo } from "react";
+import useSWR from "swr";
+import { DecimalUtil, ZERO_DECIMAL } from "utils";
 
 import {
   Box,
@@ -13,7 +13,7 @@ import {
   Skeleton,
   Icon,
   HStack,
-} from "@chakra-ui/react"
+} from "@chakra-ui/react";
 
 import {
   Validator,
@@ -23,29 +23,29 @@ import {
   Delegator,
   AppchainInfo,
   ValidatorStatus,
-} from "types"
+} from "types";
 
-import { OCT_TOKEN_DECIMALS } from "primitives"
-import { RippleDot } from "components"
-import { ChevronRightIcon } from "@chakra-ui/icons"
-import { useNavigate } from "react-router-dom"
-import { formatAppChainAddress } from "utils/format"
-import OctIdenticon from "components/common/OctIdenticon"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
-import ValidatorStatusTag from "components/Validator/Tag"
+import { OCT_TOKEN_DECIMALS } from "primitives";
+import { RippleDot } from "components";
+import { ChevronRightIcon } from "@chakra-ui/icons";
+import { useNavigate } from "react-router-dom";
+import { formatAppChainAddress } from "utils/format";
+import OctIdenticon from "components/common/OctIdenticon";
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
+import ValidatorStatusTag from "components/Validator/Tag";
 
 type ValidatorRowProps = {
-  validator: Validator
-  appchainId?: string
-  ftMetadata?: FungibleTokenMetadata
-  anchor?: AnchorContract
-  isLoading: boolean
-  isInAppchain: boolean
-  haveSessionKey: boolean
-  validatorSetHistoryEndIndex?: string
-  appchain?: AppchainInfo
-  validatorsHasEraPoints: string[]
-}
+  validator: Validator;
+  appchainId?: string;
+  ftMetadata?: FungibleTokenMetadata;
+  anchor?: AnchorContract;
+  isLoading: boolean;
+  isInAppchain: boolean;
+  haveSessionKey: boolean;
+  validatorSetHistoryEndIndex?: string;
+  appchain?: AppchainInfo;
+  validatorsHasEraPoints: string[];
+};
 
 export const ValidatorRow: React.FC<ValidatorRowProps> = ({
   anchor,
@@ -59,41 +59,41 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
   validatorSetHistoryEndIndex,
   validatorsHasEraPoints,
 }) => {
-  const { accountId } = useWalletSelector()
+  const { accountId } = useWalletSelector();
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const isMyself = useMemo(
     () => validator && accountId === validator.validator_id,
     [accountId, validator]
-  )
+  );
 
   const { data: rewards } = useSWR<RewardHistory[]>(
     appchainId && validatorSetHistoryEndIndex
       ? `rewards/${validator.validator_id}/${appchainId}/${validatorSetHistoryEndIndex}`
       : null
-  )
+  );
 
   const { data: delegators } = useSWR<Delegator[]>(
     appchainId && validatorSetHistoryEndIndex
       ? `${validator.validator_id}/${appchainId}/delegators`
       : null
-  )
+  );
 
   const isDelegated = useMemo(
     () => accountId && !!delegators?.find((d) => d.delegator_id === accountId),
     [delegators, accountId]
-  )
+  );
 
   const { data: delegatorRewards } = useSWR<RewardHistory[]>(
     isDelegated && appchainId && validatorSetHistoryEndIndex
       ? `rewards/${validator.validator_id}/${appchainId}/${accountId}/${validatorSetHistoryEndIndex}`
       : null
-  )
+  );
 
   const unwithdrawnDelegatorRewards = useMemo(() => {
     if (!delegatorRewards?.length || !ftMetadata) {
-      return ZERO_DECIMAL
+      return ZERO_DECIMAL;
     }
 
     return delegatorRewards.reduce(
@@ -102,13 +102,13 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
           DecimalUtil.fromString(next.unwithdrawn_reward, ftMetadata?.decimals)
         ),
       ZERO_DECIMAL
-    )
-  }, [delegatorRewards, ftMetadata])
+    );
+  }, [delegatorRewards, ftMetadata]);
 
   const ss58Address = formatAppChainAddress(
     validator.validator_id_in_appchain,
     appchain
-  )
+  );
 
   const totalRewards = useMemo(
     () =>
@@ -122,22 +122,22 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
           )
         : ZERO_DECIMAL,
     [rewards]
-  )
+  );
 
-  let status = ValidatorStatus.Registered
+  let status = ValidatorStatus.Registered;
 
   if (validator.is_unbonding) {
-    status = ValidatorStatus.Unstaking
+    status = ValidatorStatus.Unstaking;
   } else if (
     validatorsHasEraPoints.some(
       (t) => t.toLowerCase() === ss58Address.toLowerCase()
     )
   ) {
-    status = ValidatorStatus.Validating
+    status = ValidatorStatus.Validating;
   } else if (isInAppchain) {
-    status = ValidatorStatus.Validating_N_Not_Producing
+    status = ValidatorStatus.Validating_N_Not_Producing;
   } else if (haveSessionKey) {
-    status = ValidatorStatus.New
+    status = ValidatorStatus.New;
   }
 
   return (
@@ -241,18 +241,8 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
             </Text>
           ) : null}
           <Icon as={ChevronRightIcon} boxSize={5} className="octo-gray" />
-          {unwithdrawnDelegatorRewards.gt(ZERO_DECIMAL) ? (
-            <Box
-              position="absolute"
-              top="-3px"
-              right="15px"
-              boxSize={2}
-              bg="red"
-              borderRadius="full"
-            />
-          ) : null}
         </HStack>
       </GridItem>
     </Grid>
-  )
-}
+  );
+};
