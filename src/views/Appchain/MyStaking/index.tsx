@@ -69,6 +69,7 @@ export const MyStaking: React.FC<MyStakingProps> = ({
 
   const [unbonedStakes, setUnbondedStakes] = useState<UnbondedHistory[]>();
   const [stakingHistories, setStakingHistories] = useState<StakingHistory[]>();
+  const [delegatedAmount, setDelegatedAmount] = useState(ZERO_DECIMAL);
 
   const { data: validatorRewards } = useSWR<RewardHistory[]>(
     appchain?.anchor_status && accountId
@@ -86,6 +87,26 @@ export const MyStaking: React.FC<MyStakingProps> = ({
           networkConfig,
           appchain.appchain_anchor,
           accountId
+        );
+
+        const delegated = await Promise.all(
+          delegatedValidatorIds.map(async (id) => {
+            return await fetch(
+              `${API_HOST}/${id}/${appchain?.appchain_id}/delegators`
+            )
+              .then((res) => res.json())
+              .then((res) =>
+                res.find((t: any) => t.delegator_id === accountId)
+              );
+          })
+        );
+
+        const delegatedAmount = delegated.reduce(
+          (acc, cur) => acc.plus(cur.delegation_amount),
+          ZERO_DECIMAL
+        );
+        setDelegatedAmount(
+          DecimalUtil.fromString(delegatedAmount, OCT_TOKEN_DECIMALS)
         );
 
         const delegatorRewards = await Promise.all(
@@ -237,7 +258,7 @@ export const MyStaking: React.FC<MyStakingProps> = ({
           </Flex>
           <VStack p={6} spacing={1}>
             <Heading fontSize="3xl" color="white">
-              {DecimalUtil.beautify(deposit)}
+              {DecimalUtil.beautify(deposit.plus(delegatedAmount))}
             </Heading>
             <Text color="whiteAlpha.800">You Staked (OCT)</Text>
           </VStack>

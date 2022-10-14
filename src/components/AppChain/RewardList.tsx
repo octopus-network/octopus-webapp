@@ -1,10 +1,8 @@
 import { WarningTwoIcon } from "@chakra-ui/icons";
 import {
   Box,
-  Button,
   Divider,
   Flex,
-  Heading,
   HStack,
   Table,
   Tag,
@@ -16,7 +14,6 @@ import {
   Tr,
   useBoolean,
   useColorModeValue,
-  VStack,
 } from "@chakra-ui/react";
 import { Action } from "@near-wallet-selector/core";
 import { Empty } from "components/Empty";

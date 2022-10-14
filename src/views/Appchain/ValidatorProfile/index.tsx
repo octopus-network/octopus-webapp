@@ -109,7 +109,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
   const [delegateModalOpen, setDelegateModalOpen] = useBoolean();
   const [updateEmail, setUpdateEmail] = useBoolean();
 
-  const { accountId, selector, networkConfig } = useWalletSelector();
+  const { accountId, selector } = useWalletSelector();
 
   const { data: delegators } = useSWR<Delegator[]>(
     appchain && validatorId
@@ -145,26 +145,6 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
         );
       });
   }, [anchor, accountId, validator, appchain]);
-
-  const unwithdrawnDelegatorRewards = useMemo(() => {
-    if (!delegatorRewards?.length) {
-      return ZERO_DECIMAL;
-    }
-
-    return delegatorRewards.reduce(
-      (total, next) =>
-        total.plus(
-          DecimalUtil.fromString(
-            next.unwithdrawn_reward,
-            appchain?.appchain_metadata?.fungible_token_metadata.decimals
-          )
-        ),
-      ZERO_DECIMAL
-    );
-  }, [
-    appchain?.appchain_metadata?.fungible_token_metadata.decimals,
-    delegatorRewards,
-  ]);
 
   useEffect(() => {
     if (!validator || !anchor) {
