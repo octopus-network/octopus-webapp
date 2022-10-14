@@ -8,7 +8,6 @@ import {
   TabPanel,
   Flex,
   Button,
-  Text,
   Heading,
   useBoolean,
 } from "@chakra-ui/react";
@@ -88,22 +87,9 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
   }, [validatorRewards]);
 
   const total = useMemo(() => {
-    const vTotal = validatorRewards?.length
-      ? validatorRewards?.reduce(
-          (total, next) =>
-            total.plus(DecimalUtil.fromString(next.total_reward, decimals)),
-          ZERO_DECIMAL
-        )
-      : ZERO_DECIMAL;
+    const vTotal = calcUnwithdrawnReward(validatorRewards || [], decimals);
     const dTotal = Object.values(delegatorRewards).reduce(
-      (total, rewards) =>
-        total.plus(
-          rewards.reduce(
-            (total, next) =>
-              total.plus(DecimalUtil.fromString(next.total_reward, decimals)),
-            ZERO_DECIMAL
-          )
-        ),
+      (total, rewards) => total.plus(calcUnwithdrawnReward(rewards, decimals)),
       ZERO_DECIMAL
     );
     return DecimalUtil.beautify(vTotal.plus(dTotal));
