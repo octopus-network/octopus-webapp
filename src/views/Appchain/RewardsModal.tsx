@@ -10,6 +10,10 @@ import {
   Button,
   Heading,
   useBoolean,
+  Box,
+  HStack,
+  Text,
+  useColorModeValue,
 } from "@chakra-ui/react";
 
 import {
@@ -32,6 +36,7 @@ import { CodeResult } from "near-api-js/lib/providers/provider";
 import { Action, Transaction } from "@near-wallet-selector/core";
 import Decimal from "decimal.js";
 import { COMPLEX_CALL_GAS, SIMPLE_CALL_GAS } from "primitives";
+import { WarningTwoIcon } from "@chakra-ui/icons";
 
 type RewardsModalProps = {
   validatorRewards?: RewardHistory[];
@@ -56,6 +61,8 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
 }) => {
   const decimals =
     appchain?.appchain_metadata?.fungible_token_metadata?.decimals;
+
+  const bg = useColorModeValue("#f6f7fa", "#15172c");
 
   const [index, setIndex] = useState(0);
   const [wrappedAppchainToken, setWrappedAppchainToken] =
@@ -209,6 +216,19 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
           Claim All
         </Button>
       </Flex>
+      <Box p={4} bg={bg} borderRadius="lg">
+        <>
+          <Flex>
+            <HStack color="red">
+              <WarningTwoIcon boxSize={3} />
+              <Text fontSize="sm">
+                You can only claim the rewards distributed within the last 84
+                eras(days).
+              </Text>
+            </HStack>
+          </Flex>
+        </>
+      </Box>
       <Tabs variant="enclosed" index={index} onChange={setIndex}>
         <TabList>
           <Tab>Validator Reward</Tab>
@@ -216,13 +236,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
         </TabList>
         <TabPanels>
           <TabPanel>
-            <RewardList
-              rewards={validatorRewards || []}
-              appchain={appchain}
-              anchor={anchor}
-              validatorId={validatorId}
-              onClaimRewards={onClaimRewards}
-            />
+            <RewardList rewards={validatorRewards || []} appchain={appchain} />
           </TabPanel>
           <TabPanel>
             <Tabs>
@@ -250,9 +264,6 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
                         <RewardList
                           rewards={delegatorRewards[key] || []}
                           appchain={appchain}
-                          anchor={anchor}
-                          validatorId={key}
-                          onClaimRewards={onClaimRewards}
                         />
                       </TabPanel>
                     );
