@@ -52,16 +52,18 @@ export const getDelegatedValidators = async (
         `,
     });
 
-    const tmpArr = res.data.map((r: any) => {
-      try {
-        const obj = JSON.parse(
-          decodeURIComponent(r.args.args_json.msg.replace(/\\/g, ""))
-        );
-        return obj.RegisterDelegator.validator_id;
-      } catch (error) {
-        return "";
-      }
-    });
+    const tmpArr = res.data
+      .map((r: any) => {
+        try {
+          const obj = JSON.parse(
+            decodeURIComponent(r.args.args_json.msg.replace(/\\/g, ""))
+          );
+          return obj.RegisterDelegator.validator_id;
+        } catch (error) {
+          return "";
+        }
+      })
+      .filter((t: string) => t !== "");
 
     return Array.from(new Set(tmpArr));
   } catch (error) {

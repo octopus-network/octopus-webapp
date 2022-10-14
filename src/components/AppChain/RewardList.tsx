@@ -104,39 +104,8 @@ export default function RewardList({
 
   return (
     <>
-      <Box p={4} bg={bg} borderRadius="lg">
-        <Flex justifyContent="space-between" alignItems="center">
-          <Text variant="gray">Total Rewards</Text>
-          <Heading fontSize="md">
-            {DecimalUtil.beautify(totalRewards)}{" "}
-            {appchain?.appchain_metadata?.fungible_token_metadata.symbol}
-          </Heading>
-        </Flex>
-        <Flex justifyContent="space-between" alignItems="flex-start" mt={3}>
-          <Text variant="gray">Unclaimed Rewards</Text>
-          <VStack spacing={0} alignItems="flex-end">
-            <HStack>
-              <Heading fontSize="md">
-                {DecimalUtil.beautify(unwithdrawnRewards)}{" "}
-                {appchain?.appchain_metadata?.fungible_token_metadata.symbol}
-              </Heading>
-              <Button
-                colorScheme="octo-blue"
-                size="sm"
-                onClick={_onClaimRewards}
-                isLoading={isClaiming}
-                isDisabled={
-                  unwithdrawnRewards.lte(ZERO_DECIMAL) ||
-                  isClaiming ||
-                  isClaimRewardsPaused
-                }
-              >
-                {isClaimRewardsPaused ? "Claim Paused" : "Claim"}
-              </Button>
-            </HStack>
-          </VStack>
-        </Flex>
-        {unwithdrawnRewards.gt(ZERO_DECIMAL) ? (
+      {unwithdrawnRewards.gt(ZERO_DECIMAL) && (
+        <Box p={4} bg={bg} borderRadius="lg">
           <>
             <Divider mt={3} mb={3} />
             <Flex>
@@ -149,8 +118,8 @@ export default function RewardList({
               </HStack>
             </Flex>
           </>
-        ) : null}
-      </Box>
+        </Box>
+      )}
       {rewards?.length ? (
         <Box maxH="40vh" overflow="scroll" mt={3}>
           <Table>

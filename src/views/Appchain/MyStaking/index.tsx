@@ -87,7 +87,6 @@ export const MyStaking: React.FC<MyStakingProps> = ({
           appchain.appchain_anchor,
           accountId
         );
-        console.log("appchain", appchain);
 
         const delegatorRewards = await Promise.all(
           delegatedValidatorIds.map(async (id) => {
