@@ -8,7 +8,6 @@ import {
   TabPanel,
   Flex,
   Button,
-  Text,
   Heading,
   useBoolean,
 } from "@chakra-ui/react";

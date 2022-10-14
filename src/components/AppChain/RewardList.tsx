@@ -12,14 +12,11 @@ import {
   Th,
   Thead,
   Tr,
-  useBoolean,
   useColorModeValue,
 } from "@chakra-ui/react";
 import { Action } from "@near-wallet-selector/core";
 import { Empty } from "components/Empty";
-import { useWalletSelector } from "components/WalletSelectorContextProvider";
-import { COMPLEX_CALL_GAS } from "primitives";
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import {
   AnchorContract,
   AppchainInfoWithAnchorStatus,
@@ -43,61 +40,12 @@ export default function RewardList({
 }) {
   const bg = useColorModeValue("#f6f7fa", "#15172c");
 
-  const { accountId } = useWalletSelector();
-
-  const [isClaiming, setIsClaiming] = useBoolean(false);
-  const [isClaimRewardsPaused, setIsClaimRewardsPaused] = useBoolean(false);
-
-  useEffect(() => {
-    if (!anchor) {
-      setIsClaimRewardsPaused.off();
-      return;
-    }
-    anchor.get_anchor_status().then(({ rewards_withdrawal_is_paused }) => {
-      rewards_withdrawal_is_paused && setIsClaimRewardsPaused.on();
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [anchor]);
-
   const decimals =
     appchain?.appchain_metadata?.fungible_token_metadata?.decimals;
 
   const unwithdrawnRewards = useMemo(() => {
     return calcUnwithdrawnReward(rewards, decimals);
   }, [decimals, rewards]);
-
-  const totalRewards = useMemo(
-    () =>
-      rewards?.length
-        ? rewards?.reduce(
-            (total, next) =>
-              total.plus(DecimalUtil.fromString(next.total_reward, decimals)),
-            ZERO_DECIMAL
-          )
-        : ZERO_DECIMAL,
-    [decimals, rewards]
-  );
-
-  const _onClaimRewards = async () => {
-    setIsClaiming.on();
-    await onClaimRewards({
-      type: "FunctionCall",
-      params: {
-        methodName: !!validatorId
-          ? "withdraw_delegator_rewards"
-          : "withdraw_validator_rewards",
-        args: !!validatorId
-          ? {
-              validator_id: validatorId,
-              delegator_id: accountId || "",
-            }
-          : { validator_id: accountId },
-        gas: COMPLEX_CALL_GAS,
-        deposit: "0",
-      },
-    });
-    setIsClaiming.off();
-  };
 
   return (
     <>
