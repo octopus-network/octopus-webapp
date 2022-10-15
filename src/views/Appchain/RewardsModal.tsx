@@ -152,22 +152,20 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
           actions: [action],
         });
       } else {
-        validatorRewards?.forEach((t) => {
-          txs.push({
-            signerId: accountId,
-            receiverId: anchor.contractId,
-            actions: [
-              {
-                type: "FunctionCall",
-                params: {
-                  methodName: "withdraw_validator_rewards",
-                  args: { validator_id: accountId },
-                  gas: COMPLEX_CALL_GAS,
-                  deposit: "0",
-                },
+        txs.push({
+          signerId: accountId,
+          receiverId: anchor.contractId,
+          actions: [
+            {
+              type: "FunctionCall",
+              params: {
+                methodName: "withdraw_validator_rewards",
+                args: { validator_id: accountId },
+                gas: COMPLEX_CALL_GAS,
+                deposit: "0",
               },
-            ],
-          });
+            },
+          ],
         });
 
         Object.keys(delegatorRewards).forEach((key: string) => {
@@ -191,6 +189,8 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
           });
         });
       }
+      console.log("txs", txs);
+
       await wallet.signAndSendTransactions({
         transactions: txs,
       });
