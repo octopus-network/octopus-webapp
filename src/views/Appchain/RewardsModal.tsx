@@ -189,7 +189,6 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
           });
         });
       }
-      console.log("txs", txs);
 
       await wallet.signAndSendTransactions({
         transactions: txs,
@@ -242,33 +241,25 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
             <Tabs>
               <TabList>
                 {Object.keys(delegatorRewards).map((key) => {
-                  const unwithdrawnReward = calcUnwithdrawnReward(
-                    delegatorRewards[key] || [],
-                    decimals
-                  );
-                  if (unwithdrawnReward.gt(ZERO_DECIMAL)) {
-                    return <Tab key={key}>{key}</Tab>;
+                  if (delegatorRewards[key]?.length === 0) {
+                    return null;
                   }
-                  return null;
+                  return <Tab key={key}>{key}</Tab>;
                 })}
               </TabList>
               <TabPanels>
                 {Object.keys(delegatorRewards).map((key) => {
-                  const unwithdrawnReward = calcUnwithdrawnReward(
-                    delegatorRewards[key] || [],
-                    decimals
-                  );
-                  if (unwithdrawnReward.gt(ZERO_DECIMAL)) {
-                    return (
-                      <TabPanel key={key}>
-                        <RewardList
-                          rewards={delegatorRewards[key] || []}
-                          appchain={appchain}
-                        />
-                      </TabPanel>
-                    );
+                  if (delegatorRewards[key]?.length === 0) {
+                    return null;
                   }
-                  return null;
+                  return (
+                    <TabPanel key={key}>
+                      <RewardList
+                        rewards={delegatorRewards[key] || []}
+                        appchain={appchain}
+                      />
+                    </TabPanel>
+                  );
                 })}
               </TabPanels>
             </Tabs>
