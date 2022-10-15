@@ -101,10 +101,12 @@ export const MyStaking: React.FC<MyStakingProps> = ({
           })
         );
 
-        const delegatedAmount = delegated.reduce(
-          (acc, cur) => acc.plus(cur.delegation_amount),
-          ZERO_DECIMAL
-        );
+        const delegatedAmount = delegated.reduce((acc, cur) => {
+          if (cur) {
+            return acc.plus(cur.delegation_amount);
+          }
+          return acc;
+        }, ZERO_DECIMAL);
         setDelegatedAmount(
           DecimalUtil.fromString(delegatedAmount, OCT_TOKEN_DECIMALS)
         );
