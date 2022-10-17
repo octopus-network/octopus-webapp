@@ -209,7 +209,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
         </Heading>
         <Button
           colorScheme="octo-blue"
-          isDisabled={isClaiming}
+          isDisabled={isClaiming || Number(total) === 0}
           onClick={() => onClaimRewards(undefined)}
         >
           Claim All

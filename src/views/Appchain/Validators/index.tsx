@@ -13,7 +13,6 @@ import {
   GridItem,
   List,
   Icon,
-  useBoolean,
   VStack,
   Image,
   Link,
@@ -26,11 +25,9 @@ import {
   AnchorContract,
   AppchainInfoWithAnchorStatus,
   ValidatorSessionKey,
-  RewardHistory,
 } from "types";
 
 import { ValidatorRow } from "./ValidatorRow";
-import { RewardsModal } from "../RewardsModal";
 import { DecimalUtil } from "utils";
 import { OCT_TOKEN_DECIMALS } from "primitives";
 import { Empty } from "components";
