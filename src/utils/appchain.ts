@@ -41,7 +41,11 @@ export const getDelegatedValidators = async (
       database: `${networkConfig?.near.networkId}_explorer`,
       password: "nearprotocol",
       port: 5432,
-      parameters: ["oct.beta_oct_relay.testnet", delegatorId, appchain_anchor],
+      parameters: [
+        networkConfig?.octopus.octTokenContractId,
+        delegatorId,
+        appchain_anchor,
+      ],
       query: `
           SELECT * FROM public.action_receipt_actions 
           WHERE receipt_receiver_account_id = $1

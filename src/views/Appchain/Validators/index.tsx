@@ -107,11 +107,6 @@ export const Validators: React.FC<ValidatorsProps> = ({
 
   const [sortIdx, setSortIdx] = useState(1);
 
-  const [claimRewardsModalOpen, setClaimRewardsModalOpen] = useBoolean();
-  const [unbondedDelegatorRewards, setUnbondedDelegatorRewards] =
-    useState<RewardHistory[]>();
-  const [unbondedRewardsValidatorId, setUnbondedRewardsValidatorId] =
-    useState("");
   const [validatorsHasEraPoints, setValidatorsHasEraPoints] = useState<
     string[]
   >([]);
@@ -142,6 +137,7 @@ export const Validators: React.FC<ValidatorsProps> = ({
     fetchEraPoints();
   }, [appchainApi]);
 
+  const { accountId } = useWalletSelector();
   const sortedValidators = useMemo(() => {
     if (!sortIdx || !validators?.length) {
       return validators;
@@ -165,17 +161,18 @@ export const Validators: React.FC<ValidatorsProps> = ({
       });
     }
 
+    if (!accountId) {
+      return tmpArr;
+    }
+    const myValidator = tmpArr.find((t) => t.validator_id === accountId);
+    if (myValidator) {
+      return [
+        myValidator,
+        ...tmpArr.filter((t) => t.validator_id !== accountId),
+      ];
+    }
     return tmpArr;
-  }, [validators, sortIdx]);
-
-  const onClaimUnbondedDelegatorRewards = (
-    validator: string,
-    rewards: RewardHistory[]
-  ) => {
-    setUnbondedRewardsValidatorId(validator);
-    setUnbondedDelegatorRewards(rewards);
-    setClaimRewardsModalOpen.on();
-  };
+  }, [validators, sortIdx, accountId]);
 
   const { networkConfig } = useWalletSelector();
   const isMainnet = networkConfig?.near.networkId === "mainnet";
@@ -322,14 +319,6 @@ export const Validators: React.FC<ValidatorsProps> = ({
           <Empty />
         )}
       </Box>
-      <RewardsModal
-        isOpen={claimRewardsModalOpen}
-        onClose={setClaimRewardsModalOpen.off}
-        validatorRewards={unbondedDelegatorRewards}
-        anchor={anchor}
-        appchain={appchain}
-        validatorId={unbondedRewardsValidatorId}
-      />
     </>
   );
 };
