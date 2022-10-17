@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useEffect } from "react"
-import useSWR from "swr"
+import React, { useState, useMemo, useEffect } from "react";
+import useSWR from "swr";
 
 import {
   Box,
@@ -13,29 +13,29 @@ import {
   PopoverBody,
   Flex,
   Input,
-} from "@chakra-ui/react"
+} from "@chakra-ui/react";
 
-import { AnchorContract, AppchainInfoWithAnchorStatus, Validator } from "types"
+import { AnchorContract, AppchainInfoWithAnchorStatus, Validator } from "types";
 
-import { COMPLEX_CALL_GAS, OCT_TOKEN_DECIMALS } from "primitives"
+import { COMPLEX_CALL_GAS, OCT_TOKEN_DECIMALS } from "primitives";
 
-import { DecimalUtil, ZERO_DECIMAL } from "utils"
-import Decimal from "decimal.js"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
-import { Toast } from "components/common/toast"
-import { onTxSent } from "utils/helper"
-import { getDelegateLimit, getStakeLimit } from "utils/delegate"
+import { DecimalUtil, ZERO_DECIMAL } from "utils";
+import Decimal from "decimal.js";
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
+import { Toast } from "components/common/toast";
+import { onTxSent } from "utils/helper";
+import { getDelegateLimit, getStakeLimit } from "utils/delegate";
 
 type StakingPopoverProps = {
-  type: "increase" | "decrease"
-  deposited?: Decimal
-  anchor?: AnchorContract
-  validatorId?: string
-  helper?: string
-  trigger: any
-  validator?: Validator
-  appchain?: AppchainInfoWithAnchorStatus
-}
+  type: "increase" | "decrease";
+  deposited?: Decimal;
+  anchor?: AnchorContract;
+  validatorId?: string;
+  helper?: string;
+  trigger: any;
+  validator?: Validator;
+  appchain?: AppchainInfoWithAnchorStatus;
+};
 
 export const StakingPopover: React.FC<StakingPopoverProps> = ({
   trigger,
@@ -47,30 +47,30 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
   validator,
   appchain,
 }) => {
-  const initialFocusRef = React.useRef<any>()
+  const initialFocusRef = React.useRef<any>();
 
-  const inputRef = React.useRef<any>()
-  const [min, setMin] = useState(0)
-  const [max, setMax] = useState(0)
-  const [amount, setAmount] = useState("")
+  const inputRef = React.useRef<any>();
+  const [min, setMin] = useState(0);
+  const [max, setMax] = useState(0);
+  const [amount, setAmount] = useState("");
 
-  const [isSubmitting, setIsSubmitting] = useBoolean(false)
+  const [isSubmitting, setIsSubmitting] = useBoolean(false);
 
-  const { accountId, octToken, selector } = useWalletSelector()
+  const { accountId, octToken, selector } = useWalletSelector();
 
-  const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null)
+  const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null);
   const octBalance = useMemo(
     () => DecimalUtil.fromString(balances?.["OCT"]),
     [balances]
-  )
+  );
 
   const amountInDecimal = useMemo(
     () => DecimalUtil.fromString(String(amount)),
     [amount]
-  )
+  );
 
   useEffect(() => {
-    if (!anchor) return
+    if (!anchor) return;
     if (validatorId) {
       getDelegateLimit({
         type,
@@ -79,9 +79,9 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
         octBalance,
         deposited,
       }).then(({ min, max }) => {
-        setMin(min)
-        setMax(max)
-      })
+        setMin(min);
+        setMax(max);
+      });
     } else if (validator) {
       getStakeLimit({
         type,
@@ -89,39 +89,39 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
         anchor,
         octBalance,
       }).then(({ min, max }) => {
-        setMin(min)
-        setMax(max)
-      })
+        setMin(min);
+        setMax(max);
+      });
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [anchor, validator, octBalance, type, deposited, validatorId])
+  }, [anchor, validator, octBalance, type, deposited, validatorId]);
 
   const onOpen = () => {
     setTimeout(() => {
-      inputRef.current?.focus()
-    }, 300)
-  }
+      inputRef.current?.focus();
+    }, 300);
+  };
 
   const onSubmit = async () => {
     if (!anchor) {
-      return
+      return;
     }
 
-    setIsSubmitting.on()
+    setIsSubmitting.on();
 
     let amountStr = DecimalUtil.toU64(
       amountInDecimal,
       OCT_TOKEN_DECIMALS
-    ).toString()
+    ).toString();
 
     try {
-      const wallet = await selector.wallet()
+      const wallet = await selector.wallet();
       if (type === "increase") {
-        const octAmount = DecimalUtil.power(octBalance, OCT_TOKEN_DECIMALS)
+        const octAmount = DecimalUtil.power(octBalance, OCT_TOKEN_DECIMALS);
 
         if (octAmount.lt(amountStr)) {
-          amountStr = octAmount.toFixed(0)
+          amountStr = octAmount.toFixed(0);
         }
 
         await wallet.signAndSendTransaction({
@@ -148,8 +148,8 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
               },
             },
           ],
-        })
-        onTxSent()
+        });
+        onTxSent();
       } else {
         await wallet.signAndSendTransaction({
           signerId: accountId,
@@ -169,19 +169,19 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
               },
             },
           ],
-        })
+        });
       }
-      Toast.success("Submitted")
-      setIsSubmitting.off()
-      onTxSent()
+      Toast.success("Submitted");
+      setIsSubmitting.off();
+      onTxSent();
     } catch (err: any) {
-      Toast.error(err)
+      Toast.error(err);
     }
 
-    setIsSubmitting.off()
-  }
+    setIsSubmitting.off();
+  };
 
-  const isDisabled = max <= min
+  const isDisabled = max <= min;
 
   return (
     <Popover
@@ -210,7 +210,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
                   variant="gray"
                   onClick={() => {
                     if (octBalance.gte(min) && octBalance.lte(max)) {
-                      setAmount(octBalance.toString())
+                      setAmount(octBalance.toString());
                     }
                   }}
                 >
@@ -222,7 +222,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
               mt={2}
               value={amount}
               onChange={(e) => {
-                setAmount(e.target.value)
+                setAmount(e.target.value);
               }}
               type="number"
               min={min}
@@ -235,7 +235,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
                 cursor="pointer"
                 onClick={() => {
                   if (octBalance.gte(min) && !isDisabled) {
-                    setAmount(String(min))
+                    setAmount(String(min));
                   }
                 }}
               >
@@ -246,11 +246,11 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
                 fontSize="sm"
                 cursor="pointer"
                 onClick={() => {
-                  if (isDisabled) return
+                  if (isDisabled) return;
                   if (type === "decrease") {
-                    setAmount(String(max))
+                    setAmount(String(max));
                   } else if (octBalance.gte(max)) {
-                    setAmount(String(max))
+                    setAmount(String(max));
                   }
                 }}
               >
@@ -281,5 +281,5 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
         </PopoverBody>
       </PopoverContent>
     </Popover>
-  )
-}
+  );
+};
