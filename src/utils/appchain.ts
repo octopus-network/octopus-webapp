@@ -1,6 +1,7 @@
 import axios from "axios";
 import { NetworkConfig, RewardHistory } from "types";
 import { DecimalUtil, ZERO_DECIMAL } from "./decimal";
+import { API_HOST } from "config";
 
 export const getUnbondedValidators = async (
   networkConfig: NetworkConfig,
@@ -92,4 +93,51 @@ export const calcUnwithdrawnReward = (
       ),
     ZERO_DECIMAL
   );
+};
+
+async function getRewards(url: string) {
+  try {
+    const res = await axios.get(url);
+    return res.data;
+  } catch (error) {
+    return [];
+  }
+}
+
+export const getAppchainRewards = async (
+  appchainId: string,
+  accountId: string,
+  networkConfig: NetworkConfig
+) => {
+  try {
+    const appchainRes = await axios.get(`${API_HOST}/appchain/${appchainId}`);
+    const appchain = appchainRes.data;
+    const validatorRewards = await getRewards(
+      `${API_HOST}/rewards/${accountId}/${appchain.appchain_id}/${appchain?.anchor_status?.index_range_of_validator_set_history?.end_index}`
+    );
+    const delegatedValidatorIds = await getDelegatedValidators(
+      networkConfig,
+      appchain.appchain_anchor,
+      accountId
+    );
+
+    const delegatorRewards = await Promise.all(
+      delegatedValidatorIds.map(async (id) => {
+        return await fetch(
+          `${API_HOST}/rewards/${id}/${appchain.appchain_id}/${accountId}/${appchain?.anchor_status?.index_range_of_validator_set_history?.end_index}`
+        ).then((res) => res.json());
+      })
+    );
+    const rewards: { [key: string]: RewardHistory[] } = {};
+
+    delegatorRewards.forEach((reward, idx) => {
+      rewards[delegatedValidatorIds[idx]] = reward;
+    });
+
+    return {
+      appchain,
+      validatorRewards: validatorRewards,
+      delegatorRewards: rewards,
+    };
+  } catch (error) {}
 };

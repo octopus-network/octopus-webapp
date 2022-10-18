@@ -1,5 +1,5 @@
-import React from "react"
-import useSWR from "swr"
+import React from "react";
+import useSWR from "swr";
 
 import {
   Heading,
@@ -13,31 +13,32 @@ import {
   Spinner,
   Center,
   Flex,
-} from "@chakra-ui/react"
+  useColorModeValue,
+} from "@chakra-ui/react";
 
-import dayjs from "dayjs"
-import relativeTime from "dayjs/plugin/relativeTime"
-import { ExternalLinkIcon } from "@chakra-ui/icons"
-import { Empty } from "components"
-import { DecimalUtil } from "utils"
-import Decimal from "decimal.js"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import { ExternalLinkIcon } from "@chakra-ui/icons";
+import { Empty } from "components";
+import { DecimalUtil } from "utils";
+import Decimal from "decimal.js";
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
 
 type Airdrop = {
-  time: number
-  description: string
+  time: number;
+  description: string;
   data: {
-    amount: number
-    hash: string
-  }
-}
+    amount: number;
+    hash: string;
+  };
+};
 
-dayjs.extend(relativeTime)
+dayjs.extend(relativeTime);
 
 export const AirdropItem: React.FC<{
-  airdrop: Airdrop
+  airdrop: Airdrop;
 }> = ({ airdrop }) => {
-  const { networkConfig } = useWalletSelector()
+  const { networkConfig } = useWalletSelector();
 
   return (
     <Box>
@@ -64,17 +65,22 @@ export const AirdropItem: React.FC<{
         </Link>
       </Flex>
     </Box>
-  )
-}
+  );
+};
 
 export const Airdrops: React.FC = () => {
-  const { accountId } = useWalletSelector()
+  const bg = useColorModeValue("white", "#15172c");
+  const { accountId } = useWalletSelector();
   const { data: airdrops, error: airdropsError } = useSWR<Airdrop[]>(
     accountId ? `${accountId}/airdrops` : null
-  )
+  );
+
+  if (airdrops && airdrops.length === 0) {
+    return null;
+  }
 
   return (
-    <Box>
+    <Box bg={bg} p={6} borderRadius="lg" mt={6}>
       <Heading fontSize="2xl">Airdrops</Heading>
       {!airdrops && !airdropsError ? (
         <Center minH="160px">
@@ -90,5 +96,5 @@ export const Airdrops: React.FC = () => {
         <Empty />
       )}
     </Box>
-  )
-}
+  );
+};

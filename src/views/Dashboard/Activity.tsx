@@ -1,5 +1,5 @@
-import React from "react"
-import useSWR from "swr"
+import React from "react";
+import useSWR from "swr";
 
 import {
   Heading,
@@ -13,29 +13,30 @@ import {
   Link,
   Center,
   Flex,
-} from "@chakra-ui/react"
+  useColorModeValue,
+} from "@chakra-ui/react";
 
-import { Empty } from "components"
-import dayjs from "dayjs"
-import relativeTime from "dayjs/plugin/relativeTime"
-import { ExternalLinkIcon } from "@chakra-ui/icons"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { Empty } from "components";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import { ExternalLinkIcon } from "@chakra-ui/icons";
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
 
 type ActivityType = {
-  action_kind: string
-  block_timestamp: string
-  hash: string
-  args: any
-  receiver_id: string
-}
+  action_kind: string;
+  block_timestamp: string;
+  hash: string;
+  args: any;
+  receiver_id: string;
+};
 
 class ActivityTranslator {
-  private data: ActivityType
-  private account: string
+  private data: ActivityType;
+  private account: string;
 
   constructor(data: ActivityType, account: string) {
-    this.data = data
-    this.account = account
+    this.data = data;
+    this.account = account;
   }
 
   getActionKind(): string {
@@ -49,7 +50,7 @@ class ActivityTranslator {
         ADD_KEY: "Access Key added",
         FUNCTION_CALL: "Method called",
       }[this.data.action_kind] || "Unknown"
-    )
+    );
   }
 
   getActionConnect() {
@@ -60,34 +61,34 @@ class ActivityTranslator {
         ADD_KEY: "for",
         FUNCTION_CALL: `${this.data.args?.method_name} in `,
       }[this.data.action_kind] || "Unknown"
-    )
+    );
   }
 
   getActionTarget() {
-    const { receiver_id, args, action_kind } = this.data
+    const { receiver_id, args, action_kind } = this.data;
 
     switch (action_kind) {
       case "TRANSFER":
       case "CREATE_ACCOUNT":
-        return receiver_id
+        return receiver_id;
       case "ADD_KEY":
         return args.access_key.permission.permission_kind === "FULL_ACCESS"
           ? receiver_id
-          : args.access_key.permission.permission_details?.receiver_id
+          : args.access_key.permission.permission_details?.receiver_id;
       case "FUNCTION_CALL":
-        return args.args_json?.receiver_id || receiver_id
+        return args.args_json?.receiver_id || receiver_id;
     }
   }
 }
 
-dayjs.extend(relativeTime)
+dayjs.extend(relativeTime);
 
 const ActivityItem: React.FC<{
-  activity: ActivityType
+  activity: ActivityType;
 }> = ({ activity }) => {
-  const { accountId, networkConfig } = useWalletSelector()
+  const { accountId, networkConfig } = useWalletSelector();
 
-  const activityTranslator = new ActivityTranslator(activity, accountId || "")
+  const activityTranslator = new ActivityTranslator(activity, accountId || "");
 
   return (
     <Box>
@@ -139,17 +140,19 @@ const ActivityItem: React.FC<{
         </Link>
       </Flex>
     </Box>
-  )
-}
+  );
+};
 
 export const Activity: React.FC = () => {
-  const { accountId } = useWalletSelector()
+  const bg = useColorModeValue("white", "#15172c");
+
+  const { accountId } = useWalletSelector();
   const { data: activity, error: activityError } = useSWR<any[]>(
     accountId ? `${accountId}/activity` : null
-  )
+  );
 
   return (
-    <Box minH="320px">
+    <Box minH="320px" bg={bg} p={6} borderRadius="lg" mt={6}>
       <Heading fontSize="2xl">Recent Activity</Heading>
       {!activity && !activityError ? (
         <Center minH="160px">
@@ -165,5 +168,5 @@ export const Activity: React.FC = () => {
         <Empty />
       )}
     </Box>
-  )
-}
+  );
+};
