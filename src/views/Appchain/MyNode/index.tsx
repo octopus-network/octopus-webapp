@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react"
-import axios from "axios"
-import useSWR from "swr"
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import useSWR from "swr";
 
 import {
   Box,
@@ -17,18 +17,18 @@ import {
   useColorModeValue,
   useBoolean,
   Image,
-} from "@chakra-ui/react"
+} from "@chakra-ui/react";
 
-import { DeleteIcon } from "@chakra-ui/icons"
+import { DeleteIcon } from "@chakra-ui/icons";
 
-import myStakingBg from "assets/my-staking-bg.png"
-import { BsFillTerminalFill } from "react-icons/bs"
-import { TiKey } from "react-icons/ti"
-import { BsThreeDots } from "react-icons/bs"
-import { API_HOST } from "config"
-import type { ApiPromise } from "@polkadot/api"
+import myStakingBg from "assets/my-staking-bg.png";
+import { BsFillTerminalFill } from "react-icons/bs";
+import { TiKey } from "react-icons/ti";
+import { BsThreeDots } from "react-icons/bs";
+import { API_HOST } from "config";
+import type { ApiPromise } from "@polkadot/api";
 
-import { InstanceInfoModal } from "./InstanceInfoModal"
+import { InstanceInfoModal } from "./InstanceInfoModal";
 import {
   AnchorContract,
   AppchainInfo,
@@ -38,23 +38,23 @@ import {
   NodeState,
   Validator,
   ValidatorSessionKey,
-} from "types"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
-import NodeBoard from "components/AppChain/NodeBoard"
-import { MyStaking } from "../MyStaking"
-import NodeDeploy from "components/AppChain/NodeDeploy"
-import NodeManager from "utils/NodeManager"
-import { SetSessionKeyModal } from "./SetSessionKeyModal"
+} from "types";
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
+import NodeBoard from "components/AppChain/NodeBoard";
+import { MyStaking } from "../MyStaking";
+import NodeDeploy from "components/AppChain/NodeDeploy";
+import NodeManager from "utils/NodeManager";
+import { SetSessionKeyModal } from "./SetSessionKeyModal";
 
 type MyNodeProps = {
-  appchainId: string | undefined
-  appchainApi: ApiPromise | undefined
-  needKeys: boolean
-  appchain?: AppchainInfo
-  anchor?: AnchorContract
-  validator?: Validator
-  validatorSessionKeys?: Record<string, ValidatorSessionKey>
-}
+  appchainId: string | undefined;
+  appchainApi: ApiPromise | undefined;
+  needKeys: boolean;
+  appchain?: AppchainInfo;
+  anchor?: AnchorContract;
+  validator?: Validator;
+  validatorSessionKeys?: Record<string, ValidatorSessionKey>;
+};
 
 export const MyNode: React.FC<MyNodeProps> = ({
   appchainId,
@@ -65,51 +65,51 @@ export const MyNode: React.FC<MyNodeProps> = ({
   validator,
   validatorSessionKeys,
 }) => {
-  const bg = useColorModeValue("white", "#15172c")
+  const bg = useColorModeValue("white", "#15172c");
   const validatorBg = useColorModeValue(
     "linear-gradient(137deg,#1486ff 4%, #0c4df5)",
     "linear-gradient(137deg,#1486ff 4%, #0c4df5)"
-  )
+  );
 
-  const [node, setNode] = useState<NodeDetail>()
+  const [node, setNode] = useState<NodeDetail>();
 
-  const [isInitializing, setIsInitializing] = useBoolean()
+  const [isInitializing, setIsInitializing] = useBoolean();
 
-  const [nodeMetrics, setNodeMetrics] = useState<NodeMetric>()
+  const [nodeMetrics, setNodeMetrics] = useState<NodeMetric>();
 
-  const [instanceInfoModalOpen, setInstanceInfoModalOpen] = useBoolean()
-  const [isManuallyDeployed, setIsManuallyDeployed] = useBoolean()
-  const [setSessionKeyModalOpen, setSetSessionKeyModalOpen] = useBoolean(false)
+  const [instanceInfoModalOpen, setInstanceInfoModalOpen] = useBoolean();
+  const [isManuallyDeployed, setIsManuallyDeployed] = useBoolean();
+  const [setSessionKeyModalOpen, setSetSessionKeyModalOpen] = useBoolean(false);
 
-  const { data: deployConfig } = useSWR("deploy-config")
+  const { data: deployConfig } = useSWR("deploy-config");
 
-  const { accountId, network } = useWalletSelector()
+  const { accountId, network } = useWalletSelector();
 
   const cloudVendorInLocalStorage = window.localStorage.getItem(
     "OCTOPUS_DEPLOYER_CloudVendor"
-  ) as CloudVendor
+  ) as CloudVendor;
   const accessKeyInLocalStorage =
     window.localStorage.getItem("OCTOPUS_DEPLOYER_ACCESS_KEY") ||
     window.localStorage.getItem("accessKey") ||
-    ""
+    "";
 
   useEffect(() => {
     if (appchainId) {
-      const ismd = localStorage.getItem(`manually-deployed-${appchainId}`)
-      ismd === "true" && setIsManuallyDeployed.on()
+      const ismd = localStorage.getItem(`manually-deployed-${appchainId}`);
+      ismd === "true" && setIsManuallyDeployed.on();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appchainId])
+  }, [appchainId]);
 
   const fetchNode = async () => {
-    setIsInitializing.on()
+    setIsInitializing.on();
     const cloudVendor = window.localStorage.getItem(
       "OCTOPUS_DEPLOYER_CloudVendor"
-    ) as CloudVendor
+    ) as CloudVendor;
     const accessKey =
       window.localStorage.getItem("OCTOPUS_DEPLOYER_ACCESS_KEY") ||
       window.localStorage.getItem("accessKey") ||
-      ""
+      "";
     NodeManager.getNodeDetail({
       appchainId: appchainId!,
       cloudVendor,
@@ -119,7 +119,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
     })
       .then((node) => {
         if (node) {
-          setNode(node)
+          setNode(node);
           if (
             node?.state &&
             [NodeState.APPLYING, NodeState.DESTROYING].includes(
@@ -127,21 +127,21 @@ export const MyNode: React.FC<MyNodeProps> = ({
             )
           ) {
             setTimeout(() => {
-              fetchNode()
-            }, 3000)
+              fetchNode();
+            }, 3000);
           }
-          fetchMetrics(node)
+          fetchMetrics(node);
         }
-        setIsInitializing.off()
+        setIsInitializing.off();
       })
       .catch(() => {
-        setIsInitializing.off()
-      })
-  }
+        setIsInitializing.off();
+      });
+  };
 
   const fetchMetrics = async (node: NodeDetail | undefined) => {
     if (!node || !appchainId) {
-      return
+      return;
     }
 
     if (accountId && node.state === NodeState.RUNNING) {
@@ -154,11 +154,11 @@ export const MyNode: React.FC<MyNodeProps> = ({
         .then((res) => res.data)
         .then((res) => {
           if (res?.memory) {
-            setNodeMetrics(res)
+            setNodeMetrics(res);
           }
-        })
+        });
     }
-  }
+  };
 
   useEffect(() => {
     if (
@@ -167,19 +167,19 @@ export const MyNode: React.FC<MyNodeProps> = ({
       !cloudVendorInLocalStorage ||
       !accountId
     ) {
-      return
+      return;
     }
-    fetchNode()
+    fetchNode();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     accessKeyInLocalStorage,
     accountId,
     appchainId,
     cloudVendorInLocalStorage,
-  ])
+  ]);
 
   useEffect(() => {
-    fetchMetrics(node)
+    fetchMetrics(node);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     node,
@@ -187,15 +187,15 @@ export const MyNode: React.FC<MyNodeProps> = ({
     accountId,
     cloudVendorInLocalStorage,
     accessKeyInLocalStorage,
-  ])
+  ]);
 
   const onClearCache = () => {
-    window.localStorage.removeItem("OCTOPUS_DEPLOYER_CloudVendor")
-    window.localStorage.removeItem("OCTOPUS_DEPLOYER_ACCESS_KEY")
-    window.localStorage.removeItem("accessKey")
-    window.localStorage.removeItem(`manually-deployed-${appchainId}`)
-    window.location.reload()
-  }
+    window.localStorage.removeItem("OCTOPUS_DEPLOYER_CloudVendor");
+    window.localStorage.removeItem("OCTOPUS_DEPLOYER_ACCESS_KEY");
+    window.localStorage.removeItem("accessKey");
+    window.localStorage.removeItem(`manually-deployed-${appchainId}`);
+    window.location.reload();
+  };
 
   // check NODE_STATE_RECORD for state meaning
   const isShowRegister =
@@ -206,13 +206,13 @@ export const MyNode: React.FC<MyNodeProps> = ({
       NodeState.DESTROYING,
       NodeState.DESTROY_FAILED,
       NodeState.UPGRADING,
-    ].includes(node?.state as NodeState)
+    ].includes(node?.state as NodeState);
 
-  const skeyBadge = needKeys && !!node?.skey
-  const metricBadge = nodeMetrics && nodeMetrics?.filesystem?.percentage > 0.8
-  let validatorSessionKey
+  const skeyBadge = needKeys && !!node?.skey;
+  const metricBadge = nodeMetrics && nodeMetrics?.filesystem?.percentage > 0.8;
+  let validatorSessionKey;
   if (validator && validatorSessionKeys && node) {
-    validatorSessionKey = validatorSessionKeys[validator.validator_id]
+    validatorSessionKey = validatorSessionKeys[validator.validator_id];
   }
 
   const menuItems = [
@@ -228,7 +228,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
     {
       isDisabled: !nodeMetrics,
       onClick: setInstanceInfoModalOpen.on,
-      label: "Instance Info",
+      label: "Instance Status",
       icon: BsFillTerminalFill,
       hasBadge: metricBadge,
     },
@@ -239,7 +239,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
       icon: DeleteIcon,
       hasBadge: false,
     },
-  ]
+  ];
 
   return (
     <>
@@ -355,5 +355,5 @@ export const MyNode: React.FC<MyNodeProps> = ({
         validatorSessionKey={validatorSessionKey}
       />
     </>
-  )
-}
+  );
+};

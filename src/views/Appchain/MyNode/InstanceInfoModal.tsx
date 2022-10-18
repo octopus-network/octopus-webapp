@@ -1,4 +1,4 @@
-import React from "react"
+import React from "react";
 
 import {
   Box,
@@ -9,19 +9,19 @@ import {
   Progress,
   Divider,
   HStack,
-} from "@chakra-ui/react"
+} from "@chakra-ui/react";
 
-import { BaseModal } from "components"
-import { FiCpu } from "react-icons/fi"
-import { FaMemory } from "react-icons/fa"
-import { GrStorage } from "react-icons/gr"
-import { NodeMetric } from "types"
+import { BaseModal } from "components";
+import { FiCpu } from "react-icons/fi";
+import { FaMemory } from "react-icons/fa";
+import { GrStorage } from "react-icons/gr";
+import { NodeMetric } from "types";
 
 type Props = {
-  isOpen: boolean
-  onClose: VoidFunction
-  metrics?: NodeMetric
-}
+  isOpen: boolean;
+  onClose: VoidFunction;
+  metrics?: NodeMetric;
+};
 
 export const InstanceInfoModal: React.FC<Props> = ({
   metrics,
@@ -29,10 +29,10 @@ export const InstanceInfoModal: React.FC<Props> = ({
   onClose,
 }) => {
   if (!metrics || !metrics?.cpu) {
-    return null
+    return null;
   }
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title="Instance Info">
+    <BaseModal isOpen={isOpen} onClose={onClose} title="Instance Status">
       <Box p={4}>
         <Flex justifyContent="space-between">
           <HStack>
@@ -105,5 +105,5 @@ export const InstanceInfoModal: React.FC<Props> = ({
         </Flex>
       </Box>
     </BaseModal>
-  )
-}
+  );
+};
