@@ -15,19 +15,14 @@ import { Transaction } from "@near-wallet-selector/core";
 import { Empty } from "components";
 import { Toast } from "components/common/toast";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
-import { ANCHOR_METHODS, TOKEN_METHODS } from "config/constants";
+import { ANCHOR_METHODS } from "config/constants";
 import Decimal from "decimal.js";
 import { Account, providers } from "near-api-js";
 import { CodeResult } from "near-api-js/lib/providers/provider";
 import { COMPLEX_CALL_GAS, SIMPLE_CALL_GAS } from "primitives";
 import { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
-import {
-  AnchorContract,
-  AppchainInfo,
-  RewardHistory,
-  TokenContract,
-} from "types";
+import { AnchorContract, AppchainInfo, RewardHistory } from "types";
 import { DecimalUtil, ZERO_DECIMAL } from "utils";
 import { calcUnwithdrawnReward, getAppchainRewards } from "utils/appchain";
 
@@ -45,6 +40,8 @@ async function claimRewardsTxForAppchain(
   nearAccount: Account,
   provider: providers.JsonRpcProvider
 ) {
+  console.log("claimRewardsTxForAppchain");
+
   try {
     const { appchain, validatorRewards, delegatorRewards } = appchainReward;
     const anchor = new AnchorContract(
@@ -55,14 +52,27 @@ async function claimRewardsTxForAppchain(
 
     const wrappedToken = await anchor.get_wrapped_appchain_token();
 
-    const tokenContract = new TokenContract(
-      nearAccount!,
-      wrappedToken.contract_account,
-      TOKEN_METHODS
-    );
-    const storageBalance = await tokenContract.storage_balance_of({
-      account_id: accountId,
+    // const tokenContract = new TokenContract(
+    //   nearAccount!,
+    //   wrappedToken.contract_account,
+    //   TOKEN_METHODS
+    // );
+    // const storageBalance = await tokenContract.storage_balance_of({
+    //   account_id: accountId,
+    // });
+    // console.log("wrappedToken", wrappedToken);
+
+    const storageRes = await provider.query<CodeResult>({
+      request_type: "call_function",
+      account_id: wrappedToken.contract_account,
+      method_name: "storage_balance_of",
+      args_base64: btoa(JSON.stringify({ account_id: accountId })),
+      finality: "optimistic",
     });
+    const storageBalance = JSON.parse(
+      Buffer.from(storageRes.result).toString()
+    );
+
     const boundsRes = await provider.query<CodeResult>({
       request_type: "call_function",
       account_id: wrappedToken.contract_account,
@@ -135,8 +145,6 @@ async function claimRewardsTxForAppchain(
     });
     return txs;
   } catch (error) {
-    console.log("error", error);
-
     return [];
   }
 }
@@ -230,6 +238,9 @@ const Rewards: React.FC = () => {
       txs.forEach((tx) => {
         transactions = transactions.concat(tx);
       });
+      if (!transactions.length) {
+        return Toast.error("No rewards to claim");
+      }
       const wallet = await selector.wallet();
       wallet.signAndSendTransactions({
         transactions,
