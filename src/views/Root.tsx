@@ -28,7 +28,7 @@ import { useTxnsStore } from "stores";
 import { API_HOST } from "config";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
 import { Toast } from "components/common/toast";
-import XothBannerBg from "assets/xoth-banner.png";
+import OptoBannerBg from "assets/opto-banner.png";
 import AvatarBannerBg from "assets/avatar-banner.png";
 import Carousel from "nuka-carousel/lib/carousel";
 import useLocalStorage from "hooks/useLocalStorage";
@@ -293,16 +293,16 @@ export const Root: React.FC = () => {
               wrapAround
             >
               <a
-                href="https://xoth.app"
+                href="https://optowallet.com"
                 target="_blank"
                 rel="noreferrer"
-                onClick={() => posthog.capture("click_xoth")}
+                onClick={() => posthog.capture("click_opto")}
               >
                 <Img
-                  src={XothBannerBg}
+                  src={OptoBannerBg}
                   width="300px"
                   height="200px"
-                  alt="Xoth Wallet"
+                  alt="Opto Wallet"
                   borderRadius={10}
                 />
               </a>
