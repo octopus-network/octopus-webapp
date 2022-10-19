@@ -154,16 +154,25 @@ export const Activity: React.FC = () => {
   return (
     <Box minH="320px" bg={bg} p={6} borderRadius="lg" mt={6}>
       <Heading fontSize="2xl">Recent Activity</Heading>
-      {!activity && !activityError ? (
-        <Center minH="160px">
-          <Spinner size="md" thickness="4px" speed="1s" color="octo-blue.500" />
-        </Center>
-      ) : activity?.length ? (
-        <List spacing={4} mt={6}>
-          {activity.map((a, idx) => (
-            <ActivityItem activity={a} key={`activity-${idx}`} />
-          ))}
-        </List>
+      {accountId ? (
+        !activity && !activityError ? (
+          <Center minH="160px">
+            <Spinner
+              size="md"
+              thickness="4px"
+              speed="1s"
+              color="octo-blue.500"
+            />
+          </Center>
+        ) : activity?.length ? (
+          <List spacing={4} mt={6}>
+            {activity.map((a, idx) => (
+              <ActivityItem activity={a} key={`activity-${idx}`} />
+            ))}
+          </List>
+        ) : (
+          <Empty />
+        )
       ) : (
         <Empty />
       )}

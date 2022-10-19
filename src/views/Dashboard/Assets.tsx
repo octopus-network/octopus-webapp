@@ -1,5 +1,5 @@
-import React, { useMemo } from "react"
-import useSWR from "swr"
+import React, { useMemo } from "react";
+import useSWR from "swr";
 
 import {
   Heading,
@@ -12,23 +12,23 @@ import {
   Spinner,
   Center,
   Flex,
-} from "@chakra-ui/react"
+} from "@chakra-ui/react";
 
-import { FungibleTokenMetadata } from "types"
-import { Empty } from "components"
-import { DecimalUtil } from "utils"
-import Decimal from "decimal.js"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { FungibleTokenMetadata } from "types";
+import { Empty } from "components";
+import { DecimalUtil } from "utils";
+import Decimal from "decimal.js";
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
 
 type Asset = {
-  contractId: string
-  metadata: FungibleTokenMetadata
-  balance: number
-}
+  contractId: string;
+  metadata: FungibleTokenMetadata;
+  balance: number;
+};
 
 export const AssetItem: React.FC<{
-  asset: Asset
-  prices: Record<string, number> | undefined
+  asset: Asset;
+  prices: Record<string, number> | undefined;
 }> = ({ asset, prices }) => {
   return (
     <Box>
@@ -67,29 +67,29 @@ export const AssetItem: React.FC<{
         </VStack>
       </Flex>
     </Box>
-  )
-}
+  );
+};
 
 export const Assets: React.FC = () => {
-  const { accountId } = useWalletSelector()
+  const { accountId } = useWalletSelector();
   const { data: assets, error: assetsError } = useSWR<Asset[]>(
     accountId ? `${accountId}/assets` : null
-  )
+  );
   const { data: prices } = useSWR<Record<string, number>>(
     assets ? `prices/${assets.map((a) => a.metadata.symbol).join(",")}` : null
-  )
+  );
 
   const totalValue = useMemo(() => {
     if (!assets || !prices) {
-      return 0
+      return 0;
     }
 
     return assets.reduce(
       (total, { metadata, balance }) =>
         total + (prices?.[metadata.symbol] || 0) * balance,
       0
-    )
-  }, [assets, prices])
+    );
+  }, [assets, prices]);
 
   return (
     <Box minH="320px">
@@ -101,7 +101,7 @@ export const Assets: React.FC = () => {
             : "-"}
         </Text>
       </Flex>
-      {!assets && !assetsError ? (
+      {accountId && !assets && !assetsError ? (
         <Center minH="160px">
           <Spinner size="md" thickness="4px" speed="1s" color="octo-blue.500" />
         </Center>
@@ -119,9 +119,8 @@ export const Assets: React.FC = () => {
               <AssetItem asset={a} key={`asset-${idx}`} prices={prices} />
             ))}
         </List>
-      ) : (
-        <Empty message="No Assets" />
-      )}
+      ) : null}
+      {!accountId && <Empty message="No Assets" />}
     </Box>
-  )
-}
+  );
+};

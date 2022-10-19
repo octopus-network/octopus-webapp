@@ -195,11 +195,10 @@ const Rewards: React.FC = () => {
     });
   }, [appchainRewards]);
 
-  if (!accountId) {
-    return null;
-  }
-
   const claimAll = async () => {
+    if (!accountId) {
+      return;
+    }
     try {
       setIsClaiming.on();
       const provider = new providers.JsonRpcProvider({

@@ -75,7 +75,7 @@ export const Airdrops: React.FC = () => {
     accountId ? `${accountId}/airdrops` : null
   );
 
-  if (airdrops && airdrops.length === 0) {
+  if (!accountId || (airdrops && airdrops.length === 0)) {
     return null;
   }
 

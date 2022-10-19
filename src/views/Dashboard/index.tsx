@@ -51,7 +51,7 @@ export const Dashboard: React.FC = () => {
                   overflow="hidden"
                   whiteSpace="nowrap"
                 >
-                  {accountId}
+                  {accountId || "No account connected"}
                 </Heading>
                 <IconButton
                   aria-label="copy"
