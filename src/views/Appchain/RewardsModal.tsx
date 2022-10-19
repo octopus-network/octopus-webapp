@@ -239,14 +239,16 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
           </TabPanel>
           <TabPanel>
             <Tabs>
-              <TabList>
-                {Object.keys(delegatorRewards).map((key) => {
-                  if (delegatorRewards[key]?.length === 0) {
-                    return null;
-                  }
-                  return <Tab key={key}>{key}</Tab>;
-                })}
-              </TabList>
+              {Object.keys(delegatorRewards).length > 0 && (
+                <TabList>
+                  {Object.keys(delegatorRewards).map((key) => {
+                    if (delegatorRewards[key]?.length === 0) {
+                      return null;
+                    }
+                    return <Tab key={key}>{key}</Tab>;
+                  })}
+                </TabList>
+              )}
               <TabPanels>
                 {Object.keys(delegatorRewards).map((key) => {
                   if (delegatorRewards[key]?.length === 0) {
