@@ -24,7 +24,6 @@ import {
   DrawerOverlay,
   DrawerContent,
   useInterval,
-  Tooltip,
   Alert,
   AlertIcon,
   AlertTitle,

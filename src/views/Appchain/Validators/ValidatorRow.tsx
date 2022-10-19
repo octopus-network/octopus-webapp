@@ -3,7 +3,6 @@ import useSWR from "swr";
 import { DecimalUtil, ZERO_DECIMAL } from "utils";
 
 import {
-  Box,
   Grid,
   GridItem,
   Heading,
@@ -13,6 +12,7 @@ import {
   Skeleton,
   Icon,
   HStack,
+  Tag,
 } from "@chakra-ui/react";
 
 import {
@@ -101,7 +101,7 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
             ZERO_DECIMAL
           )
         : ZERO_DECIMAL,
-    [rewards]
+    [ftMetadata?.decimals, rewards]
   );
 
   let status = ValidatorStatus.Registered;
@@ -166,7 +166,7 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
           </Flex>
         </VStack>
       </GridItem>
-      <GridItem colSpan={3} textAlign="center">
+      <GridItem colSpan={2} textAlign="center">
         <HStack justify="center">
           <Heading fontSize="md">
             {DecimalUtil.beautify(
@@ -205,7 +205,7 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
       >
         <Heading fontSize="md">{validator.delegators_count}</Heading>
       </GridItem>
-      <GridItem colSpan={1}>
+      <GridItem colSpan={2}>
         <HStack
           justifyContent="flex-end"
           alignItems="center"
@@ -217,8 +217,10 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
             </Text>
           ) : isDelegated ? (
             <Text variant="gray" fontSize="sm">
-              Delegated
+              "Delegated"
             </Text>
+          ) : validator.can_be_delegated_to ? (
+            <Tag>Delegatable</Tag>
           ) : null}
           <Icon as={ChevronRightIcon} boxSize={5} className="octo-gray" />
         </HStack>

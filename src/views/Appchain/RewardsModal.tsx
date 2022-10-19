@@ -23,7 +23,7 @@ import {
   WrappedAppchainToken,
 } from "types";
 
-import { BaseModal } from "components";
+import { BaseModal, Empty } from "components";
 import { DecimalUtil, ZERO_DECIMAL } from "utils";
 
 import RewardList from "components/AppChain/RewardList";
@@ -262,6 +262,9 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
                   );
                 })}
               </TabPanels>
+              {Object.keys(delegatorRewards).length === 0 && (
+                <Empty message="No Rewards" />
+              )}
             </Tabs>
           </TabPanel>
         </TabPanels>
