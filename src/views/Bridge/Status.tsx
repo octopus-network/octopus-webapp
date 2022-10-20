@@ -29,7 +29,7 @@ import {
   useBoolean,
 } from "@chakra-ui/react";
 
-import { Select, chakraComponents } from "chakra-react-select";
+import { Select } from "chakra-react-select";
 
 import { DecimalUtil, decodeNearAccount } from "utils";
 import { Link as RouterLink, useParams, useNavigate } from "react-router-dom";

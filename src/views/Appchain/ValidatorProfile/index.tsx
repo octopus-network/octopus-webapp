@@ -34,7 +34,6 @@ import {
   ValidatorProfile as ValidatorProfileType,
   AnchorContract,
   Delegator,
-  RewardHistory,
   AppchainInfoWithAnchorStatus,
 } from "types";
 
@@ -55,7 +54,6 @@ import { StateBadge, LoginButton } from "components";
 import { DelegatorsTable } from "./DelegatorsTable";
 import { StakingPopover } from "../StakingPopover";
 import { DelegateModal } from "./DelegateModal";
-import { RewardsModal } from "../RewardsModal";
 import { DecimalUtil, toShortAddress, ZERO_DECIMAL } from "utils";
 
 import octoAvatar from "assets/icons/avatar.png";
@@ -98,8 +96,6 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
   const [delegatedDeposits, setDelegatedDeposits] = useState(ZERO_DECIMAL);
 
   const [isTogglingDelegation, setIsTogglingDelegation] = useBoolean();
-  const [delegatorRewardsModalOpen, setDelegatorRewardsModalOpen] =
-    useBoolean();
 
   const [unbondAlertOpen, setUnbondAlertOpen] = useBoolean();
   const [unbondDelegationAlertOpen, setUnbondDelegationAlertOpen] =
@@ -120,12 +116,6 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
   const isDelegated = useMemo(
     () => accountId && !!delegators?.find((d) => d.delegator_id === accountId),
     [delegators, accountId]
-  );
-
-  const { data: delegatorRewards } = useSWR<RewardHistory[]>(
-    isDelegated && appchain?.anchor_status
-      ? `rewards/${validator?.validator_id}/${appchain?.appchain_id}/${accountId}/${appchain?.anchor_status?.index_range_of_validator_set_history?.end_index}`
-      : null
   );
 
   const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null);
@@ -591,18 +581,6 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
         anchor={anchor}
         onClose={setDelegateModalOpen.off}
         validatorId={validator?.validator_id || ""}
-      />
-
-      <RewardsModal
-        isOpen={delegatorRewardsModalOpen}
-        onClose={setDelegatorRewardsModalOpen.off}
-        appchain={appchain}
-        anchor={anchor}
-        validatorId={validatorId}
-        delegatorRewards={{
-          [validatorId]: delegatorRewards || [],
-        }}
-        validatorRewards={[]}
       />
     </>
   );

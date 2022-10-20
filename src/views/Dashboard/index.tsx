@@ -1,4 +1,4 @@
-import React from "react"
+import React from "react";
 
 import {
   Container,
@@ -13,21 +13,22 @@ import {
   IconButton,
   useColorModeValue,
   useClipboard,
-} from "@chakra-ui/react"
+} from "@chakra-ui/react";
 
-import { CheckIcon, CopyIcon } from "@chakra-ui/icons"
-import octoAvatar from "assets/icons/avatar.png"
-import { Assets } from "./Assets"
-import { Activity } from "./Activity"
-import { Airdrops } from "./Airdrops"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { CheckIcon, CopyIcon } from "@chakra-ui/icons";
+import octoAvatar from "assets/icons/avatar.png";
+import { Assets } from "./Assets";
+import { Activity } from "./Activity";
+import { Airdrops } from "./Airdrops";
+import Rewards from "./Rewards";
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
 
 export const Dashboard: React.FC = () => {
-  const bg = useColorModeValue("white", "#15172c")
-  const { accountId } = useWalletSelector()
+  const bg = useColorModeValue("white", "#15172c");
+  const { accountId } = useWalletSelector();
 
   const { hasCopied: hasAccountIdCopied, onCopy: onCopyAccountId } =
-    useClipboard(accountId || "")
+    useClipboard(accountId || "");
 
   return (
     <Container>
@@ -50,7 +51,7 @@ export const Dashboard: React.FC = () => {
                   overflow="hidden"
                   whiteSpace="nowrap"
                 >
-                  {accountId}
+                  {accountId || "No account connected"}
                 </Heading>
                 <IconButton
                   aria-label="copy"
@@ -66,13 +67,13 @@ export const Dashboard: React.FC = () => {
           </Box>
         </GridItem>
         <GridItem colSpan={4}>
-          <Box p={6} borderRadius="lg" bg={bg} h="100%">
+          <Box gap={6} h="100%">
+            <Rewards />
             <Airdrops />
-            <Divider mt={6} mb={6} />
             <Activity />
           </Box>
         </GridItem>
       </Grid>
     </Container>
-  )
-}
+  );
+};

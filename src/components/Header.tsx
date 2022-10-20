@@ -14,7 +14,6 @@ import {
   Box,
   MenuButton,
   MenuGroup,
-  MenuDivider,
   useDisclosure,
   Drawer,
   DrawerOverlay,
@@ -36,7 +35,7 @@ import {
 
 import { ColorModeSwitcher, LoginButton } from "components";
 
-import { AiOutlinePoweroff, AiOutlineDashboard } from "react-icons/ai";
+import { AiOutlinePoweroff } from "react-icons/ai";
 
 import { Link as RouterLink, useLocation } from "react-router-dom";
 import logo from "assets/logo.png";
@@ -112,7 +111,7 @@ export const Header: React.FC = () => {
             <NavLink path="/home" label="Home" />
             <NavLink path="/appchains" label="Appchains" />
             <NavLink path="/bridge" label="Bridge" />
-            {/* <NavLink path="/converter" label="Token converter" /> */}
+            <NavLink path="/dashboard" label="Dashboard" />
             <Link href="https://docs.oct.network/" isExternal>
               <Heading fontSize="sm" fontWeight={600}>
                 Docs
@@ -136,17 +135,13 @@ export const Header: React.FC = () => {
                 mt={-1}
               >
                 <MenuGroup title={accountId}>
-                  <RouterLink to="/dashboard">
-                    <MenuItem icon={<AiOutlineDashboard />}>Dashboard</MenuItem>
-                  </RouterLink>
+                  <MenuItem
+                    onClick={setConfirmModal.on}
+                    icon={<AiOutlinePoweroff />}
+                  >
+                    Logout
+                  </MenuItem>
                 </MenuGroup>
-                <MenuDivider />
-                <MenuItem
-                  onClick={setConfirmModal.on}
-                  icon={<AiOutlinePoweroff />}
-                >
-                  Logout
-                </MenuItem>
               </MenuList>
             </Menu>
           ) : (
