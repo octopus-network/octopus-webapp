@@ -37,6 +37,7 @@ import { RegisterValidatorModal } from "views/Appchain/MyStaking/RegisterValidat
 import { BsArrowUpRight } from "react-icons/bs";
 import NodeManager from "utils/NodeManager";
 import { FaAws, FaDigitalOcean } from "react-icons/fa";
+import { Toast } from "components/common/toast";
 
 export default function NodeBoard({
   node,
@@ -122,6 +123,7 @@ export default function NodeBoard({
     }
 
     setIsDestroying.on();
+    Toast.info("Destroying node, check details on your instance");
     axios
       .delete(`${deployConfig.deployApiHost}/tasks/${node?.uuid}`, {
         data: {

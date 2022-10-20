@@ -191,7 +191,8 @@ const Rewards: React.FC = () => {
           total.plus(calcUnwithdrawnReward(rewards, decimals)),
         ZERO_DECIMAL
       );
-      return vTotal.plus(dTotal).isZero();
+
+      return !vTotal.plus(dTotal).isZero();
     });
   }, [appchainRewards]);
 
@@ -314,7 +315,7 @@ const Rewards: React.FC = () => {
           );
         })}
       </List>
-      {!isLoading && !appchainRewards.length && <Empty />}
+      {!isLoading && (!appchainRewards.length || !claimable) && <Empty />}
       {isLoading && (
         <Center minH="160px">
           <Spinner size="md" thickness="4px" speed="1s" color="octo-blue.500" />

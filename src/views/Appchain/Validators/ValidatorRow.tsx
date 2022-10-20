@@ -217,7 +217,7 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
             </Text>
           ) : isDelegated ? (
             <Text variant="gray" fontSize="sm">
-              "Delegated"
+              Delegated
             </Text>
           ) : validator.can_be_delegated_to ? (
             <Tag>Delegatable</Tag>
