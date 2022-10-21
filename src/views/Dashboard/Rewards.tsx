@@ -315,7 +315,9 @@ const Rewards: React.FC = () => {
           );
         })}
       </List>
-      {!isLoading && (!appchainRewards.length || !claimable) && <Empty />}
+      {!isLoading && (!appchainRewards.length || !claimable) && (
+        <Empty message="No rewards" />
+      )}
       {isLoading && (
         <Center minH="160px">
           <Spinner size="md" thickness="4px" speed="1s" color="octo-blue.500" />

@@ -187,6 +187,10 @@ export const BridgePanel: React.FC = () => {
     }
     async function checkStorage() {
       try {
+        if (tokenAsset?.contractId === "usn") {
+          setTargetAccountNeedDepositStorage.off();
+          return;
+        }
         const provider = new providers.JsonRpcProvider({
           url: selector.options.network.nodeUrl,
         });
