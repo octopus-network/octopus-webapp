@@ -1,50 +1,52 @@
-import { Wallet } from "@near-wallet-selector/core"
-import { ApiPromise } from "@polkadot/api"
-import { isHex, stringToHex, u8aToHex } from "@polkadot/util"
-import { decodeAddress, isAddress } from "@polkadot/util-crypto"
-import { Toast } from "components/common/toast"
-import { BigNumber, ethers } from "ethers"
-import { providers } from "near-api-js"
-import { CodeResult } from "near-api-js/lib/providers/provider"
-import { COMPLEX_CALL_GAS } from "primitives"
+import { Wallet } from "@near-wallet-selector/core";
+import { ApiPromise } from "@polkadot/api";
+import { isHex, stringToHex, u8aToHex } from "@polkadot/util";
+import { decodeAddress, isAddress } from "@polkadot/util-crypto";
+import { Toast } from "components/common/toast";
+import { BigNumber, ethers } from "ethers";
+import { providers } from "near-api-js";
+import { CodeResult } from "near-api-js/lib/providers/provider";
+import { COMPLEX_CALL_GAS } from "primitives";
 import {
   BridgeHistoryStatus,
   TokenAsset,
   BridgeConfig,
   BridgeHistory,
-} from "types"
-import OctopusAppchain from "./abis/OctopusAppchain.json"
-import OctopusSession from "./abis/OctopusSession.json"
-import { DecimalUtil, ZERO_DECIMAL } from "./decimal"
-import BN from "bn.js"
-import Decimal from "decimal.js"
-import { request } from "graphql-request"
+} from "types";
+import OctopusAppchain from "./abis/OctopusAppchain.json";
+import OctopusSession from "./abis/OctopusSession.json";
+import { DecimalUtil, ZERO_DECIMAL } from "./decimal";
+import BN from "bn.js";
+import Decimal from "decimal.js";
+import { request } from "graphql-request";
 
-let _signer: ethers.providers.JsonRpcSigner | null = null
+let _signer: ethers.providers.JsonRpcSigner | null = null;
 
-const OctopusAppchainAddress = "0x0000000000000000000000000000000000000803"
-const OctopusSessionAddress = "0x0000000000000000000000000000000000000804"
+const OctopusAppchainAddress = "0x0000000000000000000000000000000000000803";
+const OctopusSessionAddress = "0x0000000000000000000000000000000000000804";
 
 function toHexAddress(ss58Address: string) {
   if (isHex(ss58Address)) {
-    return ""
+    return "";
   }
   try {
-    const u8a = decodeAddress(ss58Address)
-    return u8aToHex(u8a)
+    const u8a = decodeAddress(ss58Address);
+    return u8aToHex(u8a);
   } catch (err) {
-    return ""
+    return "";
   }
 }
 
 const getSigner = () => {
   if (!_signer) {
-    const provider = new ethers.providers.Web3Provider((window as any).ethereum)
+    const provider = new ethers.providers.Web3Provider(
+      (window as any).ethereum
+    );
 
-    _signer = provider.getSigner()
+    _signer = provider.getSigner();
   }
-  return _signer
-}
+  return _signer;
+};
 
 const TX_QUERY = (hash: string) => `
   query {
@@ -63,27 +65,27 @@ const TX_QUERY = (hash: string) => `
       }
     }
   }
-`
+`;
 
 export async function checkEvmTxSequence(tx: BridgeHistory) {
   const result = await request(
     `https://api.subquery.network/sq/octopus-appchains/testnet-barnacle-evm`,
     TX_QUERY(tx.hash)
-  )
+  );
   if (result.transaction) {
-    const extrinsic = result.transaction.extrinsic
+    const extrinsic = result.transaction.extrinsic;
     if (extrinsic) {
-      const events = extrinsic.events
+      const events = extrinsic.events;
       if (events) {
-        const nodes = events.nodes
+        const nodes = events.nodes;
         if (nodes) {
-          const node = nodes[0]
+          const node = nodes[0];
           if (node) {
-            const data = node.data
+            const data = node.data;
             if (data) {
-              const _data = JSON.parse(data)
+              const _data = JSON.parse(data);
               if (_data) {
-                return Number(_data.sequence)
+                return Number(_data.sequence);
               }
             }
           }
@@ -98,19 +100,19 @@ export async function isValidAddress({
   isNearToAppchain,
   isEvm,
 }: {
-  address: string
-  isNearToAppchain: boolean
-  isEvm: boolean
+  address: string;
+  isNearToAppchain: boolean;
+  isEvm: boolean;
 }) {
   // substrate address
   if (isNearToAppchain) {
     return (
       (!isEvm && (isHex(address) || isAddress(address))) ||
       (isEvm && ethers.utils.getAddress(address) !== null)
-    )
+    );
   }
 
-  return true
+  return true;
   // TODO: check if address is valid for NEAR
   // try {
 
@@ -124,15 +126,15 @@ export async function isValidAmount({
   isNearToAppchain,
   amount,
 }: {
-  address: string
-  isNearToAppchain: boolean
-  amount: BN
+  address: string;
+  isNearToAppchain: boolean;
+  amount: BN;
 }): Promise<boolean> {
   if (amount.lte(new BN(0))) {
-    return false
+    return false;
   }
 
-  return true
+  return true;
 }
 
 export async function getPolkaTokenBalance({
@@ -141,48 +143,48 @@ export async function getPolkaTokenBalance({
   bridgeConfig,
   account,
 }: {
-  tokenAsset: TokenAsset
-  appchainApi: ApiPromise
-  bridgeConfig: BridgeConfig
-  account: string
+  tokenAsset: TokenAsset;
+  appchainApi: ApiPromise;
+  bridgeConfig: BridgeConfig;
+  account: string;
 }) {
-  let balance = ZERO_DECIMAL
+  let balance = ZERO_DECIMAL;
   try {
     if (tokenAsset.assetId === undefined) {
-      const res = await appchainApi?.query.system.account(account)
-      const resJSON: any = res?.toJSON()
+      const res = await appchainApi?.query.system.account(account);
+      const resJSON: any = res?.toJSON();
       balance = DecimalUtil.fromString(
         resJSON?.data?.free,
         Array.isArray(tokenAsset?.metadata.decimals)
           ? tokenAsset?.metadata.decimals[1]
           : tokenAsset?.metadata.decimals
-      )
+      );
     } else {
       const query =
         appchainApi?.query[bridgeConfig.tokenPallet.section]?.[
           bridgeConfig.tokenPallet.method
-        ]
+        ];
 
       if (!query) {
-        return balance
+        return balance;
       }
 
       const res = await (bridgeConfig.tokenPallet.paramsType === "Tuple"
         ? query([tokenAsset.assetId, account])
-        : query(tokenAsset.assetId, account))
+        : query(tokenAsset.assetId, account));
 
-      const resJSON: any = res?.toJSON()
+      const resJSON: any = res?.toJSON();
 
       balance = DecimalUtil.fromString(
         resJSON?.[bridgeConfig.tokenPallet.valueKey],
         Array.isArray(tokenAsset?.metadata.decimals)
           ? tokenAsset?.metadata.decimals[1]
           : tokenAsset?.metadata.decimals
-      )
+      );
     }
   } catch (error) {}
 
-  return balance
+  return balance;
 }
 
 export async function getNearTokenBalance({
@@ -190,43 +192,43 @@ export async function getNearTokenBalance({
   accountId,
   tokenAsset,
 }: {
-  nodeUrl: string
-  accountId: string
-  tokenAsset: TokenAsset
+  nodeUrl: string;
+  accountId: string;
+  tokenAsset: TokenAsset;
 }) {
   try {
     const provider = new providers.JsonRpcProvider({
       url: nodeUrl,
-    })
+    });
     const res = await provider.query<CodeResult>({
       request_type: "call_function",
       account_id: tokenAsset.contractId,
       method_name: "ft_balance_of",
       args_base64: btoa(JSON.stringify({ account_id: accountId })),
       finality: "optimistic",
-    })
+    });
 
-    const bal = JSON.parse(Buffer.from(res.result).toString())
+    const bal = JSON.parse(Buffer.from(res.result).toString());
 
     return DecimalUtil.fromString(
       bal,
       Array.isArray(tokenAsset?.metadata.decimals)
         ? tokenAsset?.metadata.decimals[0]
         : tokenAsset?.metadata.decimals
-    )
+    );
   } catch (error) {
-    return ZERO_DECIMAL
+    return ZERO_DECIMAL;
   }
 }
 
 export async function setSessionKey(key: string) {
-  const signer = getSigner()
+  const signer = getSigner();
   const contract = new ethers.Contract(
     OctopusSessionAddress,
     OctopusSession,
     signer
-  )
-  await contract.set_keys(key, "0x00")
+  );
+  await contract.set_keys(key, "0x00");
 }
 
 export async function nearBurn({
@@ -237,28 +239,28 @@ export async function nearBurn({
   wallet,
   anchorId,
 }: {
-  token: TokenAsset
-  amount: string
-  isEvm: boolean
-  targetAccount: string
-  wallet: Wallet
-  anchorId: string
+  token: TokenAsset;
+  amount: string;
+  isEvm: boolean;
+  targetAccount: string;
+  wallet: Wallet;
+  anchorId: string;
 }) {
   const amountInU64 = DecimalUtil.toU64(
     DecimalUtil.fromString(amount),
     Array.isArray(token?.metadata.decimals)
       ? token?.metadata.decimals[0]
       : token?.metadata.decimals
-  )
+  );
 
-  let targetAccountInHex = targetAccount
+  let targetAccountInHex = targetAccount;
 
   if (!isEvm) {
-    targetAccountInHex = toHexAddress(targetAccount || "")
+    targetAccountInHex = toHexAddress(targetAccount || "");
   }
 
   if (!targetAccountInHex) {
-    throw new Error("Invalid target account")
+    throw new Error("Invalid target account");
   }
 
   if (token?.assetId === undefined) {
@@ -278,9 +280,9 @@ export async function nearBurn({
           },
         },
       ],
-    })
-    Toast.success("Transaction has been sent")
-    return
+    });
+    Toast.success("Transaction has been sent");
+    return;
   }
 
   await wallet.signAndSendTransaction({
@@ -304,7 +306,7 @@ export async function nearBurn({
         },
       },
     ],
-  })
+  });
 }
 
 export async function nearBurnNft({
@@ -314,16 +316,16 @@ export async function nearBurnNft({
   tokenId,
   wallet,
 }: {
-  targetAccount: string
-  anchorId: string
-  receiverId: string
-  tokenId: string
-  wallet: Wallet
+  targetAccount: string;
+  anchorId: string;
+  receiverId: string;
+  tokenId: string;
+  wallet: Wallet;
 }) {
-  let targetAccountInHex = toHexAddress(targetAccount || "")
+  let targetAccountInHex = toHexAddress(targetAccount || "");
 
   if (!targetAccountInHex) {
-    throw new Error("Invalid target account")
+    throw new Error("Invalid target account");
   }
 
   await wallet.signAndSendTransaction({
@@ -347,7 +349,7 @@ export async function nearBurnNft({
         },
       },
     ],
-  })
+  });
 }
 
 export async function substrateBurn({
@@ -360,24 +362,24 @@ export async function substrateBurn({
   appchainId,
   updateTxn,
 }: {
-  api: ApiPromise
-  asset?: TokenAsset
-  bridgeConfig?: BridgeConfig
-  amount: string
-  targetAccount: string
-  fromAccount: string
-  appchainId: string
-  updateTxn: (key: string, value: any) => void
+  api: ApiPromise;
+  asset?: TokenAsset;
+  bridgeConfig?: BridgeConfig;
+  amount: string;
+  targetAccount: string;
+  fromAccount: string;
+  appchainId: string;
+  updateTxn: (key: string, value: any) => void;
 }) {
   const amountInDec = DecimalUtil.power(
     new Decimal(amount),
     Array.isArray(asset?.metadata.decimals)
       ? asset?.metadata.decimals[0]
       : asset?.metadata.decimals
-  )
+  );
 
-  let rawAmount = amountInDec.toString()
-  const targetAccountInHex = stringToHex(targetAccount)
+  let rawAmount = amountInDec.toString();
+  const targetAccountInHex = stringToHex(targetAccount);
   let tx: any =
     asset?.assetId === undefined
       ? api?.tx.octopusAppchain.lock(targetAccountInHex, amountInDec.toFixed(0))
@@ -385,7 +387,7 @@ export async function substrateBurn({
           asset?.assetId,
           targetAccountInHex,
           amountInDec.toFixed(0)
-        )
+        );
 
   if (!asset?.assetId) {
     const balance = await getPolkaTokenBalance({
@@ -393,18 +395,18 @@ export async function substrateBurn({
       appchainApi: api,
       tokenAsset: asset!,
       bridgeConfig: bridgeConfig!,
-    })
+    });
 
     if (balance.lt(amount)) {
-      amount = balance.toString()
+      amount = balance.toString();
     }
 
     if (balance.toString() === amount) {
-      const info = await tx.paymentInfo(fromAccount)
-      const fee = info.partialFee.toString()
+      const info = await tx.paymentInfo(fromAccount);
+      const fee = info.partialFee.toString();
 
-      const _amount = amountInDec.minus(new Decimal(fee).mul(2)).toFixed(0)
-      rawAmount = _amount
+      const _amount = amountInDec.minus(new Decimal(fee).mul(2)).toFixed(0);
+      rawAmount = _amount;
 
       tx =
         asset?.assetId === undefined
@@ -413,7 +415,7 @@ export async function substrateBurn({
               asset?.assetId,
               targetAccountInHex,
               _amount
-            )
+            );
     }
   }
 
@@ -434,13 +436,13 @@ export async function substrateBurn({
           fromAccount,
           toAccount: targetAccount,
           tokenContractId: asset?.contractId,
-        })
+        });
         setTimeout(() => {
-          window.location.reload()
-        }, 1000)
+          window.location.reload();
+        }, 1000);
       }
-    })
-  })
+    });
+  });
 }
 
 export async function evmBurn({
@@ -451,29 +453,29 @@ export async function evmBurn({
   appchainId,
   fromAccount,
 }: {
-  asset?: TokenAsset
-  amount: string
-  receiver_id: string
-  updateTxn: (key: string, value: any) => void
-  appchainId?: string
-  fromAccount?: string
+  asset?: TokenAsset;
+  amount: string;
+  receiver_id: string;
+  updateTxn: (key: string, value: any) => void;
+  appchainId?: string;
+  fromAccount?: string;
 }) {
   const amountInU64 = DecimalUtil.toU64(
     DecimalUtil.fromString(amount),
     Array.isArray(asset?.metadata.decimals)
       ? asset?.metadata.decimals[0]
       : asset?.metadata.decimals
-  )
+  );
 
-  let hash = ""
+  let hash = "";
   if (typeof asset?.assetId === "number") {
     hash = await evmBurnAsset(
       asset?.assetId,
       amountInU64.toString(),
       receiver_id
-    )
+    );
   } else {
-    hash = await evmLock(amountInU64.toString(), receiver_id)
+    hash = await evmLock(amountInU64.toString(), receiver_id);
   }
   updateTxn(appchainId || "", {
     isAppchainSide: true,
@@ -486,19 +488,19 @@ export async function evmBurn({
     toAccount: receiver_id,
     tokenContractId: asset?.assetId,
     isEvm: true,
-  })
-  return hash
+  });
+  return hash;
 }
 
 export async function evmLock(amount: string, receiver_id: string) {
-  const signer = getSigner()
+  const signer = getSigner();
   const contract = new ethers.Contract(
     OctopusAppchainAddress,
     OctopusAppchain,
     signer
-  )
-  const tx = await contract.lock(amount, receiver_id)
-  return tx.hash
+  );
+  const tx = await contract.lock(amount, receiver_id);
+  return tx.hash;
 }
 
 export async function evmBurnAsset(
@@ -506,14 +508,14 @@ export async function evmBurnAsset(
   amount: string,
   receiver_id: string
 ) {
-  const signer = getSigner()
+  const signer = getSigner();
   const contract = new ethers.Contract(
     OctopusAppchainAddress,
     OctopusAppchain,
     signer
-  )
-  const tx = await contract.burn_asset(asset_id, amount, receiver_id)
-  return tx.hash
+  );
+  const tx = await contract.burn_asset(asset_id, amount, receiver_id);
+  return tx.hash;
 }
 
 export async function evmLockNft(
@@ -522,14 +524,14 @@ export async function evmLockNft(
   receiver_id: string
 ) {
   try {
-    const signer = getSigner()
+    const signer = getSigner();
     const contract = new ethers.Contract(
       OctopusAppchainAddress,
       OctopusAppchain,
       signer
-    )
-    await contract.lock_nft(class_id, instance_id, receiver_id)
+    );
+    await contract.lock_nft(class_id, instance_id, receiver_id);
   } catch (error) {
-    throw error
+    throw error;
   }
 }

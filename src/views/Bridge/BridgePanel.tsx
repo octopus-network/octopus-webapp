@@ -258,7 +258,6 @@ export const BridgePanel: React.FC = () => {
       .forEach((t) => {
         checkEvmTxSequence(t)
           .then((sequenceId) => {
-            console.log("sequenceId", sequenceId);
             if (typeof sequenceId === "number") {
               updateTxn(t.appchainId, {
                 ...t,
@@ -319,7 +318,6 @@ export const BridgePanel: React.FC = () => {
           return appchainApi?.query.octopusAppchain
             .notificationHistory(txn.sequenceId)
             .then((res) => {
-              console.log(txn, res);
               const jsonRes: string | null = res?.toJSON() as any;
               if (jsonRes === "Success") {
                 updateTxn(txn.appchainId, {
@@ -477,7 +475,7 @@ export const BridgePanel: React.FC = () => {
                     "https:"
                   ),
                 ],
-                blockExplorerUrls: ["https://moonbase.moonscan.io/"],
+                blockExplorerUrls: [], // TODO
               },
             ],
           });
@@ -489,9 +487,6 @@ export const BridgePanel: React.FC = () => {
         );
         appchainApi?.setSigner(injected.signer);
       }
-
-      // check amount
-      console.log("tokenAsset", tokenAsset, collectible);
 
       if (collectible) {
         if (isNearToAppchain) {
@@ -644,7 +639,7 @@ export const BridgePanel: React.FC = () => {
               </IconButton>
             </Flex>
             <AddressInpput
-              label="Target"
+              label="To"
               chain={!isNearToAppchain ? "NEAR" : appchainId}
               appchain={appchain}
               onChange={(to) => setTo(to || "")}

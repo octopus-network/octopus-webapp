@@ -46,7 +46,7 @@ import {
   MinusIcon,
   EditIcon,
 } from "@chakra-ui/icons";
-import { BiDoorOpen, BiLogOut } from "react-icons/bi";
+import { BiDoorOpen, BiLogOut, BiRefresh } from "react-icons/bi";
 import { Empty, Alert } from "components";
 import { AiOutlineCloseCircle } from "react-icons/ai";
 import { StateBadge, LoginButton } from "components";
@@ -442,7 +442,13 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                 </HStack>
               </Flex>
               <Divider mt={4} mb={4} />
-              <SimpleGrid columns={{ base: 1, md: 1 }} gap={4}>
+              <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
+                <Button
+                  colorScheme="octo-blue"
+                  onClick={setUnbondDelegationAlertOpen.on}
+                >
+                  <Icon as={BiRefresh} mr={2} /> Redelegate
+                </Button>
                 <Button
                   colorScheme="red"
                   onClick={setUnbondDelegationAlertOpen.on}

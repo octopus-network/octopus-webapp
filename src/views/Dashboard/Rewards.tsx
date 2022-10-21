@@ -52,16 +52,6 @@ async function claimRewardsTxForAppchain(
 
     const wrappedToken = await anchor.get_wrapped_appchain_token();
 
-    // const tokenContract = new TokenContract(
-    //   nearAccount!,
-    //   wrappedToken.contract_account,
-    //   TOKEN_METHODS
-    // );
-    // const storageBalance = await tokenContract.storage_balance_of({
-    //   account_id: accountId,
-    // });
-    // console.log("wrappedToken", wrappedToken);
-
     const storageRes = await provider.query<CodeResult>({
       request_type: "call_function",
       account_id: wrappedToken.contract_account,

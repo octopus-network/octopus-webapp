@@ -134,26 +134,13 @@ export const MyStaking: React.FC<MyStakingProps> = ({
 
   const decimals =
     appchain?.appchain_metadata?.fungible_token_metadata.decimals;
-  const hasNewReward = useMemo(() => {
-    const unwithdrawnValidatorReward = calcUnwithdrawnReward(
-      validatorRewards || [],
-      decimals
+  const total = useMemo(() => {
+    const vTotal = calcUnwithdrawnReward(validatorRewards || [], decimals);
+    const dTotal = Object.values(delegatorRewards).reduce(
+      (total, rewards) => total.plus(calcUnwithdrawnReward(rewards, decimals)),
+      ZERO_DECIMAL
     );
-    if (!unwithdrawnValidatorReward.isZero()) {
-      return true;
-    }
-
-    const unwithdrawnDelegatorRewards = Object.values(delegatorRewards).map(
-      (t) => {
-        return calcUnwithdrawnReward(t, decimals);
-      }
-    );
-
-    if (unwithdrawnDelegatorRewards.some((t) => !t.isZero())) {
-      return true;
-    }
-
-    return false;
+    return DecimalUtil.beautify(vTotal.plus(dTotal));
   }, [validatorRewards, delegatorRewards, decimals]);
 
   const withdrawableStakes = useMemo(() => {
@@ -194,28 +181,12 @@ export const MyStaking: React.FC<MyStakingProps> = ({
         <Box position="relative" zIndex={1}>
           <Flex justifyContent="space-between" alignItems="center">
             <Heading fontSize="lg" color="white">
-              My Staking
+              My Rewards
             </Heading>
             <HStack spacing={0}>
-              <Box position="relative">
-                <Button
-                  size="sm"
-                  variant="whiteAlphaGhost"
-                  onClick={setRewardsModalOpen.on}
-                >
-                  Rewards
-                </Button>
-                {hasNewReward ? (
-                  <Box
-                    boxSize={2}
-                    borderRadius="full"
-                    bg="red"
-                    position="absolute"
-                    right="2px"
-                    top="2px"
-                  />
-                ) : null}
-              </Box>
+              <Button size="sm" onClick={setRewardsModalOpen.on}>
+                Claim
+              </Button>
               <Menu>
                 <MenuButton
                   as={Button}
@@ -258,18 +229,19 @@ export const MyStaking: React.FC<MyStakingProps> = ({
               </Menu>
             </HStack>
           </Flex>
-          <VStack p={6} spacing={1}>
-            <Heading fontSize="3xl" color="white">
-              {DecimalUtil.beautify(deposit.plus(delegatedAmount))}
+          <VStack p={6} alignItems="center" justify="center">
+            <Heading fontSize="4xl" color="white">
+              {total}{" "}
+              {appchain?.appchain_metadata?.fungible_token_metadata.symbol}
             </Heading>
-            <Text color="whiteAlpha.800">You Staked (OCT)</Text>
           </VStack>
-          {isValidator && (
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+          <HStack alignItems="center" justify="flex-end" spacing={4} mt={0}>
+            <Text color="whiteAlpha.800">Staked</Text>
+            {isValidator && (
               <StakingPopover
                 trigger={
-                  <Button variant="whiteAlpha">
-                    <Icon as={MinusIcon} mr={2} boxSize={3} /> Decrease
+                  <Button variant="whiteAlpha" size="xs">
+                    <Icon as={MinusIcon} boxSize={3} />
                   </Button>
                 }
                 deposited={deposit}
@@ -279,12 +251,17 @@ export const MyStaking: React.FC<MyStakingProps> = ({
                 appchain={appchain}
                 validator={validator}
               />
+            )}
 
+            <Heading fontSize="1xl" color="white">
+              {DecimalUtil.beautify(deposit.plus(delegatedAmount))} OCT
+            </Heading>
+
+            {isValidator && (
               <StakingPopover
                 trigger={
-                  <Button variant="white">
-                    <Icon as={AddIcon} mr={2} boxSize={3} />
-                    Increase
+                  <Button variant="white" size="xs">
+                    <Icon as={AddIcon} boxSize={3} />
                   </Button>
                 }
                 type="increase"
@@ -292,8 +269,8 @@ export const MyStaking: React.FC<MyStakingProps> = ({
                 appchain={appchain}
                 validator={validator}
               />
-            </SimpleGrid>
-          )}
+            )}
+          </HStack>
         </Box>
       </Box>
 

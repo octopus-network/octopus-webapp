@@ -45,6 +45,8 @@ import { MyStaking } from "../MyStaking";
 import NodeDeploy from "components/AppChain/NodeDeploy";
 import NodeManager from "utils/NodeManager";
 import { SetSessionKeyModal } from "./SetSessionKeyModal";
+import { Toast } from "components/common/toast";
+import { AiOutlineClear } from "react-icons/ai";
 
 type MyNodeProps = {
   appchainId: string | undefined;
@@ -74,6 +76,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
   const [node, setNode] = useState<NodeDetail>();
 
   const [isInitializing, setIsInitializing] = useBoolean();
+  const [isDestroying, setIsDestroying] = useBoolean();
 
   const [nodeMetrics, setNodeMetrics] = useState<NodeMetric>();
 
@@ -215,6 +218,37 @@ export const MyNode: React.FC<MyNodeProps> = ({
     validatorSessionKey = validatorSessionKeys[validator.validator_id];
   }
 
+  const onDestroyNode = () => {
+    let secretKey;
+
+    if ([CloudVendor.AWS, CloudVendor.DO].includes(cloudVendorInLocalStorage)) {
+      secretKey = window.prompt(
+        CloudVendor.AWS === cloudVendorInLocalStorage
+          ? "Please enter the secret key of your server"
+          : "Please enter the personal access token of your server",
+        ""
+      );
+
+      if (!secretKey) {
+        return;
+      }
+    } else {
+    }
+
+    setIsDestroying.on();
+    Toast.info("Destroying node, check details on your instance");
+    axios
+      .delete(`${deployConfig.deployApiHost}/tasks/${node?.uuid}`, {
+        data: {
+          secret_key: secretKey,
+        },
+        headers: { authorization: node?.user! },
+      })
+      .then((res) => {
+        window.location.reload();
+      });
+  };
+
   const menuItems = [
     {
       isDisabled: isManuallyDeployed
@@ -227,6 +261,13 @@ export const MyNode: React.FC<MyNodeProps> = ({
     },
     {
       isDisabled: !nodeMetrics,
+      onClick: onDestroyNode,
+      label: "Destroy",
+      icon: DeleteIcon,
+      hasBadge: false,
+    },
+    {
+      isDisabled: !nodeMetrics,
       onClick: setInstanceInfoModalOpen.on,
       label: "Instance Status",
       icon: BsFillTerminalFill,
@@ -235,8 +276,8 @@ export const MyNode: React.FC<MyNodeProps> = ({
     {
       isDisabled: false,
       onClick: onClearCache,
-      label: "Clear Local Storage",
-      icon: DeleteIcon,
+      label: "Clear Node Info",
+      icon: AiOutlineClear,
       hasBadge: false,
     },
   ];
