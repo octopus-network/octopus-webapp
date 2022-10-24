@@ -284,7 +284,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
 
   return (
     <>
-      <Box position="relative" mb={3} p={4} borderRadius="lg" bg={validatorBg}>
+      <Box position="relative" mb={6} p={4} borderRadius="lg" bg={validatorBg}>
         <Image
           position="absolute"
           bottom="0"

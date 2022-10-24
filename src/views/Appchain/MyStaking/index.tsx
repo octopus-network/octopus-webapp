@@ -184,9 +184,6 @@ export const MyStaking: React.FC<MyStakingProps> = ({
               My Rewards
             </Heading>
             <HStack spacing={0}>
-              <Button size="sm" onClick={setRewardsModalOpen.on}>
-                Claim
-              </Button>
               <Menu>
                 <MenuButton
                   as={Button}
@@ -227,6 +224,13 @@ export const MyStaking: React.FC<MyStakingProps> = ({
                   </MenuItem>
                 </MenuList>
               </Menu>
+              <Button
+                size="sm"
+                borderRadius={4}
+                onClick={setRewardsModalOpen.on}
+              >
+                Claim
+              </Button>
             </HStack>
           </Flex>
           <VStack p={6} alignItems="center" justify="center">

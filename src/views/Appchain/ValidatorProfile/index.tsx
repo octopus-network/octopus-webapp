@@ -63,6 +63,7 @@ import { useWalletSelector } from "components/WalletSelectorContextProvider";
 import { Toast } from "components/common/toast";
 import { onTxSent } from "utils/helper";
 import SetupEmail from "../SetupEmail";
+import RedelegateModal from "./RedelegateModal";
 
 type ValidatorProfileProps = {
   appchain?: AppchainInfoWithAnchorStatus;
@@ -103,6 +104,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
   const [isUnbonding, setIsUnbonding] = useBoolean();
   const [isUnbondingDelegation, setIsUnbondingDelegation] = useBoolean();
   const [delegateModalOpen, setDelegateModalOpen] = useBoolean();
+  const [redelegateModalOpen, setRedelegateModalOpen] = useBoolean();
   const [updateEmail, setUpdateEmail] = useBoolean();
 
   const { accountId, selector } = useWalletSelector();
@@ -445,7 +447,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
               <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
                 <Button
                   colorScheme="octo-blue"
-                  onClick={setUnbondDelegationAlertOpen.on}
+                  onClick={setRedelegateModalOpen.on}
                 >
                   <Icon as={BiRefresh} mr={2} /> Redelegate
                 </Button>
@@ -587,6 +589,14 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
         anchor={anchor}
         onClose={setDelegateModalOpen.off}
         validatorId={validator?.validator_id || ""}
+      />
+
+      <RedelegateModal
+        isOpen={redelegateModalOpen}
+        onClose={setRedelegateModalOpen.off}
+        currentValidatorId={validatorId}
+        validators={validators}
+        anchor={anchor}
       />
     </>
   );
