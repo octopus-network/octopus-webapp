@@ -25,7 +25,6 @@ import {
   CopyIcon,
 } from "@chakra-ui/icons";
 import { NODE_STATE_RECORD } from "config/constants";
-import axios from "axios";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
 import {
   AnchorContract,
@@ -38,29 +37,24 @@ import { RegisterValidatorModal } from "views/Appchain/MyStaking/RegisterValidat
 import { BsArrowUpRight } from "react-icons/bs";
 import NodeManager from "utils/NodeManager";
 import { FaAws, FaDigitalOcean } from "react-icons/fa";
+import { BiInfoCircle } from "react-icons/bi";
 
 export default function NodeBoard({
   node,
   cloudVendor,
-  deployConfig,
-  deployAccessKey,
-  appchainId,
-  setNode,
   appchain,
   anchor,
   validator,
-  isInitializing,
+  onOpenInstance,
+  metricBadge,
 }: {
   node?: any;
   cloudVendor: CloudVendor;
-  deployConfig?: any;
-  deployAccessKey: string;
-  appchainId?: string;
-  setNode: (node: any) => void;
   appchain?: AppchainInfo;
   anchor?: AnchorContract;
   validator?: Validator;
-  isInitializing: boolean;
+  onOpenInstance: () => void;
+  metricBadge: boolean;
 }) {
   const [isApplying, setIsApplying] = useBoolean();
   const [isDeleting, setIsDeleting] = useBoolean();
@@ -112,26 +106,26 @@ export default function NodeBoard({
 
   return (
     <Box mt={3}>
-      <List spacing={2}>
+      <List spacing={3}>
         <Flex justifyContent="space-between">
-          <Text variant="gray" fontSize="sm">
+          <Text variant="gray" fontSize="md">
             Cloud
           </Text>
           {node.task.cloud_vendor === CloudVendor.AWS ? (
             <Flex alignItems="center" gap={2}>
-              <Text fontSize="sm">AWS</Text>
+              <Text fontSize="md">AWS</Text>
               <FaAws size={18} />
             </Flex>
           ) : (
             <Flex alignItems="center" gap={2}>
-              <Text fontSize="sm">Digital Ocean</Text>
+              <Text fontSize="md">Digital Ocean</Text>
               <FaDigitalOcean size={18} />
             </Flex>
           )}
         </Flex>
         <Flex justifyContent="space-between">
-          <Text variant="gray" fontSize="sm">
-            Status
+          <Text variant="gray" fontSize="md">
+            Node Status
           </Text>
           <Tag
             colorScheme={NODE_STATE_RECORD[node.state as NodeState]?.color}
@@ -143,12 +137,12 @@ export default function NodeBoard({
           </Tag>
         </Flex>
         <Flex justifyContent="space-between">
-          <Text variant="gray" fontSize="sm">
+          <Text variant="gray" fontSize="md">
             Node ID
           </Text>
           <HStack>
             <Text
-              fontSize="sm"
+              fontSize="md"
               whiteSpace="nowrap"
               w="calc(160px - 30px)"
               overflow="hidden"
@@ -162,13 +156,13 @@ export default function NodeBoard({
           </HStack>
         </Flex>
         <Flex justifyContent="space-between">
-          <Text variant="gray" fontSize="sm">
-            Instance
+          <Text variant="gray" fontSize="md">
+            Instance Link
           </Text>
           {node.instance ? (
             <HStack>
               <Text
-                fontSize="sm"
+                fontSize="md"
                 whiteSpace="nowrap"
                 w="calc(160px - 30px)"
                 overflow="hidden"
@@ -186,15 +180,35 @@ export default function NodeBoard({
             "-"
           )}
         </Flex>
+        <Flex justifyContent="space-between">
+          <Text variant="gray" fontSize="md">
+            Instance Status
+          </Text>
+          <HStack position="relative">
+            <IconButton aria-label="button" size="xs" onClick={onOpenInstance}>
+              <BiInfoCircle />
+            </IconButton>
+            {metricBadge && (
+              <Box
+                position="absolute"
+                top="0px"
+                right="0px"
+                boxSize={2}
+                bg="red"
+                borderRadius="full"
+              />
+            )}
+          </HStack>
+        </Flex>
       </List>
       <Box mt={3}>
         {node.state === NodeState.RUNNING && !node.sync && (
           <HStack>
-            <Text variant="gray" fontSize="sm">
+            <Text variant="gray" fontSize="md">
               Syncing
             </Text>
             <Progress size="sm" flex={1} value={syncingProgress} />
-            {/* <Text variant="gray" fontSize="sm">
+            {/* <Text variant="gray" fontSize="md">
               {syncingProgress.toFixed(0)}%
             </Text> */}
           </HStack>
@@ -227,7 +241,7 @@ export default function NodeBoard({
                 speed="1s"
                 color="octo-blue.500"
               />
-              <Text fontSize="sm" color="gray">
+              <Text fontSize="md" color="gray">
                 {NODE_STATE_RECORD[node.state as NodeState].label}
               </Text>
             </Center>

@@ -12,7 +12,7 @@ import { BaseModal } from "components";
 import { Toast } from "components/common/toast";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
 import { COMPLEX_CALL_GAS } from "primitives";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnchorContract, Validator } from "types";
 
 export default function RedelegateModal({
@@ -28,8 +28,28 @@ export default function RedelegateModal({
   validators?: Validator[];
   anchor?: AnchorContract;
 }) {
-  const { selector } = useWalletSelector();
+  const { selector, accountId } = useWalletSelector();
   const [newValidatorId, setNewValidatorId] = useState("");
+  const [avaliableValidators, setAvaliableValidators] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (validators.length > 0) {
+      const avv = validators
+        ?.filter((v) => {
+          if (
+            !v.can_be_delegated_to ||
+            v.validator_id === currentValidatorId ||
+            v.validator_id === accountId ||
+            v.is_unbonding
+          ) {
+            return false;
+          }
+          return true;
+        })
+        .map((t) => t.validator_id);
+      setAvaliableValidators(avv);
+    }
+  }, [validators, currentValidatorId, accountId]);
 
   const onConfirm = async () => {
     try {
@@ -71,13 +91,10 @@ export default function RedelegateModal({
             onChange={setNewValidatorId}
           >
             <Stack>
-              {validators?.map((v) => {
-                if (!v.can_be_delegated_to) {
-                  return null;
-                }
+              {avaliableValidators?.map((v) => {
                 return (
-                  <Radio key={v.validator_id} value={v.validator_id} size="lg">
-                    {v.validator_id}
+                  <Radio key={v} value={v} size="lg">
+                    {v}
                   </Radio>
                 );
               })}
