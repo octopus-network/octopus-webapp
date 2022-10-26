@@ -139,14 +139,20 @@ async function claimRewardsTxForAppchain(
   }
 }
 
-const Rewards: React.FC = () => {
+const Rewards = ({ viewingAccount }: { viewingAccount?: string }) => {
   const bg = useColorModeValue("white", "#15172c");
   const { data: appchains } = useSWR("appchains/running");
   const [appchainRewards, setAppchainRewards] = useState<AppChainRewards[]>([]);
   const [isLoading, setIsLoading] = useBoolean(false);
   const [isClaiming, setIsClaiming] = useBoolean(false);
-  const { accountId, networkConfig, nearAccount, selector } =
-    useWalletSelector();
+  const {
+    networkConfig,
+    nearAccount,
+    selector,
+    accountId: myAccountId,
+  } = useWalletSelector();
+
+  const accountId = viewingAccount;
 
   useEffect(() => {
     if (appchains && networkConfig && accountId) {
@@ -187,7 +193,7 @@ const Rewards: React.FC = () => {
   }, [appchainRewards]);
 
   const claimAll = async () => {
-    if (!accountId) {
+    if (!myAccountId) {
       return;
     }
     try {
@@ -217,7 +223,7 @@ const Rewards: React.FC = () => {
           .map((appchainReward) =>
             claimRewardsTxForAppchain(
               appchainReward,
-              accountId,
+              myAccountId,
               nearAccount!,
               provider
             )

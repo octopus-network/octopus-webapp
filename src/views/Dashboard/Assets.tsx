@@ -70,8 +70,8 @@ export const AssetItem: React.FC<{
   );
 };
 
-export const Assets: React.FC = () => {
-  const { accountId } = useWalletSelector();
+export const Assets = ({ viewingAccount }: { viewingAccount?: string }) => {
+  const accountId = viewingAccount;
   const { data: assets, error: assetsError } = useSWR<Asset[]>(
     accountId ? `${accountId}/assets` : null
   );

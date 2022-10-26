@@ -68,9 +68,9 @@ export const AirdropItem: React.FC<{
   );
 };
 
-export const Airdrops: React.FC = () => {
+export const Airdrops = ({ viewingAccount }: { viewingAccount?: string }) => {
   const bg = useColorModeValue("white", "#15172c");
-  const { accountId } = useWalletSelector();
+  const accountId = viewingAccount;
   const { data: airdrops, error: airdropsError } = useSWR<Airdrop[]>(
     accountId ? `${accountId}/airdrops` : null
   );
