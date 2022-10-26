@@ -449,13 +449,13 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                   colorScheme="octo-blue"
                   onClick={setRedelegateModalOpen.on}
                 >
-                  <Icon as={BiRefresh} mr={2} /> Redelegate
+                  <Icon as={BiRefresh} mr={2} boxSize={7} /> Redelegate
                 </Button>
                 <Button
                   colorScheme="red"
                   onClick={setUnbondDelegationAlertOpen.on}
                 >
-                  <Icon as={BiLogOut} mr={2} /> Unbond Delegation
+                  <Icon as={BiLogOut} mr={2} boxSize={6} /> Unbond Delegation
                 </Button>
               </SimpleGrid>
             </Box>
@@ -591,13 +591,16 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
         validatorId={validator?.validator_id || ""}
       />
 
-      <RedelegateModal
-        isOpen={redelegateModalOpen}
-        onClose={setRedelegateModalOpen.off}
-        currentValidatorId={validatorId}
-        validators={validators}
-        anchor={anchor}
-      />
+      {redelegateModalOpen && (
+        <RedelegateModal
+          isOpen={redelegateModalOpen}
+          onClose={setRedelegateModalOpen.off}
+          currentValidatorId={validatorId}
+          validators={validators}
+          anchor={anchor}
+          delegatedDeposits={delegatedDeposits}
+        />
+      )}
     </>
   );
 };

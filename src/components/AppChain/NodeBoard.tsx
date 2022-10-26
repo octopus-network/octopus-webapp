@@ -34,10 +34,11 @@ import {
   Validator,
 } from "types";
 import { RegisterValidatorModal } from "views/Appchain/MyStaking/RegisterValidatorModal";
-import { BsArrowUpRight } from "react-icons/bs";
+import { BsArrowUpRight, BsExclamationCircle } from "react-icons/bs";
 import NodeManager from "utils/NodeManager";
 import { FaAws, FaDigitalOcean } from "react-icons/fa";
 import { BiInfoCircle } from "react-icons/bi";
+import { IoIosWarning, IoMdWarning } from "react-icons/io";
 
 export default function NodeBoard({
   node,
@@ -150,9 +151,11 @@ export default function NodeBoard({
             >
               {node.uuid}
             </Text>
-            <IconButton aria-label="copy" onClick={onCopyNodeId} size="xs">
-              {hasNodeIdCopied ? <CheckIcon /> : <CopyIcon />}
-            </IconButton>
+            {hasNodeIdCopied ? (
+              <CheckIcon onClick={onCopyNodeId} />
+            ) : (
+              <CopyIcon onClick={onCopyNodeId} />
+            )}
           </HStack>
         </Flex>
         <Flex justifyContent="space-between">
@@ -171,9 +174,7 @@ export default function NodeBoard({
                 {node.instance.region}@{node.instance.id}
               </Text>
               <Link href={node.instance.url} target="_blank">
-                <IconButton aria-label="link" size="xs">
-                  <BsArrowUpRight color="octo-blue" />
-                </IconButton>
+                <BsArrowUpRight color="octo-blue" />
               </Link>
             </HStack>
           ) : (
@@ -185,18 +186,10 @@ export default function NodeBoard({
             Instance Status
           </Text>
           <HStack position="relative">
-            <IconButton aria-label="button" size="xs" onClick={onOpenInstance}>
-              <BiInfoCircle />
-            </IconButton>
-            {metricBadge && (
-              <Box
-                position="absolute"
-                top="0px"
-                right="0px"
-                boxSize={2}
-                bg="red"
-                borderRadius="full"
-              />
+            {metricBadge ? (
+              <BsExclamationCircle color="red" onClick={onOpenInstance} />
+            ) : (
+              <BiInfoCircle onClick={onOpenInstance} />
             )}
           </HStack>
         </Flex>
@@ -208,9 +201,6 @@ export default function NodeBoard({
               Syncing
             </Text>
             <Progress size="sm" flex={1} value={syncingProgress} />
-            {/* <Text variant="gray" fontSize="md">
-              {syncingProgress.toFixed(0)}%
-            </Text> */}
           </HStack>
         )}
         {node?.state === NodeState.INIT ? (
