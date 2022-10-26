@@ -175,6 +175,9 @@ const Rewards = ({ viewingAccount }: { viewingAccount?: string }) => {
   }, [appchains, accountId, networkConfig]);
 
   const claimable = useMemo(() => {
+    if (myAccountId !== viewingAccount) {
+      return false;
+    }
     return appchainRewards.some((t) => {
       if (!t) {
         return false;
@@ -190,7 +193,7 @@ const Rewards = ({ viewingAccount }: { viewingAccount?: string }) => {
 
       return !vTotal.plus(dTotal).isZero();
     });
-  }, [appchainRewards]);
+  }, [appchainRewards, myAccountId, viewingAccount]);
 
   const claimAll = async () => {
     if (!myAccountId) {
@@ -251,7 +254,7 @@ const Rewards = ({ viewingAccount }: { viewingAccount?: string }) => {
     <Box bg={bg} p={6} borderRadius="lg">
       <Flex direction="row" align="center" justify="space-between">
         <Heading fontSize="2xl">Rewards</Heading>
-        {claimable && (
+        {myAccountId === viewingAccount && claimable && (
           <Button
             colorScheme="octo-blue"
             onClick={claimAll}
