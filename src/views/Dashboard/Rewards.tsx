@@ -40,8 +40,6 @@ async function claimRewardsTxForAppchain(
   nearAccount: Account,
   provider: providers.JsonRpcProvider
 ) {
-  console.log("claimRewardsTxForAppchain");
-
   try {
     const { appchain, validatorRewards, delegatorRewards } = appchainReward;
     const anchor = new AnchorContract(
@@ -167,7 +165,6 @@ const Rewards = ({ viewingAccount }: { viewingAccount?: string }) => {
           setAppchainRewards(rewards);
         })
         .catch((e) => {
-          console.log("error", e);
           setIsLoading.off();
         });
     }
