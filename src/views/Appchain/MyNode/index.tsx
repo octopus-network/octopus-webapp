@@ -260,7 +260,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
       hasBadge: skeyBadge,
     },
     {
-      isDisabled: !nodeMetrics || x,
+      isDisabled: !nodeMetrics || isDestroying,
       onClick: onDestroyNode,
       label: "Destroy",
       icon: DeleteIcon,
