@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo } from "react"
-import useSWR from "swr"
-import FocusLock from "react-focus-lock"
+import React, { useState, useEffect, useMemo } from "react";
+import useSWR from "swr";
+import FocusLock from "react-focus-lock";
 
 import {
   Box,
@@ -29,45 +29,45 @@ import {
   RadioGroup,
   Radio,
   Stack,
-} from "@chakra-ui/react"
+} from "@chakra-ui/react";
 
-import { EditIcon } from "@chakra-ui/icons"
-import { DecimalUtil, ZERO_DECIMAL } from "utils"
-import { Formik, Form, Field } from "formik"
-import { OCT_TOKEN_DECIMALS, COMPLEX_CALL_GAS } from "primitives"
-import Decimal from "decimal.js"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
-import { Toast } from "components/common/toast"
-import { EMAIL_REGEX } from "config/constants"
+import { EditIcon } from "@chakra-ui/icons";
+import { DecimalUtil, ZERO_DECIMAL } from "utils";
+import { Formik, Form, Field } from "formik";
+import { OCT_TOKEN_DECIMALS, COMPLEX_CALL_GAS } from "primitives";
+import Decimal from "decimal.js";
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
+import { Toast } from "components/common/toast";
+import { EMAIL_REGEX } from "config/constants";
 
 export const RegisterForm: React.FC = () => {
-  const bg = useColorModeValue("white", "#15172c")
-  const grayBg = useColorModeValue("#f2f4f7", "#1e1f34")
+  const bg = useColorModeValue("white", "#15172c");
+  const grayBg = useColorModeValue("#f2f4f7", "#1e1f34");
 
   const {
     onOpen: onTokenInfoPopoverOpen,
     onClose: onTokenInfoPopoverClose,
     isOpen: isTokenInfoPopoverOpen,
-  } = useDisclosure()
+  } = useDisclosure();
 
-  const [auditingFee, setAuditingFee] = useState<Decimal>()
+  const [auditingFee, setAuditingFee] = useState<Decimal>();
   const [tokenInfo, setTokenInfo] = useState({
     tokenName: "",
     tokenSymbol: "",
     icon: "",
     decimals: 18,
-  })
+  });
   const { accountId, registry, octToken, networkConfig, selector } =
-    useWalletSelector()
+    useWalletSelector();
 
-  const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null)
+  const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null);
 
   const octBalance = useMemo(
     () => DecimalUtil.fromString(balances?.["OCT"]),
     [balances]
-  )
+  );
 
-  const initialFieldRef = React.useRef(null)
+  const initialFieldRef = React.useRef(null);
 
   useEffect(() => {
     registry?.get_registry_settings().then((settings) => {
@@ -76,28 +76,28 @@ export const RegisterForm: React.FC = () => {
           settings.minimum_register_deposit,
           OCT_TOKEN_DECIMALS
         )
-      )
-    })
-  }, [registry])
+      );
+    });
+  }, [registry]);
 
   const validateAppchainId = (value: string) => {
-    const reg = /^[a-z]([-a-z0-9]*[a-z0-9]){1,20}$/
+    const reg = /^[a-z]([-a-z0-9]*[a-z0-9]){1,20}$/;
     if (!reg.test(value)) {
-      return "Consists of [a-z|0-9] or `-`, and max length is 20"
+      return "Consists of [a-z|0-9] or `-`, and max length is 20";
     }
-  }
+  };
 
   const validateUrl = (value: string) => {
     if (!/^https:\/\//.test(value)) {
-      return "Start with https://"
+      return "Start with https://";
     }
-  }
+  };
 
   const validateEmail = (value: string) => {
     if (!EMAIL_REGEX.test(value)) {
-      return "Invalid email"
+      return "Invalid email";
     }
-  }
+  };
 
   const validateInitialSupply = (value: string) => {
     if (
@@ -105,46 +105,44 @@ export const RegisterForm: React.FC = () => {
       Number(value) <= 0 ||
       !Number.isSafeInteger(value)
     ) {
-      return "Invalid number"
+      return "Invalid number";
     }
-  }
+  };
 
   const onTokenInfoChange = (key: string, val: string) => {
     setTokenInfo(
       Object.assign({}, tokenInfo, {
         [key]: val,
       })
-    )
-  }
+    );
+  };
 
   const onSubmit = async (values: any, actions: any) => {
     const {
       appchainId,
       website,
-      functionSpec,
       email,
       githubAddress,
       initialSupply,
-      githubRelease,
       preminedAmount,
       preminedBeneficiary,
       idoAmount,
       eraReward,
       description,
       templateType,
-    } = values
+    } = values;
 
-    actions.setSubmitting(true)
+    actions.setSubmitting(true);
     if (!tokenInfo.tokenName || !tokenInfo.tokenSymbol) {
-      Toast.error("Please input the token info")
+      Toast.error("Please input the token info");
       setTimeout(() => {
-        actions.setSubmitting(false)
-      }, 300)
-      return
+        actions.setSubmitting(false);
+      }, 300);
+      return;
     }
 
     try {
-      const wallet = await selector.wallet()
+      const wallet = await selector.wallet();
       await wallet.signAndSendTransaction({
         signerId: accountId,
         receiverId: octToken?.contractId,
@@ -163,11 +161,11 @@ export const RegisterForm: React.FC = () => {
                   RegisterAppchain: {
                     appchain_id: appchainId,
                     website_url: website,
-                    description,
+                    description: description || "",
                     github_address: githubAddress,
-                    github_release: githubRelease,
+                    github_release: "unknown",
                     contact_email: email,
-                    function_spec_url: functionSpec,
+                    function_spec_url: "unknown",
                     template_type: templateType,
                     premined_wrapped_appchain_token_beneficiary:
                       preminedBeneficiary,
@@ -206,14 +204,14 @@ export const RegisterForm: React.FC = () => {
           },
         ],
         callbackUrl: window.location.origin + "/appchains",
-      })
-      Toast.success("Registered")
-      actions.setSubmitting(false)
+      });
+      Toast.success("Registered");
+      actions.setSubmitting(false);
     } catch (error) {
-      actions.setSubmitting(false)
-      Toast.error(error)
+      actions.setSubmitting(false);
+      Toast.error(error);
     }
-  }
+  };
 
   return (
     <Box bg={bg} p={6} borderRadius="lg">
@@ -335,26 +333,6 @@ export const RegisterForm: React.FC = () => {
                   </FormControl>
                 )}
               </Field>
-              <Field name="functionSpec" validate={validateUrl}>
-                {({ field, form }: any) => (
-                  <FormControl
-                    isInvalid={
-                      form.errors.functionSpec && form.touched.functionSpec
-                    }
-                    isRequired
-                  >
-                    <FormLabel htmlFor="functionSpec">Function Spec</FormLabel>
-                    <Input
-                      {...field}
-                      id="functionSpec"
-                      placeholder="eg: https://github.com/octopus-network/barnacle/blob/master/README.md"
-                    />
-                    <FormErrorMessage>
-                      {form.errors.functionSpec}
-                    </FormErrorMessage>
-                  </FormControl>
-                )}
-              </Field>
               <Field name="email" validate={validateEmail}>
                 {({ field, form }: any) => (
                   <FormControl
@@ -385,28 +363,6 @@ export const RegisterForm: React.FC = () => {
                     />
                     <FormErrorMessage>
                       {form.errors.githubAddress}
-                    </FormErrorMessage>
-                  </FormControl>
-                )}
-              </Field>
-              <Field name="githubRelease" validate={validateUrl}>
-                {({ field, form }: any) => (
-                  <FormControl
-                    isInvalid={
-                      form.errors.githubRelease && form.touched.githubRelease
-                    }
-                    isRequired
-                  >
-                    <FormLabel htmlFor="githubRelease">
-                      Github Release
-                    </FormLabel>
-                    <Input
-                      {...field}
-                      id="githubRelease"
-                      placeholder="eg: https://github.com/octopus-network/barnacle/releases/tag/v0.2-alpha.1"
-                    />
-                    <FormErrorMessage>
-                      {form.errors.githubRelease}
                     </FormErrorMessage>
                   </FormControl>
                 )}
@@ -610,5 +566,5 @@ export const RegisterForm: React.FC = () => {
         )}
       </Formik>
     </Box>
-  )
-}
+  );
+};
