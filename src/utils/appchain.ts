@@ -57,6 +57,8 @@ export const getDelegatedValidators = async (
         `,
     });
 
+    console.log("res.data", res.data);
+
     const tmpArr = res.data
       .map((r: any) => {
         try {
@@ -72,6 +74,8 @@ export const getDelegatedValidators = async (
 
     return Array.from(new Set(tmpArr));
   } catch (error) {
+    console.log("error", error);
+
     return [];
   }
 };

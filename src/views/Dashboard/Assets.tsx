@@ -18,7 +18,6 @@ import { FungibleTokenMetadata } from "types";
 import { Empty } from "components";
 import { DecimalUtil } from "utils";
 import Decimal from "decimal.js";
-import { useWalletSelector } from "components/WalletSelectorContextProvider";
 
 type Asset = {
   contractId: string;
@@ -70,8 +69,8 @@ export const AssetItem: React.FC<{
   );
 };
 
-export const Assets: React.FC = () => {
-  const { accountId } = useWalletSelector();
+export const Assets = ({ viewingAccount }: { viewingAccount?: string }) => {
+  const accountId = viewingAccount;
   const { data: assets, error: assetsError } = useSWR<Asset[]>(
     accountId ? `${accountId}/assets` : null
   );

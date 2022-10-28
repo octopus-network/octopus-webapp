@@ -143,10 +143,10 @@ const ActivityItem: React.FC<{
   );
 };
 
-export const Activity: React.FC = () => {
+export const Activity = ({ viewingAccount }: { viewingAccount?: string }) => {
   const bg = useColorModeValue("white", "#15172c");
 
-  const { accountId } = useWalletSelector();
+  const accountId = viewingAccount;
   const { data: activity, error: activityError } = useSWR<any[]>(
     accountId ? `${accountId}/activity` : null
   );

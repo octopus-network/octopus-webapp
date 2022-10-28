@@ -40,8 +40,6 @@ async function claimRewardsTxForAppchain(
   nearAccount: Account,
   provider: providers.JsonRpcProvider
 ) {
-  console.log("claimRewardsTxForAppchain");
-
   try {
     const { appchain, validatorRewards, delegatorRewards } = appchainReward;
     const anchor = new AnchorContract(
@@ -51,16 +49,6 @@ async function claimRewardsTxForAppchain(
     );
 
     const wrappedToken = await anchor.get_wrapped_appchain_token();
-
-    // const tokenContract = new TokenContract(
-    //   nearAccount!,
-    //   wrappedToken.contract_account,
-    //   TOKEN_METHODS
-    // );
-    // const storageBalance = await tokenContract.storage_balance_of({
-    //   account_id: accountId,
-    // });
-    // console.log("wrappedToken", wrappedToken);
 
     const storageRes = await provider.query<CodeResult>({
       request_type: "call_function",
@@ -149,14 +137,20 @@ async function claimRewardsTxForAppchain(
   }
 }
 
-const Rewards: React.FC = () => {
+const Rewards = ({ viewingAccount }: { viewingAccount?: string }) => {
   const bg = useColorModeValue("white", "#15172c");
   const { data: appchains } = useSWR("appchains/running");
   const [appchainRewards, setAppchainRewards] = useState<AppChainRewards[]>([]);
   const [isLoading, setIsLoading] = useBoolean(false);
   const [isClaiming, setIsClaiming] = useBoolean(false);
-  const { accountId, networkConfig, nearAccount, selector } =
-    useWalletSelector();
+  const {
+    networkConfig,
+    nearAccount,
+    selector,
+    accountId: myAccountId,
+  } = useWalletSelector();
+
+  const accountId = viewingAccount;
 
   useEffect(() => {
     if (appchains && networkConfig && accountId) {
@@ -171,7 +165,6 @@ const Rewards: React.FC = () => {
           setAppchainRewards(rewards);
         })
         .catch((e) => {
-          console.log("error", e);
           setIsLoading.off();
         });
     }
@@ -179,6 +172,9 @@ const Rewards: React.FC = () => {
   }, [appchains, accountId, networkConfig]);
 
   const claimable = useMemo(() => {
+    if (myAccountId !== viewingAccount) {
+      return false;
+    }
     return appchainRewards.some((t) => {
       if (!t) {
         return false;
@@ -194,10 +190,10 @@ const Rewards: React.FC = () => {
 
       return !vTotal.plus(dTotal).isZero();
     });
-  }, [appchainRewards]);
+  }, [appchainRewards, myAccountId, viewingAccount]);
 
   const claimAll = async () => {
-    if (!accountId) {
+    if (!myAccountId) {
       return;
     }
     try {
@@ -227,7 +223,7 @@ const Rewards: React.FC = () => {
           .map((appchainReward) =>
             claimRewardsTxForAppchain(
               appchainReward,
-              accountId,
+              myAccountId,
               nearAccount!,
               provider
             )
@@ -255,7 +251,7 @@ const Rewards: React.FC = () => {
     <Box bg={bg} p={6} borderRadius="lg">
       <Flex direction="row" align="center" justify="space-between">
         <Heading fontSize="2xl">Rewards</Heading>
-        {claimable && (
+        {myAccountId === viewingAccount && claimable && (
           <Button
             colorScheme="octo-blue"
             onClick={claimAll}

@@ -22,7 +22,6 @@ import {
 import { DeleteIcon } from "@chakra-ui/icons";
 
 import myStakingBg from "assets/my-staking-bg.png";
-import { BsFillTerminalFill } from "react-icons/bs";
 import { TiKey } from "react-icons/ti";
 import { BsThreeDots } from "react-icons/bs";
 import { API_HOST } from "config";
@@ -45,6 +44,8 @@ import { MyStaking } from "../MyStaking";
 import NodeDeploy from "components/AppChain/NodeDeploy";
 import NodeManager from "utils/NodeManager";
 import { SetSessionKeyModal } from "./SetSessionKeyModal";
+import { Toast } from "components/common/toast";
+import { AiOutlineClear } from "react-icons/ai";
 
 type MyNodeProps = {
   appchainId: string | undefined;
@@ -74,6 +75,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
   const [node, setNode] = useState<NodeDetail>();
 
   const [isInitializing, setIsInitializing] = useBoolean();
+  const [isDestroying, setIsDestroying] = useBoolean();
 
   const [nodeMetrics, setNodeMetrics] = useState<NodeMetric>();
 
@@ -209,11 +211,43 @@ export const MyNode: React.FC<MyNodeProps> = ({
     ].includes(node?.state as NodeState);
 
   const skeyBadge = needKeys && !!node?.skey;
-  const metricBadge = nodeMetrics && nodeMetrics?.filesystem?.percentage > 0.8;
+  const metricBadge =
+    !!nodeMetrics && nodeMetrics?.filesystem?.percentage > 0.8;
   let validatorSessionKey;
   if (validator && validatorSessionKeys && node) {
     validatorSessionKey = validatorSessionKeys[validator.validator_id];
   }
+
+  const onDestroyNode = () => {
+    let secretKey;
+
+    if ([CloudVendor.AWS, CloudVendor.DO].includes(cloudVendorInLocalStorage)) {
+      secretKey = window.prompt(
+        CloudVendor.AWS === cloudVendorInLocalStorage
+          ? "Please enter the secret key of your server"
+          : "Please enter the personal access token of your server",
+        ""
+      );
+
+      if (!secretKey) {
+        return;
+      }
+    } else {
+    }
+
+    setIsDestroying.on();
+    Toast.info("Destroying node, check details on your instance");
+    axios
+      .delete(`${deployConfig.deployApiHost}/tasks/${node?.uuid}`, {
+        data: {
+          secret_key: secretKey,
+        },
+        headers: { authorization: node?.user! },
+      })
+      .then((res) => {
+        window.location.reload();
+      });
+  };
 
   const menuItems = [
     {
@@ -226,24 +260,24 @@ export const MyNode: React.FC<MyNodeProps> = ({
       hasBadge: skeyBadge,
     },
     {
-      isDisabled: !nodeMetrics,
-      onClick: setInstanceInfoModalOpen.on,
-      label: "Instance Status",
-      icon: BsFillTerminalFill,
-      hasBadge: metricBadge,
+      isDisabled: !nodeMetrics || isDestroying,
+      onClick: onDestroyNode,
+      label: "Destroy",
+      icon: DeleteIcon,
+      hasBadge: false,
     },
     {
       isDisabled: false,
       onClick: onClearCache,
-      label: "Clear Local Storage",
-      icon: DeleteIcon,
+      label: "Clear Node Info",
+      icon: AiOutlineClear,
       hasBadge: false,
     },
   ];
 
   return (
     <>
-      <Box position="relative" mb={3} p={4} borderRadius="lg" bg={validatorBg}>
+      <Box position="relative" mb={5} p={4} borderRadius="lg" bg={validatorBg}>
         <Image
           position="absolute"
           bottom="0"
@@ -267,7 +301,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
               position="relative"
             >
               <Icon as={BsThreeDots} boxSize={5} />
-              {(skeyBadge || metricBadge) && (
+              {skeyBadge && (
                 <Box
                   position="absolute"
                   top="0px"
@@ -315,15 +349,12 @@ export const MyNode: React.FC<MyNodeProps> = ({
         {node && (
           <NodeBoard
             node={node}
-            appchainId={appchainId}
             cloudVendor={cloudVendorInLocalStorage}
-            setNode={setNode}
-            deployAccessKey={accessKeyInLocalStorage}
-            deployConfig={deployConfig}
             anchor={anchor}
             appchain={appchain}
             validator={validator}
-            isInitializing={isInitializing}
+            onOpenInstance={setInstanceInfoModalOpen.on}
+            metricBadge={metricBadge}
           />
         )}
         {!node && !isInitializing && (

@@ -46,7 +46,7 @@ import {
   MinusIcon,
   EditIcon,
 } from "@chakra-ui/icons";
-import { BiDoorOpen, BiLogOut } from "react-icons/bi";
+import { BiDoorOpen, BiLogOut, BiRefresh } from "react-icons/bi";
 import { Empty, Alert } from "components";
 import { AiOutlineCloseCircle } from "react-icons/ai";
 import { StateBadge, LoginButton } from "components";
@@ -63,6 +63,7 @@ import { useWalletSelector } from "components/WalletSelectorContextProvider";
 import { Toast } from "components/common/toast";
 import { onTxSent } from "utils/helper";
 import SetupEmail from "../SetupEmail";
+import RedelegateModal from "./RedelegateModal";
 
 type ValidatorProfileProps = {
   appchain?: AppchainInfoWithAnchorStatus;
@@ -103,6 +104,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
   const [isUnbonding, setIsUnbonding] = useBoolean();
   const [isUnbondingDelegation, setIsUnbondingDelegation] = useBoolean();
   const [delegateModalOpen, setDelegateModalOpen] = useBoolean();
+  const [redelegateModalOpen, setRedelegateModalOpen] = useBoolean();
   const [updateEmail, setUpdateEmail] = useBoolean();
 
   const { accountId, selector } = useWalletSelector();
@@ -442,12 +444,18 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                 </HStack>
               </Flex>
               <Divider mt={4} mb={4} />
-              <SimpleGrid columns={{ base: 1, md: 1 }} gap={4}>
+              <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
+                <Button
+                  colorScheme="octo-blue"
+                  onClick={setRedelegateModalOpen.on}
+                >
+                  <Icon as={BiRefresh} mr={2} boxSize={7} /> Redelegate
+                </Button>
                 <Button
                   colorScheme="red"
                   onClick={setUnbondDelegationAlertOpen.on}
                 >
-                  <Icon as={BiLogOut} mr={2} /> Unbond Delegation
+                  <Icon as={BiLogOut} mr={2} boxSize={6} /> Unbond Delegation
                 </Button>
               </SimpleGrid>
             </Box>
@@ -582,6 +590,17 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
         onClose={setDelegateModalOpen.off}
         validatorId={validator?.validator_id || ""}
       />
+
+      {redelegateModalOpen && (
+        <RedelegateModal
+          isOpen={redelegateModalOpen}
+          onClose={setRedelegateModalOpen.off}
+          currentValidatorId={validatorId}
+          validators={validators}
+          anchor={anchor}
+          delegatedDeposits={delegatedDeposits}
+        />
+      )}
     </>
   );
 };
