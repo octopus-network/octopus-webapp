@@ -142,11 +142,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
   };
 
   const fetchMetrics = async (node: NodeDetail | undefined) => {
-    if (!node || !appchainId) {
-      return;
-    }
-
-    if (accountId && node.state === NodeState.RUNNING) {
+    if (accountId && node && appchainId) {
       axios
         .get(
           `
@@ -264,7 +260,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
       hasBadge: skeyBadge,
     },
     {
-      isDisabled: !nodeMetrics || isDestroying,
+      isDisabled: !nodeMetrics || x,
       onClick: onDestroyNode,
       label: "Destroy",
       icon: DeleteIcon,
