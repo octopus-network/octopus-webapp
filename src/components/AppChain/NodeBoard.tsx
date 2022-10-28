@@ -5,7 +5,6 @@ import {
   Flex,
   HStack,
   Icon,
-  IconButton,
   Link,
   List,
   SimpleGrid,
@@ -38,7 +37,6 @@ import { BsArrowUpRight, BsExclamationCircle } from "react-icons/bs";
 import NodeManager from "utils/NodeManager";
 import { FaAws, FaDigitalOcean } from "react-icons/fa";
 import { BiInfoCircle } from "react-icons/bi";
-import { IoIosWarning, IoMdWarning } from "react-icons/io";
 
 export default function NodeBoard({
   node,
