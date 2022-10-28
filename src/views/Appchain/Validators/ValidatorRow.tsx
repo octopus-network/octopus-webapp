@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 import { DecimalUtil, ZERO_DECIMAL } from "utils";
 
@@ -24,7 +24,7 @@ import {
   AppchainInfo,
   ValidatorStatus,
 } from "types";
-
+import dayjs from "dayjs";
 import { OCT_TOKEN_DECIMALS } from "primitives";
 import { RippleDot } from "components";
 import { ChevronRightIcon } from "@chakra-ui/icons";
@@ -33,6 +33,10 @@ import { formatAppChainAddress } from "utils/format";
 import OctIdenticon from "components/common/OctIdenticon";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
 import ValidatorStatusTag from "components/Validator/Tag";
+import _ from "lodash";
+import relativeTime from "dayjs/plugin/relativeTime";
+
+dayjs.extend(relativeTime);
 
 type ValidatorRowProps = {
   validator: Validator;
@@ -60,8 +64,23 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
   validatorsHasEraPoints,
 }) => {
   const { accountId } = useWalletSelector();
+  const [registeredDays, setRegisteredDays] = useState("");
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (anchor) {
+      anchor
+        .get_user_staking_histories_of({ account_id: validator.validator_id })
+        .then((result) => {
+          const time = _.min(result.map((t) => Number(t.timestamp)));
+          if (time) {
+            setRegisteredDays(dayjs(Math.floor(time / 1e6)).fromNow());
+          }
+        })
+        .catch(() => {});
+    }
+  }, [anchor, validator.validator_id]);
 
   const isMyself = useMemo(
     () => validator && accountId === validator.validator_id,
@@ -145,16 +164,19 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
     >
       <GridItem colSpan={3} w="100%">
         <VStack spacing={1} alignItems="flex-start">
-          <HStack w="100%">
+          <HStack w="100%" gap={2}>
             <OctIdenticon value={ss58Address} size={24} />
-            <Heading
-              fontSize="lg"
-              whiteSpace="nowrap"
-              textOverflow="ellipsis"
-              overflow="hidden"
-            >
-              {validator.validator_id}
-            </Heading>
+            <VStack spacing={0} align="flex-start">
+              <Heading
+                fontSize="lg"
+                whiteSpace="nowrap"
+                textOverflow="ellipsis"
+                overflow="hidden"
+              >
+                {validator.validator_id}
+              </Heading>
+              <Text fontSize="small">{registeredDays}</Text>
+            </VStack>
           </HStack>
 
           <Flex justifyContent="center">
