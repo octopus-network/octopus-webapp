@@ -245,7 +245,11 @@ export const MyNode: React.FC<MyNodeProps> = ({
         headers: { authorization: node?.user! },
       })
       .then((res) => {
+        setIsDestroying.off();
         window.location.reload();
+      })
+      .catch(() => {
+        setIsDestroying.off();
       });
   };
 
