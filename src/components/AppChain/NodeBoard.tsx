@@ -186,6 +186,9 @@ export default function NodeBoard({
             Instance Status
           </Text>
           <HStack position="relative">
+            <Text fontSize="md">
+              {metricBadge ? "Overload" : "Operational"}
+            </Text>
             {metricBadge ? (
               <BsExclamationCircle color="red" onClick={onOpenInstance} />
             ) : (
@@ -201,6 +204,11 @@ export default function NodeBoard({
               Syncing
             </Text>
             <Progress size="sm" flex={1} value={syncingProgress} />
+            <Text variant="gray" fontSize="md">
+              {node.syncState.currentBlock && node.syncState.highestBlock
+                ? `${node.syncState.currentBlock}/${node.syncState.highestBlock}`
+                : "-/-"}
+            </Text>
           </HStack>
         )}
         {node?.state === NodeState.INIT ? (
