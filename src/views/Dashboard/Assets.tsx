@@ -18,7 +18,6 @@ import { FungibleTokenMetadata } from "types";
 import { Empty } from "components";
 import { DecimalUtil } from "utils";
 import Decimal from "decimal.js";
-import { useWalletSelector } from "components/WalletSelectorContextProvider";
 
 type Asset = {
   contractId: string;

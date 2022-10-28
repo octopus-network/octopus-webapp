@@ -16,12 +16,17 @@ import {
 import { BaseModal, Empty } from "components";
 import { Toast } from "components/common/toast";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
+import dayjs from "dayjs";
 import Decimal from "decimal.js";
+import _ from "lodash";
 import { COMPLEX_CALL_GAS, OCT_TOKEN_DECIMALS } from "primitives";
 import { useEffect, useState } from "react";
 import { AnchorContract, Validator } from "types";
 import { DecimalUtil } from "utils";
 import { getStakeLimit } from "utils/delegate";
+import relativeTime from "dayjs/plugin/relativeTime";
+
+dayjs.extend(relativeTime);
 
 export default function RedelegateModal({
   isOpen,
@@ -86,6 +91,36 @@ export default function RedelegateModal({
     }
   }, [validators, currentValidatorId, accountId, anchor, delegatedDeposits]);
 
+  useEffect(() => {
+    if (anchor && avaliableValidators.length) {
+      Promise.all(
+        avaliableValidators.map((t) =>
+          anchor.get_user_staking_histories_of({
+            account_id: t.validator_id,
+          })
+        )
+      )
+        .then((results) => {
+          const froms: string[] = [];
+          results.forEach((r, i) => {
+            const time = _.min(r.map((t) => Number(t.timestamp)));
+            if (time) {
+              froms.push(dayjs(Math.floor(time / 1e6)).fromNow());
+            } else {
+              froms.push("-");
+            }
+          });
+          setAvaliableValidators(
+            avaliableValidators.map((t, idx) => ({
+              ...t,
+              registered_from: froms[idx],
+            }))
+          );
+        })
+        .catch(() => {});
+    }
+  }, [anchor, avaliableValidators]);
+
   const onConfirm = async () => {
     try {
       const wallet = await selector.wallet();
@@ -129,6 +164,7 @@ export default function RedelegateModal({
                       <Th>Validator</Th>
                       <Th>Total Staked</Th>
                       <Th isNumeric>Delegators</Th>
+                      <Th isNumeric>Registered From</Th>
                     </Tr>
                   </Thead>
                   <Tbody>
@@ -159,7 +195,8 @@ export default function RedelegateModal({
                               )
                             )}
                           </Td>
-                          <Td isNumeric>{v.delegators_count}</Td>
+                          <Td textAlign="center">{v.delegators_count}</Td>
+                          <Td textAlign="center">{v.registered_from || "-"}</Td>
                         </Tr>
                       );
                     })}

@@ -101,7 +101,10 @@ export default function NodeBoard({
   };
 
   const syncingProgress =
-    node.syncState.currentBlock && node.syncState.highestBlock
+    node &&
+    node.syncState &&
+    node.syncState.currentBlock &&
+    node.syncState.highestBlock
       ? (node.syncState.currentBlock * 100) / node.syncState.highestBlock
       : 0;
 
@@ -205,7 +208,10 @@ export default function NodeBoard({
             </Text>
             <Progress size="sm" flex={1} value={syncingProgress} />
             <Text variant="gray" fontSize="md">
-              {node.syncState.currentBlock && node.syncState.highestBlock
+              {node &&
+              node.syncState &&
+              node.syncState.currentBlock &&
+              node.syncState.highestBlock
                 ? `${node.syncState.currentBlock}/${node.syncState.highestBlock}`
                 : "-/-"}
             </Text>
