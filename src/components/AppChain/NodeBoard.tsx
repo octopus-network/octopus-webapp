@@ -37,6 +37,7 @@ import { BsArrowUpRight, BsExclamationCircle } from "react-icons/bs";
 import NodeManager from "utils/NodeManager";
 import { FaAws, FaDigitalOcean } from "react-icons/fa";
 import { BiInfoCircle } from "react-icons/bi";
+import { beautify } from "utils";
 
 export default function NodeBoard({
   node,
@@ -149,6 +150,7 @@ export default function NodeBoard({
               w="calc(160px - 30px)"
               overflow="hidden"
               textOverflow="ellipsis"
+              fontFamily="monospace"
             >
               {node.uuid}
             </Text>
@@ -171,6 +173,7 @@ export default function NodeBoard({
                 w="calc(160px - 30px)"
                 overflow="hidden"
                 textOverflow="ellipsis"
+                fontFamily="monospace"
               >
                 {node.instance.region}@{node.instance.id}
               </Text>
@@ -205,12 +208,14 @@ export default function NodeBoard({
               Syncing
             </Text>
             <Progress size="sm" flex={1} value={syncingProgress} />
-            <Text variant="gray" fontSize="md">
+            <Text fontSize="md" fontFamily="monospace">
               {node &&
               node.syncState &&
               node.syncState.currentBlock &&
               node.syncState.highestBlock
-                ? `${node.syncState.currentBlock}/${node.syncState.highestBlock}`
+                ? `${beautify(String(node.syncState.currentBlock))}/${beautify(
+                    String(node.syncState.highestBlock)
+                  )}`
                 : "-/-"}
             </Text>
           </HStack>
