@@ -29,7 +29,7 @@ import { OCT_TOKEN_DECIMALS } from "primitives";
 import { RippleDot } from "components";
 import { ChevronRightIcon } from "@chakra-ui/icons";
 import { useNavigate } from "react-router-dom";
-import { formatAppChainAddress } from "utils/format";
+import { formatAppChainAddress, formatNearAddress } from "utils/format";
 import OctIdenticon from "components/common/OctIdenticon";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
 import ValidatorStatusTag from "components/Validator/Tag";
@@ -173,7 +173,7 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
                 textOverflow="ellipsis"
                 overflow="hidden"
               >
-                {validator.validator_id}
+                {formatNearAddress(validator.validator_id)}
               </Heading>
               <Text fontSize="small">{registeredDays}</Text>
             </VStack>

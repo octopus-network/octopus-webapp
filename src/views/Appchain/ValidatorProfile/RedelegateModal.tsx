@@ -25,6 +25,7 @@ import { AnchorContract, Validator } from "types";
 import { DecimalUtil } from "utils";
 import { getStakeLimit } from "utils/delegate";
 import relativeTime from "dayjs/plugin/relativeTime";
+import { formatNearAddress } from "utils/format";
 
 dayjs.extend(relativeTime);
 
@@ -184,7 +185,7 @@ export default function RedelegateModal({
                                 }
                               }}
                             >
-                              {v.validator_id}
+                              {formatNearAddress(v.validator_id)}
                             </Radio>
                           </Td>
                           <Td>

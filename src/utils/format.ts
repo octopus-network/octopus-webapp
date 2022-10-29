@@ -1,19 +1,26 @@
-import { encodeAddress } from "@polkadot/util-crypto"
-import { AppchainInfo } from "types"
+import { encodeAddress } from "@polkadot/util-crypto";
+import { AppchainInfo } from "types";
 
 export const formatAppChainAddress = (
   addr: string | undefined,
   appchain: AppchainInfo | undefined
 ) => {
   if (!addr || !appchain) {
-    return ""
+    return "";
   }
 
   if (appchain?.appchain_metadata?.template_type === "BarnacleEvm") {
-    return addr
+    return addr;
   }
   try {
-    return encodeAddress(addr)
+    return encodeAddress(addr);
   } catch (err) {}
-  return addr
-}
+  return addr;
+};
+
+export const formatNearAddress = (addr: string) => {
+  if (addr.includes(".")) {
+    return addr;
+  }
+  return addr.substring(0, 6) + "..." + addr.substring(60);
+};
