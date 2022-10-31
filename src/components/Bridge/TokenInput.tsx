@@ -1,4 +1,4 @@
-import { ChevronDownIcon } from "@chakra-ui/icons"
+import { ChevronDownIcon } from "@chakra-ui/icons";
 import {
   Avatar,
   Box,
@@ -14,19 +14,19 @@ import {
   useBoolean,
   useColorModeValue,
   VStack,
-} from "@chakra-ui/react"
-import { ApiPromise } from "@polkadot/api"
+} from "@chakra-ui/react";
+import { ApiPromise } from "@polkadot/api";
 
-import { AmountInput } from "components/AmountInput"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
-import Decimal from "decimal.js"
-import { useCallback, useEffect, useMemo, useState } from "react"
-import { AiFillCloseCircle } from "react-icons/ai"
-import useSWR from "swr"
-import { BridgeConfig, Collectible, TokenAsset } from "types"
-import { DecimalUtil, ZERO_DECIMAL } from "utils"
-import { getNearTokenBalance, getPolkaTokenBalance } from "utils/bridge"
-import { SelectTokenModal } from "views/Bridge/SelectTokenModal"
+import { AmountInput } from "components/AmountInput";
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
+import Decimal from "decimal.js";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { AiFillCloseCircle } from "react-icons/ai";
+import useSWR from "swr";
+import { BridgeConfig, Collectible, TokenAsset } from "types";
+import { DecimalUtil, ZERO_DECIMAL } from "utils";
+import { getNearTokenBalance, getPolkaTokenBalance } from "utils/bridge";
+import { SelectTokenModal } from "views/Bridge/SelectTokenModal";
 
 export default function TokenInpput({
   chain,
@@ -36,42 +36,42 @@ export default function TokenInpput({
   onChangeTokenAsset,
   appchainApi,
 }: {
-  chain: string
-  from: string
-  appchainId: string
-  onChangeAmount: (value: string) => void
-  onChangeTokenAsset: (value: any, isCollectible: boolean) => void
-  appchainApi?: ApiPromise
+  chain: string;
+  from: string;
+  appchainId: string;
+  onChangeAmount: (value: string) => void;
+  onChangeTokenAsset: (value: any, isCollectible: boolean) => void;
+  appchainApi?: ApiPromise;
 }) {
-  const { accountId, selector } = useWalletSelector()
+  const { accountId, selector } = useWalletSelector();
 
-  const bg = useColorModeValue("white", "#15172c")
-  const grayBg = useColorModeValue("#f2f4f7", "#1e1f34")
-  const [amount, setAmount] = useState("")
-  const [tokenAsset, setTokenAsset] = useState<TokenAsset>()
-  const [collectible, setCollectible] = useState<Collectible>()
-  const [balance, setBalance] = useState<Decimal>()
-  const [isAmountInputFocused, setIsAmountInputFocused] = useBoolean()
-  const [selectTokenModalOpen, setSelectTokenModalOpen] = useBoolean()
-  const [isLoadingBalance, setIsLoadingBalance] = useBoolean()
+  const bg = useColorModeValue("white", "#15172c");
+  const grayBg = useColorModeValue("#f2f4f7", "#1e1f34");
+  const [amount, setAmount] = useState("");
+  const [tokenAsset, setTokenAsset] = useState<TokenAsset>();
+  const [collectible, setCollectible] = useState<Collectible>();
+  const [balance, setBalance] = useState<Decimal>();
+  const [isAmountInputFocused, setIsAmountInputFocused] = useBoolean();
+  const [selectTokenModalOpen, setSelectTokenModalOpen] = useBoolean();
+  const [isLoadingBalance, setIsLoadingBalance] = useBoolean();
 
   const { data: tokens } = useSWR<TokenAsset[]>(
     appchainId ? `tokens/${appchainId}` : null
-  )
+  );
   const { data: bridgeConfig } = useSWR<BridgeConfig>(
     appchainId ? `bridge-config/${appchainId}` : null
-  )
+  );
   const { data: collectibleClasses } = useSWR<number[]>(
     appchainId ? `collectible-classes/${appchainId}` : null
-  )
+  );
 
   const filteredTokens = useMemo(() => {
     if (!tokens?.length) {
-      return []
+      return [];
     }
 
     if (!bridgeConfig?.whitelist) {
-      return tokens
+      return tokens;
     }
 
     return tokens.filter(
@@ -82,34 +82,41 @@ export default function TokenInpput({
           Object.values(bridgeConfig.whitelist)
             .flat(Infinity)
             .includes(accountId))
-    )
-  }, [tokens, bridgeConfig, accountId])
+    );
+  }, [tokens, bridgeConfig, accountId]);
 
   const onUpdateAmount = useCallback((v: string) => {
-    setAmount(v)
-    onChangeAmount(v)
+    setAmount(v);
+    onChangeAmount(v);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-  const isNear = chain === "NEAR"
+  }, []);
+  const isNear = chain === "NEAR";
   const onSetMax = () => {
-    onUpdateAmount(balance?.toString() || "")
-  }
+    onUpdateAmount(
+      balance?.toPrecision(
+        (Array.isArray(tokenAsset?.metadata.decimals)
+          ? tokenAsset?.metadata.decimals[0]
+          : tokenAsset?.metadata.decimals)!,
+        Decimal.ROUND_DOWN
+      ) || ""
+    );
+  };
 
   const onUpdateTokenAsset = useCallback((t: TokenAsset) => {
-    setTokenAsset(t)
-    onChangeTokenAsset(t, false)
+    setTokenAsset(t);
+    onChangeTokenAsset(t, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, []);
   useEffect(() => {
     if (filteredTokens.length) {
-      onUpdateTokenAsset(filteredTokens[0])
+      onUpdateTokenAsset(filteredTokens[0]);
     }
-  }, [filteredTokens, onUpdateTokenAsset])
+  }, [filteredTokens, onUpdateTokenAsset]);
 
   useEffect(() => {
-    setIsLoadingBalance.on()
+    setIsLoadingBalance.on();
     if (!(tokenAsset && from)) {
-      return
+      return;
     }
     if (isNear) {
       getNearTokenBalance({
@@ -117,9 +124,9 @@ export default function TokenInpput({
         accountId: from,
         tokenAsset,
       }).then((bal) => {
-        setBalance(bal)
-        setIsLoadingBalance.off()
-      })
+        setBalance(bal);
+        setIsLoadingBalance.off();
+      });
     } else if (appchainApi && bridgeConfig) {
       getPolkaTokenBalance({
         account: from,
@@ -127,9 +134,9 @@ export default function TokenInpput({
         tokenAsset,
         bridgeConfig,
       }).then((bal) => {
-        setBalance(bal)
-        setIsLoadingBalance.off()
-      })
+        setBalance(bal);
+        setIsLoadingBalance.off();
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -140,24 +147,24 @@ export default function TokenInpput({
     isNear,
     appchainApi,
     bridgeConfig,
-  ])
+  ]);
 
   const onSelectToken = (
     token: TokenAsset | Collectible,
     isCollectible = false
   ) => {
     if (isCollectible) {
-      setCollectible(token as Collectible)
-      onChangeTokenAsset(token as Collectible, true)
-      setTokenAsset(undefined)
+      setCollectible(token as Collectible);
+      onChangeTokenAsset(token as Collectible, true);
+      setTokenAsset(undefined);
     } else {
-      setCollectible(undefined)
-      onUpdateTokenAsset(token as TokenAsset)
+      setCollectible(undefined);
+      onUpdateTokenAsset(token as TokenAsset);
     }
 
-    onUpdateAmount("")
-    setSelectTokenModalOpen.off()
-  }
+    onUpdateAmount("");
+    setSelectTokenModalOpen.off();
+  };
 
   return (
     <Box
@@ -266,5 +273,5 @@ export default function TokenInpput({
         selectedToken={tokenAsset?.metadata?.symbol}
       />
     </Box>
-  )
+  );
 }
