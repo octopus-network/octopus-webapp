@@ -68,11 +68,12 @@ export const getDelegatedValidators = async (
         database: `${networkConfig?.near.networkId}_explorer`,
         password: "nearprotocol",
         port: 5432,
-        parameters: [appchain_anchor],
+        parameters: [appchain_anchor, delegatorId],
         query: `
           SELECT * FROM public.action_receipt_actions 
           WHERE receipt_receiver_account_id = $1
           AND args->>'method_name' = 'change_delegated_validator'
+          AND receipt_predecessor_account_id = $2
           LIMIT 100;
         `,
       }
