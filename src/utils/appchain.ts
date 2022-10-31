@@ -36,18 +36,20 @@ export const getDelegatedValidators = async (
   delegatorId: string
 ): Promise<string[]> => {
   try {
-    const res = await axios.post(`${networkConfig?.near.restApiUrl}/explorer`, {
-      user: "public_readonly",
-      host: `${networkConfig?.near.networkId}.db.explorer.indexer.near.dev`,
-      database: `${networkConfig?.near.networkId}_explorer`,
-      password: "nearprotocol",
-      port: 5432,
-      parameters: [
-        networkConfig?.octopus.octTokenContractId,
-        delegatorId,
-        appchain_anchor,
-      ],
-      query: `
+    const registerRes = await axios.post(
+      `${networkConfig?.near.restApiUrl}/explorer`,
+      {
+        user: "public_readonly",
+        host: `${networkConfig?.near.networkId}.db.explorer.indexer.near.dev`,
+        database: `${networkConfig?.near.networkId}_explorer`,
+        password: "nearprotocol",
+        port: 5432,
+        parameters: [
+          networkConfig?.octopus.octTokenContractId,
+          delegatorId,
+          appchain_anchor,
+        ],
+        query: `
           SELECT * FROM public.action_receipt_actions 
           WHERE receipt_receiver_account_id = $1
           AND receipt_predecessor_account_id = $2
@@ -55,27 +57,46 @@ export const getDelegatedValidators = async (
           AND args->'args_json'->>'receiver_id' = $3
           LIMIT 100;
         `,
+      }
+    );
+
+    const redelegateRes = await axios.post(
+      `${networkConfig?.near.restApiUrl}/explorer`,
+      {
+        user: "public_readonly",
+        host: `${networkConfig?.near.networkId}.db.explorer.indexer.near.dev`,
+        database: `${networkConfig?.near.networkId}_explorer`,
+        password: "nearprotocol",
+        port: 5432,
+        parameters: [appchain_anchor],
+        query: `
+          SELECT * FROM public.action_receipt_actions 
+          WHERE receipt_receiver_account_id = $1
+          AND args->>'method_name' = 'change_delegated_validator'
+          LIMIT 100;
+        `,
+      }
+    );
+
+    const registerArr = registerRes.data.map((r: any) => {
+      try {
+        const obj = JSON.parse(
+          decodeURIComponent(r.args.args_json.msg.replace(/\\/g, ""))
+        );
+        return obj.RegisterDelegator.validator_id;
+      } catch (error) {
+        return "";
+      }
+    });
+    redelegateRes.data.forEach((t: any) => {
+      if (t.args.args_json) {
+        registerArr.push(t.args.args_json.new_validator_id);
+        registerArr.push(t.args.args_json.old_validator_id);
+      }
     });
 
-    console.log("res.data", res.data);
-
-    const tmpArr = res.data
-      .map((r: any) => {
-        try {
-          const obj = JSON.parse(
-            decodeURIComponent(r.args.args_json.msg.replace(/\\/g, ""))
-          );
-          return obj.RegisterDelegator.validator_id;
-        } catch (error) {
-          return "";
-        }
-      })
-      .filter((t: string) => t !== "");
-
-    return Array.from(new Set(tmpArr));
+    return Array.from(new Set(registerArr.filter((t: string) => t !== "")));
   } catch (error) {
-    console.log("error", error);
-
     return [];
   }
 };
