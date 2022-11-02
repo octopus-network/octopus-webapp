@@ -1,6 +1,16 @@
 import React from "react";
 
-import { Table, Thead, Tbody, Tr, Th, Td, Box, Text } from "@chakra-ui/react";
+import {
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  Box,
+  Text,
+  VStack,
+} from "@chakra-ui/react";
 
 import { StakingHistory } from "types";
 
@@ -24,11 +34,13 @@ export const StakingHistoryModal: React.FC<StakingHistoryModalProps> = ({
   onClose,
   histories,
 }) => {
+  console.log("histories", histories);
+
   return (
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
-      maxW="640px"
+      maxW="800px"
       title="Staking History"
     >
       {histories?.length ? (
@@ -37,9 +49,8 @@ export const StakingHistoryModal: React.FC<StakingHistoryModalProps> = ({
             <Thead>
               <Tr>
                 <Th>Action</Th>
+                <Th>Validator ID</Th>
                 <Th>Amount</Th>
-                {/* <Th>Effected</Th> */}
-                <Th textAlign="right">Time</Th>
               </Tr>
             </Thead>
             <Tbody>
@@ -60,6 +71,37 @@ export const StakingHistoryModal: React.FC<StakingHistoryModalProps> = ({
                         >
                           {action}
                         </Text>
+                        <Text fontSize="xs" color="gray">
+                          {dayjs(Math.floor(h.timestamp / 1e6)).fromNow()}
+                        </Text>
+                      </Td>
+                      <Td maxW="200px">
+                        {action === "DelegatedValidatorChanged" ? (
+                          <VStack align="flex-start">
+                            <Text
+                              textOverflow="ellipsis"
+                              overflow="hidden"
+                              whiteSpace="nowrap"
+                            >
+                              From: {(fact as any).old_validator_id}
+                            </Text>
+                            <Text
+                              textOverflow="ellipsis"
+                              overflow="hidden"
+                              whiteSpace="nowrap"
+                            >
+                              To: {(fact as any).new_validator_id}
+                            </Text>
+                          </VStack>
+                        ) : (
+                          <Text
+                            textOverflow="ellipsis"
+                            overflow="hidden"
+                            whiteSpace="nowrap"
+                          >
+                            {(fact as any).validator_id}
+                          </Text>
+                        )}
                       </Td>
                       <Td>
                         {DecimalUtil.beautify(
@@ -68,14 +110,6 @@ export const StakingHistoryModal: React.FC<StakingHistoryModalProps> = ({
                             OCT_TOKEN_DECIMALS
                           )
                         )}
-                      </Td>
-                      {/* <Td>
-                          {h.has_taken_effect}
-                        </Td> */}
-                      <Td textAlign="right">
-                        <Text>
-                          {dayjs(Math.floor(h.timestamp / 1e6)).fromNow()}
-                        </Text>
                       </Td>
                     </Tr>
                   );

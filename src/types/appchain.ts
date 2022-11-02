@@ -207,6 +207,11 @@ export type StakingFact = {
     validator_id: string;
     amount: string;
   };
+  DelegatedValidatorChanged?: {
+    amount: string;
+    new_validator_id: string;
+    old_validator_id: string;
+  };
 };
 
 export type StakingHistory = {
