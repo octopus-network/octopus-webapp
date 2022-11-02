@@ -109,6 +109,10 @@ export const BridgePanel: React.FC = () => {
   const { currentAccount } = useAccounts(isEvm, !!appchainId);
 
   const [appchainApi, setAppchainApi] = useState<ApiPromise>();
+  const [crosschainFee, setCrosschainFee] = useState({
+    fungible: 0,
+    nonfungible: 0,
+  });
 
   const [tokenAsset, setTokenAsset] = useState<TokenAsset>();
   const [collectible, setCollectible] = useState<Collectible>();
@@ -161,6 +165,37 @@ export const BridgePanel: React.FC = () => {
       setAppchainApi(api);
     });
   }, [appchainSettings, appchain]);
+
+  useEffect(() => {
+    if (appchainApi && bridgeConfig?.crosschainFee) {
+      Promise.all([
+        appchainApi.query.octopusBridge
+          ?.crosschainTransferFee("fungible")
+          .then((res) => {
+            return res?.toJSON() as any;
+          }),
+        appchainApi.query.octopusBridge
+          ?.crosschainTransferFee("nonfungible")
+          .then((res) => {
+            return res?.toJSON() as any;
+          }),
+      ])
+        .then((results) => {
+          setCrosschainFee({
+            fungible: results[0] || 0,
+            nonfungible: results[1] || 0,
+          });
+        })
+        .catch((e) => {
+          console.log("e", e);
+        });
+    } else {
+      setCrosschainFee({
+        fungible: 0,
+        nonfungible: 0,
+      });
+    }
+  }, [appchainApi, bridgeConfig]);
 
   useEffect(() => {
     if (!appchainId) {
@@ -403,6 +438,7 @@ export const BridgePanel: React.FC = () => {
         appchainId: appchainId!,
         bridgeConfig,
         updateTxn,
+        crosschainFee: crosschainFee.fungible,
       });
     }
   };
@@ -410,11 +446,22 @@ export const BridgePanel: React.FC = () => {
   const redeemCollectible = async () => {
     const targetAccountInHex = stringToHex(to);
 
-    const tx: any = appchainApi?.tx.octopusAppchain.lockNft(
-      collectible?.class,
-      collectible?.id,
-      targetAccountInHex
-    );
+    let tx: any = null;
+
+    if (bridgeConfig?.crosschainFee) {
+      tx = appchainApi?.tx.octopusBridge.lockNonfungible(
+        collectible?.class,
+        collectible?.id,
+        targetAccountInHex,
+        crosschainFee.nonfungible
+      );
+    } else {
+      tx = appchainApi?.tx.octopusAppchain.lockNft(
+        collectible?.class,
+        collectible?.id,
+        targetAccountInHex
+      );
+    }
 
     await tx.signAndSend(from, ({ events = [] }: any) => {
       events.forEach(({ event: { data, method, section } }: any) => {
@@ -649,6 +696,8 @@ export const BridgePanel: React.FC = () => {
             />
             <TokenInput
               chain={isNearToAppchain ? "NEAR" : appchainId}
+              nativeToken={filteredTokens.find((t) => !t.assetId)}
+              crosschainFee={crosschainFee}
               appchainApi={appchainApi}
               from={from}
               appchainId={appchainId}

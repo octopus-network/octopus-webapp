@@ -24,6 +24,7 @@ export type BridgeConfig = {
     valueKey: string;
   };
   whitelist: Record<string, string[]>;
+  crosschainFee: boolean;
 };
 
 type ConverterItemConfig = {

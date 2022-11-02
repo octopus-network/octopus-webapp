@@ -361,6 +361,7 @@ export async function substrateBurn({
   fromAccount,
   appchainId,
   updateTxn,
+  crosschainFee,
 }: {
   api: ApiPromise;
   asset?: TokenAsset;
@@ -370,6 +371,7 @@ export async function substrateBurn({
   fromAccount: string;
   appchainId: string;
   updateTxn: (key: string, value: any) => void;
+  crosschainFee: number;
 }) {
   const amountInDec = DecimalUtil.power(
     new Decimal(amount),
@@ -380,14 +382,35 @@ export async function substrateBurn({
 
   let rawAmount = amountInDec.toString();
   const targetAccountInHex = stringToHex(targetAccount);
-  let tx: any =
-    asset?.assetId === undefined
-      ? api?.tx.octopusAppchain.lock(targetAccountInHex, amountInDec.toFixed(0))
-      : api?.tx.octopusAppchain.burnAsset(
-          asset?.assetId,
-          targetAccountInHex,
-          amountInDec.toFixed(0)
-        );
+  let tx: any = null;
+
+  if (bridgeConfig?.crosschainFee) {
+    tx =
+      asset?.assetId === undefined
+        ? api?.tx.octopusBridge.lock(
+            targetAccountInHex,
+            amountInDec.toFixed(0),
+            crosschainFee
+          )
+        : api?.tx.octopusAppchain.burnNep141(
+            asset?.assetId,
+            targetAccountInHex,
+            amountInDec.toFixed(0),
+            crosschainFee
+          );
+  } else {
+    tx =
+      asset?.assetId === undefined
+        ? api?.tx.octopusAppchain.lock(
+            targetAccountInHex,
+            amountInDec.toFixed(0)
+          )
+        : api?.tx.octopusAppchain.burnAsset(
+            asset?.assetId,
+            targetAccountInHex,
+            amountInDec.toFixed(0)
+          );
+  }
 
   if (!asset?.assetId) {
     const balance = await getPolkaTokenBalance({
