@@ -442,36 +442,35 @@ export async function substrateBurn({
     }
   }
 
-  await tx.signAndSend(fromAccount, ({ events = [] }: any) => {
-    events.forEach(({ event: { data, method, section } }: any) => {
-      console.log("section", section, method);
-      if (bridgeConfig?.crosschainFee) {
+  await tx.signAndSend(fromAccount, (res: any) => {
+    res.events.forEach(({ event: { data, method, section } }: any) => {
+      if (
+        (section === "octopusAppchain" &&
+          (method === "Locked" || method === "AssetBurned")) ||
+        (section === "octopusBridge" &&
+          (method === "Locked" || method === "BurnNep141"))
+      ) {
+        let sequenceId: number;
+        if (crosschainFee) {
+          sequenceId = data.toJSON()[method === "Locked" ? 4 : 5];
+        } else {
+          sequenceId = data[method === "Locked" ? 3 : 4].toNumber();
+        }
+        updateTxn(appchainId || "", {
+          isAppchainSide: true,
+          appchainId,
+          hash: tx.hash.toString(),
+          sequenceId,
+          amount: rawAmount,
+          status: BridgeHistoryStatus.Pending,
+          timestamp: new Date().getTime(),
+          fromAccount,
+          toAccount: targetAccount,
+          tokenContractId: asset?.contractId,
+        });
         setTimeout(() => {
           window.location.reload();
-        }, 1000);
-      } else {
-        if (
-          section === "octopusAppchain" &&
-          (method === "Locked" ||
-            method === "AssetBurned" ||
-            method === "BurnNep141")
-        ) {
-          updateTxn(appchainId || "", {
-            isAppchainSide: true,
-            appchainId,
-            hash: tx.hash.toString(),
-            sequenceId: data[method === "Locked" ? 3 : 4].toNumber(),
-            amount: rawAmount,
-            status: BridgeHistoryStatus.Pending,
-            timestamp: new Date().getTime(),
-            fromAccount,
-            toAccount: targetAccount,
-            tokenContractId: asset?.contractId,
-          });
-          setTimeout(() => {
-            window.location.reload();
-          }, 1000);
-        }
+        }, 100);
       }
     });
   });

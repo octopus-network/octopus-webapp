@@ -109,13 +109,22 @@ export default function TokenInpput({
   const onUpdateTokenAsset = useCallback((t: TokenAsset) => {
     setTokenAsset(t);
     onChangeTokenAsset(t, false);
+    localStorage.setItem(`bridge-token-${chain}`, t.contractId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
     if (filteredTokens.length) {
+      const prevTokenId = localStorage.getItem(`bridge-token-${chain}`);
+
+      if (prevTokenId) {
+        const token = filteredTokens.find((t) => t.contractId === prevTokenId);
+        if (token) {
+          return onUpdateTokenAsset(token);
+        }
+      }
       onUpdateTokenAsset(filteredTokens[0]);
     }
-  }, [filteredTokens, onUpdateTokenAsset]);
+  }, [filteredTokens, onUpdateTokenAsset, chain]);
 
   useEffect(() => {
     setIsLoadingBalance.on();
