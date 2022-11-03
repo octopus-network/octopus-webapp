@@ -34,8 +34,6 @@ export const StakingHistoryModal: React.FC<StakingHistoryModalProps> = ({
   onClose,
   histories,
 }) => {
-  console.log("histories", histories);
-
   return (
     <BaseModal
       isOpen={isOpen}

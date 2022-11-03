@@ -1,69 +1,45 @@
-import axios from "axios"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
-import { API_HOST } from "config"
-import { Account, keyStores, Near, providers } from "near-api-js"
-import { CodeResult } from "near-api-js/lib/providers/provider"
-import { useEffect, useState } from "react"
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
+import { Account, providers } from "near-api-js";
+import { CodeResult } from "near-api-js/lib/providers/provider";
+import { useEffect, useState } from "react";
 import {
   ConversionPool,
   ConvertorContract,
   FungibleTokenMetadata,
-  NetworkConfig,
-} from "types"
-
-export const useNear = () => {
-  const [near, setNear] = useState<Near | null>()
-
-  useEffect(() => {
-    axios
-      .get(`${API_HOST}/network-config`)
-      .then((res) => res.data)
-      .then((network: NetworkConfig) => {
-        const near = new Near({
-          keyStore: new keyStores.BrowserLocalStorageKeyStore(),
-          headers: {},
-          ...network.near,
-        })
-        setNear(near)
-      })
-      .catch(console.error)
-  }, [])
-
-  return near
-}
+} from "types";
 
 export const useConvertorContract = (account: Account, contractId: string) => {
-  const [contract, setContract] = useState<ConvertorContract | null>(null)
+  const [contract, setContract] = useState<ConvertorContract | null>(null);
 
   useEffect(() => {
     if (contractId) {
       const _contract = new ConvertorContract(account, contractId, {
         viewMethods: ["get_whitelist", "get_pools", "get_storage_fee_gap_of"],
         changeMethods: [],
-      })
-      setContract(_contract)
+      });
+      setContract(_contract);
     }
-  }, [account, contractId])
+  }, [account, contractId]);
 
-  return contract
-}
+  return contract;
+};
 
 export const usePools = (
   contractId: string,
   from_index: number,
   limit: number
 ) => {
-  const [pools, setPools] = useState<ConversionPool[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [pools, setPools] = useState<ConversionPool[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const { selector } = useWalletSelector()
+  const { selector } = useWalletSelector();
   useEffect(() => {
     async function fetchPools() {
       try {
-        setIsLoading(true)
+        setIsLoading(true);
         const provider = new providers.JsonRpcProvider({
           url: selector.options.network.nodeUrl,
-        })
+        });
 
         const res = await provider.query<CodeResult>({
           request_type: "call_function",
@@ -76,32 +52,32 @@ export const usePools = (
             })
           ),
           finality: "optimistic",
-        })
-        const pools = JSON.parse(Buffer.from(res.result).toString())
-        setPools(pools)
-        setIsLoading(false)
+        });
+        const pools = JSON.parse(Buffer.from(res.result).toString());
+        setPools(pools);
+        setIsLoading(false);
       } catch (error) {
-        setIsLoading(false)
+        setIsLoading(false);
       }
     }
-    fetchPools()
-  }, [contractId, from_index, limit, selector.options.network.nodeUrl])
-  return { pools, isLoading }
-}
+    fetchPools();
+  }, [contractId, from_index, limit, selector.options.network.nodeUrl]);
+  return { pools, isLoading };
+};
 
 export const useWhitelist = (contractId: string) => {
-  const [whitelist, setWhitelist] = useState<FungibleTokenMetadata[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const { selector, near } = useWalletSelector()
+  const [whitelist, setWhitelist] = useState<FungibleTokenMetadata[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { selector, near } = useWalletSelector();
   useEffect(() => {
     async function fetch() {
       if (!(contractId && near)) {
-        return
+        return;
       }
       try {
         const provider = new providers.JsonRpcProvider({
           url: selector.options.network.nodeUrl,
-        })
+        });
 
         const res = await provider.query<CodeResult>({
           request_type: "call_function",
@@ -109,43 +85,43 @@ export const useWhitelist = (contractId: string) => {
           method_name: "get_whitelist",
           args_base64: "",
           finality: "optimistic",
-        })
-        const _whitelist = JSON.parse(Buffer.from(res.result).toString())
+        });
+        const _whitelist = JSON.parse(Buffer.from(res.result).toString());
 
-        const viewAccount = new Account(near.connection, "dontcare")
+        const viewAccount = new Account(near.connection, "dontcare");
         const metas = await Promise.all(
           _whitelist.map((t: any) => {
             return viewAccount
               .viewFunction(t.token_id, "ft_metadata")
               .then((meta) => ({ ...meta, token_id: t.token_id }))
-              .catch(() => null)
+              .catch(() => null);
           })
-        )
-        setWhitelist(metas)
-        setIsLoading(false)
+        );
+        setWhitelist(metas);
+        setIsLoading(false);
       } catch (error) {
-        setIsLoading(false)
+        setIsLoading(false);
       }
     }
-    fetch()
-  }, [contractId, near, selector.options.network.nodeUrl])
+    fetch();
+  }, [contractId, near, selector.options.network.nodeUrl]);
 
-  return { whitelist, isLoading }
-}
+  return { whitelist, isLoading };
+};
 
 export const useTokenBalance = (contractId: string | undefined) => {
-  const [balance, setBalance] = useState("0")
-  const { accountId, selector } = useWalletSelector()
+  const [balance, setBalance] = useState("0");
+  const { accountId, selector } = useWalletSelector();
   useEffect(() => {
     async function getTokenBalance() {
       if (!contractId) {
-        return
+        return;
       }
 
       try {
         const provider = new providers.JsonRpcProvider({
           url: selector.options.network.nodeUrl,
-        })
+        });
 
         const res = await provider.query<CodeResult>({
           request_type: "call_function",
@@ -157,15 +133,15 @@ export const useTokenBalance = (contractId: string | undefined) => {
             })
           ),
           finality: "optimistic",
-        })
-        const bal = JSON.parse(Buffer.from(res.result).toString())
-        setBalance(bal)
+        });
+        const bal = JSON.parse(Buffer.from(res.result).toString());
+        setBalance(bal);
       } catch (error) {
-        setBalance("0")
+        setBalance("0");
       }
     }
 
-    getTokenBalance()
-  }, [contractId, accountId, selector.options.network.nodeUrl])
-  return balance
-}
+    getTokenBalance();
+  }, [contractId, accountId, selector.options.network.nodeUrl]);
+  return balance;
+};
