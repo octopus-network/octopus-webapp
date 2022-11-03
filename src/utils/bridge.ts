@@ -444,25 +444,34 @@ export async function substrateBurn({
 
   await tx.signAndSend(fromAccount, ({ events = [] }: any) => {
     events.forEach(({ event: { data, method, section } }: any) => {
-      if (
-        section === "octopusAppchain" &&
-        (method === "Locked" || method === "AssetBurned")
-      ) {
-        updateTxn(appchainId || "", {
-          isAppchainSide: true,
-          appchainId,
-          hash: tx.hash.toString(),
-          sequenceId: data[method === "Locked" ? 3 : 4].toNumber(),
-          amount: rawAmount,
-          status: BridgeHistoryStatus.Pending,
-          timestamp: new Date().getTime(),
-          fromAccount,
-          toAccount: targetAccount,
-          tokenContractId: asset?.contractId,
-        });
+      console.log("section", section, method);
+      if (bridgeConfig?.crosschainFee) {
         setTimeout(() => {
           window.location.reload();
         }, 1000);
+      } else {
+        if (
+          section === "octopusAppchain" &&
+          (method === "Locked" ||
+            method === "AssetBurned" ||
+            method === "BurnNep141")
+        ) {
+          updateTxn(appchainId || "", {
+            isAppchainSide: true,
+            appchainId,
+            hash: tx.hash.toString(),
+            sequenceId: data[method === "Locked" ? 3 : 4].toNumber(),
+            amount: rawAmount,
+            status: BridgeHistoryStatus.Pending,
+            timestamp: new Date().getTime(),
+            fromAccount,
+            toAccount: targetAccount,
+            tokenContractId: asset?.contractId,
+          });
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        }
       }
     });
   });
