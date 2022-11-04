@@ -389,13 +389,13 @@ export async function substrateBurn({
       asset?.assetId === undefined
         ? api?.tx.octopusBridge.lock(
             targetAccountInHex,
-            amountInDec.toFixed(0),
+            amountInDec.toFixed(0, Decimal.ROUND_DOWN),
             crosschainFee
           )
         : api?.tx.octopusAppchain.burnNep141(
             asset?.assetId,
             targetAccountInHex,
-            amountInDec.toFixed(0),
+            amountInDec.toFixed(0, Decimal.ROUND_DOWN),
             crosschainFee
           );
   } else {
@@ -403,12 +403,12 @@ export async function substrateBurn({
       asset?.assetId === undefined
         ? api?.tx.octopusAppchain.lock(
             targetAccountInHex,
-            amountInDec.toFixed(0)
+            amountInDec.toFixed(0, Decimal.ROUND_DOWN)
           )
         : api?.tx.octopusAppchain.burnAsset(
             asset?.assetId,
             targetAccountInHex,
-            amountInDec.toFixed(0)
+            amountInDec.toFixed(0, Decimal.ROUND_DOWN)
           );
   }
 
@@ -428,7 +428,9 @@ export async function substrateBurn({
       const info = await tx.paymentInfo(fromAccount);
       const fee = info.partialFee.toString();
 
-      const _amount = amountInDec.minus(new Decimal(fee).mul(2)).toFixed(0);
+      const _amount = amountInDec
+        .minus(new Decimal(fee).mul(2))
+        .toFixed(0, Decimal.ROUND_DOWN);
       rawAmount = _amount;
 
       tx =
