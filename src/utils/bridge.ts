@@ -205,7 +205,7 @@ export async function getNearTokenBalance({
       account_id: tokenAsset.contractId,
       method_name: "ft_balance_of",
       args_base64: btoa(JSON.stringify({ account_id: accountId })),
-      finality: "optimistic",
+      finality: "final",
     });
 
     const bal = JSON.parse(Buffer.from(res.result).toString());

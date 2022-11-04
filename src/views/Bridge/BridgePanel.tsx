@@ -234,7 +234,7 @@ export const BridgePanel: React.FC = () => {
           account_id: tokenAsset?.contractId,
           method_name: "storage_balance_bounds",
           args_base64: "",
-          finality: "optimistic",
+          finality: "final",
         });
         const bounds = JSON.parse(Buffer.from(res.result).toString());
 
@@ -243,7 +243,7 @@ export const BridgePanel: React.FC = () => {
           account_id: tokenAsset?.contractId,
           method_name: "storage_balance_of",
           args_base64: btoa(JSON.stringify({ account_id: to })),
-          finality: "optimistic",
+          finality: "final",
         });
         const storage = JSON.parse(Buffer.from(res2.result).toString());
 
@@ -331,7 +331,7 @@ export const BridgePanel: React.FC = () => {
                 nonce: txn.sequenceId,
               })
             ),
-            finality: "optimistic",
+            finality: "final",
           })
           .then((res) => {
             const result = JSON.parse(Buffer.from(res.result).toString());
@@ -590,7 +590,7 @@ export const BridgePanel: React.FC = () => {
         account_id: tokenAsset?.contractId,
         method_name: "storage_balance_bounds",
         args_base64: "",
-        finality: "optimistic",
+        finality: "final",
       });
       const bounds = JSON.parse(Buffer.from(res.result).toString());
       await wallet.signAndSendTransaction({

@@ -51,7 +51,7 @@ export const usePools = (
               limit,
             })
           ),
-          finality: "optimistic",
+          finality: "final",
         });
         const pools = JSON.parse(Buffer.from(res.result).toString());
         setPools(pools);
@@ -84,7 +84,7 @@ export const useWhitelist = (contractId: string) => {
           account_id: contractId,
           method_name: "get_whitelist",
           args_base64: "",
-          finality: "optimistic",
+          finality: "final",
         });
         const _whitelist = JSON.parse(Buffer.from(res.result).toString());
 
@@ -132,7 +132,7 @@ export const useTokenBalance = (contractId: string | undefined) => {
               account_id: accountId,
             })
           ),
-          finality: "optimistic",
+          finality: "final",
         });
         const bal = JSON.parse(Buffer.from(res.result).toString());
         setBalance(bal);

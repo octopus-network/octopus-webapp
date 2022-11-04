@@ -55,7 +55,7 @@ async function claimRewardsTxForAppchain(
       account_id: wrappedToken.contract_account,
       method_name: "storage_balance_of",
       args_base64: btoa(JSON.stringify({ account_id: accountId })),
-      finality: "optimistic",
+      finality: "final",
     });
     const storageBalance = JSON.parse(
       Buffer.from(storageRes.result).toString()
@@ -66,7 +66,7 @@ async function claimRewardsTxForAppchain(
       account_id: wrappedToken.contract_account,
       method_name: "storage_balance_bounds",
       args_base64: "",
-      finality: "optimistic",
+      finality: "final",
     });
     const storageBounds = JSON.parse(Buffer.from(boundsRes.result).toString());
     const txs: Transaction[] = [];
