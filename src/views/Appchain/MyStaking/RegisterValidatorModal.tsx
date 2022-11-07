@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useEffect } from "react"
-import useSWR from "swr"
+import React, { useState, useMemo, useEffect } from "react";
+import useSWR from "swr";
 
 import {
   List,
@@ -15,26 +15,27 @@ import {
   Button,
   Box,
   useBoolean,
-} from "@chakra-ui/react"
+} from "@chakra-ui/react";
 
-import { OCT_TOKEN_DECIMALS, COMPLEX_CALL_GAS } from "primitives"
+import { OCT_TOKEN_DECIMALS, COMPLEX_CALL_GAS } from "primitives";
 
-import { decodeAddress } from "@polkadot/util-crypto"
-import { u8aToHex, isHex } from "@polkadot/util"
-import { BaseModal } from "components"
-import { AnchorContract, AppchainInfoWithAnchorStatus } from "types"
-import { DecimalUtil, ZERO_DECIMAL } from "utils"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
-import { Toast } from "components/common/toast"
-import { onTxSent } from "utils/helper"
-import { EMAIL_REGEX } from "config/constants"
+import { decodeAddress } from "@polkadot/util-crypto";
+import { u8aToHex, isHex } from "@polkadot/util";
+import { BaseModal } from "components";
+import { AnchorContract, AppchainInfoWithAnchorStatus } from "types";
+import { DecimalUtil, ZERO_DECIMAL } from "utils";
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
+import { Toast } from "components/common/toast";
+import { onTxSent } from "utils/helper";
+import { EMAIL_REGEX } from "config/constants";
+import Decimal from "decimal.js";
 
 type RegisterValidatorModalProps = {
-  appchain: AppchainInfoWithAnchorStatus | undefined
-  anchor: AnchorContract | undefined
-  isOpen: boolean
-  onClose: () => void
-}
+  appchain: AppchainInfoWithAnchorStatus | undefined;
+  anchor: AnchorContract | undefined;
+  isOpen: boolean;
+  onClose: () => void;
+};
 
 export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
   isOpen,
@@ -42,59 +43,59 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
   anchor,
   appchain,
 }) => {
-  const [amount, setAmount] = useState("")
-  const [appchainAccount, setAppchainAccount] = useState("")
+  const [amount, setAmount] = useState("");
+  const [appchainAccount, setAppchainAccount] = useState("");
 
-  const { accountId, octToken, selector } = useWalletSelector()
-  const [email, setEmail] = useState("")
-  const [socialMediaHandle, setSocialMediaHandle] = useState("")
-  const [canBeDelegatedTo, setCanBeDelegatedTo] = useState(false)
+  const { accountId, octToken, selector } = useWalletSelector();
+  const [email, setEmail] = useState("");
+  const [socialMediaHandle, setSocialMediaHandle] = useState("");
+  const [canBeDelegatedTo, setCanBeDelegatedTo] = useState(false);
 
-  const [minimumDeposit, setMinimumDeposit] = useState(ZERO_DECIMAL)
+  const [minimumDeposit, setMinimumDeposit] = useState(ZERO_DECIMAL);
 
-  const [isSubmitting, setIsSubmitting] = useBoolean()
-  const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null)
+  const [isSubmitting, setIsSubmitting] = useBoolean();
+  const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null);
 
   const amountInDecimal = useMemo(
     () => DecimalUtil.fromString(amount),
     [amount]
-  )
+  );
   const octBalance = useMemo(
     () => DecimalUtil.fromString(balances?.["OCT"]),
     [balances]
-  )
+  );
 
   useEffect(() => {
     anchor?.get_protocol_settings().then((settings) => {
       const minimumDepositInDecimal = DecimalUtil.fromString(
         settings.minimum_validator_deposit,
         OCT_TOKEN_DECIMALS
-      )
-      setMinimumDeposit(minimumDepositInDecimal)
-      setAmount(minimumDepositInDecimal.toString())
-    })
-  }, [anchor])
+      );
+      setMinimumDeposit(minimumDepositInDecimal);
+      setAmount(minimumDepositInDecimal.toString());
+    });
+  }, [anchor]);
 
   const onSubmit = async () => {
-    let hexId = ""
+    let hexId = "";
     try {
       if (isHex(appchainAccount)) {
-        throw new Error("Invalid appchain account")
+        throw new Error("Invalid appchain account");
       }
-      const u8a = decodeAddress(appchainAccount)
-      hexId = u8aToHex(u8a)
+      const u8a = decodeAddress(appchainAccount);
+      hexId = u8aToHex(u8a);
     } catch (err) {
-      Toast.error(err)
-      return
+      Toast.error(err);
+      return;
     }
 
     if (!EMAIL_REGEX.test(email)) {
-      return Toast.error("Invalid email")
+      return Toast.error("Invalid email");
     }
 
     try {
-      setIsSubmitting.on()
-      const wallet = await selector.wallet()
+      setIsSubmitting.on();
+      const wallet = await selector.wallet();
       await wallet.signAndSendTransaction({
         signerId: accountId,
         receiverId: octToken?.contractId,
@@ -125,17 +126,17 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
             },
           },
         ],
-      })
-      Toast.success("Submitted")
-      setIsSubmitting.off()
-      onTxSent()
+      });
+      Toast.success("Submitted");
+      setIsSubmitting.off();
+      onTxSent();
     } catch (error) {
-      Toast.error(error)
-      setIsSubmitting.off()
+      Toast.error(error);
+      setIsSubmitting.off();
     }
-  }
+  };
 
-  const isEvm = appchain?.appchain_metadata.template_type === "BarnacleEvm"
+  const isEvm = appchain?.appchain_metadata.template_type === "BarnacleEvm";
 
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} title="Register Validator">
@@ -165,7 +166,7 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
           <Flex alignItems="center" justifyContent="space-between">
             <FormLabel htmlFor="amount">Deposit Amount</FormLabel>
             <FormHelperText>
-              OCT balance: {octBalance.toFixed(0)}
+              OCT balance: {octBalance.toFixed(0, Decimal.ROUND_DOWN)}
             </FormHelperText>
           </Flex>
           <Input
@@ -235,5 +236,5 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
         </Button>
       </Box>
     </BaseModal>
-  )
-}
+  );
+};

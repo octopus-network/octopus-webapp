@@ -46,6 +46,7 @@ import NodeManager from "utils/NodeManager";
 import { SetSessionKeyModal } from "./SetSessionKeyModal";
 import { Toast } from "components/common/toast";
 import { AiOutlineClear } from "react-icons/ai";
+import useLocalStorage from "hooks/useLocalStorage";
 
 type MyNodeProps = {
   appchainId: string | undefined;
@@ -87,13 +88,15 @@ export const MyNode: React.FC<MyNodeProps> = ({
 
   const { accountId, network } = useWalletSelector();
 
-  const cloudVendorInLocalStorage = window.localStorage.getItem(
-    "OCTOPUS_DEPLOYER_CloudVendor"
-  ) as CloudVendor;
-  const accessKeyInLocalStorage =
-    window.localStorage.getItem("OCTOPUS_DEPLOYER_ACCESS_KEY") ||
-    window.localStorage.getItem("accessKey") ||
-    "";
+  const [vendorKeys, setVendorKeys] = useLocalStorage("vendorKeys", null);
+  const currentVendor =
+    vendorKeys && appchainId && vendorKeys[appchainId]
+      ? vendorKeys[appchainId].vendor
+      : null;
+  const currentKey =
+    vendorKeys && appchainId && vendorKeys[appchainId]
+      ? vendorKeys[appchainId].key
+      : "";
 
   useEffect(() => {
     if (appchainId) {
@@ -105,17 +108,18 @@ export const MyNode: React.FC<MyNodeProps> = ({
 
   const fetchNode = async () => {
     setIsInitializing.on();
-    const cloudVendor = window.localStorage.getItem(
-      "OCTOPUS_DEPLOYER_CloudVendor"
-    ) as CloudVendor;
-    const accessKey =
-      window.localStorage.getItem("OCTOPUS_DEPLOYER_ACCESS_KEY") ||
-      window.localStorage.getItem("accessKey") ||
-      "";
+    const _vendorKeysStr = window.localStorage.getItem("vendorKeys");
+    const _vendorKeys = _vendorKeysStr ? JSON.parse(_vendorKeysStr) : null;
     NodeManager.getNodeDetail({
       appchainId: appchainId!,
-      cloudVendor,
-      accessKey,
+      cloudVendor:
+        _vendorKeys && appchainId && _vendorKeys[appchainId]
+          ? _vendorKeys[appchainId].vendor
+          : CloudVendor.AWS,
+      accessKey:
+        _vendorKeys && appchainId && _vendorKeys[appchainId]
+          ? _vendorKeys[appchainId].key
+          : "",
       accountId: accountId!,
       network,
     })
@@ -146,7 +150,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
       axios
         .get(
           `
-        ${API_HOST}/node-metrics/${node.uuid}/${cloudVendorInLocalStorage}/${accessKeyInLocalStorage}/${appchainId}/${accountId}
+        ${API_HOST}/node-metrics/${node.uuid}/${currentVendor}/${currentKey}/${appchainId}/${accountId}
       `
         )
         .then((res) => res.data)
@@ -159,52 +163,23 @@ export const MyNode: React.FC<MyNodeProps> = ({
   };
 
   useEffect(() => {
-    if (
-      !accessKeyInLocalStorage ||
-      !appchainId ||
-      !cloudVendorInLocalStorage ||
-      !accountId
-    ) {
+    if (!currentKey || !appchainId || !currentVendor || !accountId) {
       return;
     }
     fetchNode();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    accessKeyInLocalStorage,
-    accountId,
-    appchainId,
-    cloudVendorInLocalStorage,
-  ]);
+  }, [currentKey, accountId, appchainId, currentVendor]);
 
   useEffect(() => {
     fetchMetrics(node);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    node,
-    appchainId,
-    accountId,
-    cloudVendorInLocalStorage,
-    accessKeyInLocalStorage,
-  ]);
+  }, [node, appchainId, accountId, currentVendor, currentKey]);
 
   const onClearCache = () => {
-    window.localStorage.removeItem("OCTOPUS_DEPLOYER_CloudVendor");
-    window.localStorage.removeItem("OCTOPUS_DEPLOYER_ACCESS_KEY");
-    window.localStorage.removeItem("accessKey");
     window.localStorage.removeItem(`manually-deployed-${appchainId}`);
+    setVendorKeys({ ...(vendorKeys || {}), [appchainId!]: null });
     window.location.reload();
   };
-
-  // check NODE_STATE_RECORD for state meaning
-  const isShowRegister =
-    !!validator ||
-    [
-      NodeState.RUNNING,
-      NodeState.DESTROYED,
-      NodeState.DESTROYING,
-      NodeState.DESTROY_FAILED,
-      NodeState.UPGRADING,
-    ].includes(node?.state as NodeState);
 
   const skeyBadge = needKeys && !!node?.skey;
   const metricBadge =
@@ -217,9 +192,9 @@ export const MyNode: React.FC<MyNodeProps> = ({
   const onDestroyNode = () => {
     let secretKey;
 
-    if ([CloudVendor.AWS, CloudVendor.DO].includes(cloudVendorInLocalStorage)) {
+    if ([CloudVendor.AWS, CloudVendor.DO].includes(currentVendor)) {
       secretKey = window.prompt(
-        CloudVendor.AWS === cloudVendorInLocalStorage
+        CloudVendor.AWS === currentVendor
           ? "Please enter the secret key of your server"
           : "Please enter the personal access token of your server",
         ""
@@ -349,7 +324,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
         {node && (
           <NodeBoard
             node={node}
-            cloudVendor={cloudVendorInLocalStorage}
+            cloudVendor={currentVendor}
             anchor={anchor}
             appchain={appchain}
             validator={validator}
@@ -359,10 +334,8 @@ export const MyNode: React.FC<MyNodeProps> = ({
         )}
         {!node && !isInitializing && (
           <NodeDeploy
-            setNode={setNode}
             validator={validator}
             appchainId={appchainId}
-            isShowRegister={isShowRegister}
             anchor={anchor}
             appchain={appchain}
             fetchNode={fetchNode}

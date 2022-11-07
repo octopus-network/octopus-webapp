@@ -1,5 +1,5 @@
-import React, { useMemo } from "react"
-import useSWR from "swr"
+import React, { useEffect, useMemo } from "react";
+import useSWR from "swr";
 
 import {
   Flex,
@@ -14,46 +14,47 @@ import {
   useColorModeValue,
   Skeleton,
   SkeletonCircle,
-} from "@chakra-ui/react"
+} from "@chakra-ui/react";
 
-import { useNavigate } from "react-router-dom"
-import { ChevronRightIcon } from "@chakra-ui/icons"
-import { Link as RouterLink } from "react-router-dom"
-import { DecimalUtil, ZERO_DECIMAL } from "utils"
+import { useNavigate } from "react-router-dom";
+import { ChevronRightIcon } from "@chakra-ui/icons";
+import { Link as RouterLink } from "react-router-dom";
+import { DecimalUtil, ZERO_DECIMAL } from "utils";
 
-import { OCT_TOKEN_DECIMALS } from "primitives"
+import { OCT_TOKEN_DECIMALS } from "primitives";
 
-import { AppchainInfo, AppchainSettings, Delegator, Validator } from "types"
+import { AppchainInfo, AppchainSettings, Delegator, Validator } from "types";
+import useLocalStorage from "hooks/useLocalStorage";
 
 type RunningAppchainsProps = {
-  showMore?: boolean
-}
+  showMore?: boolean;
+};
 
 type RunningItemProps = {
-  whiteBg?: boolean
-  data: AppchainInfo
-}
+  whiteBg?: boolean;
+  data: AppchainInfo;
+};
 
 const RunningItem: React.FC<RunningItemProps> = ({ whiteBg = false, data }) => {
-  const bg = useColorModeValue(whiteBg ? "white" : "#f6f7fa", "#15172c")
-  const iconBg = useColorModeValue("white", "whiteAlpha.100")
+  const bg = useColorModeValue(whiteBg ? "white" : "#f6f7fa", "#15172c");
+  const iconBg = useColorModeValue("white", "whiteAlpha.100");
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const icon = useMemo(
     () => data.appchain_metadata?.fungible_token_metadata?.icon || "",
     [data]
-  )
+  );
 
   const { data: prices } = useSWR(
     `prices/OCT,${data.appchain_metadata?.fungible_token_metadata?.symbol}`
-  )
+  );
   const { data: appchainSettings } = useSWR<AppchainSettings>(
     `appchain-settings/${data.appchain_id}`
-  )
+  );
   const { data: validators } = useSWR<Validator[]>(
     `validators/${data.appchain_id}`
-  )
+  );
 
   const { data: delegatorsArr } = useSWR<Delegator[][]>(
     validators?.length
@@ -61,22 +62,22 @@ const RunningItem: React.FC<RunningItemProps> = ({ whiteBg = false, data }) => {
           data.appchain_id
         }/delegators`
       : null
-  )
+  );
 
   const delegatorsCount = useMemo(
     () => delegatorsArr?.flat(Infinity).length,
     [delegatorsArr]
-  )
+  );
 
   const apy = useMemo(() => {
-    if (!appchainSettings || !prices) return ZERO_DECIMAL
-    const { fungible_token_metadata } = data.appchain_metadata || {}
+    if (!appchainSettings || !prices) return ZERO_DECIMAL;
+    const { fungible_token_metadata } = data.appchain_metadata || {};
     const rewardsPerYear = DecimalUtil.fromString(
       appchainSettings.era_reward,
       fungible_token_metadata.decimals
     )
       .mul(365)
-      .mul(prices[fungible_token_metadata.symbol])
+      .mul(prices[fungible_token_metadata.symbol]);
 
     return rewardsPerYear
       .mul(100)
@@ -84,8 +85,8 @@ const RunningItem: React.FC<RunningItemProps> = ({ whiteBg = false, data }) => {
         DecimalUtil.fromString(data.total_stake, OCT_TOKEN_DECIMALS).mul(
           prices["OCT"]
         )
-      )
-  }, [prices, data, appchainSettings])
+      );
+  }, [prices, data, appchainSettings]);
 
   return (
     <Box
@@ -149,11 +150,11 @@ const RunningItem: React.FC<RunningItemProps> = ({ whiteBg = false, data }) => {
         </VStack>
       </Flex>
     </Box>
-  )
-}
+  );
+};
 
 const BlankItem: React.FC<Omit<RunningItemProps, "data">> = ({ whiteBg }) => {
-  const bg = useColorModeValue(whiteBg ? "white" : "#f6f7fa", "#15172c")
+  const bg = useColorModeValue(whiteBg ? "white" : "#f6f7fa", "#15172c");
 
   return (
     <Box bg={bg} borderRadius="lg" p={6}>
@@ -208,13 +209,32 @@ const BlankItem: React.FC<Omit<RunningItemProps, "data">> = ({ whiteBg }) => {
         </VStack>
       </Flex>
     </Box>
-  )
-}
+  );
+};
 
 export const RunningAppchains: React.FC<RunningAppchainsProps> = ({
   showMore = true,
 }) => {
-  const { data } = useSWR("appchains/running")
+  const { data } = useSWR<AppchainInfo[]>("appchains/running");
+  const [vendorKeys, setVendorKeys] = useLocalStorage("vendorKeys", null);
+
+  useEffect(() => {
+    if (!vendorKeys && data) {
+      const obj: { [key in string]: any } = {};
+      const vendor = localStorage.getItem("OCTOPUS_DEPLOYER_CloudVendor");
+      const key = localStorage.getItem("OCTOPUS_DEPLOYER_ACCESS_KEY");
+      data.forEach((item) => {
+        obj[item.appchain_id] = {
+          vendor,
+          key,
+        };
+      });
+      setVendorKeys(obj);
+      localStorage.removeItem("OCTOPUS_DEPLOYER_CloudVendor");
+      localStorage.removeItem("OCTOPUS_DEPLOYER_ACCESS_KEY");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, vendorKeys]);
 
   return (
     <>
@@ -242,5 +262,5 @@ export const RunningAppchains: React.FC<RunningAppchainsProps> = ({
         )}
       </SimpleGrid>
     </>
-  )
-}
+  );
+};

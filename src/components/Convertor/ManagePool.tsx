@@ -18,20 +18,20 @@ import {
   TabPanel,
   Link,
   Avatar,
-} from "@chakra-ui/react"
-import Decimal from "decimal.js"
-import { useTokenBalance } from "hooks/useConvertorContract"
-import { SIMPLE_CALL_GAS } from "primitives"
-import { useState } from "react"
-import { AccountId, ConversionPool, FungibleTokenMetadata } from "types"
-import { DecimalUtil } from "utils"
-import { isValidNumber } from "utils/validate"
-import NEP141 from "assets/icons/nep141-token.png"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
-import { Transaction } from "@near-wallet-selector/core"
-import { Toast } from "components/common/toast"
-import { providers } from "near-api-js"
-import { CodeResult } from "near-api-js/lib/providers/provider"
+} from "@chakra-ui/react";
+import Decimal from "decimal.js";
+import { useTokenBalance } from "hooks/useConvertorContract";
+import { SIMPLE_CALL_GAS } from "primitives";
+import { useState } from "react";
+import { AccountId, ConversionPool, FungibleTokenMetadata } from "types";
+import { DecimalUtil } from "utils";
+import { isValidNumber } from "utils/validate";
+import NEP141 from "assets/icons/nep141-token.png";
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
+import { Transaction } from "@near-wallet-selector/core";
+import { Toast } from "components/common/toast";
+import { providers } from "near-api-js";
+import { CodeResult } from "near-api-js/lib/providers/provider";
 
 function TokenInput({
   token,
@@ -39,20 +39,20 @@ function TokenInput({
   onSubmit,
   isWithdraw = false,
 }: {
-  token: FungibleTokenMetadata | undefined
-  liquidity: string
-  onSubmit: (value: string, token: FungibleTokenMetadata) => void
-  isWithdraw?: boolean
+  token: FungibleTokenMetadata | undefined;
+  liquidity: string;
+  onSubmit: (value: string, token: FungibleTokenMetadata) => void;
+  isWithdraw?: boolean;
 }) {
-  const [value, setValue] = useState("")
-  const balance = useTokenBalance(token?.token_id)
-  const inputBg = useColorModeValue("#f5f7fa", "whiteAlpha.100")
+  const [value, setValue] = useState("");
+  const balance = useTokenBalance(token?.token_id);
+  const inputBg = useColorModeValue("#f5f7fa", "whiteAlpha.100");
   const tokenLiq = DecimalUtil.fromString(liquidity, token?.decimals)
     .toFixed(2)
-    .toString()
+    .toString();
   const tokenBalance = DecimalUtil.fromString(balance, token?.decimals)
     .toFixed(2)
-    .toString()
+    .toString();
   return (
     <Box mb={6}>
       <Flex direction="row" align="center" gap={2} mb={2}>
@@ -96,7 +96,7 @@ function TokenInput({
         </Flex>
       </Flex>
     </Box>
-  )
+  );
 }
 
 export default function ManagePool({
@@ -105,18 +105,18 @@ export default function ManagePool({
   onClose,
   contractId,
 }: {
-  pool: ConversionPool | null
-  whitelist: FungibleTokenMetadata[]
-  onClose: () => void
-  contractId: AccountId
+  pool: ConversionPool | null;
+  whitelist: FungibleTokenMetadata[];
+  onClose: () => void;
+  contractId: AccountId;
 }) {
-  const inToken = whitelist.find((t) => t.token_id === pool?.in_token)
-  const outToken = whitelist.find((t) => t.token_id === pool?.out_token)
+  const inToken = whitelist.find((t) => t.token_id === pool?.in_token);
+  const outToken = whitelist.find((t) => t.token_id === pool?.out_token);
 
-  const { accountId, selector, networkConfig } = useWalletSelector()
+  const { accountId, selector, networkConfig } = useWalletSelector();
 
   if (!pool) {
-    return null
+    return null;
   }
 
   const onDepositToken = async (
@@ -124,7 +124,7 @@ export default function ManagePool({
     token: FungibleTokenMetadata
   ) => {
     try {
-      const wallet = await selector.wallet()
+      const wallet = await selector.wallet();
       await wallet.signAndSendTransaction({
         signerId: accountId,
         receiverId: token.token_id,
@@ -146,20 +146,20 @@ export default function ManagePool({
             },
           },
         ],
-      })
-      onClose()
-      Toast.success("Deposited")
+      });
+      onClose();
+      Toast.success("Deposited");
     } catch (error) {
-      Toast.error(error)
+      Toast.error(error);
     }
-  }
+  };
 
   const onWithdrawToken = async (
     amount: string,
     token: FungibleTokenMetadata
   ) => {
     try {
-      const wallet = await selector.wallet()
+      const wallet = await selector.wallet();
       await wallet.signAndSendTransaction({
         signerId: accountId,
         receiverId: contractId,
@@ -181,30 +181,30 @@ export default function ManagePool({
             },
           },
         ],
-      })
-      onClose()
-      Toast.success("Withdrawed")
+      });
+      onClose();
+      Toast.success("Withdrawed");
     } catch (error) {
-      Toast.error(error)
+      Toast.error(error);
     }
-  }
+  };
 
   const onDeletePool = async () => {
     try {
       if (!accountId) {
-        throw new Error("No account")
+        throw new Error("No account");
       }
 
-      const wallet = await selector.wallet()
+      const wallet = await selector.wallet();
 
       const tx: Transaction = {
         signerId: accountId,
         receiverId: contractId,
         actions: [],
-      }
+      };
       const provider = new providers.JsonRpcProvider({
         url: selector.options.network.nodeUrl,
-      })
+      });
 
       const res = await provider.query<CodeResult>({
         request_type: "call_function",
@@ -215,9 +215,9 @@ export default function ManagePool({
             account_id: accountId!,
           })
         ),
-        finality: "optimistic",
-      })
-      const storageFee = JSON.parse(Buffer.from(res.result).toString())
+        finality: "final",
+      });
+      const storageFee = JSON.parse(Buffer.from(res.result).toString());
 
       if (String(storageFee) !== "0") {
         tx.actions.push({
@@ -230,7 +230,7 @@ export default function ManagePool({
             gas: SIMPLE_CALL_GAS,
             deposit: String(storageFee),
           },
-        })
+        });
       }
       if (pool.in_token_balance !== "0") {
         tx.actions.push({
@@ -245,7 +245,7 @@ export default function ManagePool({
             gas: SIMPLE_CALL_GAS,
             deposit: String(1),
           },
-        })
+        });
       }
 
       if (pool.out_token_balance !== "0") {
@@ -261,7 +261,7 @@ export default function ManagePool({
             gas: SIMPLE_CALL_GAS,
             deposit: String(1),
           },
-        })
+        });
       }
 
       tx.actions.push({
@@ -272,15 +272,15 @@ export default function ManagePool({
           gas: SIMPLE_CALL_GAS,
           deposit: String(1),
         },
-      })
+      });
 
-      await wallet.signAndSendTransaction(tx)
-      onClose()
-      Toast.success("Deleted")
+      await wallet.signAndSendTransaction(tx);
+      onClose();
+      Toast.success("Deleted");
     } catch (error) {
-      Toast.error(error)
+      Toast.error(error);
     }
-  }
+  };
 
   return (
     <Drawer placement="right" isOpen onClose={onClose} size="md">
@@ -350,5 +350,5 @@ export default function ManagePool({
         </Flex>
       </DrawerContent>
     </Drawer>
-  )
+  );
 }

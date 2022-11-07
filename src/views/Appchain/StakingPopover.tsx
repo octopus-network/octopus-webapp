@@ -121,7 +121,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
         const octAmount = DecimalUtil.power(octBalance, OCT_TOKEN_DECIMALS);
 
         if (octAmount.lt(amountStr)) {
-          amountStr = octAmount.toFixed(0);
+          amountStr = octAmount.toFixed(0, Decimal.ROUND_DOWN);
         }
 
         await wallet.signAndSendTransaction({

@@ -22,6 +22,7 @@ import { Toast } from "components/common/toast";
 import SecretKey from "./DeployStep/SecretKey";
 import NodeManager from "utils/NodeManager";
 import { CLOUD_NODE_INSTANCES } from "config/constants";
+import useLocalStorage from "hooks/useLocalStorage";
 
 enum DeployStep {
   NEED_ACCESS_KEY,
@@ -32,41 +33,35 @@ enum DeployStep {
 export default function NodeDeploy({
   validator,
   appchainId,
-  setNode,
-  isShowRegister,
   appchain,
   anchor,
   fetchNode,
 }: {
   validator?: Validator;
   appchainId?: string;
-  setNode: (node: any) => void;
-  isShowRegister: boolean;
   appchain?: AppchainInfo;
   anchor?: AnchorContract;
   fetchNode: () => void;
 }) {
-  const cloudVendorInLocalStorage = window.localStorage.getItem(
-    "OCTOPUS_DEPLOYER_CloudVendor"
-  ) as CloudVendor;
-  const accessKeyInLocalStorage =
-    window.localStorage.getItem("OCTOPUS_DEPLOYER_ACCESS_KEY") ||
-    window.localStorage.getItem("accessKey") ||
-    "";
+  const [vendorKeys, setVendorKeys] = useLocalStorage("vendorKeys", null);
 
+  let currentVendor;
+  let currentAccessKey = "";
+  if (vendorKeys && appchainId && vendorKeys[appchainId]) {
+    currentVendor = vendorKeys[appchainId].vendor;
+    currentAccessKey = vendorKeys[appchainId].key;
+  }
   const [step, setStep] = useState<DeployStep>(DeployStep.NEED_ACCESS_KEY);
   const [cloudVendor, setCloudVendor] = useState<CloudVendor>(
-    cloudVendorInLocalStorage || CloudVendor.AWS
+    currentVendor || CloudVendor.AWS
   );
-  const [accessKey, setAccessKey] = useState<string>(accessKeyInLocalStorage);
+  const [accessKey, setAccessKey] = useState<string>(currentAccessKey);
   const [secretKey, setSecretKey] = useState<string>("");
   const [deployRegion, setDeployRegion] = useState<string>("");
   const [isManuallyDeployed, setIsManuallyDeployed] = useBoolean();
   const [isDeploying, setIsDeploying] = useBoolean();
-  // const [projectId, setProjectId] = useState<string>()
   const [registerValidatorModalOpen, setRegisterValidatorModalOpen] =
     useBoolean(false);
-  const isDeployed = isShowRegister || isManuallyDeployed;
 
   useEffect(() => {
     if (appchainId) {
@@ -81,8 +76,10 @@ export default function NodeDeploy({
   const { accountId, network } = useWalletSelector();
 
   const onConfirmAccessKey = async () => {
+    if (!appchainId) {
+      return;
+    }
     if (!accessKey) {
-      //
       return Toast.error(
         `Please input ${
           cloudVendor === CloudVendor.AWS ? "Access Key" : "Token Name"
@@ -94,8 +91,10 @@ export default function NodeDeploy({
     }
 
     setStep(DeployStep.CONFIRMED_ACCESS_KEY);
-    window.localStorage.setItem("OCTOPUS_DEPLOYER_ACCESS_KEY", accessKey);
-    window.localStorage.setItem("OCTOPUS_DEPLOYER_CloudVendor", cloudVendor);
+    setVendorKeys({
+      ...(vendorKeys || {}),
+      [appchainId]: { vendor: cloudVendor, accessKey },
+    });
 
     try {
       const node = await NodeManager.getNodeDetail({

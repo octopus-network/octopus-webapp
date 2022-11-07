@@ -35,6 +35,8 @@ export default function TokenInpput({
   onChangeAmount,
   onChangeTokenAsset,
   appchainApi,
+  nativeToken,
+  crosschainFee,
 }: {
   chain: string;
   from: string;
@@ -42,6 +44,8 @@ export default function TokenInpput({
   onChangeAmount: (value: string) => void;
   onChangeTokenAsset: (value: any, isCollectible: boolean) => void;
   appchainApi?: ApiPromise;
+  nativeToken?: TokenAsset;
+  crosschainFee: { fungible: number; nonfungible: number };
 }) {
   const { accountId, selector } = useWalletSelector();
 
@@ -105,13 +109,22 @@ export default function TokenInpput({
   const onUpdateTokenAsset = useCallback((t: TokenAsset) => {
     setTokenAsset(t);
     onChangeTokenAsset(t, false);
+    localStorage.setItem(`bridge-token-${chain}`, t.contractId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
     if (filteredTokens.length) {
+      const prevTokenId = localStorage.getItem(`bridge-token-${chain}`);
+
+      if (prevTokenId) {
+        const token = filteredTokens.find((t) => t.contractId === prevTokenId);
+        if (token) {
+          return onUpdateTokenAsset(token);
+        }
+      }
       onUpdateTokenAsset(filteredTokens[0]);
     }
-  }, [filteredTokens, onUpdateTokenAsset]);
+  }, [filteredTokens, onUpdateTokenAsset, chain]);
 
   useEffect(() => {
     setIsLoadingBalance.on();
@@ -166,6 +179,13 @@ export default function TokenInpput({
     setSelectTokenModalOpen.off();
   };
 
+  let decimals = 0;
+  if (nativeToken) {
+    decimals = Array.isArray(nativeToken.metadata.decimals)
+      ? nativeToken.metadata.decimals[0]
+      : nativeToken.metadata.decimals;
+  }
+
   return (
     <Box
       borderWidth={1}
@@ -200,66 +220,93 @@ export default function TokenInpput({
           </Skeleton>
         ) : null}
       </Flex>
-      {collectible ? (
-        <Flex
-          mt={3}
-          borderWidth={1}
-          p={2}
-          borderColor="octo-blue.500"
-          borderRadius="lg"
-          overflow="hidden"
-          position="relative"
-        >
-          <Box w="20%">
-            <Image src={collectible.metadata.mediaUri} w="100%" />
-          </Box>
-          <VStack alignItems="flex-start" ml={3}>
-            <Heading fontSize="md">{collectible.metadata.name}</Heading>
-          </VStack>
-          <Box position="absolute" top={1} right={1}>
-            <IconButton
-              aria-label="clear"
-              size="sm"
-              isRound
-              onClick={() => setCollectible(undefined)}
-            >
-              <Icon as={AiFillCloseCircle} boxSize={5} className="octo-gray" />
-            </IconButton>
-          </Box>
-        </Flex>
-      ) : (
-        <Flex mt={3} alignItems="center">
-          <AmountInput
-            autoFocus
-            placeholder="0.00"
-            fontSize="xl"
-            fontWeight={700}
-            unstyled
-            min={0}
-            value={amount}
-            onChange={onUpdateAmount}
-            onFocus={setIsAmountInputFocused.on}
-            onBlur={setIsAmountInputFocused.off}
-          />
-          <Button
-            ml={3}
-            size="sm"
-            variant="ghost"
-            onClick={setSelectTokenModalOpen.on}
+      <VStack width="100%">
+        {collectible ? (
+          <Flex
+            mt={3}
+            borderWidth={1}
+            p={2}
+            borderColor="octo-blue.500"
+            borderRadius="lg"
+            overflow="hidden"
+            position="relative"
+            width="100%"
           >
-            <HStack>
-              <Avatar
-                name={tokenAsset?.metadata?.symbol}
-                src={tokenAsset?.metadata?.icon as any}
-                boxSize={5}
+            <Box w="20%">
+              <Image src={collectible.metadata.mediaUri} w="100%" />
+            </Box>
+            <VStack alignItems="flex-start" ml={3}>
+              <Heading fontSize="md">{collectible.metadata.name}</Heading>
+            </VStack>
+            <Box position="absolute" top={1} right={1}>
+              <IconButton
+                aria-label="clear"
                 size="sm"
-              />
-              <Heading fontSize="md">{tokenAsset?.metadata?.symbol}</Heading>
-              <Icon as={ChevronDownIcon} />
-            </HStack>
-          </Button>
-        </Flex>
-      )}
+                isRound
+                onClick={() => setCollectible(undefined)}
+              >
+                <Icon
+                  as={AiFillCloseCircle}
+                  boxSize={5}
+                  className="octo-gray"
+                />
+              </IconButton>
+            </Box>
+          </Flex>
+        ) : (
+          <Flex mt={3} alignItems="center" width="100%">
+            <AmountInput
+              autoFocus
+              placeholder="0.00"
+              fontSize="xl"
+              fontWeight={700}
+              unstyled
+              min={0}
+              value={amount}
+              onChange={onUpdateAmount}
+              onFocus={setIsAmountInputFocused.on}
+              onBlur={setIsAmountInputFocused.off}
+            />
+            <Button
+              ml={3}
+              size="sm"
+              variant="ghost"
+              onClick={setSelectTokenModalOpen.on}
+            >
+              <HStack>
+                <Avatar
+                  name={tokenAsset?.metadata?.symbol}
+                  src={tokenAsset?.metadata?.icon as any}
+                  boxSize={5}
+                  size="sm"
+                />
+                <Heading fontSize="md">{tokenAsset?.metadata?.symbol}</Heading>
+                <Icon as={ChevronDownIcon} />
+              </HStack>
+            </Button>
+          </Flex>
+        )}
+        {nativeToken && crosschainFee.fungible !== 0 && chain !== "NEAR" && (
+          <HStack justify="flex-start" width="100%" gap={1}>
+            <Text fontSize="xs" color="gray">
+              Fee
+            </Text>
+            <Text fontSize="xs" color="gray">
+              {DecimalUtil.beautify(
+                DecimalUtil.shift(
+                  new Decimal(
+                    tokenAsset
+                      ? crosschainFee.fungible
+                      : crosschainFee.nonfungible
+                  ),
+                  decimals
+                ),
+                decimals
+              )}
+            </Text>
+          </HStack>
+        )}
+      </VStack>
       <SelectTokenModal
         isOpen={selectTokenModalOpen}
         onClose={setSelectTokenModalOpen.off}

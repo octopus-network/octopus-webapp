@@ -118,7 +118,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
         account_id: tokenContract?.contractId,
         method_name: "storage_balance_bounds",
         args_base64: "",
-        finality: "optimistic",
+        finality: "final",
       });
       const storageBounds = JSON.parse(Buffer.from(res.result).toString());
       const txs: Transaction[] = [];

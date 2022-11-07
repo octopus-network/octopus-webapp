@@ -205,7 +205,7 @@ export async function getNearTokenBalance({
       account_id: tokenAsset.contractId,
       method_name: "ft_balance_of",
       args_base64: btoa(JSON.stringify({ account_id: accountId })),
-      finality: "optimistic",
+      finality: "final",
     });
 
     const bal = JSON.parse(Buffer.from(res.result).toString());
@@ -361,6 +361,7 @@ export async function substrateBurn({
   fromAccount,
   appchainId,
   updateTxn,
+  crosschainFee,
 }: {
   api: ApiPromise;
   asset?: TokenAsset;
@@ -370,6 +371,7 @@ export async function substrateBurn({
   fromAccount: string;
   appchainId: string;
   updateTxn: (key: string, value: any) => void;
+  crosschainFee: number;
 }) {
   const amountInDec = DecimalUtil.power(
     new Decimal(amount),
@@ -380,14 +382,35 @@ export async function substrateBurn({
 
   let rawAmount = amountInDec.toString();
   const targetAccountInHex = stringToHex(targetAccount);
-  let tx: any =
-    asset?.assetId === undefined
-      ? api?.tx.octopusAppchain.lock(targetAccountInHex, amountInDec.toFixed(0))
-      : api?.tx.octopusAppchain.burnAsset(
-          asset?.assetId,
-          targetAccountInHex,
-          amountInDec.toFixed(0)
-        );
+  let tx: any = null;
+
+  if (bridgeConfig?.crosschainFee) {
+    tx =
+      asset?.assetId === undefined
+        ? api?.tx.octopusBridge.lock(
+            targetAccountInHex,
+            amountInDec.toFixed(0, Decimal.ROUND_DOWN),
+            crosschainFee
+          )
+        : api?.tx.octopusAppchain.burnNep141(
+            asset?.assetId,
+            targetAccountInHex,
+            amountInDec.toFixed(0, Decimal.ROUND_DOWN),
+            crosschainFee
+          );
+  } else {
+    tx =
+      asset?.assetId === undefined
+        ? api?.tx.octopusAppchain.lock(
+            targetAccountInHex,
+            amountInDec.toFixed(0, Decimal.ROUND_DOWN)
+          )
+        : api?.tx.octopusAppchain.burnAsset(
+            asset?.assetId,
+            targetAccountInHex,
+            amountInDec.toFixed(0, Decimal.ROUND_DOWN)
+          );
+  }
 
   if (!asset?.assetId) {
     const balance = await getPolkaTokenBalance({
@@ -405,7 +428,9 @@ export async function substrateBurn({
       const info = await tx.paymentInfo(fromAccount);
       const fee = info.partialFee.toString();
 
-      const _amount = amountInDec.minus(new Decimal(fee).mul(2)).toFixed(0);
+      const _amount = amountInDec
+        .minus(new Decimal(fee).mul(2))
+        .toFixed(0, Decimal.ROUND_DOWN);
       rawAmount = _amount;
 
       tx =
@@ -419,17 +444,25 @@ export async function substrateBurn({
     }
   }
 
-  await tx.signAndSend(fromAccount, ({ events = [] }: any) => {
-    events.forEach(({ event: { data, method, section } }: any) => {
+  await tx.signAndSend(fromAccount, (res: any) => {
+    res.events.forEach(({ event: { data, method, section } }: any) => {
       if (
-        section === "octopusAppchain" &&
-        (method === "Locked" || method === "AssetBurned")
+        (section === "octopusAppchain" &&
+          (method === "Locked" || method === "AssetBurned")) ||
+        (section === "octopusBridge" &&
+          (method === "Locked" || method === "BurnNep141"))
       ) {
+        let sequenceId: number;
+        if (crosschainFee) {
+          sequenceId = data.toJSON()[method === "Locked" ? 4 : 5];
+        } else {
+          sequenceId = data[method === "Locked" ? 3 : 4].toNumber();
+        }
         updateTxn(appchainId || "", {
           isAppchainSide: true,
           appchainId,
           hash: tx.hash.toString(),
-          sequenceId: data[method === "Locked" ? 3 : 4].toNumber(),
+          sequenceId,
           amount: rawAmount,
           status: BridgeHistoryStatus.Pending,
           timestamp: new Date().getTime(),
@@ -439,7 +472,7 @@ export async function substrateBurn({
         });
         setTimeout(() => {
           window.location.reload();
-        }, 1000);
+        }, 100);
       }
     });
   });

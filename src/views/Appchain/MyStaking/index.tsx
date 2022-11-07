@@ -5,7 +5,6 @@ import dayjs from "dayjs";
 import {
   Box,
   Heading,
-  SimpleGrid,
   Text,
   HStack,
   VStack,

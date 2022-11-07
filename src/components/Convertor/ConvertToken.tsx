@@ -13,25 +13,25 @@ import {
   Icon,
   useColorModeValue,
   Avatar,
-} from "@chakra-ui/react"
-import Decimal from "decimal.js"
-import { useTokenBalance } from "hooks/useConvertorContract"
+} from "@chakra-ui/react";
+import Decimal from "decimal.js";
+import { useTokenBalance } from "hooks/useConvertorContract";
 import {
   COMPLEX_CALL_GAS,
   FT_MINIMUM_STORAGE_BALANCE,
   SIMPLE_CALL_GAS,
-} from "primitives"
-import { useState } from "react"
-import { MdArrowDownward, MdSwapVert } from "react-icons/md"
-import { AccountId, ConversionPool, FungibleTokenMetadata } from "types"
-import { DecimalUtil } from "utils"
-import { isValidNumber } from "utils/validate"
-import NEP141 from "assets/icons/nep141-token.png"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
-import { Transaction } from "@near-wallet-selector/core"
-import { Toast } from "components/common/toast"
-import { providers } from "near-api-js"
-import { CodeResult } from "near-api-js/lib/providers/provider"
+} from "primitives";
+import { useState } from "react";
+import { MdArrowDownward, MdSwapVert } from "react-icons/md";
+import { AccountId, ConversionPool, FungibleTokenMetadata } from "types";
+import { DecimalUtil } from "utils";
+import { isValidNumber } from "utils/validate";
+import NEP141 from "assets/icons/nep141-token.png";
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
+import { Transaction } from "@near-wallet-selector/core";
+import { Toast } from "components/common/toast";
+import { providers } from "near-api-js";
+import { CodeResult } from "near-api-js/lib/providers/provider";
 
 const TokenInput = ({
   value,
@@ -41,20 +41,20 @@ const TokenInput = ({
   inputDisabled = false,
   autoFocus = false,
 }: {
-  value: string
-  onValueChange: (value: string) => void
-  token: FungibleTokenMetadata | undefined
-  liquidity: string
-  inputDisabled?: boolean
-  autoFocus?: boolean
+  value: string;
+  onValueChange: (value: string) => void;
+  token: FungibleTokenMetadata | undefined;
+  liquidity: string;
+  inputDisabled?: boolean;
+  autoFocus?: boolean;
 }) => {
-  const tokenBlance = useTokenBalance(token?.token_id)
-  const liq = DecimalUtil.fromString(liquidity, token?.decimals).toFixed(2)
+  const tokenBlance = useTokenBalance(token?.token_id);
+  const liq = DecimalUtil.fromString(liquidity, token?.decimals).toFixed(2);
 
   const balance = DecimalUtil.fromString(tokenBlance, token?.decimals).toFixed(
     2
-  )
-  const inputBg = useColorModeValue("#f5f7fa", "whiteAlpha.100")
+  );
+  const inputBg = useColorModeValue("#f5f7fa", "whiteAlpha.100");
 
   return (
     <Flex direction="row" align="flex-end" gap={4}>
@@ -81,8 +81,8 @@ const TokenInput = ({
         <Avatar src={token?.icon || NEP141} width={10} height={10} />
       </Flex>
     </Flex>
-  )
-}
+  );
+};
 
 export default function ConvertToken({
   pool,
@@ -90,36 +90,36 @@ export default function ConvertToken({
   onClose,
   contractId,
 }: {
-  pool: ConversionPool | null
-  whitelist: FungibleTokenMetadata[]
-  onClose: () => void
-  contractId: AccountId
+  pool: ConversionPool | null;
+  whitelist: FungibleTokenMetadata[];
+  onClose: () => void;
+  contractId: AccountId;
 }) {
-  const [inTokenValue, setInTokenValue] = useState<string | number>("")
-  const [outTokenValue, setOutTokenValue] = useState<string | number>("")
-  const [isReversed, setIsReversed] = useState(false)
-  const { accountId, selector, near } = useWalletSelector()
+  const [inTokenValue, setInTokenValue] = useState<string | number>("");
+  const [outTokenValue, setOutTokenValue] = useState<string | number>("");
+  const [isReversed, setIsReversed] = useState(false);
+  const { accountId, selector, near } = useWalletSelector();
 
-  const bg = useColorModeValue("white", "#15172c")
+  const bg = useColorModeValue("white", "#15172c");
 
-  const inToken = whitelist.find((t) => t.token_id === pool?.in_token)
-  const outToken = whitelist.find((t) => t.token_id === pool?.out_token)
+  const inToken = whitelist.find((t) => t.token_id === pool?.in_token);
+  const outToken = whitelist.find((t) => t.token_id === pool?.out_token);
 
-  const _inToken = isReversed ? outToken : inToken
-  const _outToken = !isReversed ? outToken : inToken
-  const inTokenBalanceRaw = useTokenBalance(_inToken?.token_id)
+  const _inToken = isReversed ? outToken : inToken;
+  const _outToken = !isReversed ? outToken : inToken;
+  const inTokenBalanceRaw = useTokenBalance(_inToken?.token_id);
   const inTokenBalance = DecimalUtil.fromString(
     inTokenBalanceRaw,
     _inToken?.decimals
-  ).toString()
-  const outTokenBalanceRaw = useTokenBalance(_outToken?.token_id)
+  ).toString();
+  const outTokenBalanceRaw = useTokenBalance(_outToken?.token_id);
   const outTokenBalance = DecimalUtil.fromString(
     outTokenBalanceRaw,
     _inToken?.decimals
-  ).toString()
+  ).toString();
 
   if (!pool) {
-    return null
+    return null;
   }
 
   const isValid =
@@ -133,46 +133,46 @@ export default function ConvertToken({
         isReversed ? pool?.in_token_balance : pool?.out_token_balance,
         _outToken?.decimals
       ).toString()
-    )
+    );
 
   const onTokenValueChange = (value: string, _isReversed: boolean) => {
     if (value.trim() !== "") {
       if (_isReversed) {
-        setOutTokenValue(value)
+        setOutTokenValue(value);
         setInTokenValue(
           new Decimal(value)
             .mul(!isReversed ? pool.in_token_rate : pool.out_token_rate)
             .div(isReversed ? pool.in_token_rate : pool.out_token_rate)
             .toFixed(inToken?.decimals)
             .toString()
-        )
+        );
       } else {
-        setInTokenValue(value)
+        setInTokenValue(value);
         setOutTokenValue(
           new Decimal(value)
             .mul(isReversed ? pool.in_token_rate : pool.out_token_rate)
             .div(!isReversed ? pool.in_token_rate : pool.out_token_rate)
             .toFixed(inToken?.decimals)
             .toString()
-        )
+        );
       }
     } else {
-      setOutTokenValue("")
-      setInTokenValue("")
+      setOutTokenValue("");
+      setInTokenValue("");
     }
-  }
+  };
 
   const onConvert = async () => {
     try {
       if (!accountId) {
-        throw new Error("No account")
+        throw new Error("No account");
       }
-      const wallet = await selector.wallet()
-      const txs: Transaction[] = []
+      const wallet = await selector.wallet();
+      const txs: Transaction[] = [];
 
       const provider = new providers.JsonRpcProvider({
         url: selector.options.network.nodeUrl,
-      })
+      });
 
       const res = await provider.query<CodeResult>({
         request_type: "call_function",
@@ -183,9 +183,9 @@ export default function ConvertToken({
             account_id: accountId!,
           })
         ),
-        finality: "optimistic",
-      })
-      const storageFee = JSON.parse(Buffer.from(res.result).toString())
+        finality: "final",
+      });
+      const storageFee = JSON.parse(Buffer.from(res.result).toString());
 
       if (String(storageFee) !== "0") {
         txs.push({
@@ -204,16 +204,16 @@ export default function ConvertToken({
               },
             },
           ],
-        })
+        });
       }
 
-      const receiveTokenId = !isReversed ? pool.out_token : pool.in_token
-      const account = await near?.account("dontcare")
+      const receiveTokenId = !isReversed ? pool.out_token : pool.in_token;
+      const account = await near?.account("dontcare");
       const storageBalance = await account?.viewFunction(
         receiveTokenId,
         "storage_balance_of",
         { account_id: accountId }
-      )
+      );
 
       if (!storageBalance || storageBalance?.total === "0") {
         txs.push({
@@ -233,22 +233,22 @@ export default function ConvertToken({
               },
             },
           ],
-        })
+        });
       }
 
-      const tokenContractId = isReversed ? pool.out_token : pool.in_token
-      const amount = inTokenValue
-      const token = whitelist.find((t) => t.token_id === tokenContractId)
+      const tokenContractId = isReversed ? pool.out_token : pool.in_token;
+      const amount = inTokenValue;
+      const token = whitelist.find((t) => t.token_id === tokenContractId);
       const _amount = DecimalUtil.toU64(
         new Decimal(amount),
         token?.decimals
-      ).toString()
+      ).toString();
 
       const convertAction = {
         input_token_amount: _amount,
         input_token_id: tokenContractId,
         pool_id: pool.id,
-      }
+      };
 
       txs.push({
         signerId: accountId,
@@ -270,26 +270,26 @@ export default function ConvertToken({
             },
           },
         ],
-      })
+      });
 
       await wallet.signAndSendTransactions({
         transactions: txs,
-      })
-      onClose()
+      });
+      onClose();
       // Toast.success("Converted")
     } catch (error) {
-      Toast.error(error)
+      Toast.error(error);
     }
-  }
+  };
 
   return (
     <Drawer
       placement="right"
       isOpen
       onClose={() => {
-        onClose()
-        setInTokenValue("")
-        setOutTokenValue("")
+        onClose();
+        setInTokenValue("");
+        setOutTokenValue("");
       }}
       size="md"
     >
@@ -321,9 +321,9 @@ export default function ConvertToken({
               transform="scale(1.4)"
               disabled={!pool.reversible}
               onClick={() => {
-                setIsReversed(!isReversed)
-                setInTokenValue("")
-                setOutTokenValue("")
+                setIsReversed(!isReversed);
+                setInTokenValue("");
+                setOutTokenValue("");
               }}
             >
               <Icon
@@ -355,5 +355,5 @@ export default function ConvertToken({
         </Flex>
       </DrawerContent>
     </Drawer>
-  )
+  );
 }
