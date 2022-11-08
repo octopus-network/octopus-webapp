@@ -1,6 +1,6 @@
-import { CloudVendor, NodeState, OCTNetwork } from "types"
+import { CloudVendor, NodeState, OCTNetwork } from "types";
 
-export const EMAIL_REGEX = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,15})+$/
+export const EMAIL_REGEX = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,15})+$/;
 
 export const ANCHOR_METHODS = {
   viewMethods: [
@@ -27,7 +27,7 @@ export const ANCHOR_METHODS = {
     "withdraw_delegator_rewards",
     "decrease_delegation",
   ],
-}
+};
 
 export const TOKEN_METHODS = {
   viewMethods: [
@@ -37,7 +37,7 @@ export const TOKEN_METHODS = {
     "ft_metadata",
   ],
   changeMethods: [],
-}
+};
 
 export const NODE_STATE_RECORD: Record<NodeState, any> = {
   [NodeState.INIT]: { label: "Init", color: "blue", state: 0 },
@@ -52,10 +52,10 @@ export const NODE_STATE_RECORD: Record<NodeState, any> = {
   },
   [NodeState.DESTROYED]: { label: "Destroyed", color: "gray", state: 22 },
   [NodeState.UPGRADING]: { label: "Upgrading", color: "green", state: 30 },
-}
+};
 
 export const OAUTH_SCOPE =
-  "https://www.googleapis.com/auth/cloud-platform.read-only https://www.googleapis.com/auth/compute"
+  "https://www.googleapis.com/auth/cloud-platform.read-only https://www.googleapis.com/auth/compute";
 
 const INSTANCES: Record<
   string,
@@ -169,35 +169,42 @@ const INSTANCES: Record<
       unit: "m",
     },
   },
-}
+};
 
 export const CLOUD_NODE_INSTANCES: Record<string, any> = {
   [OCTNetwork.ATOCHA]: {
     [CloudVendor.AWS]: INSTANCES["t3"],
     [CloudVendor.DO]: INSTANCES["s-2vcpu-2gb-intel"],
+    [CloudVendor.GCP]: INSTANCES["t3"],
   },
   [OCTNetwork.DEIP]: {
     [CloudVendor.AWS]: INSTANCES["t3"],
     [CloudVendor.DO]: INSTANCES["s-2vcpu-2gb-intel"],
+    [CloudVendor.GCP]: INSTANCES["t3"],
   },
   [OCTNetwork.DEBIO_NETWORK]: {
     [CloudVendor.AWS]: INSTANCES["t3"],
     [CloudVendor.DO]: INSTANCES["s-2vcpu-2gb-intel"],
+    [CloudVendor.GCP]: INSTANCES["t3"],
   },
   [OCTNetwork.MYRIAD]: {
     [CloudVendor.AWS]: INSTANCES["t3"],
     [CloudVendor.DO]: INSTANCES["s-2vcpu-2gb-intel"],
+    [CloudVendor.GCP]: INSTANCES["t3"],
   },
   [OCTNetwork.FUSOTAO]: {
     [CloudVendor.AWS]: INSTANCES["t5"],
     [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb-intel"],
+    [CloudVendor.GCP]: INSTANCES["t5"],
   },
   [OCTNetwork.DISCOVOL]: {
     [CloudVendor.AWS]: INSTANCES["t3"],
     [CloudVendor.DO]: INSTANCES["s-2vcpu-2gb-intel"],
+    [CloudVendor.GCP]: INSTANCES["t3"],
   },
   [OCTNetwork.BARNANCLE_0918]: {
     [CloudVendor.AWS]: INSTANCES["t3"],
     [CloudVendor.DO]: INSTANCES["s-2vcpu-2gb-intel"],
+    [CloudVendor.GCP]: INSTANCES["t3"],
   },
-}
+};

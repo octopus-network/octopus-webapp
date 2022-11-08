@@ -22,6 +22,7 @@ declare global {
   interface Window {
     selector: WalletSelector;
     modal: WalletSelectorModal;
+    gapi: any;
   }
 }
 
