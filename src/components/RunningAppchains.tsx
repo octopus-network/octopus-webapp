@@ -225,8 +225,8 @@ export const RunningAppchains: React.FC<RunningAppchainsProps> = ({
       const key = localStorage.getItem("OCTOPUS_DEPLOYER_ACCESS_KEY");
       data.forEach((item) => {
         obj[item.appchain_id] = {
-          vendor,
-          key,
+          vendor: vendor || "",
+          key: key || "",
         };
       });
       setVendorKeys(obj);

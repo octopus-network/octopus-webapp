@@ -109,7 +109,7 @@ export default function TokenInpput({
   const onUpdateTokenAsset = useCallback((t: TokenAsset) => {
     setTokenAsset(t);
     onChangeTokenAsset(t, false);
-    localStorage.setItem(`bridge-token-${chain}`, t.contractId);
+    localStorage.setItem(`bridge-token-${chain}`, String(t.assetId));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
@@ -117,7 +117,9 @@ export default function TokenInpput({
       const prevTokenId = localStorage.getItem(`bridge-token-${chain}`);
 
       if (prevTokenId) {
-        const token = filteredTokens.find((t) => t.contractId === prevTokenId);
+        const token = filteredTokens.find(
+          (t) => t.assetId === Number(prevTokenId)
+        );
         if (token) {
           return onUpdateTokenAsset(token);
         }

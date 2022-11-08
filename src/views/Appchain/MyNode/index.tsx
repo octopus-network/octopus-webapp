@@ -92,7 +92,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
   const currentVendor =
     vendorKeys && appchainId && vendorKeys[appchainId]
       ? vendorKeys[appchainId].vendor
-      : null;
+      : "";
   const currentKey =
     vendorKeys && appchainId && vendorKeys[appchainId]
       ? vendorKeys[appchainId].key
@@ -177,7 +177,10 @@ export const MyNode: React.FC<MyNodeProps> = ({
 
   const onClearCache = () => {
     window.localStorage.removeItem(`manually-deployed-${appchainId}`);
-    setVendorKeys({ ...(vendorKeys || {}), [appchainId!]: null });
+    setVendorKeys({
+      ...(vendorKeys || {}),
+      [appchainId!]: { vendor: "", key: "" },
+    });
     window.location.reload();
   };
 
