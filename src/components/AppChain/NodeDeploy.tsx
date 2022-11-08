@@ -48,8 +48,8 @@ export default function NodeDeploy({
   let currentVendor;
   let currentAccessKey = "";
   if (vendorKeys && appchainId && vendorKeys[appchainId]) {
-    currentVendor = vendorKeys[appchainId].vendor;
-    currentAccessKey = vendorKeys[appchainId].key;
+    currentVendor = vendorKeys[appchainId].vendor || "";
+    currentAccessKey = vendorKeys[appchainId].key || "";
   }
   const [step, setStep] = useState<DeployStep>(DeployStep.NEED_ACCESS_KEY);
   const [cloudVendor, setCloudVendor] = useState<CloudVendor>(
@@ -93,7 +93,7 @@ export default function NodeDeploy({
     setStep(DeployStep.CONFIRMED_ACCESS_KEY);
     setVendorKeys({
       ...(vendorKeys || {}),
-      [appchainId]: { vendor: cloudVendor, accessKey },
+      [appchainId]: { vendor: cloudVendor, key: accessKey },
     });
 
     try {
