@@ -71,11 +71,11 @@ export default function Initial({
   const { authClient, oauthUser } = useGCP();
 
   useEffect(() => {
-    if (oauthUser) {
+    if (oauthUser && cloudVendor === CloudVendor.GCP) {
       setInputAccessKey(oauthUser.Bc.access_token);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [oauthUser]);
+  }, [oauthUser, cloudVendor]);
 
   return (
     <>

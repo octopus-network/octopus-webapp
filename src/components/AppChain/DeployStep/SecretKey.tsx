@@ -7,6 +7,7 @@ import {
   useColorModeValue,
 } from "@chakra-ui/react";
 import useGCP from "hooks/useGCP";
+import { useEffect } from "react";
 import useSWR from "swr";
 import { CloudVendor } from "types";
 import RecommendInstance from "./RecommendInstance";
@@ -27,6 +28,13 @@ export default function SecretKey({
   const inputBg = useColorModeValue("#f5f7fa", "whiteAlpha.100");
   const { data: deployConfig } = useSWR("deploy-config");
   const { projects } = useGCP();
+
+  useEffect(() => {
+    if (!secretKey && cloudVendor === CloudVendor.GCP && projects?.length) {
+      setSecretKey(projects[0]?.projectId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [secretKey, cloudVendor, projects]);
 
   return (
     <Flex pt={2} pb={4} justifyContent="center" flexDirection="column" gap={4}>

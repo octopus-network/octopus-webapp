@@ -8,7 +8,6 @@ export default function useGCP() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [authClient, setAuthClient] = useState<any>();
   const [projects, setProjects] = useState<any[]>();
-  const [projectId, setProjectId] = useState<string>();
 
   useEffect(() => {
     window.gapi.load("client", () => {
@@ -37,10 +36,7 @@ export default function useGCP() {
 
     const checkStatus = () => {
       const user = authClient.currentUser.get();
-
       const authorized = user.hasGrantedScopes(OAUTH_SCOPE);
-
-      console.log("user", user);
 
       setIsAuthorized(authorized);
       if (authorized) {
@@ -66,7 +62,6 @@ export default function useGCP() {
   }, [authClient]);
 
   return {
-    projectId,
     projects,
     isAuthorized,
     oauthUser,

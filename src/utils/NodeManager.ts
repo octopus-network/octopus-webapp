@@ -75,6 +75,7 @@ export default class NodeManager {
     appchainId,
     network,
     accountId,
+    gcpId,
   }: {
     cloudVendor: CloudVendor;
     region?: string;
@@ -85,6 +86,7 @@ export default class NodeManager {
     appchainId: string;
     network: NetworkType;
     accountId: string;
+    gcpId?: string;
   }) {
     const authKey = [
       "appchain",
@@ -95,8 +97,15 @@ export default class NodeManager {
       cloudVendor,
       "account",
       accountId,
-      accessKey,
+      gcpId || accessKey,
     ].join("-");
+
+    let _secretKey = secret_key;
+    let project = undefined;
+    if (cloudVendor === CloudVendor.GCP) {
+      _secretKey = accessKey;
+      project = secret_key;
+    }
     const task = await axios.post(
       `${API_HOST[network]}`,
       {
@@ -105,7 +114,8 @@ export default class NodeManager {
         instance_type,
         volume_size,
         chain_spec: `octopus-${network}`,
-        secret_key,
+        secret_key: _secretKey,
+        project,
       },
       {
         headers: {
