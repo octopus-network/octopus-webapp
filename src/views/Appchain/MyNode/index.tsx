@@ -238,7 +238,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
       hasBadge: skeyBadge,
     },
     {
-      isDisabled: !nodeMetrics || isDestroying,
+      isDisabled: (node ? node.state === "10" : true) || isDestroying,
       onClick: onDestroyNode,
       label: "Destroy",
       icon: DeleteIcon,
