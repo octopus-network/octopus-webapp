@@ -47,6 +47,7 @@ import { SetSessionKeyModal } from "./SetSessionKeyModal";
 import { Toast } from "components/common/toast";
 import { AiOutlineClear } from "react-icons/ai";
 import useLocalStorage from "hooks/useLocalStorage";
+import useGCP from "hooks/useGCP";
 
 type MyNodeProps = {
   appchainId: string | undefined;
@@ -192,6 +193,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
     validatorSessionKey = validatorSessionKeys[validator.validator_id];
   }
 
+  const { oauthUser } = useGCP();
   const onDestroyNode = () => {
     let secretKey;
 
@@ -206,7 +208,11 @@ export const MyNode: React.FC<MyNodeProps> = ({
       if (!secretKey) {
         return;
       }
-    } else {
+    } else if (currentVendor === CloudVendor.GCP) {
+      if (!oauthUser) {
+        return Toast.error("Please login with your Google account first");
+      }
+      secretKey = oauthUser.Bc.access_token;
     }
 
     setIsDestroying.on();
