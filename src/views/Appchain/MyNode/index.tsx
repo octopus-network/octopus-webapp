@@ -233,6 +233,11 @@ export const MyNode: React.FC<MyNodeProps> = ({
       });
   };
 
+  let isGCPSigned = false;
+  if (node && node.task.cloud_vendor === CloudVendor.GCP) {
+    isGCPSigned = !oauthUser;
+  }
+
   const menuItems = [
     {
       isDisabled: isManuallyDeployed
@@ -244,7 +249,8 @@ export const MyNode: React.FC<MyNodeProps> = ({
       hasBadge: skeyBadge,
     },
     {
-      isDisabled: (node ? node.state === "10" : true) || isDestroying,
+      isDisabled:
+        (node ? node.state === "10" : true) || isDestroying || isGCPSigned,
       onClick: onDestroyNode,
       label: "Destroy",
       icon: DeleteIcon,
