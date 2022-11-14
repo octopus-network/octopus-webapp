@@ -453,7 +453,8 @@ export const BridgePanel: React.FC = () => {
         collectible?.class,
         collectible?.id,
         targetAccountInHex,
-        crosschainFee.nonfungible
+        crosschainFee.nonfungible,
+        1 // TODO: metadata_length
       );
     } else {
       tx = appchainApi?.tx.octopusAppchain.lockNft(
@@ -465,7 +466,12 @@ export const BridgePanel: React.FC = () => {
 
     await tx.signAndSend(from, ({ events = [] }: any) => {
       events.forEach(({ event: { data, method, section } }: any) => {
-        if (section === "octopusAppchain" && method === "NftLocked") {
+        console.log("events", method, section);
+
+        if (
+          (section === "octopusAppchain" && method === "NftLocked") ||
+          (section === "octopusBridge" && method === "NonfungibleLocked")
+        ) {
           setIsTransferring.off();
           setCollectible(undefined);
           setTimeout(() => {

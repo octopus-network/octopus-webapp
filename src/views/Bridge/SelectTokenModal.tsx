@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react";
 
 import {
   Box,
@@ -13,30 +13,31 @@ import {
   Image,
   VStack,
   SimpleGrid,
-} from "@chakra-ui/react"
+} from "@chakra-ui/react";
 
-import { TokenAsset, CollectibleContract, Collectible } from "types"
+import { TokenAsset, CollectibleContract, Collectible } from "types";
 
-import { Empty, BaseModal } from "components"
-import failedToLoad from "assets/failed_to_load.svg"
-import { ApiPromise } from "@polkadot/api"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { Empty, BaseModal } from "components";
+import failedToLoad from "assets/failed_to_load.svg";
+import { ApiPromise } from "@polkadot/api";
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
+import { hexToString } from "@polkadot/util";
 
 type SelectTokenModalProps = {
-  isOpen: boolean
-  onClose: VoidFunction
-  selectedToken?: string
-  tokens: TokenAsset[] | undefined
-  isReverse?: boolean
-  appchainApi: ApiPromise | undefined
-  fromAccount: string | undefined
-  appchainId: string | undefined
-  collectibleClasses?: number[]
+  isOpen: boolean;
+  onClose: VoidFunction;
+  selectedToken?: string;
+  tokens: TokenAsset[] | undefined;
+  isReverse?: boolean;
+  appchainApi: ApiPromise | undefined;
+  fromAccount: string | undefined;
+  appchainId: string | undefined;
+  collectibleClasses?: number[];
   onSelectToken: (
     account: TokenAsset | Collectible,
     isCollectible?: boolean
-  ) => void
-}
+  ) => void;
+};
 
 export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
   tokens,
@@ -50,11 +51,11 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
   isReverse = false,
   collectibleClasses = [],
 }) => {
-  const bg = useColorModeValue("#f6f7fa", "#15172c")
-  const [tabIdx, setTabIdx] = useState(0)
-  const [collectibles, setCollectibles] = useState<Collectible[]>()
+  const bg = useColorModeValue("#f6f7fa", "#15172c");
+  const [tabIdx, setTabIdx] = useState(0);
+  const [collectibles, setCollectibles] = useState<Collectible[]>();
 
-  const { registry, nearAccount } = useWalletSelector()
+  const { registry, nearAccount } = useWalletSelector();
 
   useEffect(() => {
     if (
@@ -63,8 +64,8 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
       !registry ||
       !fromAccount
     ) {
-      setCollectibles([])
-      return
+      setCollectibles([]);
+      return;
     }
 
     if (isReverse) {
@@ -77,7 +78,7 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
               viewMethods: ["nft_tokens_for_owner"],
               changeMethods: [],
             }
-          )
+          );
 
           return contract
             .nft_tokens_for_owner({
@@ -85,17 +86,15 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
               from_index: "0",
             })
             .then((res) => {
-              console.log("#res", res)
-
               return res
                 ? res.map((item: any) => ({ ...item, class: classId }))
-                : null
+                : null;
             })
-            .catch(console.error)
+            .catch(console.error);
         } catch (error) {
-          return null
+          return null;
         }
-      })
+      });
 
       Promise.all(promises).then((res) => {
         const tmpArr: any[] = res?.length
@@ -111,22 +110,24 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                   mediaUri: item.metadata?.media,
                 },
               }))
-          : []
+          : [];
 
-        setCollectibles(tmpArr)
-      })
+        setCollectibles(tmpArr);
+      });
     } else {
       if (!appchainApi?.isReady) {
-        return
+        return;
       }
 
       const promises = collectibleClasses.map((classId) => {
         return appchainApi.query.octopusUniques.class(classId).then((info) => {
-          const { instances } = (info?.toJSON() as any) || {}
+          const { instances, items } = (info?.toJSON() as any) || {};
 
-          const tmpPromises = []
+          const count = instances || items || 0;
 
-          for (let i = 0; i <= instances; i++) {
+          const tmpPromises = [];
+
+          for (let i = 0; i <= count; i++) {
             tmpPromises.push(
               appchainApi.query.octopusUniques
                 .asset(classId, i)
@@ -137,20 +138,25 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                         await appchainApi.query.octopusUniques.instanceMetadataOf(
                           classId,
                           i
-                        )
-                      const unique = res.toJSON() as any
+                        );
+                      const unique = res.toJSON() as any;
 
                       if (!(unique && unique.owner === fromAccount)) {
-                        return null
+                        return null;
                       }
 
-                      const metadataHuman = _res.toHuman() as any
+                      const metadataHuman = _res.toHuman() as any;
+
                       if (!metadataHuman) {
-                        return null
+                        return null;
                       }
-                      const metadata = JSON.parse((_res.toHuman() as any).data)
+
+                      const metadata = JSON.parse(
+                        hexToString(metadataHuman.data)
+                      );
+
                       if (!metadata || !unique) {
-                        return null
+                        return null;
                       }
 
                       return {
@@ -158,39 +164,39 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                         id: i,
                         class: classId,
                         metadata: metadata,
-                      }
+                      };
                     }
                   } catch (error) {
-                    console.error(error)
+                    console.error(error);
                   }
 
-                  return null
+                  return null;
                 })
-            )
+            );
           }
 
           return Promise.all(tmpPromises as any).then((res) => {
-            return res?.filter((item) => !!item)
-          })
-        })
-      })
+            return res?.filter((item) => !!item);
+          });
+        });
+      });
 
       Promise.all(promises).then((res) => {
         const tmpArr: any[] = res?.length
           ? res.flat(Infinity).map((item: any) => {
-              console.log("item", item)
+              console.log("item", item);
 
               return {
                 id: item.id,
                 class: item.class,
                 owner: item.owner,
                 metadata: item.metadata,
-              }
+              };
             })
-          : []
+          : [];
 
-        setCollectibles(tmpArr)
-      })
+        setCollectibles(tmpArr);
+      });
     }
   }, [
     appchainId,
@@ -199,7 +205,7 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
     fromAccount,
     appchainApi,
     isOpen,
-  ])
+  ]);
 
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} maxW="xl">
@@ -288,5 +294,5 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
         </Box>
       )}
     </BaseModal>
-  )
-}
+  );
+};
