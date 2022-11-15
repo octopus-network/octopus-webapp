@@ -1,7 +1,7 @@
-import React, { useRef, useState, useEffect, useMemo } from "react"
-import Decimal from "decimal.js"
-import useSWR from "swr"
-import axios from "axios"
+import React, { useRef, useState, useEffect, useMemo } from "react";
+import Decimal from "decimal.js";
+import useSWR from "swr";
+import axios from "axios";
 
 import {
   SimpleGrid,
@@ -17,34 +17,34 @@ import {
   Flex,
   Stack,
   useBoolean,
-} from "@chakra-ui/react"
+} from "@chakra-ui/react";
 
-import { useSpring, animated } from "react-spring"
+import { useSpring, animated } from "react-spring";
 
-import { DecimalUtil, ZERO_DECIMAL } from "utils"
-import { AmountInput } from "components"
-import { IoMdThumbsUp, IoMdThumbsDown } from "react-icons/io"
-import { AppchainInfo, UserVotes } from "types"
-import { API_HOST } from "config"
+import { DecimalUtil, ZERO_DECIMAL } from "utils";
+import { AmountInput } from "components";
+import { IoMdThumbsUp, IoMdThumbsDown } from "react-icons/io";
+import { AppchainInfo, UserVotes } from "types";
+import { API_HOST } from "config";
 
-import { OCT_TOKEN_DECIMALS, COMPLEX_CALL_GAS } from "primitives"
+import { OCT_TOKEN_DECIMALS, COMPLEX_CALL_GAS } from "primitives";
 
-import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
-import { Toast } from "components/common/toast"
-import { onTxSent } from "utils/helper"
+import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
+import { Toast } from "components/common/toast";
+import { onTxSent } from "utils/helper";
 
 type VoteActionsProps = {
-  data: AppchainInfo
-}
+  data: AppchainInfo;
+};
 
 type VotePopoverProps = {
-  isOpen: boolean
-  appchainId: string
-  voteType: "upvote" | "downvote"
-  voted: Decimal
-  onClose: () => void
-}
+  isOpen: boolean;
+  appchainId: string;
+  voteType: "upvote" | "downvote";
+  voted: Decimal;
+  onClose: () => void;
+};
 
 const VotePopover: React.FC<VotePopoverProps> = ({
   isOpen,
@@ -54,83 +54,83 @@ const VotePopover: React.FC<VotePopoverProps> = ({
   onClose,
 }) => {
   const { accountId, octToken, networkConfig, registry, selector } =
-    useWalletSelector()
+    useWalletSelector();
 
-  const bg = useColorModeValue("white", "#25263c")
-  const ref = useRef<any>()
+  const bg = useColorModeValue("white", "#25263c");
+  const ref = useRef<any>();
 
-  const inputRef = useRef<any>()
-  const inputRef2 = useRef<any>()
+  const inputRef = useRef<any>();
+  const inputRef2 = useRef<any>();
 
-  const [isDepositing, setIsDepositing] = useBoolean(false)
-  const [isWithdrawing, setIsWithdrawing] = useBoolean(false)
+  const [isDepositing, setIsDepositing] = useBoolean(false);
+  const [isWithdrawing, setIsWithdrawing] = useBoolean(false);
 
-  const [withdrawPanel, setWithdrawPanel] = useBoolean(false)
+  const [withdrawPanel, setWithdrawPanel] = useBoolean(false);
 
-  const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null)
+  const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null);
 
   const [popoverProps, popoverApi] = useSpring(() => ({
     opacity: 0,
     transform: "translateY(10px)",
-  }))
+  }));
 
   const [depositPanelProps, depositPanelApi] = useSpring(() => ({
     opacity: 1,
     transform: "translateX(0px)",
-  }))
+  }));
 
   const [withdrawPanelProps, withdrawPanelApi] = useSpring(() => ({
     opacity: 0,
     transform: "translateX(100%)",
-  }))
+  }));
 
-  const [amount, setAmount] = useState("")
+  const [amount, setAmount] = useState("");
 
   useOutsideClick({
     ref: ref,
     handler: onClose,
-  })
+  });
 
   useEffect(() => {
     if (isOpen) {
-      popoverApi.start({ opacity: 1, transform: "translateY(0px)" })
+      popoverApi.start({ opacity: 1, transform: "translateY(0px)" });
       setTimeout(() => {
-        inputRef?.current.focus()
-      }, 300)
+        inputRef?.current.focus();
+      }, 300);
     } else {
-      popoverApi.start({ opacity: 0, transform: "translateY(10px)" })
+      popoverApi.start({ opacity: 0, transform: "translateY(10px)" });
     }
 
     if (!isOpen) {
-      setAmount("")
-      setWithdrawPanel.off()
+      setAmount("");
+      setWithdrawPanel.off();
     }
-  }, [isOpen])
+  }, [isOpen]);
 
   useEffect(() => {
     if (withdrawPanel) {
-      depositPanelApi.start({ opacity: 0, transform: "translateX(-100%)" })
-      withdrawPanelApi.start({ opacity: 1, transform: "translateX(0px)" })
+      depositPanelApi.start({ opacity: 0, transform: "translateX(-100%)" });
+      withdrawPanelApi.start({ opacity: 1, transform: "translateX(0px)" });
       setTimeout(() => {
-        inputRef2?.current.focus()
-      }, 300)
+        inputRef2?.current.focus();
+      }, 300);
     } else {
-      depositPanelApi.start({ opacity: 1, transform: "translateX(0px)" })
-      withdrawPanelApi.start({ opacity: 0, transform: "translateX(100%)" })
+      depositPanelApi.start({ opacity: 1, transform: "translateX(0px)" });
+      withdrawPanelApi.start({ opacity: 0, transform: "translateX(100%)" });
       setTimeout(() => {
-        inputRef?.current.focus()
-      }, 300)
+        inputRef?.current.focus();
+      }, 300);
     }
-  }, [withdrawPanel])
+  }, [withdrawPanel]);
 
   const onAmountChange = (value: string) => {
-    setAmount(value)
-  }
+    setAmount(value);
+  };
 
   const onDepositVotes = async () => {
     try {
-      setIsDepositing.on()
-      const wallet = await selector.wallet()
+      setIsDepositing.on();
+      const wallet = await selector.wallet();
       await wallet.signAndSendTransaction({
         signerId: accountId,
         receiverId: octToken?.contractId,
@@ -158,20 +158,20 @@ const VotePopover: React.FC<VotePopoverProps> = ({
             },
           },
         ],
-      })
-      Toast.success("Deposited")
-      setIsDepositing.off()
-      onTxSent()
+      });
+      Toast.success("Deposited");
+      setIsDepositing.off();
+      onTxSent();
     } catch (error) {
-      Toast.error(error)
-      setIsDepositing.off()
+      Toast.error(error);
+      setIsDepositing.off();
     }
-  }
+  };
 
   const onWithdrawVotes = async () => {
     try {
-      setIsWithdrawing.on()
-      const wallet = await selector.wallet()
+      setIsWithdrawing.on();
+      const wallet = await selector.wallet();
       await wallet.signAndSendTransaction({
         signerId: accountId,
         receiverId: registry?.contractId,
@@ -195,20 +195,20 @@ const VotePopover: React.FC<VotePopoverProps> = ({
             },
           },
         ],
-      })
+      });
       axios
         .post(`${API_HOST}/update-appchains`)
-        .then(() => window.location.reload())
-      setIsWithdrawing.off()
+        .then(() => window.location.reload());
+      setIsWithdrawing.off();
     } catch (error) {
-      setIsWithdrawing.off()
-      Toast.error(error)
+      setIsWithdrawing.off();
+      Toast.error(error);
     }
-  }
+  };
 
   const setMaxAmount = () => {
-    setAmount(voted.toString())
-  }
+    setAmount(voted.toString());
+  };
 
   return (
     <animated.div style={popoverProps}>
@@ -345,40 +345,40 @@ const VotePopover: React.FC<VotePopoverProps> = ({
         </animated.div>
       </Box>
     </animated.div>
-  )
-}
+  );
+};
 
 export const VoteActions: React.FC<VoteActionsProps> = ({ data }) => {
-  const { accountId, registry, selector } = useWalletSelector()
-  const bg = useColorModeValue("#f6f7fa", "#15172c")
+  const { accountId, registry, selector } = useWalletSelector();
+  const bg = useColorModeValue("#f6f7fa", "#15172c");
 
-  const [upvotePopoverOpen, setUpvotePopoverOpen] = useBoolean(false)
-  const [downvotePopoverOpen, setDownvotePopoverOpen] = useBoolean(false)
+  const [upvotePopoverOpen, setUpvotePopoverOpen] = useBoolean(false);
+  const [downvotePopoverOpen, setDownvotePopoverOpen] = useBoolean(false);
 
   const { data: userVotes } = useSWR<UserVotes>(
     accountId ? `votes/${accountId}/${data.appchain_id}` : null
-  )
+  );
 
   const userDownvotes = useMemo(
     () => DecimalUtil.fromString(userVotes?.downvotes, OCT_TOKEN_DECIMALS),
     [userVotes]
-  )
+  );
   const userUpvotes = useMemo(
     () => DecimalUtil.fromString(userVotes?.upvotes, OCT_TOKEN_DECIMALS),
     [userVotes]
-  )
+  );
 
-  const [isWithdrawingUpvotes, setIsWithdrawingUpvotes] = useBoolean()
-  const [isWithdrawingDownvotes, setIsWithdrawingDownvotes] = useBoolean()
+  const [isWithdrawingUpvotes, setIsWithdrawingUpvotes] = useBoolean();
+  const [isWithdrawingDownvotes, setIsWithdrawingDownvotes] = useBoolean();
 
   const onWithdrawVotes = async (voteType: "upvote" | "downvote") => {
     try {
-      ;(voteType === "upvote"
+      (voteType === "upvote"
         ? setIsWithdrawingUpvotes
         : setIsWithdrawingDownvotes
-      ).on()
+      ).on();
 
-      const wallet = await selector.wallet()
+      const wallet = await selector.wallet();
       await wallet.signAndSendTransaction({
         signerId: accountId,
         receiverId: registry?.contractId,
@@ -402,14 +402,14 @@ export const VoteActions: React.FC<VoteActionsProps> = ({ data }) => {
             },
           },
         ],
-      })
+      });
       axios
         .post(`${API_HOST}/update-appchains`)
-        .then(() => window.location.reload())
+        .then(() => window.location.reload());
     } catch (error) {
-      Toast.error(error)
+      Toast.error(error);
     }
-  }
+  };
 
   return (
     <>
@@ -431,7 +431,7 @@ export const VoteActions: React.FC<VoteActionsProps> = ({ data }) => {
                 <Heading fontSize="md">
                   {DecimalUtil.beautify(userUpvotes)}
                 </Heading>
-                {data?.appchain_state !== "InQueue" ? (
+                {data?.appchain_state !== "Voting" ? (
                   <Button
                     size="xs"
                     colorScheme="octo-blue"
@@ -463,7 +463,7 @@ export const VoteActions: React.FC<VoteActionsProps> = ({ data }) => {
                 <Heading fontSize="md">
                   {DecimalUtil.beautify(userDownvotes)}
                 </Heading>
-                {data?.appchain_state !== "InQueue" ? (
+                {data?.appchain_state !== "Voting" ? (
                   <Button
                     size="xs"
                     colorScheme="octo-blue"
@@ -489,7 +489,7 @@ export const VoteActions: React.FC<VoteActionsProps> = ({ data }) => {
           </Stack>
         </Flex>
       ) : null}
-      {data?.appchain_state === "InQueue" ? (
+      {data?.appchain_state === "Voting" ? (
         <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
           <Box position="relative">
             <Button
@@ -552,5 +552,5 @@ export const VoteActions: React.FC<VoteActionsProps> = ({ data }) => {
         </SimpleGrid>
       ) : null}
     </>
-  )
-}
+  );
+};
