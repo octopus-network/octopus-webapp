@@ -1,6 +1,6 @@
-import { CloudVendor, NodeState, OCTNetwork } from "types"
+import { CloudVendor, NodeState, OCTNetwork } from "types";
 
-export const EMAIL_REGEX = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,15})+$/
+export const EMAIL_REGEX = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,15})+$/;
 
 export const ANCHOR_METHODS = {
   viewMethods: [
@@ -27,7 +27,7 @@ export const ANCHOR_METHODS = {
     "withdraw_delegator_rewards",
     "decrease_delegation",
   ],
-}
+};
 
 export const TOKEN_METHODS = {
   viewMethods: [
@@ -37,7 +37,7 @@ export const TOKEN_METHODS = {
     "ft_metadata",
   ],
   changeMethods: [],
-}
+};
 
 export const NODE_STATE_RECORD: Record<NodeState, any> = {
   [NodeState.INIT]: { label: "Init", color: "blue", state: 0 },
@@ -52,10 +52,10 @@ export const NODE_STATE_RECORD: Record<NodeState, any> = {
   },
   [NodeState.DESTROYED]: { label: "Destroyed", color: "gray", state: 22 },
   [NodeState.UPGRADING]: { label: "Upgrading", color: "green", state: 30 },
-}
+};
 
 export const OAUTH_SCOPE =
-  "https://www.googleapis.com/auth/cloud-platform.read-only https://www.googleapis.com/auth/compute"
+  "https://www.googleapis.com/auth/cloud-platform.read-only https://www.googleapis.com/auth/compute";
 
 const INSTANCES: Record<
   string,
@@ -115,12 +115,12 @@ const INSTANCES: Record<
       unit: "m",
     },
   },
-  "s-2vcpu-2gb-intel": {
-    instance_type: "s-2vcpu-2gb-intel",
+  "s-4vcpu-8gb": {
+    instance_type: "s-4vcpu-8gb",
     volume_size: "120",
     type: {
-      desc: "s-2vcpu-2gb-intel",
-      price: "21",
+      desc: "s-4vcpu-8gb",
+      price: "48",
       unit: "m",
     },
     storage: {
@@ -134,20 +134,20 @@ const INSTANCES: Record<
       unit: "G",
     },
     hd: {
-      cpu: "2 vCPUs",
-      ram: "2.0 GiB",
+      cpu: "4 vCPUs",
+      ram: "8.0 GiB",
     },
     total: {
-      price: "33",
+      price: "60",
       unit: "m",
     },
   },
-  "s-4vcpu-8gb-intel": {
-    instance_type: "s-4vcpu-8gb-intel",
+  "s-4vcpu-8gb-fusotao": {
+    instance_type: "s-4vcpu-8gb",
     volume_size: "250",
     type: {
-      desc: "s-4vcpu-8gb-intel",
-      price: "56",
+      desc: "s-4vcpu-8gb",
+      price: "48",
       unit: "m",
     },
     storage: {
@@ -161,43 +161,43 @@ const INSTANCES: Record<
       unit: "G",
     },
     hd: {
-      cpu: "2 vCPUs",
-      ram: "4.0 GiB",
+      cpu: "4 vCPUs",
+      ram: "8.0 GiB",
     },
     total: {
-      price: "81",
+      price: "73",
       unit: "m",
     },
   },
-}
+};
 
 export const CLOUD_NODE_INSTANCES: Record<string, any> = {
   [OCTNetwork.ATOCHA]: {
     [CloudVendor.AWS]: INSTANCES["t3"],
-    [CloudVendor.DO]: INSTANCES["s-2vcpu-2gb-intel"],
+    [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb"],
   },
   [OCTNetwork.DEIP]: {
     [CloudVendor.AWS]: INSTANCES["t3"],
-    [CloudVendor.DO]: INSTANCES["s-2vcpu-2gb-intel"],
+    [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb"],
   },
   [OCTNetwork.DEBIO_NETWORK]: {
     [CloudVendor.AWS]: INSTANCES["t3"],
-    [CloudVendor.DO]: INSTANCES["s-2vcpu-2gb-intel"],
+    [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb"],
   },
   [OCTNetwork.MYRIAD]: {
     [CloudVendor.AWS]: INSTANCES["t3"],
-    [CloudVendor.DO]: INSTANCES["s-2vcpu-2gb-intel"],
+    [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb"],
   },
   [OCTNetwork.FUSOTAO]: {
     [CloudVendor.AWS]: INSTANCES["t5"],
-    [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb-intel"],
+    [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb-fusotao"],
   },
   [OCTNetwork.DISCOVOL]: {
     [CloudVendor.AWS]: INSTANCES["t3"],
-    [CloudVendor.DO]: INSTANCES["s-2vcpu-2gb-intel"],
+    [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb"],
   },
   [OCTNetwork.BARNANCLE_0918]: {
     [CloudVendor.AWS]: INSTANCES["t3"],
-    [CloudVendor.DO]: INSTANCES["s-2vcpu-2gb-intel"],
+    [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb"],
   },
-}
+};
