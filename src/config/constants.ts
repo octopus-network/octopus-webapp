@@ -165,7 +165,7 @@ const INSTANCES: Record<
       ram: "8.0 GiB",
     },
     total: {
-      price: "92",
+      price: "93",
       unit: "m",
     },
   },
