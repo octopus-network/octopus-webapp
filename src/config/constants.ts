@@ -192,7 +192,7 @@ const INSTANCES: Record<
       ram: "2.0 GiB",
     },
     total: {
-      price: "45",
+      price: "73",
       unit: "m",
     },
   },
@@ -222,7 +222,7 @@ export const CLOUD_NODE_INSTANCES: Record<string, any> = {
   [OCTNetwork.FUSOTAO]: {
     [CloudVendor.AWS]: INSTANCES["t5"],
     [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb-fusotao"],
-    [CloudVendor.GCP]: INSTANCES["t5"],
+    [CloudVendor.GCP]: INSTANCES["e2"],
   },
   [OCTNetwork.DISCOVOL]: {
     [CloudVendor.AWS]: INSTANCES["t3"],
