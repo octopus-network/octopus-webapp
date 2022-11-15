@@ -115,12 +115,12 @@ const INSTANCES: Record<
       unit: "m",
     },
   },
-  "s-2vcpu-2gb-intel": {
-    instance_type: "s-2vcpu-2gb-intel",
+  "s-4vcpu-8gb": {
+    instance_type: "s-4vcpu-8gb",
     volume_size: "120",
     type: {
-      desc: "s-2vcpu-2gb-intel",
-      price: "21",
+      desc: "s-4vcpu-8gb",
+      price: "48",
       unit: "m",
     },
     storage: {
@@ -134,20 +134,20 @@ const INSTANCES: Record<
       unit: "G",
     },
     hd: {
-      cpu: "2 vCPUs",
-      ram: "2.0 GiB",
+      cpu: "4 vCPUs",
+      ram: "8.0 GiB",
     },
     total: {
-      price: "33",
+      price: "60",
       unit: "m",
     },
   },
-  "s-4vcpu-8gb-intel": {
-    instance_type: "s-4vcpu-8gb-intel",
+  "s-4vcpu-8gb-fusotao": {
+    instance_type: "s-4vcpu-8gb",
     volume_size: "250",
     type: {
-      desc: "s-4vcpu-8gb-intel",
-      price: "56",
+      desc: "s-4vcpu-8gb",
+      price: "48",
       unit: "m",
     },
     storage: {
@@ -161,11 +161,11 @@ const INSTANCES: Record<
       unit: "G",
     },
     hd: {
-      cpu: "2 vCPUs",
-      ram: "4.0 GiB",
+      cpu: "4 vCPUs",
+      ram: "8.0 GiB",
     },
     total: {
-      price: "81",
+      price: "73",
       unit: "m",
     },
   },
@@ -201,37 +201,37 @@ const INSTANCES: Record<
 export const CLOUD_NODE_INSTANCES: Record<string, any> = {
   [OCTNetwork.ATOCHA]: {
     [CloudVendor.AWS]: INSTANCES["t3"],
-    [CloudVendor.DO]: INSTANCES["s-2vcpu-2gb-intel"],
+    [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb"],
     [CloudVendor.GCP]: INSTANCES["e2"],
   },
   [OCTNetwork.DEIP]: {
     [CloudVendor.AWS]: INSTANCES["t3"],
-    [CloudVendor.DO]: INSTANCES["s-2vcpu-2gb-intel"],
+    [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb"],
     [CloudVendor.GCP]: INSTANCES["e2"],
   },
   [OCTNetwork.DEBIO_NETWORK]: {
     [CloudVendor.AWS]: INSTANCES["t3"],
-    [CloudVendor.DO]: INSTANCES["s-2vcpu-2gb-intel"],
+    [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb"],
     [CloudVendor.GCP]: INSTANCES["e2"],
   },
   [OCTNetwork.MYRIAD]: {
     [CloudVendor.AWS]: INSTANCES["t3"],
-    [CloudVendor.DO]: INSTANCES["s-2vcpu-2gb-intel"],
+    [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb"],
     [CloudVendor.GCP]: INSTANCES["e2"],
   },
   [OCTNetwork.FUSOTAO]: {
     [CloudVendor.AWS]: INSTANCES["t5"],
-    [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb-intel"],
+    [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb-fusotao"],
     [CloudVendor.GCP]: INSTANCES["t5"],
   },
   [OCTNetwork.DISCOVOL]: {
     [CloudVendor.AWS]: INSTANCES["t3"],
-    [CloudVendor.DO]: INSTANCES["s-2vcpu-2gb-intel"],
+    [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb"],
     [CloudVendor.GCP]: INSTANCES["e2"],
   },
   [OCTNetwork.BARNANCLE_0918]: {
     [CloudVendor.AWS]: INSTANCES["t3"],
-    [CloudVendor.DO]: INSTANCES["s-2vcpu-2gb-intel"],
+    [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb"],
     [CloudVendor.GCP]: INSTANCES["e2"],
   },
 };
