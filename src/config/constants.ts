@@ -131,7 +131,7 @@ const INSTANCES: Record<
     dataTransfer: {
       desc: "100GB",
       price: "0.0",
-      unit: "G",
+      unit: "m",
     },
     hd: {
       cpu: "4 vCPUs",
@@ -156,16 +156,16 @@ const INSTANCES: Record<
       unit: "m",
     },
     dataTransfer: {
-      desc: "5TB",
-      price: "0.0",
-      unit: "G",
+      desc: "7TB",
+      price: "20",
+      unit: "m",
     },
     hd: {
       cpu: "4 vCPUs",
       ram: "8.0 GiB",
     },
     total: {
-      price: "73",
+      price: "92",
       unit: "m",
     },
   },
