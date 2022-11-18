@@ -40,6 +40,8 @@ export default function useGCP() {
 
       setIsAuthorized(authorized);
       if (authorized) {
+        console.log("authorized", user);
+
         setOAuthUser(user);
 
         const request = window.gapi.client.request({
