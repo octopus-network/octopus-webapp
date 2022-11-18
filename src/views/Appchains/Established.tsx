@@ -49,7 +49,7 @@ const AppchainItem: React.FC<AppchainItemProps> = ({ data }) => {
         alignItems="center"
         gap={6}
       >
-        <GridItem colSpan={3}>
+        <GridItem colSpan={5}>
           <HStack>
             <Avatar
               src={data.appchain_metadata?.fungible_token_metadata?.icon as any}
@@ -66,13 +66,8 @@ const AppchainItem: React.FC<AppchainItemProps> = ({ data }) => {
             </Heading>
           </HStack>
         </GridItem>
-        <GridItem colSpan={3} display={{ base: "none", md: "table-cell" }}>
+        <GridItem colSpan={4} display={{ base: "none", md: "table-cell" }}>
           <Heading fontSize="md">{data.appchain_owner}</Heading>
-        </GridItem>
-        <GridItem colSpan={3}>
-          <Flex>
-            <StateBadge state={data.appchain_state} />
-          </Flex>
         </GridItem>
         <GridItem colSpan={1} textAlign="right">
           <Icon
@@ -90,40 +85,14 @@ const AppchainItem: React.FC<AppchainItemProps> = ({ data }) => {
 export const Established: React.FC = () => {
   const bg = useColorModeValue("white", "#25263c");
 
-  const [showType, setShowType] = useState("pre-audit");
-  const { data: appchains } = useSWR(`appchains/${showType}`);
+  const { data: appchains } = useSWR(`appchains/audited`);
 
   return (
     <>
       <Flex alignItems="center" justifyContent="space-between">
-        <Tooltip label="Pre-Voting Appchains, includes 'Registered' and 'Audited' Appchains.">
-          <HStack>
-            <Heading fontSize="xl">Pre-Voting</Heading>
-            <Icon as={QuestionOutlineIcon} boxSize={4} className="octo-gray" />
-          </HStack>
-        </Tooltip>
-        <HStack>
-          <Button
-            variant={showType === "registered" ? "octo-blue" : "octo-white"}
-            size="sm"
-            onClick={() => setShowType("registered")}
-          >
-            Registered
-          </Button>
-          <Button
-            variant={showType === "auditing" ? "octo-blue" : "octo-white"}
-            size="sm"
-            onClick={() => setShowType("auditing")}
-          >
-            Audited
-          </Button>
-          <Button
-            variant={showType === "pre-audit" ? "octo-blue" : "octo-white"}
-            size="sm"
-            onClick={() => setShowType("pre-audit")}
-          >
-            All
-          </Button>
+        <HStack pl={10}>
+          <Heading fontSize="xl">Audited</Heading>
+          <Icon as={QuestionOutlineIcon} boxSize={4} className="octo-gray" />
         </HStack>
       </Flex>
       <Box mt={8} bg={bg} p={6} borderRadius="lg">
@@ -138,14 +107,62 @@ export const Established: React.FC = () => {
                 className="octo-gray"
                 gap={6}
               >
-                <GridItem colSpan={3}>ID</GridItem>
+                <GridItem colSpan={5}>ID</GridItem>
                 <GridItem
-                  colSpan={3}
+                  colSpan={4}
                   display={{ base: "none", md: "table-cell" }}
                 >
                   Founder
                 </GridItem>
-                <GridItem colSpan={3}>Status</GridItem>
+                <GridItem colSpan={1} />
+              </Grid>
+            </Box>
+            <List>
+              {appchains.map((appchain: AppchainInfo, idx: number) => (
+                <AppchainItem data={appchain} key={`established-item-${idx}`} />
+              ))}
+            </List>
+          </>
+        ) : (
+          <Empty />
+        )}
+      </Box>
+    </>
+  );
+};
+
+export const Registered: React.FC = () => {
+  const bg = useColorModeValue("white", "#25263c");
+
+  const { data: appchains } = useSWR(`appchains/registered`);
+
+  return (
+    <>
+      <Flex alignItems="center" justifyContent="space-between">
+        <HStack pl={10}>
+          <Heading fontSize="xl">Registered</Heading>
+          <Icon as={QuestionOutlineIcon} boxSize={4} className="octo-gray" />
+        </HStack>
+      </Flex>
+      <Box mt={8} bg={bg} p={6} borderRadius="lg">
+        {appchains?.length ? (
+          <>
+            <Box p={4}>
+              <Grid
+                templateColumns={{
+                  base: "repeat(7, 1fr)",
+                  md: "repeat(10, 1fr)",
+                }}
+                className="octo-gray"
+                gap={6}
+              >
+                <GridItem colSpan={5}>ID</GridItem>
+                <GridItem
+                  colSpan={4}
+                  display={{ base: "none", md: "table-cell" }}
+                >
+                  Founder
+                </GridItem>
                 <GridItem colSpan={1} />
               </Grid>
             </Box>

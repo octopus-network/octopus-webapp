@@ -1,5 +1,5 @@
-import React, { useMemo } from "react"
-import useSWR from "swr"
+import React, { useMemo } from "react";
+import useSWR from "swr";
 
 import {
   Flex,
@@ -18,77 +18,77 @@ import {
   GridItem,
   Progress,
   Box,
-} from "@chakra-ui/react"
+} from "@chakra-ui/react";
 
-import { QuestionOutlineIcon, ChevronRightIcon } from "@chakra-ui/icons"
+import { QuestionOutlineIcon, ChevronRightIcon } from "@chakra-ui/icons";
 
-import { IoMdThumbsUp, IoMdThumbsDown } from "react-icons/io"
-import { AppchainInfo } from "types"
+import { IoMdThumbsUp, IoMdThumbsDown } from "react-icons/io";
+import { AppchainInfo } from "types";
 
-import Decimal from "decimal.js"
-import rank1Icon from "assets/icons/rank1.png"
-import rank2Icon from "assets/icons/rank2.png"
-import rank3Icon from "assets/icons/rank3.png"
+import Decimal from "decimal.js";
+import rank1Icon from "assets/icons/rank1.png";
+import rank2Icon from "assets/icons/rank2.png";
+import rank3Icon from "assets/icons/rank3.png";
 
-import { useNavigate } from "react-router-dom"
-import { DecimalUtil, ZERO_DECIMAL } from "utils"
-import { OCT_TOKEN_DECIMALS } from "primitives"
-import { Empty } from "components"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { useNavigate } from "react-router-dom";
+import { DecimalUtil, ZERO_DECIMAL } from "utils";
+import { OCT_TOKEN_DECIMALS } from "primitives";
+import { Empty } from "components";
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
 
 type VotingItemProps = {
-  rank: number
-  data: AppchainInfo
-  highestVotes: number
-}
+  rank: number;
+  data: AppchainInfo;
+  highestVotes: number;
+};
 
-const rankIcons = [rank1Icon, rank2Icon, rank3Icon]
+const rankIcons = [rank1Icon, rank2Icon, rank3Icon];
 
 const VotingItem: React.FC<VotingItemProps> = ({
   rank,
   data,
   highestVotes,
 }) => {
-  const hoverBg = useColorModeValue("gray.100", "whiteAlpha.100")
-  const rankBg = useColorModeValue("gray.300", "whiteAlpha.300")
+  const hoverBg = useColorModeValue("gray.100", "whiteAlpha.100");
+  const rankBg = useColorModeValue("gray.300", "whiteAlpha.300");
 
-  const red = useColorModeValue("#ff5959", "#ff5959")
-  const green = useColorModeValue("#12cd76", "#12cd76")
-  const { accountId } = useWalletSelector()
+  const red = useColorModeValue("#ff5959", "#ff5959");
+  const green = useColorModeValue("#12cd76", "#12cd76");
+  const { accountId } = useWalletSelector();
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const downvotes = useMemo(
     () => DecimalUtil.fromString(data.downvote_deposit, OCT_TOKEN_DECIMALS),
     [data]
-  )
+  );
   const upvotes = useMemo(
     () => DecimalUtil.fromString(data.upvote_deposit, OCT_TOKEN_DECIMALS),
     [data]
-  )
+  );
 
   const votingScore = useMemo(
     () => DecimalUtil.fromString(data.voting_score, OCT_TOKEN_DECIMALS),
     [data]
-  )
+  );
 
   const pendingScore = useMemo(
     () => upvotes.sub(downvotes),
     [downvotes, upvotes]
-  )
+  );
 
   const { data: userVotes } = useSWR(
     accountId ? `votes/${accountId}/${data.appchain_id}` : null
-  )
+  );
 
   const userDownvotes = useMemo(
     () => DecimalUtil.fromString(userVotes?.downvotes, OCT_TOKEN_DECIMALS),
     [userVotes]
-  )
+  );
   const userUpvotes = useMemo(
     () => DecimalUtil.fromString(userVotes?.upvotes, OCT_TOKEN_DECIMALS),
     [userVotes]
-  )
+  );
 
   return (
     <Box
@@ -228,47 +228,47 @@ const VotingItem: React.FC<VotingItemProps> = ({
         </GridItem>
       </Grid>
     </Box>
-  )
-}
+  );
+};
 
 export const Voting: React.FC = () => {
-  const bg = useColorModeValue("white", "#25263c")
+  const bg = useColorModeValue("white", "#25263c");
 
-  const { data: appchains } = useSWR("appchains/voting")
+  const { data: appchains } = useSWR("appchains/voting");
 
   const highestVotes = useMemo(() => {
     if (!appchains?.length) {
-      return 0
+      return 0;
     }
 
-    let highest = ZERO_DECIMAL
+    let highest = ZERO_DECIMAL;
 
     appchains.forEach((appchain: AppchainInfo) => {
       const upvoteDeposit = DecimalUtil.fromString(
         appchain.upvote_deposit,
         OCT_TOKEN_DECIMALS
-      )
+      );
       const downvoteDeposit = DecimalUtil.fromString(
         appchain.downvote_deposit,
         OCT_TOKEN_DECIMALS
-      )
+      );
       if (upvoteDeposit.gt(highest)) {
-        highest = upvoteDeposit
+        highest = upvoteDeposit;
       }
 
       if (downvoteDeposit.gt(highest)) {
-        highest = downvoteDeposit
+        highest = downvoteDeposit;
       }
-    })
+    });
 
-    return highest.toNumber()
-  }, [appchains])
+    return highest.toNumber();
+  }, [appchains]);
 
   return (
     <>
       <Flex alignItems="center" justifyContent="space-between">
         <Tooltip label="Voting Appchains">
-          <HStack>
+          <HStack pl={10}>
             <Heading fontSize="xl">Voting</Heading>
             <Icon as={QuestionOutlineIcon} boxSize={4} className="octo-gray" />
           </HStack>
@@ -329,5 +329,5 @@ export const Voting: React.FC = () => {
         )}
       </Box>
     </>
-  )
-}
+  );
+};

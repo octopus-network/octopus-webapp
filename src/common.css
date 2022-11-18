@@ -49,3 +49,7 @@
 .tx-hash-ellipsis {
   max-width: 180px;
 }
+
+.vertical-timeline-element {
+  margin: 1em 0;
+}
