@@ -32,7 +32,7 @@ export default function useGCP() {
           setAuthClient(client);
         });
     });
-  }, []);
+  }, [network]);
 
   useEffect(() => {
     if (!authClient) {
