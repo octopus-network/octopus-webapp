@@ -1,3 +1,4 @@
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
 import { useEffect, useState } from "react";
 
 const OAUTH_SCOPE =
@@ -9,13 +10,17 @@ export default function useGCP() {
   const [authClient, setAuthClient] = useState<any>();
   const [projects, setProjects] = useState<any[]>();
 
+  const { network } = useWalletSelector();
+
   useEffect(() => {
     window.gapi.load("client", () => {
       window.gapi.client
         .init({
           apiKey: "AIzaSyCXBs_7uR9X7wNIWgNuD5D7nvTniKsfjGU",
           clientId:
-            "398338012986-f9ge03gubuvksee6rsmtorrpgtrsppf2.apps.googleusercontent.com",
+            network === "mainnet"
+              ? "219952077564-nab34fgrudtespc62grk3er44t1iar1o.apps.googleusercontent.com"
+              : "398338012986-f9ge03gubuvksee6rsmtorrpgtrsppf2.apps.googleusercontent.com",
           scope: OAUTH_SCOPE,
           discoveryDocs: [
             "https://www.googleapis.com/discovery/v1/apis/compute/v1/rest",
