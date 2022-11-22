@@ -13,7 +13,6 @@ import {
 
 import { RunningAppchains } from "components";
 
-import { Statistics } from "./Statistics";
 import { Booting } from "./Booting";
 import { Voting } from "./Voting";
 import { Established, Registered } from "./Established";
@@ -30,7 +29,6 @@ import {
   VerticalTimelineElement,
 } from "react-vertical-timeline-component";
 import "react-vertical-timeline-component/style.min.css";
-import { IoMdCodeWorking } from "react-icons/io";
 import { ArrowUpIcon } from "@chakra-ui/icons";
 
 export const Appchains: React.FC = () => {

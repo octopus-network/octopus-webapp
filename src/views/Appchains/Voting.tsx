@@ -13,7 +13,6 @@ import {
   Grid,
   List,
   SimpleGrid,
-  VStack,
   GridItem,
   Box,
   Link,
@@ -21,12 +20,9 @@ import {
 } from "@chakra-ui/react";
 
 import { QuestionOutlineIcon, ChevronRightIcon } from "@chakra-ui/icons";
-import { IoMdThumbsDown } from "react-icons/io";
 import { AppchainInfo } from "types";
 import upvote from "assets/icons/up-vote.png";
 import downvote from "assets/icons/down-vote.png";
-
-import Decimal from "decimal.js";
 
 import { useNavigate } from "react-router-dom";
 import { DecimalUtil, ZERO_DECIMAL } from "utils";

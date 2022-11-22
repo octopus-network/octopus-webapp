@@ -11,7 +11,7 @@ import { CloudVendor, Validator } from "types";
 import { Select, chakraComponents } from "chakra-react-select";
 import { FaAws, FaDigitalOcean } from "react-icons/fa";
 import { SiGooglecloud } from "react-icons/si";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { FcGoogle } from "react-icons/fc";
 import useGCP from "hooks/useGCP";
 

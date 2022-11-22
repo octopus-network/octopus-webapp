@@ -1,10 +1,8 @@
-import React, { useState } from "react";
+import React from "react";
 import useSWR from "swr";
 
 import {
   Flex,
-  Tooltip,
-  Button,
   HStack,
   Heading,
   Icon,
@@ -18,7 +16,7 @@ import {
 
 import { QuestionOutlineIcon, ChevronRightIcon } from "@chakra-ui/icons";
 
-import { StateBadge, Empty } from "components";
+import { Empty } from "components";
 
 import { AppchainInfo } from "types";
 import { useNavigate } from "react-router-dom";
