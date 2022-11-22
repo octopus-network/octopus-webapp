@@ -8,7 +8,8 @@ import { setupMyNearWallet } from "@near-wallet-selector/my-near-wallet";
 import axios from "axios";
 import { API_HOST } from "config";
 import { Account, keyStores, Near, WalletConnection } from "near-api-js";
-// import { setupWalletConnect } from "@near-wallet-selector/wallet-connect";
+import { setupLedger } from "@near-wallet-selector/ledger";
+import { setupOptoWallet } from "@near-wallet-selector/opto-wallet";
 import {
   NetworkConfig,
   NetworkType,
@@ -75,38 +76,15 @@ export const WalletSelectorContextProvider = ({
       });
     }
     const _selector = await setupWalletSelector({
-      network:
-        config?.near.networkId === NetworkType.MAINNET
-          ? "mainnet"
-          : {
-              networkId: NetworkType.TESTNET,
-              nodeUrl: "https://public-rpc.blockpi.io/http/near-testnet",
-              helperUrl: "https://helper.testnet.near.org",
-              explorerUrl: "https://explorer.testnet.near.org",
-              indexerUrl: "https://testnet-api.kitwallet.app",
-            },
+      network: config?.near.networkId,
       debug: false,
       modules: [
         setupNearWallet({
           deprecated: false,
         }),
         setupMyNearWallet(),
-        // setupLedger({
-        //   iconUrl: "/assets/ledger-icon.png",
-        //   deprecated: false,
-        // }),
-        // setupSender({
-        //   iconUrl: "/assets/sender-icon.png",
-        // }),
-        // setupWalletConnect({
-        //   projectId: "1799b9adf32c8cef373a6a41699fe8bf",
-        //   metadata: {
-        //     name: "Octopus Network",
-        //     description: "",
-        //     url: "https://mainnet.oct.network",
-        //     icons: ["https://near-vesting.netlify.app/oct.png"],
-        //   },
-        // }),
+        setupLedger(),
+        setupOptoWallet(),
       ],
     });
     const near = new Near({
