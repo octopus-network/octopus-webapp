@@ -44,6 +44,7 @@ export type AppchainInfo = {
   validator_count: number;
   voting_score: string;
   evm_chain_id: string;
+  dao_proposal_url: string;
 };
 
 export type IndexRange = {
