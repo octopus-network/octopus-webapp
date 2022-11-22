@@ -16,7 +16,7 @@ import { RunningAppchains } from "components";
 import { Statistics } from "./Statistics";
 import { Booting } from "./Booting";
 import { Voting } from "./Voting";
-import { Established } from "./Established";
+import { Established, Registered } from "./Established";
 
 import { Overview } from "./Overview";
 import { useParams, useNavigate } from "react-router-dom";
@@ -25,6 +25,13 @@ import JOIN_ACCELERATOR from "../../assets/join-accelerator.png";
 import JOIN_OCTOPUS from "../../assets/join-octopus.png";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
 import { FrozenAppchains } from "components/FrozenAppchains";
+import {
+  VerticalTimeline,
+  VerticalTimelineElement,
+} from "react-vertical-timeline-component";
+import "react-vertical-timeline-component/style.min.css";
+import { IoMdCodeWorking } from "react-icons/io";
+import { ArrowUpIcon } from "@chakra-ui/icons";
 
 export const Appchains: React.FC = () => {
   const { appchainId } = useParams();
@@ -75,20 +82,53 @@ export const Appchains: React.FC = () => {
         <Box mt={10}>
           <RunningAppchains showMore={false} />
         </Box>
-        <Box mt={10}>
+        {/* <Box mt={10}>
           <Statistics />
-        </Box>
+        </Box> */}
         <Box mt={10}>
           <Booting />
         </Box>
+        <VerticalTimeline layout="1-column-left">
+          <VerticalTimelineElement
+            // className="vertical-timeline-element--work"
+            contentStyle={{
+              color: "#fff",
+              background: "transparent",
+              boxShadow: "none",
+            }}
+            contentArrowStyle={{ borderRight: "7px solid  transparent" }}
+            iconStyle={{ background: "rgb(33, 150, 243)", color: "#fff" }}
+            icon={<ArrowUpIcon />}
+          ></VerticalTimelineElement>
+
+          <Voting />
+          <VerticalTimelineElement
+            // className="vertical-timeline-element--work"
+            contentStyle={{
+              color: "#fff",
+              background: "transparent",
+              boxShadow: "none",
+            }}
+            contentArrowStyle={{ borderRight: "7px solid  transparent" }}
+            iconStyle={{ background: "rgb(33, 150, 243)", color: "#fff" }}
+            icon={<ArrowUpIcon />}
+          ></VerticalTimelineElement>
+          <Established />
+          <VerticalTimelineElement
+            // className="vertical-timeline-element--work"
+            contentStyle={{
+              color: "#fff",
+              background: "transparent",
+              boxShadow: "none",
+            }}
+            contentArrowStyle={{ borderRight: "7px solid  transparent" }}
+            iconStyle={{ background: "rgb(33, 150, 243)", color: "#fff" }}
+            icon={<ArrowUpIcon />}
+          ></VerticalTimelineElement>
+          <Registered />
+        </VerticalTimeline>
         <Box mt={10}>
           <FrozenAppchains showMore={false} />
-        </Box>
-        <Box mt={10}>
-          <Voting />
-        </Box>
-        <Box mt={10}>
-          <Established />
         </Box>
       </Container>
       <Drawer

@@ -136,10 +136,15 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
                   receiver_id: anchor?.contractId || "",
                   amount: amountStr,
                   msg: !validatorId
-                    ? '"IncreaseStake"'
+                    ? JSON.stringify({
+                        IncreaseStake: {
+                          validator_id: null,
+                        },
+                      })
                     : JSON.stringify({
                         IncreaseDelegation: {
                           validator_id: validatorId || "",
+                          delegator_id: null,
                         },
                       }),
                 },

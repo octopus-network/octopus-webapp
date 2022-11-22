@@ -1,26 +1,26 @@
-import React, { useState, useEffect, useMemo } from "react"
-import useSWR from "swr"
+import React, { useState, useEffect, useMemo } from "react";
+import useSWR from "swr";
 
-import { Text, Button, Box, Flex, useBoolean, Input } from "@chakra-ui/react"
+import { Text, Button, Box, Flex, useBoolean, Input } from "@chakra-ui/react";
 
-import { BaseModal } from "components"
+import { BaseModal } from "components";
 
-import { OCT_TOKEN_DECIMALS, COMPLEX_CALL_GAS } from "primitives"
+import { OCT_TOKEN_DECIMALS, COMPLEX_CALL_GAS } from "primitives";
 
-import { AnchorContract } from "types"
-import { ZERO_DECIMAL, DecimalUtil } from "utils"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
-import { Toast } from "components/common/toast"
-import { onTxSent } from "utils/helper"
-import Decimal from "decimal.js"
-import { getDelegateLimit } from "utils/delegate"
+import { AnchorContract } from "types";
+import { ZERO_DECIMAL, DecimalUtil } from "utils";
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
+import { Toast } from "components/common/toast";
+import { onTxSent } from "utils/helper";
+import Decimal from "decimal.js";
+import { getDelegateLimit } from "utils/delegate";
 
 type DelegateModalProps = {
-  isOpen: boolean
-  anchor?: AnchorContract
-  onClose: () => void
-  validatorId: string
-}
+  isOpen: boolean;
+  anchor?: AnchorContract;
+  onClose: () => void;
+  validatorId: string;
+};
 
 export const DelegateModal: React.FC<DelegateModalProps> = ({
   isOpen,
@@ -28,26 +28,26 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
   validatorId,
   anchor,
 }) => {
-  const [min, setMin] = useState(0)
-  const [max, setMax] = useState(0)
-  const [amount, setAmount] = useState("")
+  const [min, setMin] = useState(0);
+  const [max, setMax] = useState(0);
+  const [amount, setAmount] = useState("");
 
-  const { accountId, octToken, selector } = useWalletSelector()
+  const { accountId, octToken, selector } = useWalletSelector();
 
-  const [isDepositing, setIsDepositing] = useBoolean(false)
-  const [minimumDeposit, setMinimumDeposit] = useState(ZERO_DECIMAL)
-  const inputRef = React.useRef<any>()
+  const [isDepositing, setIsDepositing] = useBoolean(false);
+  const [minimumDeposit, setMinimumDeposit] = useState(ZERO_DECIMAL);
+  const inputRef = React.useRef<any>();
 
-  const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null)
+  const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null);
 
   const amountInDecimal = useMemo(
     () => DecimalUtil.fromString(amount),
     [amount]
-  )
+  );
   const octBalance = useMemo(
     () => DecimalUtil.fromString(balances?.["OCT"]),
     [balances]
-  )
+  );
 
   useEffect(() => {
     if (anchor && validatorId) {
@@ -58,33 +58,33 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
         deposited: ZERO_DECIMAL,
         type: "increase",
       }).then(({ min, max }) => {
-        setMin(min)
-        setMax(max)
-      })
+        setMin(min);
+        setMax(max);
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [anchor, validatorId, octBalance])
+  }, [anchor, validatorId, octBalance]);
 
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => {
-        inputRef?.current?.focus()
-      }, 300)
+        inputRef?.current?.focus();
+      }, 300);
       anchor?.get_protocol_settings().then((settings) => {
         setMinimumDeposit(
           DecimalUtil.fromString(
             settings.minimum_delegator_deposit,
             OCT_TOKEN_DECIMALS
           )
-        )
-      })
+        );
+      });
     }
-  }, [isOpen])
+  }, [isOpen]);
 
   const onDeposit = async () => {
     try {
-      setIsDepositing.on()
-      const wallet = await selector.wallet()
+      setIsDepositing.on();
+      const wallet = await selector.wallet();
       await wallet.signAndSendTransaction({
         signerId: accountId,
         receiverId: octToken?.contractId,
@@ -102,6 +102,7 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
                 msg: JSON.stringify({
                   RegisterDelegator: {
                     validator_id: validatorId,
+                    delegator_id: null,
                   },
                 }),
               },
@@ -110,17 +111,17 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
             },
           },
         ],
-      })
-      Toast.success("Deposited")
-      setIsDepositing.off()
-      onTxSent()
+      });
+      Toast.success("Deposited");
+      setIsDepositing.off();
+      onTxSent();
     } catch (error) {
-      setIsDepositing.off()
-      Toast.error(error)
+      setIsDepositing.off();
+      Toast.error(error);
     }
-  }
+  };
 
-  const isDisabled = max < min
+  const isDisabled = max < min;
 
   return (
     <BaseModal
@@ -136,7 +137,7 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
             variant="gray"
             onClick={() => {
               if (octBalance.gte(min) && octBalance.lte(max)) {
-                setAmount(octBalance.toString())
+                setAmount(octBalance.toString());
               }
             }}
           >
@@ -147,7 +148,7 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
           mt={2}
           value={amount}
           onChange={(e) => {
-            setAmount(e.target.value)
+            setAmount(e.target.value);
           }}
           type="number"
           min={min}
@@ -160,7 +161,7 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
             cursor="pointer"
             onClick={() => {
               if (octBalance.gte(min)) {
-                setAmount(String(min))
+                setAmount(String(min));
               }
             }}
           >
@@ -172,7 +173,7 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
             cursor="pointer"
             onClick={() => {
               if (octBalance.gte(max)) {
-                setAmount(String(max))
+                setAmount(String(max));
               }
             }}
           >
@@ -209,5 +210,5 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
         </Button>
       </Box>
     </BaseModal>
-  )
-}
+  );
+};
