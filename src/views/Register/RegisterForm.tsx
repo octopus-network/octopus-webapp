@@ -109,7 +109,7 @@ export const RegisterForm: React.FC = () => {
     }
   };
 
-  const onTokenInfoChange = (key: string, val: string) => {
+  const onTokenInfoChange = (key: string, val: string | number) => {
     setTokenInfo(
       Object.assign({}, tokenInfo, {
         [key]: val,
@@ -166,7 +166,8 @@ export const RegisterForm: React.FC = () => {
                     github_address: githubAddress,
                     contact_email: email,
                     template_type: templateType,
-                    evm_chain_id: evmChainId || null,
+                    evm_chain_id:
+                      templateType === "BarnacleEvm" ? evmChainId : null,
                     premined_wrapped_appchain_token_beneficiary:
                       preminedBeneficiary,
                     premined_wrapped_appchain_token: DecimalUtil.toU64(
@@ -271,7 +272,7 @@ export const RegisterForm: React.FC = () => {
                     placeholder="Decimals"
                     value={tokenInfo.decimals}
                     onChange={(e) =>
-                      onTokenInfoChange("decimals", e.target.value)
+                      onTokenInfoChange("decimals", Number(e.target.value))
                     }
                   />
                   <Input
