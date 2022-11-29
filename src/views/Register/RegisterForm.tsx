@@ -166,7 +166,7 @@ export const RegisterForm: React.FC = () => {
                     github_address: githubAddress,
                     contact_email: email,
                     template_type: templateType,
-                    evm_chain_id: evmChainId,
+                    evm_chain_id: evmChainId || null,
                     premined_wrapped_appchain_token_beneficiary:
                       preminedBeneficiary,
                     premined_wrapped_appchain_token: DecimalUtil.toU64(
