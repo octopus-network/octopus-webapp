@@ -40,9 +40,9 @@ type VotingItemProps = {
 const VotingItem: React.FC<VotingItemProps> = ({ data, highestVotes }) => {
   const hoverBg = useColorModeValue("gray.100", "whiteAlpha.100");
 
-  const { network, selector } = useWalletSelector();
+  const { network, selector, accountId } = useWalletSelector();
   const navigate = useNavigate();
-  const [votes, setVotes] = useState({ up: 0, down: 0 });
+  const [votes, setVotes] = useState({ up: 0, down: 0, mine: undefined });
 
   useEffect(() => {
     if (data.dao_proposal_url && selector) {
@@ -72,6 +72,7 @@ const VotingItem: React.FC<VotingItemProps> = ({ data, highestVotes }) => {
             const result = JSON.parse(Buffer.from(res.result).toString());
             let up = 0;
             let down = 0;
+            console.log("result", result);
 
             Object.values(result.votes).forEach((vote: any) => {
               if (vote === "Approve") {
@@ -80,14 +81,18 @@ const VotingItem: React.FC<VotingItemProps> = ({ data, highestVotes }) => {
                 down += 1;
               }
             });
-            setVotes({ up, down });
+            setVotes({
+              up,
+              down,
+              mine: accountId ? result.votes[accountId] : undefined,
+            });
           })
           .catch((error) => {
             console.log("error", error);
           });
       }
     }
-  }, [data.dao_proposal_url, network, selector]);
+  }, [data.dao_proposal_url, network, selector, accountId]);
 
   return (
     <Box
@@ -127,13 +132,25 @@ const VotingItem: React.FC<VotingItemProps> = ({ data, highestVotes }) => {
         <GridItem colSpan={4} display={{ base: "none", md: "table-cell" }}>
           <SimpleGrid columns={2} gap={6}>
             <HStack spacing={2}>
-              <Image src={upvote} width={8} />
+              <Image
+                src={upvote}
+                width={8}
+                borderRadius="50%"
+                border={votes.mine === "Approve" ? "2px solid #7ca4f7" : ""}
+                title={votes.mine === "Approve" ? "Voted" : undefined}
+              />
               <Text fontWeight="bold" fontSize="large">
                 {votes.up}
               </Text>
             </HStack>
             <HStack spacing={2}>
-              <Image src={downvote} width={8} />
+              <Image
+                src={downvote}
+                width={8}
+                borderRadius="50%"
+                border={votes.mine === "Reject" ? "2px solid #2468f2" : ""}
+                title={votes.mine === "Reject" ? "Voted" : undefined}
+              />
               <Text fontWeight="bold" fontSize="large">
                 {votes.down}
               </Text>
@@ -202,16 +219,6 @@ export const Voting: React.FC = () => {
             <Icon as={QuestionOutlineIcon} boxSize={4} className="octo-gray" />
           </HStack>
         </Tooltip>
-        <HStack>
-          <HStack>
-            <Box boxSize={2} borderRadius="full" bg="#457ef4" />
-            <Text variant="gray">Upvotes</Text>
-          </HStack>
-          <HStack>
-            <Box boxSize={2} borderRadius="full" bg="#48cfcf" />
-            <Text variant="gray">Downvotes</Text>
-          </HStack>
-        </HStack>
       </Flex>
       <Box mt={8} bg={bg} p={6} borderRadius="lg">
         {appchains?.length ? (

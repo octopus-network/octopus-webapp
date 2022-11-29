@@ -1,5 +1,5 @@
-import React, { useMemo } from "react"
-import useSWR from "swr"
+import React from "react";
+import useSWR from "swr";
 
 import {
   Flex,
@@ -8,46 +8,29 @@ import {
   Tooltip,
   useColorModeValue,
   Icon,
-  Text,
   Avatar,
   Grid,
   List,
   GridItem,
   Box,
-} from "@chakra-ui/react"
+} from "@chakra-ui/react";
 
-import { QuestionOutlineIcon, ChevronRightIcon } from "@chakra-ui/icons"
+import { QuestionOutlineIcon, ChevronRightIcon } from "@chakra-ui/icons";
 
-import { DecimalUtil, ZERO_DECIMAL } from "utils"
-import { AppchainInfo } from "types"
-import { useNavigate } from "react-router-dom"
-import { OCT_TOKEN_DECIMALS } from "primitives"
+import { DecimalUtil } from "utils";
+import { AppchainInfo } from "types";
+import { useNavigate } from "react-router-dom";
+import { OCT_TOKEN_DECIMALS } from "primitives";
 
-import { Empty } from "components"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
+import { Empty } from "components";
 
 type BootingItemProps = {
-  data: AppchainInfo
-}
+  data: AppchainInfo;
+};
 
 const BootingItem: React.FC<BootingItemProps> = ({ data }) => {
-  const hoverBg = useColorModeValue("gray.100", "whiteAlpha.100")
-  const navigate = useNavigate()
-
-  const { accountId } = useWalletSelector()
-
-  const { data: userVotes } = useSWR(
-    accountId ? `votes/${accountId}/${data.appchain_id}` : null
-  )
-
-  const userDownvotes = useMemo(
-    () => DecimalUtil.fromString(userVotes?.downvotes, OCT_TOKEN_DECIMALS),
-    [userVotes]
-  )
-  const userUpvotes = useMemo(
-    () => DecimalUtil.fromString(userVotes?.upvotes, OCT_TOKEN_DECIMALS),
-    [userVotes]
-  )
+  const hoverBg = useColorModeValue("gray.100", "whiteAlpha.100");
+  const navigate = useNavigate();
 
   return (
     <Box
@@ -97,38 +80,23 @@ const BootingItem: React.FC<BootingItemProps> = ({ data }) => {
         </GridItem>
         <GridItem colSpan={1}>
           <HStack position="relative" justifyContent="flex-end">
-            {userUpvotes.gt(ZERO_DECIMAL) || userDownvotes.gt(ZERO_DECIMAL) ? (
-              <Text fontSize="sm" variant="gray">
-                Voted
-              </Text>
-            ) : null}
             <Icon
               as={ChevronRightIcon}
               boxSize={6}
               className="octo-gray"
               opacity=".8"
             />
-            {userDownvotes.gt(ZERO_DECIMAL) || userUpvotes.gt(ZERO_DECIMAL) ? (
-              <Box
-                position="absolute"
-                top="-3px"
-                right="18px"
-                boxSize={2}
-                bg="red"
-                borderRadius="full"
-              />
-            ) : null}
           </HStack>
         </GridItem>
       </Grid>
     </Box>
-  )
-}
+  );
+};
 
 export const Booting: React.FC = () => {
-  const bg = useColorModeValue("white", "#25263c")
+  const bg = useColorModeValue("white", "#25263c");
 
-  const { data: appchains } = useSWR("appchains/booting")
+  const { data: appchains } = useSWR("appchains/booting");
 
   return (
     <>
@@ -174,5 +142,5 @@ export const Booting: React.FC = () => {
         )}
       </Box>
     </>
-  )
-}
+  );
+};
