@@ -40,6 +40,9 @@ export default function useGCP() {
       callback: (tokenResponse: any) => {
         console.log("tokenResponse", tokenResponse);
       },
+      error_callback: (error: any) => {
+        console.log("error", error);
+      },
     });
     console.log("authorized", authorized);
 
