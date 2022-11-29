@@ -64,8 +64,6 @@ export default function NodeDeploy({
   const [registerValidatorModalOpen, setRegisterValidatorModalOpen] =
     useBoolean(false);
 
-  console.log("accessKey", accessKey);
-
   useEffect(() => {
     if (appchainId) {
       const ismd = localStorage.getItem(`manually-deployed-${appchainId}`);
