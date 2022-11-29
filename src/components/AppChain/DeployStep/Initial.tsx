@@ -14,6 +14,7 @@ import { SiGooglecloud } from "react-icons/si";
 import { useEffect } from "react";
 import { FcGoogle } from "react-icons/fc";
 import useGCP from "hooks/useGCP";
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
 
 const VendorIcons = {
   [CloudVendor.AWS]: FaAws,
@@ -67,15 +68,16 @@ export default function Initial({
 }) {
   const inputBg = useColorModeValue("#f5f7fa", "whiteAlpha.100");
   const VendorIcon = VendorIcons[cloudVendor];
+  const { network } = useWalletSelector();
 
-  const { authClient, oauthUser } = useGCP();
+  const { onLogin } = useGCP();
 
-  useEffect(() => {
-    if (oauthUser && cloudVendor === CloudVendor.GCP) {
-      setInputAccessKey(oauthUser.Bc.access_token);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [oauthUser, cloudVendor]);
+  // useEffect(() => {
+  //   if (oauthUser && cloudVendor === CloudVendor.GCP) {
+  //     setInputAccessKey(oauthUser.Bc.access_token);
+  //   }
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [oauthUser, cloudVendor]);
 
   return (
     <>
@@ -121,20 +123,16 @@ export default function Initial({
                 onChange={(e) => setInputAccessKey(e.target.value)}
               />
             )}
-            {cloudVendor === CloudVendor.GCP &&
-              (oauthUser ? (
-                <Text pl={3}>{oauthUser.lv?.Xv || oauthUser.kv?.Wv}</Text>
-              ) : (
-                <Button
-                  size="sm"
-                  onClick={() => authClient?.signIn()}
-                  disabled={!authClient}
-                  variant="ghost"
-                  colorScheme="octo-blue"
-                >
-                  <Icon as={FcGoogle} mr={1} /> Sign in with Google
-                </Button>
-              ))}
+            {cloudVendor === CloudVendor.GCP && (
+              <Button
+                size="sm"
+                onClick={onLogin}
+                variant="ghost"
+                colorScheme="octo-blue"
+              >
+                <Icon as={FcGoogle} mr={1} /> Sign in with Google
+              </Button>
+            )}
           </Flex>
         </Flex>
         {!!validator && (
