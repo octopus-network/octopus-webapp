@@ -42,7 +42,12 @@ const VotingItem: React.FC<VotingItemProps> = ({ data, highestVotes }) => {
 
   const { network, selector, accountId } = useWalletSelector();
   const navigate = useNavigate();
-  const [votes, setVotes] = useState({ up: 0, down: 0, mine: undefined });
+  const [votes, setVotes] = useState({
+    up: 0,
+    down: 0,
+    mine: undefined,
+    id: "-",
+  });
 
   useEffect(() => {
     if (data.dao_proposal_url && selector) {
@@ -72,8 +77,6 @@ const VotingItem: React.FC<VotingItemProps> = ({ data, highestVotes }) => {
             const result = JSON.parse(Buffer.from(res.result).toString());
             let up = 0;
             let down = 0;
-            console.log("result", result);
-
             Object.values(result.votes).forEach((vote: any) => {
               if (vote === "Approve") {
                 up += 1;
@@ -85,6 +88,7 @@ const VotingItem: React.FC<VotingItemProps> = ({ data, highestVotes }) => {
               up,
               down,
               mine: accountId ? result.votes[accountId] : undefined,
+              id: result.id,
             });
           })
           .catch((error) => {
@@ -160,7 +164,7 @@ const VotingItem: React.FC<VotingItemProps> = ({ data, highestVotes }) => {
         <GridItem colSpan={3} display={{ base: "none", md: "table-cell" }}>
           <HStack>
             <Link href={data.dao_proposal_url} size="large">
-              56
+              {votes.id}
             </Link>
           </HStack>
         </GridItem>

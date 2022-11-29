@@ -295,8 +295,6 @@ export const RegisterForm: React.FC = () => {
         onSubmit={onSubmit}
       >
         {(props) => {
-          console.log("props", props);
-
           return (
             <Form>
               <SimpleGrid columns={{ base: 1, md: 2 }} gap={6} mt={4}>
