@@ -36,7 +36,7 @@ export default function useGCP() {
     window.google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
       scope: OAUTH_SCOPE,
-      prompt: "",
+      prompt: "select_account",
       callback: (tokenResponse: any) => {
         console.log("tokenResponse", tokenResponse);
       },
