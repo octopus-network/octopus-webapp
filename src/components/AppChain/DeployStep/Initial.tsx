@@ -125,7 +125,7 @@ export default function Initial({
             )}
             {cloudVendor === CloudVendor.GCP &&
               (oauthUser ? (
-                <Text>{oauthUser.sub}</Text>
+                <Text pl={4}>{oauthUser.sub}</Text>
               ) : (
                 <Button
                   size="sm"

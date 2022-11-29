@@ -26,7 +26,7 @@ export default function useGCP() {
     setOAuthUser(payloadObj);
 
     const authorized =
-      window.google.accounts.oauth2.hasGrantedScopes(OAUTH_SCOPE);
+      window.google.accounts.oauth2.hasGrantedAllScopes(OAUTH_SCOPE);
 
     setIsAuthorized(authorized);
     if (authorized) {
