@@ -132,6 +132,7 @@ export default function Initial({
                   onClick={onLogin}
                   variant="ghost"
                   colorScheme="octo-blue"
+                  ml={4}
                 >
                   <Icon as={FcGoogle} mr={1} /> Sign in with Google
                 </Button>

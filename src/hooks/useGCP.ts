@@ -35,7 +35,7 @@ export default function useGCP() {
 
     window.google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
-      scope: "https://www.googleapis.com/auth/devstorage.full_control",
+      scope: OAUTH_SCOPE,
       prompt: "",
       callback: (tokenResponse: any) => {
         console.log("tokenResponse", tokenResponse);
