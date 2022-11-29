@@ -37,10 +37,14 @@ export default function useGCP() {
       client_id: CLIENT_ID,
       scope: OAUTH_SCOPE,
       prompt: "select_account",
-      callback: (tokenResponse: any) => {
-        console.log("tokenResponse", tokenResponse);
+      callback(tokenResponse: any) {
+        console.log(
+          "tokenResponse",
+          tokenResponse,
+          window.google.accounts.oauth2.hasGrantedAllScopes(OAUTH_SCOPE)
+        );
       },
-      error_callback: (error: any) => {
+      error_callback(error: any) {
         console.log("error", error);
       },
     });
