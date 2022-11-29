@@ -14,6 +14,11 @@ export default function useGCP() {
 
   const { network } = useWalletSelector();
 
+  const CLIENT_ID =
+    network === "mainnet"
+      ? "219952077564-nab34fgrudtespc62grk3er44t1iar1o.apps.googleusercontent.com"
+      : "398338012986-f9ge03gubuvksee6rsmtorrpgtrsppf2.apps.googleusercontent.com";
+
   const handleCredentialResponse = (e: any) => {
     console.log("handleCredentialResponse", e);
     const headerObj = KJUR.jws.JWS.readSafeJSONString(
@@ -27,6 +32,16 @@ export default function useGCP() {
 
     const authorized =
       window.google.accounts.oauth2.hasGrantedAllScopes(OAUTH_SCOPE);
+
+    window.google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: "https://www.googleapis.com/auth/devstorage.full_control",
+      prompt: "",
+      callback: (tokenResponse: any) => {
+        console.log("tokenResponse", tokenResponse);
+      },
+    });
+    console.log("authorized", authorized);
 
     setIsAuthorized(authorized);
     if (authorized) {
@@ -46,10 +61,7 @@ export default function useGCP() {
 
   const onLogin = () => {
     window.google.accounts.id.initialize({
-      client_id:
-        network === "mainnet"
-          ? "219952077564-nab34fgrudtespc62grk3er44t1iar1o.apps.googleusercontent.com"
-          : "398338012986-f9ge03gubuvksee6rsmtorrpgtrsppf2.apps.googleusercontent.com",
+      client_id: CLIENT_ID,
       callback: handleCredentialResponse,
     });
     window.google.accounts.id.prompt();
