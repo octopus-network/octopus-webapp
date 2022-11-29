@@ -70,7 +70,7 @@ export default function Initial({
   const VendorIcon = VendorIcons[cloudVendor];
   const { network } = useWalletSelector();
 
-  const { onLogin } = useGCP();
+  const { onLogin, oauthUser } = useGCP();
 
   // useEffect(() => {
   //   if (oauthUser && cloudVendor === CloudVendor.GCP) {
@@ -123,16 +123,19 @@ export default function Initial({
                 onChange={(e) => setInputAccessKey(e.target.value)}
               />
             )}
-            {cloudVendor === CloudVendor.GCP && (
-              <Button
-                size="sm"
-                onClick={onLogin}
-                variant="ghost"
-                colorScheme="octo-blue"
-              >
-                <Icon as={FcGoogle} mr={1} /> Sign in with Google
-              </Button>
-            )}
+            {cloudVendor === CloudVendor.GCP &&
+              (oauthUser ? (
+                <Text>{oauthUser.sub}</Text>
+              ) : (
+                <Button
+                  size="sm"
+                  onClick={onLogin}
+                  variant="ghost"
+                  colorScheme="octo-blue"
+                >
+                  <Icon as={FcGoogle} mr={1} /> Sign in with Google
+                </Button>
+              ))}
           </Flex>
         </Flex>
         {!!validator && (
