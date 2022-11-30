@@ -31,6 +31,10 @@ import { Empty } from "components";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
 import { providers } from "near-api-js";
 import { CodeResult } from "near-api-js/lib/providers/provider";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+
+dayjs.extend(relativeTime);
 
 type VotingItemProps = {
   data: AppchainInfo;
@@ -48,6 +52,31 @@ const VotingItem: React.FC<VotingItemProps> = ({ data, highestVotes }) => {
     mine: undefined,
     id: "-",
   });
+  const [status, setStatus] = useState("");
+
+  const countdown = async (contractId: string, submissionTime: string) => {
+    try {
+      const provider = new providers.JsonRpcProvider({
+        url: selector.options.network.nodeUrl,
+      });
+      const res = await provider.query<CodeResult>({
+        request_type: "call_function",
+        account_id: contractId,
+        method_name: "get_policy",
+        args_base64: "",
+        finality: "optimistic",
+      });
+
+      const result = JSON.parse(Buffer.from(res.result).toString());
+      const { proposal_period } = result;
+      const expiredTime = Number(proposal_period) + Number(submissionTime);
+      if (dayjs().isAfter(dayjs(expiredTime / 1000000))) {
+        setStatus("Expired");
+      } else {
+        setStatus(dayjs().to(dayjs(expiredTime / 1000000)));
+      }
+    } catch (error) {}
+  };
 
   useEffect(() => {
     if (data.dao_proposal_url && selector) {
@@ -71,10 +100,11 @@ const VotingItem: React.FC<VotingItemProps> = ({ data, highestVotes }) => {
                 id: Number(proposalId),
               })
             ),
-            finality: "final",
+            finality: "optimistic",
           })
           .then((res) => {
             const result = JSON.parse(Buffer.from(res.result).toString());
+
             let up = 0;
             let down = 0;
             Object.values(result.votes).forEach((vote: any) => {
@@ -90,12 +120,15 @@ const VotingItem: React.FC<VotingItemProps> = ({ data, highestVotes }) => {
               mine: accountId ? result.votes[accountId] : undefined,
               id: result.id,
             });
+
+            countdown(contractId, result.submission_time);
           })
           .catch((error) => {
             console.log("error", error);
           });
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.dao_proposal_url, network, selector, accountId]);
 
   return (
@@ -116,7 +149,7 @@ const VotingItem: React.FC<VotingItemProps> = ({ data, highestVotes }) => {
         alignItems="center"
         gap={6}
       >
-        <GridItem colSpan={3}>
+        <GridItem colSpan={2}>
           <HStack>
             <Avatar
               src={data.appchain_metadata?.fungible_token_metadata?.icon as any}
@@ -161,12 +194,15 @@ const VotingItem: React.FC<VotingItemProps> = ({ data, highestVotes }) => {
             </HStack>
           </SimpleGrid>
         </GridItem>
-        <GridItem colSpan={3} display={{ base: "none", md: "table-cell" }}>
+        <GridItem colSpan={2} display={{ base: "none", md: "table-cell" }}>
           <HStack>
             <Link href={data.dao_proposal_url} size="large">
               {votes.id}
             </Link>
           </HStack>
+        </GridItem>
+        <GridItem colSpan={2}>
+          <Text>{status}</Text>
         </GridItem>
         <GridItem colSpan={1}>
           <Icon
@@ -236,7 +272,7 @@ export const Voting: React.FC = () => {
                 className="octo-gray"
                 gap={6}
               >
-                <GridItem colSpan={3}>ID</GridItem>
+                <GridItem colSpan={2}>ID</GridItem>
                 <GridItem
                   colSpan={4}
                   display={{ base: "none", md: "table-cell" }}
@@ -244,11 +280,12 @@ export const Voting: React.FC = () => {
                   Votes
                 </GridItem>
                 <GridItem
-                  colSpan={3}
+                  colSpan={2}
                   display={{ base: "none", md: "table-cell" }}
                 >
                   DAO Proposal
                 </GridItem>
+                <GridItem colSpan={2}>Status</GridItem>
                 <GridItem colSpan={1} />
               </Grid>
             </Box>
