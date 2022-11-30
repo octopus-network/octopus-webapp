@@ -176,7 +176,7 @@ export const Links: React.FC<LinksProps> = ({ data }) => {
       >
         <LinkBox
           icons={[github1, github2]}
-          title="Github"
+          title="Github Repo"
           href={data?.appchain_metadata?.github_address}
         />
       </Link>
@@ -190,7 +190,7 @@ export const Links: React.FC<LinksProps> = ({ data }) => {
         <Link href={data.dao_proposal_url} isExternal>
           <LinkBox
             icons={[github1, astro]}
-            title="AstroDAO"
+            title="AstroDAO Proposal"
             href={data.dao_proposal_url}
           />
         </Link>
