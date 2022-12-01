@@ -192,7 +192,7 @@ const INSTANCES: Record<
       ram: "2.0 GiB",
     },
     total: {
-      price: "73",
+      price: "93",
       unit: "m",
     },
   },
