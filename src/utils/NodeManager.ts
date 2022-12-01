@@ -1,10 +1,10 @@
-import axios from "axios"
-import { CloudVendor, NetworkType, NodeDetail } from "types"
+import axios from "axios";
+import { CloudVendor, NetworkType, NodeDetail } from "types";
 
 const API_HOST = {
   testnet: `https://3jd9s8zf1l.execute-api.us-west-2.amazonaws.com/api/tasks`,
   mainnet: `https://1fus85rip4.execute-api.ap-northeast-1.amazonaws.com/api/tasks`,
-}
+};
 export default class NodeManager {
   static async getNodeDetail({
     appchainId,
@@ -13,11 +13,11 @@ export default class NodeManager {
     cloudVendor,
     accessKey,
   }: {
-    appchainId: string
-    accountId: string
-    network: NetworkType
-    cloudVendor: CloudVendor
-    accessKey: string
+    appchainId: string;
+    accountId: string;
+    network: NetworkType;
+    cloudVendor: CloudVendor;
+    accessKey: string;
   }) {
     const oldAuthStr = [
       "appchain",
@@ -27,7 +27,7 @@ export default class NodeManager {
       "cloud",
       cloudVendor,
       accessKey,
-    ].join("-")
+    ].join("-");
     const authStr = [
       "appchain",
       appchainId,
@@ -38,31 +38,31 @@ export default class NodeManager {
       "account",
       accountId,
       accessKey,
-    ].join("-")
+    ].join("-");
 
-    let res = { data: [] }
+    let res = { data: [] };
     try {
       res = await axios.get(`${API_HOST[network]}`, {
         headers: {
           "Content-Type": "application/json; charset=utf-8",
           authorization: authStr,
         },
-      })
+      });
     } catch (error) {
       res = await axios.get(`${API_HOST[network]}`, {
         headers: {
           "Content-Type": "application/json; charset=utf-8",
           authorization: oldAuthStr,
         },
-      })
+      });
     }
 
-    const nodes: NodeDetail[] = res.data
+    const nodes: NodeDetail[] = res.data;
 
     if (nodes.length) {
-      return nodes.find((t) => t?.state === "12") || nodes[0]
+      return nodes.find((t) => t?.state === "12") || nodes[0];
     }
-    return null
+    return null;
   }
 
   static async deployNode({
@@ -75,16 +75,18 @@ export default class NodeManager {
     appchainId,
     network,
     accountId,
+    gcpId,
   }: {
-    cloudVendor: CloudVendor
-    region?: string
-    instance_type?: string
-    volume_size?: string
-    secret_key: string
-    accessKey: string
-    appchainId: string
-    network: NetworkType
-    accountId: string
+    cloudVendor: CloudVendor;
+    region?: string;
+    instance_type?: string;
+    volume_size?: string;
+    secret_key: string;
+    accessKey: string;
+    appchainId: string;
+    network: NetworkType;
+    accountId: string;
+    gcpId?: string;
   }) {
     const authKey = [
       "appchain",
@@ -95,8 +97,15 @@ export default class NodeManager {
       cloudVendor,
       "account",
       accountId,
-      accessKey,
-    ].join("-")
+      gcpId || accessKey,
+    ].join("-");
+
+    let _secretKey = secret_key;
+    let project = undefined;
+    if (cloudVendor === CloudVendor.GCP) {
+      _secretKey = accessKey;
+      project = secret_key;
+    }
     const task = await axios.post(
       `${API_HOST[network]}`,
       {
@@ -105,7 +114,8 @@ export default class NodeManager {
         instance_type,
         volume_size,
         chain_spec: `octopus-${network}`,
-        secret_key,
+        secret_key: _secretKey,
+        project,
       },
       {
         headers: {
@@ -113,8 +123,8 @@ export default class NodeManager {
           authorization: authKey,
         },
       }
-    )
-    return task.data
+    );
+    return task.data;
   }
 
   static async upgradeNode({
@@ -124,11 +134,11 @@ export default class NodeManager {
     user,
     network,
   }: {
-    uuid: string
-    secret_key: string
-    image: string
-    user: string
-    network: NetworkType
+    uuid: string;
+    secret_key: string;
+    image: string;
+    user: string;
+    network: NetworkType;
   }) {
     return await axios.put(
       `${API_HOST[network]}/${uuid}`,
@@ -140,7 +150,7 @@ export default class NodeManager {
       {
         headers: { authorization: user },
       }
-    )
+    );
   }
 
   static async deleteNode({
@@ -148,13 +158,13 @@ export default class NodeManager {
     user,
     network,
   }: {
-    uuid: string
-    user: string
-    network: NetworkType
+    uuid: string;
+    user: string;
+    network: NetworkType;
   }) {
     await axios.delete(`${API_HOST[network]}/${uuid}`, {
       headers: { authorization: user },
-    })
+    });
   }
 
   static async applyNode({
@@ -163,10 +173,10 @@ export default class NodeManager {
     network,
     secretKey,
   }: {
-    uuid: string
-    user: string
-    network: NetworkType
-    secretKey: string
+    uuid: string;
+    user: string;
+    network: NetworkType;
+    secretKey: string;
   }) {
     await axios.put(
       `${API_HOST[network]}/${uuid}`,
@@ -177,6 +187,6 @@ export default class NodeManager {
       {
         headers: { authorization: user },
       }
-    )
+    );
   }
 }

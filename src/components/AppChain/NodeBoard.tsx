@@ -36,8 +36,24 @@ import { RegisterValidatorModal } from "views/Appchain/MyStaking/RegisterValidat
 import { BsArrowUpRight, BsExclamationCircle } from "react-icons/bs";
 import NodeManager from "utils/NodeManager";
 import { FaAws, FaDigitalOcean } from "react-icons/fa";
+import { SiGooglecloud } from "react-icons/si";
 import { BiInfoCircle } from "react-icons/bi";
 import { beautify } from "utils";
+
+const VendorIcons = {
+  [CloudVendor.AWS]: {
+    icon: FaAws,
+    name: "AWS",
+  },
+  [CloudVendor.DO]: {
+    icon: FaDigitalOcean,
+    name: "DigitalOcean",
+  },
+  [CloudVendor.GCP]: {
+    icon: SiGooglecloud,
+    name: "GCP",
+  },
+};
 
 export default function NodeBoard({
   node,
@@ -107,6 +123,7 @@ export default function NodeBoard({
       ? (node.syncState.currentBlock * 100) / node.syncState.highestBlock
       : 0;
 
+  const VendorIcon = VendorIcons[node.task.cloud_vendor as CloudVendor].icon;
   return (
     <Box mt={3}>
       <List spacing={3}>
@@ -114,17 +131,12 @@ export default function NodeBoard({
           <Text variant="gray" fontSize="md">
             Cloud
           </Text>
-          {node.task.cloud_vendor === CloudVendor.AWS ? (
-            <Flex alignItems="center" gap={2}>
-              <Text fontSize="md">AWS</Text>
-              <FaAws size={18} />
-            </Flex>
-          ) : (
-            <Flex alignItems="center" gap={2}>
-              <Text fontSize="md">Digital Ocean</Text>
-              <FaDigitalOcean size={18} />
-            </Flex>
-          )}
+          <Flex alignItems="center" gap={2}>
+            <Text fontSize="md">
+              {VendorIcons[node.task.cloud_vendor as CloudVendor].name}
+            </Text>
+            <VendorIcon size={18} />
+          </Flex>
         </Flex>
         <Flex justifyContent="space-between">
           <Text variant="gray" fontSize="md">

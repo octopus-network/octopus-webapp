@@ -47,6 +47,7 @@ import { SetSessionKeyModal } from "./SetSessionKeyModal";
 import { Toast } from "components/common/toast";
 import { AiOutlineClear } from "react-icons/ai";
 import useLocalStorage from "hooks/useLocalStorage";
+import useGCP from "hooks/useGCP";
 
 type MyNodeProps = {
   appchainId: string | undefined;
@@ -192,6 +193,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
     validatorSessionKey = validatorSessionKeys[validator.validator_id];
   }
 
+  const { oauthUser } = useGCP();
   const onDestroyNode = () => {
     let secretKey;
 
@@ -206,7 +208,11 @@ export const MyNode: React.FC<MyNodeProps> = ({
       if (!secretKey) {
         return;
       }
-    } else {
+    } else if (currentVendor === CloudVendor.GCP) {
+      if (!oauthUser) {
+        return Toast.error("Please login with your Google account first");
+      }
+      secretKey = oauthUser.Bc.access_token;
     }
 
     setIsDestroying.on();
@@ -227,6 +233,11 @@ export const MyNode: React.FC<MyNodeProps> = ({
       });
   };
 
+  let isGCPSigned = false;
+  if (node && node.task.cloud_vendor === CloudVendor.GCP) {
+    isGCPSigned = !oauthUser;
+  }
+
   const menuItems = [
     {
       isDisabled: isManuallyDeployed
@@ -238,7 +249,8 @@ export const MyNode: React.FC<MyNodeProps> = ({
       hasBadge: skeyBadge,
     },
     {
-      isDisabled: (node ? node.state === "10" : true) || isDestroying,
+      isDisabled:
+        (node ? node.state === "10" : true) || isDestroying || isGCPSigned,
       onClick: onDestroyNode,
       label: "Destroy",
       icon: DeleteIcon,

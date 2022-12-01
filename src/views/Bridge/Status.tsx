@@ -92,6 +92,7 @@ type Filters = {
   appchian: string;
   direction: string;
   token: string;
+  byStatus: string;
 };
 
 dayjs.extend(relativeTime);
@@ -392,11 +393,11 @@ function Page({
   loaded: Function;
 }) {
   const pageSize = 20;
-  const { appchian, direction, token } = filters;
+  const { appchian, direction, token, byStatus } = filters;
   const { data: txns } = useSWR<any[]>(
     `bridge-helper/bridge_txs?start=${
       (page - 1) * pageSize
-    }&size=${pageSize}&appchain=${appchian}&direction=${direction}&token=${token}`
+    }&size=${pageSize}&appchain=${appchian}&direction=${direction}&token=${token}&by_status=${byStatus}`
   );
 
   if (txns) {
@@ -417,10 +418,12 @@ export const Status: React.FC = () => {
   const [selectedAppchain, setSlectedAppchain] = useState("all");
   const [selectedDirection, setSlectedDirection] = useState("all");
   const [selectedTokenType, setSlectedTokenType] = useState("all");
+  const [selectedStatus, setSlectedStatus] = useState("all");
   const [filters, setFilters] = useState({
     appchian: "all",
     direction: "all",
     token: "all",
+    byStatus: "all",
   });
   const [isApplying, setIsApplying] = useBoolean();
   const { txId } = useParams();
@@ -498,6 +501,21 @@ export const Status: React.FC = () => {
     },
   ];
 
+  const statusOptions = [
+    {
+      label: "all status",
+      value: "all",
+    },
+    {
+      label: "success",
+      value: "Success",
+    },
+    {
+      label: "failed",
+      value: "Failed",
+    },
+  ];
+
   if (tokensMap) {
     const totalTokens: Token[] = [];
     Object.values(tokensMap as TokensMap).forEach((tokens) => {
@@ -530,6 +548,7 @@ export const Status: React.FC = () => {
       appchian: selectedAppchain,
       direction: selectedDirection,
       token: selectedTokenType,
+      byStatus: selectedStatus,
     });
   };
 
@@ -544,7 +563,7 @@ export const Status: React.FC = () => {
             </Button>
           </RouterLink>
         </Flex>
-        <Grid mt={10} mb={5} templateColumns="repeat(4, 1fr)" gap={6}>
+        <Grid mt={10} mb={5} templateColumns="repeat(5, 1fr)" gap={6}>
           <GridItem w="100%">
             <Select
               placeholder="Select appchains"
@@ -569,6 +588,15 @@ export const Status: React.FC = () => {
               options={tokenOptions}
               onChange={(newValue) => {
                 setSlectedTokenType(newValue?.value as string);
+              }}
+            />
+          </GridItem>
+          <GridItem w="100%">
+            <Select
+              placeholder="Select status"
+              options={statusOptions}
+              onChange={(newValue) => {
+                setSlectedStatus(newValue?.value as string);
               }}
             />
           </GridItem>

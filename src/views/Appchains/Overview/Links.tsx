@@ -29,6 +29,7 @@ import github1 from "assets/icons/github1.png";
 import github2 from "assets/icons/github2.png";
 import email1 from "assets/icons/email1.png";
 import email2 from "assets/icons/email2.png";
+import astro from "assets/icons/astro.png";
 import { AppchainInfo } from "types";
 import { toValidUrl } from "utils";
 import { Toast } from "components/common/toast";
@@ -123,6 +124,7 @@ const LinkBox: React.FC<LinkBoxProps> = ({
             ) : null}
           </VStack>
         </HStack>
+
         {href !== undefined ? (
           <animated.div style={arrowHoveringProps} className="octo-blue">
             <Icon as={HiOutlineArrowNarrowRight} />
@@ -174,7 +176,7 @@ export const Links: React.FC<LinksProps> = ({ data }) => {
       >
         <LinkBox
           icons={[github1, github2]}
-          title="Github"
+          title="Github Repo"
           href={data?.appchain_metadata?.github_address}
         />
       </Link>
@@ -184,6 +186,15 @@ export const Links: React.FC<LinksProps> = ({ data }) => {
         onClick={onCopyEmail}
         copy={data?.appchain_metadata?.contact_email}
       />
+      {data?.appchain_state === "Voting" && (
+        <Link href={data.dao_proposal_url} isExternal>
+          <LinkBox
+            icons={[github1, astro]}
+            title="AstroDAO Proposal"
+            href={data.dao_proposal_url}
+          />
+        </Link>
+      )}
       {data?.appchain_anchor ? (
         <LinkBox
           icons={[anchor1, anchor2]}

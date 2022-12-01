@@ -23,6 +23,7 @@ declare global {
   interface Window {
     selector: WalletSelector;
     modal: WalletSelectorModal;
+    google: any;
   }
 }
 

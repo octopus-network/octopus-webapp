@@ -23,6 +23,7 @@ import SecretKey from "./DeployStep/SecretKey";
 import NodeManager from "utils/NodeManager";
 import { CLOUD_NODE_INSTANCES } from "config/constants";
 import useLocalStorage from "hooks/useLocalStorage";
+import useGCP from "hooks/useGCP";
 
 enum DeployStep {
   NEED_ACCESS_KEY,
@@ -73,6 +74,7 @@ export default function NodeDeploy({
 
   const isUnbonding = !!(validator && validator?.is_unbonding);
 
+  const { oauthUser } = useGCP();
   const { accountId, network } = useWalletSelector();
 
   const onConfirmAccessKey = async () => {
@@ -91,10 +93,20 @@ export default function NodeDeploy({
     }
 
     setStep(DeployStep.CONFIRMED_ACCESS_KEY);
-    setVendorKeys({
-      ...(vendorKeys || {}),
-      [appchainId]: { vendor: cloudVendor, key: accessKey },
-    });
+    if (cloudVendor === CloudVendor.GCP) {
+      if (!oauthUser) {
+        return Toast.error("Please login GCP");
+      }
+      setVendorKeys({
+        ...(vendorKeys || {}),
+        [appchainId]: { vendor: cloudVendor, key: oauthUser.Ca },
+      });
+    } else {
+      setVendorKeys({
+        ...(vendorKeys || {}),
+        [appchainId]: { vendor: cloudVendor, key: accessKey },
+      });
+    }
 
     try {
       const node = await NodeManager.getNodeDetail({
@@ -125,7 +137,10 @@ export default function NodeDeploy({
 
   const onDeploy = async () => {
     if (!accountId || !appchainId) {
-      return;
+      return Toast.error("Please connect wallet");
+    }
+    if (!oauthUser && cloudVendor === CloudVendor.GCP) {
+      return Toast.error("Please login with Google first");
     }
     setIsDeploying.on();
 
@@ -143,6 +158,7 @@ export default function NodeDeploy({
         accessKey,
         instance_type: instance.instance_type,
         volume_size: instance.volume_size,
+        gcpId: cloudVendor === CloudVendor.GCP ? oauthUser?.Ca : undefined,
       });
       setIsDeploying.off();
       fetchNode();

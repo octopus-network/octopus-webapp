@@ -1,5 +1,5 @@
-import React, { useMemo } from "react"
-import useSWR from "swr"
+import React, { useEffect, useMemo, useState } from "react";
+import useSWR from "swr";
 
 import {
   Flex,
@@ -8,87 +8,128 @@ import {
   Tooltip,
   useColorModeValue,
   Icon,
-  Image,
   Avatar,
   Text,
   Grid,
   List,
   SimpleGrid,
-  VStack,
   GridItem,
-  Progress,
   Box,
-} from "@chakra-ui/react"
+  Link,
+  Image,
+} from "@chakra-ui/react";
 
-import { QuestionOutlineIcon, ChevronRightIcon } from "@chakra-ui/icons"
+import { QuestionOutlineIcon, ChevronRightIcon } from "@chakra-ui/icons";
+import { AppchainInfo } from "types";
+import upvote from "assets/icons/up-vote.png";
+import downvote from "assets/icons/down-vote.png";
 
-import { IoMdThumbsUp, IoMdThumbsDown } from "react-icons/io"
-import { AppchainInfo } from "types"
+import { useNavigate } from "react-router-dom";
+import { DecimalUtil, ZERO_DECIMAL } from "utils";
+import { OCT_TOKEN_DECIMALS } from "primitives";
+import { Empty } from "components";
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
+import { providers } from "near-api-js";
+import { CodeResult } from "near-api-js/lib/providers/provider";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 
-import Decimal from "decimal.js"
-import rank1Icon from "assets/icons/rank1.png"
-import rank2Icon from "assets/icons/rank2.png"
-import rank3Icon from "assets/icons/rank3.png"
-
-import { useNavigate } from "react-router-dom"
-import { DecimalUtil, ZERO_DECIMAL } from "utils"
-import { OCT_TOKEN_DECIMALS } from "primitives"
-import { Empty } from "components"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
+dayjs.extend(relativeTime);
 
 type VotingItemProps = {
-  rank: number
-  data: AppchainInfo
-  highestVotes: number
-}
+  data: AppchainInfo;
+  highestVotes: number;
+};
 
-const rankIcons = [rank1Icon, rank2Icon, rank3Icon]
+const VotingItem: React.FC<VotingItemProps> = ({ data, highestVotes }) => {
+  const hoverBg = useColorModeValue("gray.100", "whiteAlpha.100");
 
-const VotingItem: React.FC<VotingItemProps> = ({
-  rank,
-  data,
-  highestVotes,
-}) => {
-  const hoverBg = useColorModeValue("gray.100", "whiteAlpha.100")
-  const rankBg = useColorModeValue("gray.300", "whiteAlpha.300")
+  const { network, selector, accountId } = useWalletSelector();
+  const navigate = useNavigate();
+  const [votes, setVotes] = useState({
+    up: 0,
+    down: 0,
+    mine: undefined,
+    id: "-",
+  });
+  const [status, setStatus] = useState("");
 
-  const red = useColorModeValue("#ff5959", "#ff5959")
-  const green = useColorModeValue("#12cd76", "#12cd76")
-  const { accountId } = useWalletSelector()
+  const countdown = async (contractId: string, submissionTime: string) => {
+    try {
+      const provider = new providers.JsonRpcProvider({
+        url: selector.options.network.nodeUrl,
+      });
+      const res = await provider.query<CodeResult>({
+        request_type: "call_function",
+        account_id: contractId,
+        method_name: "get_policy",
+        args_base64: "",
+        finality: "optimistic",
+      });
 
-  const navigate = useNavigate()
+      const result = JSON.parse(Buffer.from(res.result).toString());
+      const { proposal_period } = result;
+      const expiredTime = Number(proposal_period) + Number(submissionTime);
+      if (dayjs().isAfter(dayjs(expiredTime / 1000000))) {
+        setStatus("Expired");
+      } else {
+        setStatus(dayjs().to(dayjs(expiredTime / 1000000)));
+      }
+    } catch (error) {}
+  };
 
-  const downvotes = useMemo(
-    () => DecimalUtil.fromString(data.downvote_deposit, OCT_TOKEN_DECIMALS),
-    [data]
-  )
-  const upvotes = useMemo(
-    () => DecimalUtil.fromString(data.upvote_deposit, OCT_TOKEN_DECIMALS),
-    [data]
-  )
+  useEffect(() => {
+    if (data.dao_proposal_url && selector) {
+      const result =
+        /https:\/\/(\S+).astrodao\.com\/dao\/(\S+)\/proposals\/(\S+)-(\d+)/.exec(
+          data.dao_proposal_url
+        );
+      if (result) {
+        const [, , , contractId, proposalId] = result;
+        const provider = new providers.JsonRpcProvider({
+          url: selector.options.network.nodeUrl,
+        });
 
-  const votingScore = useMemo(
-    () => DecimalUtil.fromString(data.voting_score, OCT_TOKEN_DECIMALS),
-    [data]
-  )
+        provider
+          .query<CodeResult>({
+            request_type: "call_function",
+            account_id: contractId,
+            method_name: "get_proposal",
+            args_base64: btoa(
+              JSON.stringify({
+                id: Number(proposalId),
+              })
+            ),
+            finality: "optimistic",
+          })
+          .then((res) => {
+            const result = JSON.parse(Buffer.from(res.result).toString());
 
-  const pendingScore = useMemo(
-    () => upvotes.sub(downvotes),
-    [downvotes, upvotes]
-  )
+            let up = 0;
+            let down = 0;
+            Object.values(result.votes).forEach((vote: any) => {
+              if (vote === "Approve") {
+                up += 1;
+              } else {
+                down += 1;
+              }
+            });
+            setVotes({
+              up,
+              down,
+              mine: accountId ? result.votes[accountId] : undefined,
+              id: result.id,
+            });
 
-  const { data: userVotes } = useSWR(
-    accountId ? `votes/${accountId}/${data.appchain_id}` : null
-  )
-
-  const userDownvotes = useMemo(
-    () => DecimalUtil.fromString(userVotes?.downvotes, OCT_TOKEN_DECIMALS),
-    [userVotes]
-  )
-  const userUpvotes = useMemo(
-    () => DecimalUtil.fromString(userVotes?.upvotes, OCT_TOKEN_DECIMALS),
-    [userVotes]
-  )
+            countdown(contractId, result.submission_time);
+          })
+          .catch((error) => {
+            console.log("error", error);
+          });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.dao_proposal_url, network, selector, accountId]);
 
   return (
     <Box
@@ -108,27 +149,7 @@ const VotingItem: React.FC<VotingItemProps> = ({
         alignItems="center"
         gap={6}
       >
-        <GridItem colSpan={1} display={{ base: "none", md: "table-cell" }}>
-          <Box boxSize="28px" borderRadius="full" overflow="hidden">
-            {rank <= 3 ? (
-              <Image src={rankIcons[rank - 1]} w="100%" />
-            ) : (
-              <Box
-                boxSize="24px"
-                m="2px"
-                borderRadius="full"
-                bg={rankBg}
-                color="white"
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-              >
-                <Heading fontSize="xs">{rank}</Heading>
-              </Box>
-            )}
-          </Box>
-        </GridItem>
-        <GridItem colSpan={3}>
+        <GridItem colSpan={2}>
           <HStack>
             <Avatar
               src={data.appchain_metadata?.fungible_token_metadata?.icon as any}
@@ -147,142 +168,97 @@ const VotingItem: React.FC<VotingItemProps> = ({
         </GridItem>
         <GridItem colSpan={4} display={{ base: "none", md: "table-cell" }}>
           <SimpleGrid columns={2} gap={6}>
-            <VStack alignItems="flex-start" spacing={1}>
-              <HStack className="octo-gray" spacing={1}>
-                <Icon as={IoMdThumbsUp} />
-                <Text fontSize="sm">
-                  {DecimalUtil.beautify(new Decimal(upvotes))}
-                </Text>
-              </HStack>
-              <Progress
-                colorScheme="octo-blue"
-                size="sm"
-                value={upvotes.toNumber()}
-                max={highestVotes}
-                w="100%"
-                borderRadius="lg"
+            <HStack spacing={2}>
+              <Image
+                src={upvote}
+                width={8}
+                borderRadius="50%"
+                border={votes.mine === "Approve" ? "2px solid #7ca4f7" : ""}
+                title={votes.mine === "Approve" ? "Voted" : undefined}
               />
-            </VStack>
-            <VStack alignItems="flex-start" spacing={1}>
-              <HStack className="octo-gray" spacing={1}>
-                <Icon as={IoMdThumbsDown} />
-                <Text fontSize="sm">
-                  {DecimalUtil.beautify(new Decimal(downvotes))}
-                </Text>
-              </HStack>
-              <Progress
-                colorScheme="whatsapp"
-                size="sm"
-                value={downvotes.toNumber()}
-                max={highestVotes}
-                w="100%"
-                borderRadius="lg"
+              <Text fontWeight="bold" fontSize="large">
+                {votes.up}
+              </Text>
+            </HStack>
+            <HStack spacing={2}>
+              <Image
+                src={downvote}
+                width={8}
+                borderRadius="50%"
+                border={votes.mine === "Reject" ? "2px solid #2468f2" : ""}
+                title={votes.mine === "Reject" ? "Voted" : undefined}
               />
-            </VStack>
+              <Text fontWeight="bold" fontSize="large">
+                {votes.down}
+              </Text>
+            </HStack>
           </SimpleGrid>
         </GridItem>
-        <GridItem colSpan={2} display="flex">
-          <Box position="relative">
-            <Heading fontSize="md">{DecimalUtil.beautify(votingScore)}</Heading>
-            <Box
-              top="-10px"
-              right="0"
-              padding="3px 8px"
-              position="absolute"
-              bg={
-                pendingScore.lt(ZERO_DECIMAL)
-                  ? "rgba(229, 62, 62, .1)"
-                  : "rgba(56, 161, 105, .1)"
-              }
-              borderRadius="2xl"
-              transform="translateX(100%) scale(.8)"
-            >
-              <Heading
-                color={pendingScore.lt(ZERO_DECIMAL) ? red : green}
-                fontSize="xs"
-                whiteSpace="nowrap"
-                overflow="hidden"
-                textOverflow="ellipsis"
-                maxW="120px"
-              >
-                {pendingScore.lt(ZERO_DECIMAL) ? "-" : "+"}{" "}
-                {DecimalUtil.beautify(pendingScore.abs(), 2)}
-              </Heading>
-            </Box>
-          </Box>
+        <GridItem colSpan={2} display={{ base: "none", md: "table-cell" }}>
+          <HStack>
+            <Link href={data.dao_proposal_url} size="large">
+              {votes.id}
+            </Link>
+          </HStack>
+        </GridItem>
+        <GridItem colSpan={2}>
+          <Text>{status}</Text>
         </GridItem>
         <GridItem colSpan={1}>
-          <HStack justifyContent="flex-end">
-            {userUpvotes.gt(ZERO_DECIMAL) || userDownvotes.gt(ZERO_DECIMAL) ? (
-              <Text fontSize="sm" variant="gray">
-                Voted
-              </Text>
-            ) : null}
-            <Icon
-              as={ChevronRightIcon}
-              boxSize={6}
-              className="octo-gray"
-              opacity=".8"
-            />
-          </HStack>
+          <Icon
+            as={ChevronRightIcon}
+            boxSize={6}
+            className="octo-gray"
+            opacity=".8"
+          />
         </GridItem>
       </Grid>
     </Box>
-  )
-}
+  );
+};
 
 export const Voting: React.FC = () => {
-  const bg = useColorModeValue("white", "#25263c")
+  const bg = useColorModeValue("white", "#25263c");
 
-  const { data: appchains } = useSWR("appchains/voting")
+  const { data: appchains } = useSWR("appchains/voting");
 
   const highestVotes = useMemo(() => {
     if (!appchains?.length) {
-      return 0
+      return 0;
     }
 
-    let highest = ZERO_DECIMAL
+    let highest = ZERO_DECIMAL;
 
     appchains.forEach((appchain: AppchainInfo) => {
       const upvoteDeposit = DecimalUtil.fromString(
         appchain.upvote_deposit,
         OCT_TOKEN_DECIMALS
-      )
+      );
       const downvoteDeposit = DecimalUtil.fromString(
         appchain.downvote_deposit,
         OCT_TOKEN_DECIMALS
-      )
+      );
       if (upvoteDeposit.gt(highest)) {
-        highest = upvoteDeposit
+        highest = upvoteDeposit;
       }
 
       if (downvoteDeposit.gt(highest)) {
-        highest = downvoteDeposit
+        highest = downvoteDeposit;
       }
-    })
+    });
 
-    return highest.toNumber()
-  }, [appchains])
+    return highest.toNumber();
+  }, [appchains]);
 
   return (
     <>
       <Flex alignItems="center" justifyContent="space-between">
         <Tooltip label="Voting Appchains">
-          <HStack>
+          <HStack pl={10}>
             <Heading fontSize="xl">Voting</Heading>
             <Icon as={QuestionOutlineIcon} boxSize={4} className="octo-gray" />
           </HStack>
         </Tooltip>
-        <HStack>
-          <HStack>
-            <Box boxSize={2} borderRadius="full" bg="#457ef4" />
-            <Text variant="gray">Upvotes</Text>
-          </HStack>
-          <HStack>
-            <Box boxSize={2} borderRadius="full" bg="#48cfcf" />
-            <Text variant="gray">Downvotes</Text>
-          </HStack>
-        </HStack>
       </Flex>
       <Box mt={8} bg={bg} p={6} borderRadius="lg">
         {appchains?.length ? (
@@ -296,20 +272,20 @@ export const Voting: React.FC = () => {
                 className="octo-gray"
                 gap={6}
               >
-                <GridItem
-                  colSpan={1}
-                  display={{ base: "none", md: "table-cell" }}
-                >
-                  Rank
-                </GridItem>
-                <GridItem colSpan={3}>ID</GridItem>
+                <GridItem colSpan={2}>ID</GridItem>
                 <GridItem
                   colSpan={4}
                   display={{ base: "none", md: "table-cell" }}
                 >
                   Votes
                 </GridItem>
-                <GridItem colSpan={2}>Score</GridItem>
+                <GridItem
+                  colSpan={2}
+                  display={{ base: "none", md: "table-cell" }}
+                >
+                  DAO Proposal
+                </GridItem>
+                <GridItem colSpan={2}>Status</GridItem>
                 <GridItem colSpan={1} />
               </Grid>
             </Box>
@@ -318,7 +294,6 @@ export const Voting: React.FC = () => {
                 <VotingItem
                   data={appchain}
                   key={`voting-item-${idx}`}
-                  rank={idx + 1}
                   highestVotes={highestVotes}
                 />
               ))}
@@ -329,5 +304,5 @@ export const Voting: React.FC = () => {
         )}
       </Box>
     </>
-  )
-}
+  );
+};

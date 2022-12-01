@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import useSWR from "swr";
 import dayjs from "dayjs";
 import Decimal from "decimal.js";
@@ -25,8 +25,6 @@ import { FaUser } from "react-icons/fa";
 
 import { Links } from "./Links";
 import { Descriptions } from "./Descriptions";
-import { UserPanel } from "./UserPanel";
-import { AdminPanel } from "./AdminPanel";
 import { DecimalUtil } from "utils";
 
 import octoAvatar from "assets/icons/avatar.png";
@@ -41,19 +39,12 @@ export const Overview: React.FC<OverviewProps> = ({
   appchainId,
   onDrawerClose,
 }) => {
-  const { registry, accountId } = useWalletSelector();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { accountId } = useWalletSelector();
 
   const { data: appchain } = useSWR<AppchainInfo>(`appchain/${appchainId}`);
   const footerBg = useColorModeValue("#f6f7fa", "#15172c");
 
   const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null);
-
-  useEffect(() => {
-    registry?.get_owner().then((owner) => {
-      setIsAdmin(owner === accountId);
-    });
-  }, [accountId, registry]);
 
   return (
     <>
@@ -99,13 +90,6 @@ export const Overview: React.FC<OverviewProps> = ({
         </Box>
         <Box mt={6}>
           <Descriptions data={appchain} />
-        </Box>
-        <Box mt={6}>
-          {isAdmin ? (
-            <AdminPanel data={appchain} />
-          ) : accountId ? (
-            <UserPanel data={appchain} />
-          ) : null}
         </Box>
       </DrawerBody>
       <DrawerFooter justifyContent="flex-start">

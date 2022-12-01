@@ -109,7 +109,7 @@ export const RegisterForm: React.FC = () => {
     }
   };
 
-  const onTokenInfoChange = (key: string, val: string) => {
+  const onTokenInfoChange = (key: string, val: string | number) => {
     setTokenInfo(
       Object.assign({}, tokenInfo, {
         [key]: val,
@@ -130,6 +130,7 @@ export const RegisterForm: React.FC = () => {
       eraReward,
       description,
       templateType,
+      evmChainId,
     } = values;
 
     actions.setSubmitting(true);
@@ -163,10 +164,10 @@ export const RegisterForm: React.FC = () => {
                     website_url: website,
                     description: description || "",
                     github_address: githubAddress,
-                    github_release: "unknown",
                     contact_email: email,
-                    function_spec_url: "unknown",
                     template_type: templateType,
+                    evm_chain_id:
+                      templateType === "BarnacleEvm" ? evmChainId : null,
                     premined_wrapped_appchain_token_beneficiary:
                       preminedBeneficiary,
                     premined_wrapped_appchain_token: DecimalUtil.toU64(
@@ -271,7 +272,7 @@ export const RegisterForm: React.FC = () => {
                     placeholder="Decimals"
                     value={tokenInfo.decimals}
                     onChange={(e) =>
-                      onTokenInfoChange("decimals", e.target.value)
+                      onTokenInfoChange("decimals", Number(e.target.value))
                     }
                   />
                   <Input
@@ -293,277 +294,326 @@ export const RegisterForm: React.FC = () => {
         }}
         onSubmit={onSubmit}
       >
-        {(props) => (
-          <Form>
-            <SimpleGrid columns={{ base: 1, md: 2 }} gap={6} mt={4}>
-              <Field name="appchainId" validate={validateAppchainId}>
-                {({ field, form }: any) => (
-                  <FormControl
-                    isInvalid={
-                      form.errors.appchainId && form.touched.appchainId
-                    }
-                    isRequired
-                  >
-                    <FormLabel htmlFor="appchainId">Appchain ID</FormLabel>
-                    <Input
-                      {...field}
-                      id="appchainId"
-                      placeholder="Appchain ID"
-                      maxLength={20}
-                    />
-                    <FormErrorMessage>
-                      {form.errors.appchainId}
-                    </FormErrorMessage>
-                  </FormControl>
-                )}
-              </Field>
-              <Field name="website" validate={validateUrl}>
-                {({ field, form }: any) => (
-                  <FormControl
-                    isInvalid={form.errors.website && form.touched.website}
-                    isRequired
-                  >
-                    <FormLabel htmlFor="website">Website</FormLabel>
-                    <Input
-                      {...field}
-                      id="website"
-                      placeholder="eg: https://www.oct.network"
-                    />
-                    <FormErrorMessage>{form.errors.website}</FormErrorMessage>
-                  </FormControl>
-                )}
-              </Field>
-              <Field name="email" validate={validateEmail}>
-                {({ field, form }: any) => (
-                  <FormControl
-                    isInvalid={form.errors.email && form.touched.email}
-                    isRequired
-                  >
-                    <FormLabel htmlFor="email">Email</FormLabel>
-                    <Input {...field} id="email" placeholder="Contact email" />
-                    <FormErrorMessage>{form.errors.email}</FormErrorMessage>
-                  </FormControl>
-                )}
-              </Field>
-              <Field name="githubAddress" validate={validateUrl}>
-                {({ field, form }: any) => (
-                  <FormControl
-                    isInvalid={
-                      form.errors.githubAddress && form.touched.githubAddress
-                    }
-                    isRequired
-                  >
-                    <FormLabel htmlFor="githubAddress">
-                      Github Address
-                    </FormLabel>
-                    <Input
-                      {...field}
-                      id="githubAddress"
-                      placeholder="eg: https://github.com/octopus-network/barnacle"
-                    />
-                    <FormErrorMessage>
-                      {form.errors.githubAddress}
-                    </FormErrorMessage>
-                  </FormControl>
-                )}
-              </Field>
-              <Field name="initialSupply" validate={validateInitialSupply}>
-                {({ field, form }: any) => (
-                  <FormControl
-                    isInvalid={
-                      form.errors.initialSupply && form.touched.initialSupply
-                    }
-                    isRequired
-                  >
-                    <FormLabel htmlFor="initialSupply">
-                      Initial Supply
-                    </FormLabel>
-                    <Input
-                      {...field}
-                      type="number"
-                      id="initialSupply"
-                      placeholder="Initial supply"
-                    />
-                    <FormErrorMessage>
-                      {form.errors.initialSupply}
-                    </FormErrorMessage>
-                  </FormControl>
-                )}
-              </Field>
-              <Field name="eraReward">
-                {({ field, form }: any) => (
-                  <FormControl
-                    isInvalid={form.errors.eraReward && form.touched.eraReward}
-                    isRequired
-                  >
-                    <FormLabel htmlFor="eraReward">Daily Reward</FormLabel>
-                    <Input
-                      {...field}
-                      type="number"
-                      id="eraReward"
-                      placeholder="0"
-                      defaultValue={0}
-                    />
-                    <FormErrorMessage>{form.errors.eraReward}</FormErrorMessage>
-                  </FormControl>
-                )}
-              </Field>
-              <SimpleGrid columns={2} gap={4}>
-                <Field name="preminedAmount">
+        {(props) => {
+          return (
+            <Form>
+              <SimpleGrid columns={{ base: 1, md: 2 }} gap={6} mt={4}>
+                <Field name="appchainId" validate={validateAppchainId}>
                   {({ field, form }: any) => (
                     <FormControl
                       isInvalid={
-                        form.errors.preminedAmount &&
-                        form.touched.preminedAmount
+                        form.errors.appchainId && form.touched.appchainId
                       }
+                      isRequired
                     >
-                      <FormLabel htmlFor="preminedAmount">Premined</FormLabel>
+                      <FormLabel htmlFor="appchainId">Appchain ID</FormLabel>
+                      <Input
+                        {...field}
+                        id="appchainId"
+                        placeholder="Appchain ID"
+                        maxLength={20}
+                      />
+                      <FormErrorMessage>
+                        {form.errors.appchainId}
+                      </FormErrorMessage>
+                    </FormControl>
+                  )}
+                </Field>
+                <Field name="website" validate={validateUrl}>
+                  {({ field, form }: any) => (
+                    <FormControl
+                      isInvalid={form.errors.website && form.touched.website}
+                      isRequired
+                    >
+                      <FormLabel htmlFor="website">Website</FormLabel>
+                      <Input
+                        {...field}
+                        id="website"
+                        placeholder="eg: https://www.oct.network"
+                      />
+                      <FormErrorMessage>{form.errors.website}</FormErrorMessage>
+                    </FormControl>
+                  )}
+                </Field>
+                <Field name="email" validate={validateEmail}>
+                  {({ field, form }: any) => (
+                    <FormControl
+                      isInvalid={form.errors.email && form.touched.email}
+                      isRequired
+                    >
+                      <FormLabel htmlFor="email">Email</FormLabel>
+                      <Input
+                        {...field}
+                        id="email"
+                        placeholder="Contact email"
+                      />
+                      <FormErrorMessage>{form.errors.email}</FormErrorMessage>
+                    </FormControl>
+                  )}
+                </Field>
+                <Field name="githubAddress" validate={validateUrl}>
+                  {({ field, form }: any) => (
+                    <FormControl
+                      isInvalid={
+                        form.errors.githubAddress && form.touched.githubAddress
+                      }
+                      isRequired
+                    >
+                      <FormLabel htmlFor="githubAddress">
+                        Github Address
+                      </FormLabel>
+                      <Input
+                        {...field}
+                        id="githubAddress"
+                        placeholder="eg: https://github.com/octopus-network/barnacle"
+                      />
+                      <FormErrorMessage>
+                        {form.errors.githubAddress}
+                      </FormErrorMessage>
+                    </FormControl>
+                  )}
+                </Field>
+                <Field name="initialSupply" validate={validateInitialSupply}>
+                  {({ field, form }: any) => (
+                    <FormControl
+                      isInvalid={
+                        form.errors.initialSupply && form.touched.initialSupply
+                      }
+                      isRequired
+                    >
+                      <FormLabel htmlFor="initialSupply">
+                        Initial Supply
+                      </FormLabel>
                       <Input
                         {...field}
                         type="number"
-                        id="preminedAmount"
+                        id="initialSupply"
+                        placeholder="Initial supply"
+                      />
+                      <FormErrorMessage>
+                        {form.errors.initialSupply}
+                      </FormErrorMessage>
+                    </FormControl>
+                  )}
+                </Field>
+                <Field name="eraReward">
+                  {({ field, form }: any) => (
+                    <FormControl
+                      isInvalid={
+                        form.errors.eraReward && form.touched.eraReward
+                      }
+                      isRequired
+                    >
+                      <FormLabel htmlFor="eraReward">Daily Reward</FormLabel>
+                      <Input
+                        {...field}
+                        type="number"
+                        id="eraReward"
                         placeholder="0"
                         defaultValue={0}
                       />
                       <FormErrorMessage>
-                        {form.errors.preminedAmount}
+                        {form.errors.eraReward}
                       </FormErrorMessage>
                     </FormControl>
                   )}
                 </Field>
-                <Field name="preminedBeneficiary">
+                <SimpleGrid columns={2} gap={4}>
+                  <Field name="preminedAmount">
+                    {({ field, form }: any) => (
+                      <FormControl
+                        isInvalid={
+                          form.errors.preminedAmount &&
+                          form.touched.preminedAmount
+                        }
+                      >
+                        <FormLabel htmlFor="preminedAmount">Premined</FormLabel>
+                        <Input
+                          {...field}
+                          type="number"
+                          id="preminedAmount"
+                          placeholder="0"
+                          defaultValue={0}
+                        />
+                        <FormErrorMessage>
+                          {form.errors.preminedAmount}
+                        </FormErrorMessage>
+                      </FormControl>
+                    )}
+                  </Field>
+                  <Field name="preminedBeneficiary">
+                    {({ field, form }: any) => (
+                      <FormControl
+                        isInvalid={
+                          form.errors.preminedBeneficiary &&
+                          form.touched.preminedBeneficiary
+                        }
+                      >
+                        <FormLabel htmlFor="preminedBeneficiary">
+                          Beneficiary
+                        </FormLabel>
+                        <Input
+                          {...field}
+                          id="preminedBeneficiary"
+                          placeholder="Beneficiary NEAR account"
+                        />
+                        <FormErrorMessage>
+                          {form.errors.preminedBeneficiary}
+                        </FormErrorMessage>
+                      </FormControl>
+                    )}
+                  </Field>
+                </SimpleGrid>
+                <Field name="idoAmount">
                   {({ field, form }: any) => (
                     <FormControl
                       isInvalid={
-                        form.errors.preminedBeneficiary &&
-                        form.touched.preminedBeneficiary
+                        form.errors.idoAmount && form.touched.idoAmount
                       }
                     >
-                      <FormLabel htmlFor="preminedBeneficiary">
-                        Beneficiary
-                      </FormLabel>
+                      <FormLabel htmlFor="idoAmount">IDO Amount</FormLabel>
                       <Input
                         {...field}
-                        id="preminedBeneficiary"
-                        placeholder="Beneficiary NEAR account"
+                        type="number"
+                        id="idoAmount"
+                        placeholder="0"
+                        defaultValue={0}
                       />
                       <FormErrorMessage>
-                        {form.errors.preminedBeneficiary}
+                        {form.errors.idoAmount}
                       </FormErrorMessage>
                     </FormControl>
                   )}
                 </Field>
-              </SimpleGrid>
-              <Field name="idoAmount">
-                {({ field, form }: any) => (
-                  <FormControl
-                    isInvalid={form.errors.idoAmount && form.touched.idoAmount}
-                  >
-                    <FormLabel htmlFor="idoAmount">IDO Amount</FormLabel>
-                    <Input
-                      {...field}
-                      type="number"
-                      id="idoAmount"
-                      placeholder="0"
-                      defaultValue={0}
-                    />
-                    <FormErrorMessage>{form.errors.idoAmount}</FormErrorMessage>
-                  </FormControl>
-                )}
-              </Field>
 
-              <Field name="templateType">
-                {({ field, form }: any) => (
-                  <FormControl isRequired>
-                    <FormLabel htmlFor="templateType">Template Type</FormLabel>
-                    <RadioGroup {...field} defaultValue="Barnacle">
-                      <Stack>
-                        <Radio {...field} value="Barnacle">
-                          Barnacle
-                        </Radio>
-                        <Radio {...field} value="BarnacleEvm">
-                          BarnacleEvm
-                        </Radio>
-                      </Stack>
-                    </RadioGroup>
-                  </FormControl>
-                )}
-              </Field>
-              <GridItem>
-                <Field name="description">
-                  {({ field, form }: any) => (
-                    <FormControl
-                      isInvalid={
-                        form.errors.description && form.touched.description
-                      }
-                    >
-                      <FormLabel htmlFor="description">
-                        Project description
-                      </FormLabel>
-                      <Textarea
-                        {...field}
-                        id="description"
-                        placeholder="Description for your project"
-                        maxLength={256}
-                      />
-                      <FormErrorMessage>
-                        {form.errors.description}
-                      </FormErrorMessage>
-                    </FormControl>
+                <VStack>
+                  <Field name="templateType">
+                    {({ field, form }: any) => (
+                      <FormControl isRequired>
+                        <FormLabel htmlFor="templateType">
+                          Template Type
+                        </FormLabel>
+                        <RadioGroup {...field} defaultValue="Barnacle">
+                          <Stack>
+                            <Radio {...field} value="Barnacle">
+                              Barnacle
+                            </Radio>
+                            <Radio {...field} value="BarnacleEvm">
+                              BarnacleEvm
+                            </Radio>
+                          </Stack>
+                        </RadioGroup>
+                      </FormControl>
+                    )}
+                  </Field>
+
+                  {props.values.templateType === "BarnacleEvm" && (
+                    <Field name="evmChainId">
+                      {({ field, form }: any) => (
+                        <FormControl
+                          isInvalid={
+                            form.errors.evmChainId && form.touched.evmChainId
+                          }
+                          isRequired
+                        >
+                          <HStack alignItems="center">
+                            <FormLabel
+                              htmlFor="evmChainId"
+                              whiteSpace="nowrap"
+                              marginBottom="0"
+                            >
+                              Evm Chain ID
+                            </FormLabel>
+                            <Input
+                              {...field}
+                              type="number"
+                              min={1}
+                              id="evmChainId"
+                              placeholder="0"
+                              defaultValue={1}
+                            />
+                          </HStack>
+                        </FormControl>
+                      )}
+                    </Field>
                   )}
-                </Field>
-              </GridItem>
+                </VStack>
+                <GridItem>
+                  <Field name="description">
+                    {({ field, form }: any) => (
+                      <FormControl
+                        isInvalid={
+                          form.errors.description && form.touched.description
+                        }
+                      >
+                        <FormLabel htmlFor="description">
+                          Project description
+                        </FormLabel>
+                        <Textarea
+                          {...field}
+                          id="description"
+                          placeholder="Description for your project"
+                          maxLength={256}
+                        />
+                        <FormErrorMessage>
+                          {form.errors.description}
+                        </FormErrorMessage>
+                      </FormControl>
+                    )}
+                  </Field>
+                </GridItem>
 
-              <VStack
-                spacing={1}
-                alignItems="flex-start"
-                justifyContent="center"
-              >
-                <HStack>
-                  <Heading fontSize="md">Auditing Fee:</Heading>
-                  <Skeleton isLoaded={auditingFee !== undefined}>
-                    <Heading fontSize="md" color="octo-blue.500">
-                      {auditingFee !== undefined
-                        ? DecimalUtil.beautify(auditingFee)
-                        : "loading"}
-                    </Heading>
-                  </Skeleton>
-                  <Heading fontSize="md">OCT</Heading>
-                </HStack>
-                {accountId ? (
-                  <Skeleton isLoaded={!!balances}>
-                    <Text variant="gray" fontSize="sm">
-                      Balance:{" "}
-                      {!!balances
-                        ? DecimalUtil.beautify(octBalance)
-                        : "loading"}{" "}
-                      OCT
-                    </Text>
-                  </Skeleton>
-                ) : null}
-              </VStack>
-              <Box>
-                <Button
-                  colorScheme="octo-blue"
-                  isLoading={props.isSubmitting}
-                  type="submit"
-                  disabled={
-                    props.isSubmitting ||
-                    !accountId ||
-                    !auditingFee ||
-                    octBalance.lt(auditingFee)
-                  }
+                <VStack
+                  spacing={1}
+                  alignItems="flex-start"
+                  justifyContent="center"
                 >
-                  {!accountId
-                    ? "Please Login"
-                    : auditingFee && balances && octBalance.lt(auditingFee)
-                    ? "Insufficient Balance"
-                    : "Register"}
-                </Button>
-              </Box>
-            </SimpleGrid>
-          </Form>
-        )}
+                  <HStack>
+                    <Heading fontSize="md">Auditing Fee:</Heading>
+                    <Skeleton isLoaded={auditingFee !== undefined}>
+                      <Heading fontSize="md" color="octo-blue.500">
+                        {auditingFee !== undefined
+                          ? DecimalUtil.beautify(auditingFee)
+                          : "loading"}
+                      </Heading>
+                    </Skeleton>
+                    <Heading fontSize="md">OCT</Heading>
+                  </HStack>
+                  {accountId ? (
+                    <Skeleton isLoaded={!!balances}>
+                      <Text variant="gray" fontSize="sm">
+                        Balance:{" "}
+                        {!!balances
+                          ? DecimalUtil.beautify(octBalance)
+                          : "loading"}{" "}
+                        OCT
+                      </Text>
+                    </Skeleton>
+                  ) : null}
+                </VStack>
+                <Box>
+                  <Button
+                    colorScheme="octo-blue"
+                    isLoading={props.isSubmitting}
+                    type="submit"
+                    disabled={
+                      props.isSubmitting ||
+                      !accountId ||
+                      !auditingFee ||
+                      octBalance.lt(auditingFee)
+                    }
+                  >
+                    {!accountId
+                      ? "Please Login"
+                      : auditingFee && balances && octBalance.lt(auditingFee)
+                      ? "Insufficient Balance"
+                      : "Register"}
+                  </Button>
+                </Box>
+              </SimpleGrid>
+            </Form>
+          );
+        }}
       </Formik>
     </Box>
   );

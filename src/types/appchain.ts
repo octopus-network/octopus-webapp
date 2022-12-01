@@ -2,9 +2,9 @@ import { FungibleTokenMetadata } from "types";
 
 export enum AppchainState {
   Registered = "Registered",
-  Auditing = "Auditing",
+  Audited = "Audited",
   Dead = "Dead",
-  InQueue = "InQueue",
+  Voting = "Voting",
   Staging = "Staging",
   Booting = "Booting",
   Active = "Active",
@@ -13,6 +13,7 @@ export enum AppchainState {
 export enum CloudVendor {
   AWS = "AWS",
   DO = "DO",
+  GCP = "GCP",
 }
 
 export type AppchainInfo = {
@@ -22,10 +23,8 @@ export type AppchainInfo = {
     contact_email: string;
     description: string;
     custom_metadata: Record<string, any>;
-    function_spec_url: string;
     fungible_token_metadata: FungibleTokenMetadata;
     github_address: string;
-    github_release: string;
     ido_amount_of_wrapped_appchain_token: string;
     initial_era_reward: string;
     premined_wrapped_appchain_token: string;
@@ -45,6 +44,7 @@ export type AppchainInfo = {
   validator_count: number;
   voting_score: string;
   evm_chain_id: string;
+  dao_proposal_url: string;
 };
 
 export type IndexRange = {
