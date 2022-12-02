@@ -90,7 +90,7 @@ export default function Initial({
                 value: cloudVendor,
                 icon: <VendorIcon />,
               }}
-              options={[CloudVendor.AWS, CloudVendor.DO].map(
+              options={[CloudVendor.AWS, CloudVendor.DO, CloudVendor.GCP].map(
                 (t) => {
                   const VendorIcon = VendorIcons[t];
                   return {
