@@ -14,7 +14,6 @@ import { SiGooglecloud } from "react-icons/si";
 import { useEffect } from "react";
 import { FcGoogle } from "react-icons/fc";
 import useGCP from "hooks/useGCP";
-import { useWalletSelector } from "components/WalletSelectorContextProvider";
 
 const VendorIcons = {
   [CloudVendor.AWS]: FaAws,
@@ -59,25 +58,26 @@ export default function Initial({
   cloudVendor,
   setCloudVendor,
   setInputAccessKey,
+  onLogin,
+  oauthUser,
 }: {
   cloudAccessKey: string;
   validator?: Validator;
   cloudVendor: CloudVendor;
   setCloudVendor: (cloudVendor: CloudVendor) => void;
   setInputAccessKey: (inputAccessKey: string) => void;
+  onLogin: () => void;
+  oauthUser: any;
 }) {
   const inputBg = useColorModeValue("#f5f7fa", "whiteAlpha.100");
   const VendorIcon = VendorIcons[cloudVendor];
-  const { network } = useWalletSelector();
 
-  const { onLogin, oauthUser } = useGCP();
-
-  // useEffect(() => {
-  //   if (oauthUser && cloudVendor === CloudVendor.GCP) {
-  //     setInputAccessKey(oauthUser.Bc.access_token);
-  //   }
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [oauthUser, cloudVendor]);
+  useEffect(() => {
+    if (oauthUser && cloudVendor === CloudVendor.GCP) {
+      setInputAccessKey(oauthUser.email);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [oauthUser, cloudVendor]);
 
   return (
     <>
@@ -125,7 +125,7 @@ export default function Initial({
             )}
             {cloudVendor === CloudVendor.GCP &&
               (oauthUser ? (
-                <Text pl={4}>{oauthUser.sub}</Text>
+                <Text pl={4}>{oauthUser.email}</Text>
               ) : (
                 <Button
                   size="sm"

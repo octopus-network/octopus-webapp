@@ -74,7 +74,9 @@ export default function NodeDeploy({
 
   const isUnbonding = !!(validator && validator?.is_unbonding);
 
-  const { oauthUser } = useGCP();
+  const { onLogin, oauthUser, onRequestAccessToken, projects, accessToken } =
+    useGCP();
+
   const { accountId, network } = useWalletSelector();
 
   const onConfirmAccessKey = async () => {
@@ -95,12 +97,13 @@ export default function NodeDeploy({
     setStep(DeployStep.CONFIRMED_ACCESS_KEY);
     if (cloudVendor === CloudVendor.GCP) {
       if (!oauthUser) {
-        return Toast.error("Please login GCP");
+        return Toast.error("Please login with Google first");
       }
       setVendorKeys({
         ...(vendorKeys || {}),
-        [appchainId]: { vendor: cloudVendor, key: oauthUser.Ca },
+        [appchainId]: { vendor: cloudVendor, key: oauthUser.sub },
       });
+      onRequestAccessToken();
     } else {
       setVendorKeys({
         ...(vendorKeys || {}),
@@ -155,16 +158,15 @@ export default function NodeDeploy({
         network,
         region: deployRegion,
         secret_key: secretKey,
-        accessKey,
+        accessKey: accessToken?.access_token || "",
         instance_type: instance.instance_type,
         volume_size: instance.volume_size,
-        gcpId: cloudVendor === CloudVendor.GCP ? oauthUser?.Ca : undefined,
+        gcpId: cloudVendor === CloudVendor.GCP ? oauthUser?.sub : undefined,
       });
       setIsDeploying.off();
       fetchNode();
     } catch (error) {
       setIsDeploying.off();
-
       Toast.error(error);
     }
   };
@@ -190,6 +192,8 @@ export default function NodeDeploy({
           setCloudVendor={setCloudVendor}
           setInputAccessKey={setAccessKey}
           cloudAccessKey={accessKey}
+          onLogin={onLogin}
+          oauthUser={oauthUser}
         />
       )}
 
@@ -206,6 +210,7 @@ export default function NodeDeploy({
           setSecretKey={setSecretKey}
           setDeployRegion={setDeployRegion}
           cloudVendor={cloudVendor}
+          projects={projects}
         />
       )}
 
@@ -262,19 +267,21 @@ export default function NodeDeploy({
         </Flex>
       )}
 
-      {validator && step === DeployStep.NEED_ACCESS_KEY && isManuallyDeployed && (
-        <Flex direction="column" mt={2} mb={2} gap={6}>
-          <Button
-            onClick={onConfirmAccessKey}
-            colorScheme="octo-blue"
-            isDisabled={!accountId || isUnbonding}
-            width="100%"
-          >
-            Confirm Your{" "}
-            {cloudVendor === CloudVendor.AWS ? "Access Key" : "Token Name"}
-          </Button>
-        </Flex>
-      )}
+      {validator &&
+        step === DeployStep.NEED_ACCESS_KEY &&
+        isManuallyDeployed && (
+          <Flex direction="column" mt={2} mb={2} gap={6}>
+            <Button
+              onClick={onConfirmAccessKey}
+              colorScheme="octo-blue"
+              isDisabled={!accountId || isUnbonding}
+              width="100%"
+            >
+              Confirm Your{" "}
+              {cloudVendor === CloudVendor.AWS ? "Access Key" : "Token Name"}
+            </Button>
+          </Flex>
+        )}
 
       {isManuallyDeployed && (
         <Flex direction="column" mt={2} mb={2} gap={6}>

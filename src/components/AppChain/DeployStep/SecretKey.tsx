@@ -18,16 +18,17 @@ export default function SecretKey({
   setSecretKey,
   setDeployRegion,
   cloudVendor,
+  projects,
 }: {
   appchainId?: string;
   secretKey: string;
   setSecretKey: (key: string) => void;
   setDeployRegion: (region: string) => void;
   cloudVendor: CloudVendor;
+  projects: any[];
 }) {
   const inputBg = useColorModeValue("#f5f7fa", "whiteAlpha.100");
   const { data: deployConfig } = useSWR("deploy-config");
-  const { projects } = useGCP();
 
   useEffect(() => {
     if (!secretKey && cloudVendor === CloudVendor.GCP && projects?.length) {
