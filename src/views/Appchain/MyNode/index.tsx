@@ -193,8 +193,10 @@ export const MyNode: React.FC<MyNodeProps> = ({
     validatorSessionKey = validatorSessionKeys[validator.validator_id];
   }
 
-  const { oauthUser } = useGCP();
-  const onDestroyNode = () => {
+  const { oauthUser, onRequestAccessToken, accessToken } = useGCP(
+    currentVendor === CloudVendor.GCP
+  );
+  const onDestroyNode = async () => {
     let secretKey;
 
     if ([CloudVendor.AWS, CloudVendor.DO].includes(currentVendor)) {
@@ -212,7 +214,10 @@ export const MyNode: React.FC<MyNodeProps> = ({
       if (!oauthUser) {
         return Toast.error("Please login with your Google account first");
       }
-      secretKey = oauthUser.Bc.access_token;
+      if (!accessToken) {
+        onRequestAccessToken();
+      }
+      secretKey = accessToken.access_token;
     }
 
     setIsDestroying.on();
@@ -233,10 +238,10 @@ export const MyNode: React.FC<MyNodeProps> = ({
       });
   };
 
-  let isGCPSigned = false;
-  if (node && node.task.cloud_vendor === CloudVendor.GCP) {
-    isGCPSigned = !oauthUser;
-  }
+  // let isGCPSigned = false;
+  // if (node && node.task.cloud_vendor === CloudVendor.GCP) {
+  //   isGCPSigned = !oauthUser;
+  // }
 
   const menuItems = [
     {
@@ -249,8 +254,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
       hasBadge: skeyBadge,
     },
     {
-      isDisabled:
-        (node ? node.state === "10" : true) || isDestroying || isGCPSigned,
+      isDisabled: (node ? node.state === "10" : true) || isDestroying,
       onClick: onDestroyNode,
       label: "Destroy",
       icon: DeleteIcon,

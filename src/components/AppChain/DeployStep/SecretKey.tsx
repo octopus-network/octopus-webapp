@@ -6,7 +6,6 @@ import {
   Text,
   useColorModeValue,
 } from "@chakra-ui/react";
-import useGCP from "hooks/useGCP";
 import { useEffect } from "react";
 import useSWR from "swr";
 import { CloudVendor } from "types";
@@ -31,8 +30,14 @@ export default function SecretKey({
   const { data: deployConfig } = useSWR("deploy-config");
 
   useEffect(() => {
-    if (!secretKey && cloudVendor === CloudVendor.GCP && projects?.length) {
-      setSecretKey(projects[0]?.projectId);
+    if (!secretKey && cloudVendor === CloudVendor.GCP) {
+      if (projects?.length === 0) {
+        // Toast.error(
+        //   "No project found on GCP console, please create a project first"
+        // );
+      } else {
+        setSecretKey(projects[0]?.projectId);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [secretKey, cloudVendor, projects]);

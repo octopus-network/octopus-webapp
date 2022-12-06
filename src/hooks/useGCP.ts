@@ -6,7 +6,7 @@ const OAUTH_SCOPE =
   "https://www.googleapis.com/auth/cloud-platform.read-only https://www.googleapis.com/auth/compute";
 
 // https://developers.google.com/identity/gsi/web/reference/js-reference
-export default function useGCP() {
+export default function useGCP(request = false) {
   const [oauthUser, setOAuthUser] = useState<any>();
   const [projects, setProjects] = useState<any[]>([]);
   const [accessToken, setAccessToken] = useState<any>();
@@ -27,6 +27,7 @@ export default function useGCP() {
   };
 
   const onLogin = useCallback(() => {
+    console.log("onLogin", CLIENT_ID);
     window.google.accounts.id.initialize({
       client_id: CLIENT_ID,
       callback: handleCredentialResponse,
@@ -52,8 +53,6 @@ export default function useGCP() {
         );
         xhr.send();
         xhr.onload = () => {
-          console.log("xhr.response", JSON.parse(xhr.response).projects);
-
           setProjects(JSON.parse(xhr.response).projects);
         };
       },
@@ -65,14 +64,11 @@ export default function useGCP() {
   }, [CLIENT_ID]);
 
   useEffect(() => {
-    window.google.accounts.id.initialize({
-      client_id: CLIENT_ID,
-      callback: handleCredentialResponse,
-      auto_select: true,
-      state_cookie_domain: "oct.network",
-    });
+    if (!oauthUser && request) {
+      onLogin();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [CLIENT_ID]);
+  }, [request, oauthUser]);
 
   return {
     projects,
