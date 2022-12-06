@@ -31,37 +31,42 @@ export default function useGCP(request = false) {
     window.google.accounts.id.initialize({
       client_id: CLIENT_ID,
       callback: handleCredentialResponse,
+      auto_select: true,
     });
     window.google.accounts.id.prompt();
   }, [CLIENT_ID]);
 
-  const onRequestAccessToken = useCallback(() => {
-    const tokenClient = window.google.accounts.oauth2.initTokenClient({
-      client_id: CLIENT_ID,
-      scope: OAUTH_SCOPE,
-      prompt: "select_account",
-      callback(tokenResponse: any) {
-        setAccessToken(tokenResponse);
-        const xhr = new XMLHttpRequest();
-        xhr.open(
-          "GET",
-          "https://cloudresourcemanager.googleapis.com/v1/projects"
-        );
-        xhr.setRequestHeader(
-          "Authorization",
-          "Bearer " + tokenResponse.access_token
-        );
-        xhr.send();
-        xhr.onload = () => {
-          setProjects(JSON.parse(xhr.response).projects);
-        };
-      },
-      error_callback(error: any) {
-        console.log("error", error);
-      },
-    });
-    tokenClient.requestAccessToken();
-  }, [CLIENT_ID]);
+  const onRequestAccessToken = useCallback(
+    (onGetAccessToken?: (t: any) => void) => {
+      const tokenClient = window.google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: OAUTH_SCOPE,
+        prompt: "select_account",
+        callback(tokenResponse: any) {
+          setAccessToken(tokenResponse);
+          onGetAccessToken && onGetAccessToken(tokenResponse);
+          const xhr = new XMLHttpRequest();
+          xhr.open(
+            "GET",
+            "https://cloudresourcemanager.googleapis.com/v1/projects"
+          );
+          xhr.setRequestHeader(
+            "Authorization",
+            "Bearer " + tokenResponse.access_token
+          );
+          xhr.send();
+          xhr.onload = () => {
+            setProjects(JSON.parse(xhr.response).projects);
+          };
+        },
+        error_callback(error: any) {
+          console.log("error", error);
+        },
+      });
+      tokenClient.requestAccessToken();
+    },
+    [CLIENT_ID]
+  );
 
   useEffect(() => {
     if (!oauthUser && request) {
