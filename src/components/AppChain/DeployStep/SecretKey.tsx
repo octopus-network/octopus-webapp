@@ -30,7 +30,7 @@ export default function SecretKey({
   const { data: deployConfig } = useSWR("deploy-config");
 
   useEffect(() => {
-    if (!secretKey && cloudVendor === CloudVendor.GCP) {
+    if (!secretKey && cloudVendor === CloudVendor.GCP && projects) {
       if (projects?.length === 0) {
         // Toast.error(
         //   "No project found on GCP console, please create a project first"
