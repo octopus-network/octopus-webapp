@@ -1,12 +1,12 @@
-import { theme } from "config"
-import { ChakraProvider } from "@chakra-ui/react"
+import { theme } from "config";
+import { ChakraProvider } from "@chakra-ui/react";
 
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
-} from "react-router-dom"
+} from "react-router-dom";
 
 import {
   Root,
@@ -17,10 +17,11 @@ import {
   Register,
   Dashboard,
   Converter,
-} from "views"
-import { WalletSelectorContextProvider } from "components/WalletSelectorContextProvider"
-import { ToastContainer } from "components/common/toast"
-import "@near-wallet-selector/modal-ui/styles.css"
+} from "views";
+import { WalletSelectorContextProvider } from "components/WalletSelectorContextProvider";
+import { ToastContainer } from "components/common/toast";
+import "@near-wallet-selector/modal-ui/styles.css";
+import Policy from "views/Policy";
 
 export const App = () => (
   <WalletSelectorContextProvider>
@@ -53,10 +54,11 @@ export const App = () => (
             />
             <Route path="register" element={<Register />} />
             <Route path="dashboard" element={<Dashboard />} />
+            <Route path="policy" element={<Policy />} />
           </Route>
         </Routes>
       </Router>
       <ToastContainer />
     </ChakraProvider>
   </WalletSelectorContextProvider>
-)
+);

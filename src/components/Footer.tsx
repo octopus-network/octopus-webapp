@@ -1,4 +1,4 @@
-import React from "react"
+import React from "react";
 
 import {
   Container,
@@ -8,15 +8,15 @@ import {
   Link,
   Text,
   Icon,
-} from "@chakra-ui/react"
+} from "@chakra-ui/react";
 
-import { AiFillTwitterCircle, AiFillGithub } from "react-icons/ai"
+import { AiFillTwitterCircle, AiFillGithub } from "react-icons/ai";
 
-import { FaDiscord } from "react-icons/fa"
-import { useWalletSelector } from "./WalletSelectorContextProvider"
+import { FaDiscord } from "react-icons/fa";
+import { useWalletSelector } from "./WalletSelectorContextProvider";
 
 export const Footer: React.FC = () => {
-  const { networkConfig } = useWalletSelector()
+  const { networkConfig } = useWalletSelector();
 
   return (
     <Container pt={4} pb={4}>
@@ -59,6 +59,18 @@ export const Footer: React.FC = () => {
           >
             Token Contract
           </Link>
+          <Text variant="gray" opacity=".5">
+            |
+          </Text>
+          <Link
+            variant="gray-underline"
+            whiteSpace="nowrap"
+            href={`/policy`}
+            overflow="hidden"
+            textOverflow="ellipsis"
+          >
+            Policy
+          </Link>
         </HStack>
         <HStack spacing={3}>
           <Text variant="gray">&copy; 2022 Octopus Network</Text>
@@ -86,5 +98,5 @@ export const Footer: React.FC = () => {
         </HStack>
       </Stack>
     </Container>
-  )
-}
+  );
+};
