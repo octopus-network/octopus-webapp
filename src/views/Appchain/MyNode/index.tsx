@@ -193,28 +193,11 @@ export const MyNode: React.FC<MyNodeProps> = ({
     validatorSessionKey = validatorSessionKeys[validator.validator_id];
   }
 
-  const { oauthUser } = useGCP();
-  const onDestroyNode = () => {
-    let secretKey;
+  const { oauthUser, onRequestAccessToken, accessToken } = useGCP(
+    currentVendor === CloudVendor.GCP
+  );
 
-    if ([CloudVendor.AWS, CloudVendor.DO].includes(currentVendor)) {
-      secretKey = window.prompt(
-        CloudVendor.AWS === currentVendor
-          ? "Please enter the secret key of your server"
-          : "Please enter the personal access token of your server",
-        ""
-      );
-
-      if (!secretKey) {
-        return;
-      }
-    } else if (currentVendor === CloudVendor.GCP) {
-      if (!oauthUser) {
-        return Toast.error("Please login with your Google account first");
-      }
-      secretKey = oauthUser.Bc.access_token;
-    }
-
+  const destroyNode = (secretKey: string) => {
     setIsDestroying.on();
     Toast.info("Destroying node, check details on your instance");
     axios
@@ -225,18 +208,46 @@ export const MyNode: React.FC<MyNodeProps> = ({
         headers: { authorization: node?.user! },
       })
       .then((res) => {
-        setIsDestroying.off();
         window.location.reload();
       })
       .catch(() => {
         setIsDestroying.off();
       });
   };
+  const onDestroyNode = async () => {
+    let secretKey: string;
 
-  let isGCPSigned = false;
-  if (node && node.task.cloud_vendor === CloudVendor.GCP) {
-    isGCPSigned = !oauthUser;
-  }
+    if ([CloudVendor.AWS, CloudVendor.DO].includes(currentVendor)) {
+      secretKey =
+        window.prompt(
+          CloudVendor.AWS === currentVendor
+            ? "Please enter the secret key of your server"
+            : "Please enter the personal access token of your server",
+          ""
+        ) || "";
+
+      if (!secretKey) {
+        return;
+      }
+    } else if (currentVendor === CloudVendor.GCP) {
+      if (!oauthUser) {
+        return Toast.error("Please login with your Google account first");
+      }
+      if (!accessToken) {
+        onRequestAccessToken((t) => {
+          if (!t.access_token) {
+            return Toast.error("Failed to get access token");
+          }
+          destroyNode(t.access_token);
+        });
+        return;
+      } else {
+        secretKey = accessToken.access_token;
+      }
+    }
+
+    destroyNode(secretKey!);
+  };
 
   const menuItems = [
     {
@@ -249,8 +260,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
       hasBadge: skeyBadge,
     },
     {
-      isDisabled:
-        (node ? node.state === "10" : true) || isDestroying || isGCPSigned,
+      isDisabled: (node ? node.state === "10" : true) || isDestroying,
       onClick: onDestroyNode,
       label: "Destroy",
       icon: DeleteIcon,
