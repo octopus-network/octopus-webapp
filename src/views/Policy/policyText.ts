@@ -35,7 +35,7 @@ Want to learn more about what Octopus Network does with any information we colle
 
 **TABLE OF CONTENTS**
 
-[1.WHAT INFORMATION DO WE COLLECT?](#infocollect)
+[1. WHAT INFORMATION DO WE COLLECT?](#infocollect)
 
 [2. HOW DO WE PROCESS YOUR INFORMATION?](#infouse)
 

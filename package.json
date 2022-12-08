@@ -27,6 +27,7 @@
     "borsh": "^0.7.0",
     "buffer": "^6.0.3",
     "chakra-react-select": "^4.2.2",
+    "chakra-ui-markdown-renderer": "^4.1.0",
     "crypto-browserify": "^3.12.0",
     "dayjs": "^1.11.6",
     "decimal.js": "^10.4.2",
