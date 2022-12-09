@@ -22,6 +22,7 @@ import failedToLoad from "assets/failed_to_load.svg";
 import { ApiPromise } from "@polkadot/api";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
 import { hexToString } from "@polkadot/util";
+import { getAppchainNFTs } from "utils/bridge";
 
 type SelectTokenModalProps = {
   isOpen: boolean;
@@ -68,6 +69,8 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
       return;
     }
 
+    console.log("isReverse", isReverse);
+
     if (isReverse) {
       const promises = collectibleClasses.map((classId) => {
         try {
@@ -92,6 +95,8 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
             })
             .catch(console.error);
         } catch (error) {
+          console.log("error", error);
+
           return null;
         }
       });
@@ -119,83 +124,15 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
         return;
       }
 
-      const promises = collectibleClasses.map((classId) => {
-        return appchainApi.query.octopusUniques.class(classId).then((info) => {
-          const { instances, items } = (info?.toJSON() as any) || {};
+      getAppchainNFTs(
+        collectibleClasses,
+        appchainApi,
+        fromAccount,
+        appchainId
+      ).then((res) => {
+        console.log("getAppchainNFTs", res);
 
-          const count = instances || items || 0;
-
-          const tmpPromises = [];
-
-          for (let i = 0; i <= count; i++) {
-            tmpPromises.push(
-              appchainApi.query.octopusUniques
-                .asset(classId, i)
-                .then(async (res) => {
-                  try {
-                    if (res) {
-                      const _res =
-                        await appchainApi.query.octopusUniques.instanceMetadataOf(
-                          classId,
-                          i
-                        );
-                      const unique = res.toJSON() as any;
-
-                      if (!(unique && unique.owner === fromAccount)) {
-                        return null;
-                      }
-
-                      const metadataHuman = _res.toHuman() as any;
-
-                      if (!metadataHuman) {
-                        return null;
-                      }
-
-                      const metadata = JSON.parse(
-                        hexToString(metadataHuman.data)
-                      );
-
-                      if (!metadata || !unique) {
-                        return null;
-                      }
-
-                      return {
-                        ...(unique as any),
-                        id: i,
-                        class: classId,
-                        metadata: metadata,
-                      };
-                    }
-                  } catch (error) {
-                    console.error(error);
-                  }
-
-                  return null;
-                })
-            );
-          }
-
-          return Promise.all(tmpPromises as any).then((res) => {
-            return res?.filter((item) => !!item);
-          });
-        });
-      });
-
-      Promise.all(promises).then((res) => {
-        const tmpArr: any[] = res?.length
-          ? res.flat(Infinity).map((item: any) => {
-              console.log("item", item);
-
-              return {
-                id: item.id,
-                class: item.class,
-                owner: item.owner,
-                metadata: item.metadata,
-              };
-            })
-          : [];
-
-        setCollectibles(tmpArr);
+        setCollectibles(res);
       });
     }
   }, [

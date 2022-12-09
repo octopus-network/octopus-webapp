@@ -173,7 +173,7 @@ const INSTANCES: Record<
     instance_type: "e2-small",
     volume_size: "120",
     type: {
-      desc: "ec2 t3.small",
+      desc: "e2-small",
       price: "14.4",
       unit: "m",
     },
