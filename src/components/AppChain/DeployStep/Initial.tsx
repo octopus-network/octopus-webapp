@@ -1,8 +1,7 @@
 import {
   Box,
-  Button,
   Flex,
-  Icon,
+  Img,
   Input,
   Text,
   useColorModeValue,
@@ -12,8 +11,7 @@ import { Select, chakraComponents } from "chakra-react-select";
 import { FaAws, FaDigitalOcean } from "react-icons/fa";
 import { SiGooglecloud } from "react-icons/si";
 import { useEffect } from "react";
-import { FcGoogle } from "react-icons/fc";
-import useGCP from "hooks/useGCP";
+import GoogleSignIn from "assets/google_signin.png";
 
 const VendorIcons = {
   [CloudVendor.AWS]: FaAws,
@@ -127,15 +125,16 @@ export default function Initial({
               (oauthUser ? (
                 <Text pl={4}>{oauthUser.email}</Text>
               ) : (
-                <Button
-                  size="sm"
+                <Img
+                  src={GoogleSignIn}
+                  width="183px"
+                  height="44px"
+                  alt="Google Sign In"
+                  borderRadius={10}
+                  ml={8}
                   onClick={onLogin}
-                  variant="ghost"
-                  colorScheme="octo-blue"
-                  ml={4}
-                >
-                  <Icon as={FcGoogle} mr={1} /> Sign in with Google
-                </Button>
+                  cursor="pointer"
+                />
               ))}
           </Flex>
         </Flex>
