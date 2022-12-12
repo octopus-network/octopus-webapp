@@ -1,17 +1,9 @@
-import {
-  Box,
-  Flex,
-  Img,
-  Input,
-  Text,
-  useColorModeValue,
-} from "@chakra-ui/react";
+import { Box, Flex, Input, Text, useColorModeValue } from "@chakra-ui/react";
 import { CloudVendor, Validator } from "types";
 import { Select, chakraComponents } from "chakra-react-select";
 import { FaAws, FaDigitalOcean } from "react-icons/fa";
 import { SiGooglecloud } from "react-icons/si";
 import { useEffect } from "react";
-import GoogleSignIn from "assets/google_signin.png";
 
 const VendorIcons = {
   [CloudVendor.AWS]: FaAws,
@@ -125,16 +117,7 @@ export default function Initial({
               (oauthUser ? (
                 <Text pl={4}>{oauthUser.email}</Text>
               ) : (
-                <Img
-                  src={GoogleSignIn}
-                  width="183px"
-                  height="44px"
-                  alt="Google Sign In"
-                  borderRadius={10}
-                  ml={8}
-                  onClick={onLogin}
-                  cursor="pointer"
-                />
+                <Text pl={4}></Text>
               ))}
           </Flex>
         </Flex>

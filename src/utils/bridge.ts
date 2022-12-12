@@ -1,3 +1,4 @@
+/* eslint-disable no-loop-func */
 import { Wallet } from "@near-wallet-selector/core";
 import { ApiPromise } from "@polkadot/api";
 import { isHex, stringToHex, u8aToHex } from "@polkadot/util";
@@ -19,6 +20,7 @@ import { DecimalUtil, ZERO_DECIMAL } from "./decimal";
 import BN from "bn.js";
 import Decimal from "decimal.js";
 import { request } from "graphql-request";
+import { hexToString } from "@polkadot/util";
 
 let _signer: ethers.providers.JsonRpcSigner | null = null;
 
@@ -566,5 +568,116 @@ export async function evmLockNft(
     await contract.lock_nft(class_id, instance_id, receiver_id);
   } catch (error) {
     throw error;
+  }
+}
+
+export async function getAppchainNFTs(
+  classIds: number[],
+  appchainApi: ApiPromise,
+  account: string,
+  appchainId: string
+) {
+  try {
+    // const allEntries = await appchainApi.query.ormlNFT.tokensByOwner.entries();
+    // const owned = ownedRes.toJSON() as any;
+    // allEntries.forEach(([a, b]) => {
+    //   console.log(`${a.toString()} : ${b.toString()}`);
+    // });
+
+    const promises = classIds.map((classId) => {
+      return appchainApi.query.octopusUniques.class(classId).then((info) => {
+        const { instances, items } = (info?.toJSON() as any) || {};
+
+        const count = instances || items || 0;
+
+        const tmpPromises = [];
+
+        for (let i = 0; i <= count; i++) {
+          if (appchainId === "uniqueone-appchain") {
+            const p = appchainApi.query.ormlNFT
+              .tokens(classId, i)
+              .then((res) => {
+                if (res) {
+                  const unique = res.toJSON() as any;
+
+                  // console.log("unique", classId, i, unique);
+                  if (!(unique && unique.data.creator === account)) {
+                    return null;
+                  }
+                  const metadata = JSON.parse(hexToString(unique.metadata));
+                  // console.log("metadata", metadata);
+
+                  return {
+                    id: i,
+                    class: classId,
+                    metadata: metadata,
+                    owner: account,
+                  };
+                }
+                return null;
+              });
+            tmpPromises.push(p);
+          } else {
+            const p = appchainApi.query.octopusUniques
+              .asset(classId, i)
+              .then(async (res) => {
+                try {
+                  if (res) {
+                    const _res =
+                      await appchainApi.query.octopusUniques.instanceMetadataOf(
+                        classId,
+                        i
+                      );
+
+                    const unique = res.toJSON() as any;
+
+                    if (!(unique && unique.owner === account)) {
+                      return null;
+                    }
+
+                    const metadataHuman = _res.toHuman() as any;
+
+                    if (!metadataHuman) {
+                      return null;
+                    }
+
+                    const metadata = JSON.parse(
+                      hexToString(metadataHuman.data)
+                    );
+
+                    if (!metadata || !unique) {
+                      return null;
+                    }
+
+                    return {
+                      ...(unique as any),
+                      id: i,
+                      class: classId,
+                      metadata: metadata,
+                    };
+                  }
+                } catch (error) {
+                  console.error(error);
+                }
+
+                return null;
+              });
+            tmpPromises.push(p);
+          }
+        }
+
+        return Promise.all(tmpPromises as any).then((res) => {
+          return res?.filter((item) => !!item);
+        });
+      });
+    });
+    const ress = await Promise.all(promises);
+    const tmpArr: any[] = ress?.length ? ress.flat(Infinity) : [];
+
+    return tmpArr;
+  } catch (error) {
+    console.log("error", error);
+
+    return [];
   }
 }

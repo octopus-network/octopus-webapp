@@ -82,7 +82,6 @@ export const MyNode: React.FC<MyNodeProps> = ({
   const [nodeMetrics, setNodeMetrics] = useState<NodeMetric>();
 
   const [instanceInfoModalOpen, setInstanceInfoModalOpen] = useBoolean();
-  const [isManuallyDeployed, setIsManuallyDeployed] = useBoolean();
   const [setSessionKeyModalOpen, setSetSessionKeyModalOpen] = useBoolean(false);
 
   const { data: deployConfig } = useSWR("deploy-config");
@@ -90,6 +89,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
   const { accountId, network } = useWalletSelector();
 
   const [vendorKeys, setVendorKeys] = useLocalStorage("vendorKeys", null);
+
   const currentVendor =
     vendorKeys && appchainId && vendorKeys[appchainId]
       ? vendorKeys[appchainId].vendor
@@ -98,14 +98,6 @@ export const MyNode: React.FC<MyNodeProps> = ({
     vendorKeys && appchainId && vendorKeys[appchainId]
       ? vendorKeys[appchainId].key
       : "";
-
-  useEffect(() => {
-    if (appchainId) {
-      const ismd = localStorage.getItem(`manually-deployed-${appchainId}`);
-      ismd === "true" && setIsManuallyDeployed.on();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appchainId]);
 
   const fetchNode = async () => {
     setIsInitializing.on();
@@ -177,7 +169,6 @@ export const MyNode: React.FC<MyNodeProps> = ({
   }, [node, appchainId, accountId, currentVendor, currentKey]);
 
   const onClearCache = () => {
-    window.localStorage.removeItem(`manually-deployed-${appchainId}`);
     setVendorKeys({
       ...(vendorKeys || {}),
       [appchainId!]: { vendor: "", key: "" },
@@ -251,9 +242,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
 
   const menuItems = [
     {
-      isDisabled: isManuallyDeployed
-        ? false
-        : !appchainApi || !node?.skey || !validator,
+      isDisabled: !appchainApi || !node?.skey || !validator,
       onClick: setSetSessionKeyModalOpen.on,
       label: "Set Session Key",
       icon: TiKey,

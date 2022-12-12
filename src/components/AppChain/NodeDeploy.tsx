@@ -2,13 +2,14 @@ import {
   Button,
   Center,
   Flex,
+  Img,
   Link,
   Spinner,
   Text,
   useBoolean,
 } from "@chakra-ui/react";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   AnchorContract,
   AppchainInfo,
@@ -24,6 +25,7 @@ import NodeManager from "utils/NodeManager";
 import { CLOUD_NODE_INSTANCES } from "config/constants";
 import useLocalStorage from "hooks/useLocalStorage";
 import useGCP from "hooks/useGCP";
+import GoogleSignIn from "assets/google_signin.png";
 
 enum DeployStep {
   NEED_ACCESS_KEY,
@@ -59,20 +61,9 @@ export default function NodeDeploy({
   const [accessKey, setAccessKey] = useState<string>(currentAccessKey);
   const [secretKey, setSecretKey] = useState<string>("");
   const [deployRegion, setDeployRegion] = useState<string>("");
-  const [isManuallyDeployed, setIsManuallyDeployed] = useBoolean();
   const [isDeploying, setIsDeploying] = useBoolean();
   const [registerValidatorModalOpen, setRegisterValidatorModalOpen] =
     useBoolean(false);
-
-  useEffect(() => {
-    if (appchainId) {
-      const ismd = localStorage.getItem(`manually-deployed-${appchainId}`);
-      ismd === "true" && setIsManuallyDeployed.on();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appchainId]);
-
-  const isUnbonding = !!(validator && validator?.is_unbonding);
 
   const { onLogin, oauthUser, onRequestAccessToken, projects, accessToken } =
     useGCP();
@@ -94,6 +85,8 @@ export default function NodeDeploy({
       return Toast.error("Please connect wallet");
     }
 
+    console.log("oauthUser", oauthUser);
+
     setStep(DeployStep.CONFIRMED_ACCESS_KEY);
     if (cloudVendor === CloudVendor.GCP) {
       if (!oauthUser) {
@@ -101,9 +94,8 @@ export default function NodeDeploy({
       }
       setVendorKeys({
         ...(vendorKeys || {}),
-        [appchainId]: { vendor: cloudVendor, key: oauthUser.sub },
+        [appchainId]: { vendor: cloudVendor, key: oauthUser.id },
       });
-      onRequestAccessToken();
     } else {
       setVendorKeys({
         ...(vendorKeys || {}),
@@ -161,7 +153,7 @@ export default function NodeDeploy({
         accessKey: accessToken?.access_token || "",
         instance_type: instance.instance_type,
         volume_size: instance.volume_size,
-        gcpId: cloudVendor === CloudVendor.GCP ? oauthUser?.sub : undefined,
+        gcpId: cloudVendor === CloudVendor.GCP ? oauthUser?.id : undefined,
       });
       setIsDeploying.off();
       fetchNode();
@@ -171,21 +163,9 @@ export default function NodeDeploy({
     }
   };
 
-  if (validator && isManuallyDeployed) {
-    return (
-      <>
-        <Center minH="175px">
-          <Text fontSize="md" color="gray.500">
-            You have deployed a node for this appchain manually.
-          </Text>
-        </Center>
-      </>
-    );
-  }
-
   return (
     <>
-      {step === DeployStep.NEED_ACCESS_KEY && !isManuallyDeployed && (
+      {step === DeployStep.NEED_ACCESS_KEY && (
         <Initial
           validator={validator}
           cloudVendor={cloudVendor}
@@ -214,9 +194,20 @@ export default function NodeDeploy({
         />
       )}
 
-      {!isManuallyDeployed && (
-        <Flex m={2} flexDirection="column" gap={2}>
-          <Flex direction="row" gap={2}>
+      <Flex m={2} flexDirection="column" gap={2}>
+        <Flex direction="row" justify="center">
+          {cloudVendor === CloudVendor.GCP && !accessKey ? (
+            <Img
+              src={GoogleSignIn}
+              height="60px"
+              alt="Google Sign In"
+              borderRadius={10}
+              onClick={() =>
+                onRequestAccessToken((res) => console.log("###res", res))
+              }
+              cursor="pointer"
+            />
+          ) : (
             <Button
               colorScheme="octo-blue"
               flex={"1"}
@@ -229,72 +220,22 @@ export default function NodeDeploy({
               }}
               isDisabled={isBtnDisabled}
             >
-              {step === DeployStep.NEED_SECRECT_KEY ? "Confirm" : "Deploy"}
+              {step === DeployStep.NEED_SECRECT_KEY ? "Confirm" : "Next"}
             </Button>
-
-            {step === DeployStep.NEED_ACCESS_KEY && [
-              <Text key="divider" padding="2">
-                OR
-              </Text>,
-              <Button
-                colorScheme="octo-blue"
-                key="button"
-                variant="outline"
-                flex="1"
-                onClick={() => {
-                  localStorage.setItem(
-                    `manually-deployed-${appchainId}`,
-                    "true"
-                  );
-                  setIsManuallyDeployed.on();
-                }}
-              >
-                Deployed manually
-              </Button>,
-            ]}
-          </Flex>
-          <Text textAlign="center" mt={4}>
-            Learn about{" "}
-            <Link
-              href="https://docs.oct.network/maintain/validator-deploy.html#deploy-validator-node"
-              variant="blue-underline"
-              isExternal
-              ml={2}
-            >
-              Deploy Validator Node
-            </Link>
-          </Text>
+          )}
         </Flex>
-      )}
-
-      {validator &&
-        step === DeployStep.NEED_ACCESS_KEY &&
-        isManuallyDeployed && (
-          <Flex direction="column" mt={2} mb={2} gap={6}>
-            <Button
-              onClick={onConfirmAccessKey}
-              colorScheme="octo-blue"
-              isDisabled={!accountId || isUnbonding}
-              width="100%"
-            >
-              Confirm Your{" "}
-              {cloudVendor === CloudVendor.AWS ? "Access Key" : "Token Name"}
-            </Button>
-          </Flex>
-        )}
-
-      {isManuallyDeployed && (
-        <Flex direction="column" mt={2} mb={2} gap={6}>
-          <Button
-            onClick={setRegisterValidatorModalOpen.on}
-            colorScheme="octo-blue"
-            isDisabled={!accountId || isUnbonding}
-            width="100%"
+        <Text textAlign="center" mt={4}>
+          Learn about{" "}
+          <Link
+            href="https://docs.oct.network/maintain/validator-deploy.html#deploy-validator-node"
+            variant="blue-underline"
+            isExternal
+            ml={2}
           >
-            Register Validator
-          </Button>
-        </Flex>
-      )}
+            Deploy Validator Node
+          </Link>
+        </Text>
+      </Flex>
 
       <RegisterValidatorModal
         isOpen={registerValidatorModalOpen}
