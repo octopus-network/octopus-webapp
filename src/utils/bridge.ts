@@ -578,6 +578,12 @@ export async function getAppchainNFTs(
   appchainId: string
 ) {
   try {
+    // const allEntries = await appchainApi.query.ormlNFT.tokensByOwner.entries();
+    // const owned = ownedRes.toJSON() as any;
+    // allEntries.forEach(([a, b]) => {
+    //   console.log(`${a.toString()} : ${b.toString()}`);
+    // });
+
     const promises = classIds.map((classId) => {
       return appchainApi.query.octopusUniques.class(classId).then((info) => {
         const { instances, items } = (info?.toJSON() as any) || {};
@@ -594,10 +600,13 @@ export async function getAppchainNFTs(
                 if (res) {
                   const unique = res.toJSON() as any;
 
+                  // console.log("unique", classId, i, unique);
                   if (!(unique && unique.data.creator === account)) {
                     return null;
                   }
                   const metadata = JSON.parse(hexToString(unique.metadata));
+                  // console.log("metadata", metadata);
+
                   return {
                     id: i,
                     class: classId,
@@ -667,6 +676,8 @@ export async function getAppchainNFTs(
 
     return tmpArr;
   } catch (error) {
+    console.log("error", error);
+
     return [];
   }
 }

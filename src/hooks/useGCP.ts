@@ -5,7 +5,6 @@ import { b64utoutf8, KJUR } from "jsrsasign";
 const OAUTH_SCOPE =
   "https://www.googleapis.com/auth/cloud-platform.read-only https://www.googleapis.com/auth/compute";
 
-// https://developers.google.com/identity/gsi/web/reference/js-reference
 export default function useGCP(request = false) {
   const [oauthUser, setOAuthUser] = useState<any>();
   const [projects, setProjects] = useState<any[]>([]);
@@ -58,6 +57,20 @@ export default function useGCP(request = false) {
           xhr.onload = () => {
             setProjects(JSON.parse(xhr.response).projects);
           };
+
+          const profileXhr = new XMLHttpRequest();
+          profileXhr.open(
+            "GET",
+            "https://www.googleapis.com/oauth2/v1/userinfo?alt=json"
+          );
+          profileXhr.setRequestHeader(
+            "Authorization",
+            "Bearer " + tokenResponse.access_token
+          );
+          profileXhr.send();
+          profileXhr.onload = () => {
+            setOAuthUser(JSON.parse(profileXhr.response));
+          };
         },
         error_callback(error: any) {
           console.log("error", error);
@@ -70,7 +83,7 @@ export default function useGCP(request = false) {
 
   useEffect(() => {
     if (!oauthUser && request) {
-      onLogin();
+      // onLogin();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [request, oauthUser]);
