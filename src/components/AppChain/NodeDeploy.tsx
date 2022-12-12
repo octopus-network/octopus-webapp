@@ -85,8 +85,6 @@ export default function NodeDeploy({
       return Toast.error("Please connect wallet");
     }
 
-    console.log("oauthUser", oauthUser);
-
     setStep(DeployStep.CONFIRMED_ACCESS_KEY);
     if (cloudVendor === CloudVendor.GCP) {
       if (!oauthUser) {
@@ -196,7 +194,7 @@ export default function NodeDeploy({
 
       <Flex m={2} flexDirection="column" gap={2}>
         <Flex direction="row" justify="center">
-          {cloudVendor === CloudVendor.GCP && !accessKey ? (
+          {cloudVendor === CloudVendor.GCP && !oauthUser ? (
             <Img
               src={GoogleSignIn}
               height="60px"
