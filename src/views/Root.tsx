@@ -132,7 +132,6 @@ export const Root: React.FC = () => {
     );
 
     const txHashes = transactionHashes.split(",");
-    console.log("txHashes", txHashes);
 
     const lastTxHash = txHashes[txHashes.length - 1];
     provider
@@ -140,7 +139,6 @@ export const Root: React.FC = () => {
       .then((status) => {
         const { receipts_outcome } = status;
         let message = "";
-        console.log("receipts_outcome", receipts_outcome);
 
         for (let i = 0; i < receipts_outcome.length; i++) {
           const { outcome } = receipts_outcome[i];
@@ -154,8 +152,6 @@ export const Root: React.FC = () => {
           if (outcome.logs?.length) {
             for (let j = 0; j < outcome.logs.length; j++) {
               const log = outcome.logs[j];
-
-              console.log("log", log);
 
               const reg1 =
                   /Wrapped appchain token burnt in contract '(.+)' by '(.+)' for '(.+)' of appchain. Amount: '(.+)', Crosschain notification index: '(.+)'/,

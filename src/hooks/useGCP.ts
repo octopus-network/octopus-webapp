@@ -21,12 +21,10 @@ export default function useGCP(request = false) {
     const payloadObj = KJUR.jws.JWS.readSafeJSONString(
       b64utoutf8(e.credential.split(".")[1])
     );
-    console.log("headerObj", payloadObj);
     setOAuthUser(payloadObj);
   };
 
   const onLogin = useCallback(() => {
-    console.log("onLogin", CLIENT_ID);
     window.google.accounts.id.initialize({
       client_id: CLIENT_ID,
       callback: handleCredentialResponse,
