@@ -600,7 +600,7 @@ export async function getAppchainNFTs(
                 if (res) {
                   const unique = res.toJSON() as any;
 
-                  // console.log("unique", classId, i, unique);
+                  console.log("unique", classId, i, unique);
                   if (!(unique && unique.data.creator === account)) {
                     return null;
                   }

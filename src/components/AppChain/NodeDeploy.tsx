@@ -87,12 +87,14 @@ export default function NodeDeploy({
 
     setStep(DeployStep.CONFIRMED_ACCESS_KEY);
     if (cloudVendor === CloudVendor.GCP) {
+      console.log("oauthUser", oauthUser);
+
       if (!oauthUser) {
         return Toast.error("Please login with Google first");
       }
       setVendorKeys({
         ...(vendorKeys || {}),
-        [appchainId]: { vendor: cloudVendor, key: oauthUser.id },
+        [appchainId]: { vendor: cloudVendor, key: oauthUser.sub },
       });
     } else {
       setVendorKeys({
@@ -121,7 +123,10 @@ export default function NodeDeploy({
 
   let isBtnDisabled = false;
   if (step === DeployStep.NEED_ACCESS_KEY) {
-    isBtnDisabled = !accessKey || isDeploying;
+    isBtnDisabled =
+      !accessKey ||
+      isDeploying ||
+      (cloudVendor === CloudVendor.GCP && !oauthUser);
   } else if (step === DeployStep.NEED_SECRECT_KEY) {
     isBtnDisabled = !secretKey;
   } else if (step === DeployStep.CONFIRMED_ACCESS_KEY) {
@@ -151,7 +156,7 @@ export default function NodeDeploy({
         accessKey: accessToken?.access_token || "",
         instance_type: instance.instance_type,
         volume_size: instance.volume_size,
-        gcpId: cloudVendor === CloudVendor.GCP ? oauthUser?.id : undefined,
+        gcpId: cloudVendor === CloudVendor.GCP ? oauthUser?.sub : undefined,
       });
       setIsDeploying.off();
       fetchNode();
@@ -194,33 +199,26 @@ export default function NodeDeploy({
 
       <Flex m={2} flexDirection="column" gap={2}>
         <Flex direction="row" justify="center">
-          {cloudVendor === CloudVendor.GCP && !oauthUser ? (
-            <Img
-              src={GoogleSignIn}
-              height="60px"
-              alt="Google Sign In"
-              borderRadius={10}
-              onClick={() =>
-                onRequestAccessToken((res) => console.log("###res", res))
-              }
-              cursor="pointer"
-            />
-          ) : (
-            <Button
-              colorScheme="octo-blue"
-              flex={"1"}
-              onClick={() => {
-                if (step === DeployStep.NEED_ACCESS_KEY && accessKey) {
+          <Button
+            colorScheme="octo-blue"
+            flex={"1"}
+            onClick={() => {
+              if (step === DeployStep.NEED_ACCESS_KEY && accessKey) {
+                if (cloudVendor === CloudVendor.GCP) {
+                  onRequestAccessToken(() => {
+                    onConfirmAccessKey();
+                  });
+                } else {
                   onConfirmAccessKey();
-                } else if (step === DeployStep.NEED_SECRECT_KEY && secretKey) {
-                  onDeploy();
                 }
-              }}
-              isDisabled={isBtnDisabled}
-            >
-              {step === DeployStep.NEED_SECRECT_KEY ? "Confirm" : "Next"}
-            </Button>
-          )}
+              } else if (step === DeployStep.NEED_SECRECT_KEY && secretKey) {
+                onDeploy();
+              }
+            }}
+            isDisabled={isBtnDisabled}
+          >
+            {step === DeployStep.NEED_SECRECT_KEY ? "Confirm" : "Next"}
+          </Button>
         </Flex>
         <Text textAlign="center" mt={4}>
           Learn about{" "}

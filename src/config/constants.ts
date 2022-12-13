@@ -62,11 +62,11 @@ const INSTANCES: Record<
   Record<string, Record<string, string> | string>
 > = {
   t3: {
-    instance_type: "t3.small",
+    instance_type: "c5.large",
     volume_size: "120",
     type: {
-      desc: "ec2 t3.small",
-      price: "14.4",
+      desc: "ec2 c5.large",
+      price: "61.2",
       unit: "m",
     },
     storage: {
@@ -81,15 +81,15 @@ const INSTANCES: Record<
     },
     hd: {
       cpu: "2 vCPUs",
-      ram: "2.0 GiB",
+      ram: "4.0 GiB",
     },
     total: {
-      price: "45",
+      price: "92.2",
       unit: "m",
     },
   },
   t5: {
-    instance_type: "c3.large",
+    instance_type: "c5.large",
     volume_size: "250",
     type: {
       desc: "ec2 c5.large",
@@ -111,7 +111,7 @@ const INSTANCES: Record<
       ram: "4.0 GiB",
     },
     total: {
-      price: "509",
+      price: "508.2",
       unit: "m",
     },
   },
@@ -169,30 +169,57 @@ const INSTANCES: Record<
       unit: "m",
     },
   },
-  e2: {
-    instance_type: "e2-small",
+  "e2-standard-2": {
+    instance_type: "e2-standard-2",
     volume_size: "120",
     type: {
-      desc: "e2-small",
-      price: "14.4",
+      desc: "e2-standard-2",
+      price: "49.92",
       unit: "m",
     },
     storage: {
       desc: "120GB",
-      price: "22",
+      price: "20.4",
       unit: "m",
     },
     dataTransfer: {
       desc: "100GB",
-      price: "0.09",
+      price: "0.11",
       unit: "G",
     },
     hd: {
       cpu: "2 vCPUs",
-      ram: "2.0 GiB",
+      ram: "8.0 GiB",
     },
     total: {
-      price: "93",
+      price: "81.32",
+      unit: "m",
+    },
+  },
+  "e2-standard-4": {
+    instance_type: "e2-standard-2",
+    volume_size: "250",
+    type: {
+      desc: "e2-standard-2",
+      price: "49.92",
+      unit: "m",
+    },
+    storage: {
+      desc: "250GB",
+      price: "42.5",
+      unit: "m",
+    },
+    dataTransfer: {
+      desc: "4500GB",
+      price: "0.11",
+      unit: "G",
+    },
+    hd: {
+      cpu: "2 vCPUs",
+      ram: "8.0 GiB",
+    },
+    total: {
+      price: "587.42",
       unit: "m",
     },
   },
@@ -202,36 +229,36 @@ export const CLOUD_NODE_INSTANCES: Record<string, any> = {
   [OCTNetwork.ATOCHA]: {
     [CloudVendor.AWS]: INSTANCES["t3"],
     [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb"],
-    [CloudVendor.GCP]: INSTANCES["e2"],
+    [CloudVendor.GCP]: INSTANCES["e2-standard-2"],
   },
   [OCTNetwork.DEIP]: {
     [CloudVendor.AWS]: INSTANCES["t3"],
     [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb"],
-    [CloudVendor.GCP]: INSTANCES["e2"],
+    [CloudVendor.GCP]: INSTANCES["e2-standard-2"],
   },
   [OCTNetwork.DEBIO_NETWORK]: {
     [CloudVendor.AWS]: INSTANCES["t3"],
     [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb"],
-    [CloudVendor.GCP]: INSTANCES["e2"],
+    [CloudVendor.GCP]: INSTANCES["e2-standard-2"],
   },
   [OCTNetwork.MYRIAD]: {
     [CloudVendor.AWS]: INSTANCES["t3"],
     [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb"],
-    [CloudVendor.GCP]: INSTANCES["e2"],
+    [CloudVendor.GCP]: INSTANCES["e2-standard-2"],
   },
   [OCTNetwork.FUSOTAO]: {
     [CloudVendor.AWS]: INSTANCES["t5"],
     [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb-fusotao"],
-    [CloudVendor.GCP]: INSTANCES["e2"],
+    [CloudVendor.GCP]: INSTANCES["e2-standard-4"],
   },
   [OCTNetwork.DISCOVOL]: {
     [CloudVendor.AWS]: INSTANCES["t3"],
     [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb"],
-    [CloudVendor.GCP]: INSTANCES["e2"],
+    [CloudVendor.GCP]: INSTANCES["e2-standard-2"],
   },
   [OCTNetwork.BARNANCLE_0918]: {
     [CloudVendor.AWS]: INSTANCES["t3"],
     [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb"],
-    [CloudVendor.GCP]: INSTANCES["e2"],
+    [CloudVendor.GCP]: INSTANCES["e2-standard-2"],
   },
 };

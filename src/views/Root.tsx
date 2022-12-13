@@ -41,6 +41,7 @@ export const Root: React.FC = () => {
   const location = useLocation();
 
   const navigate = useNavigate();
+  console.log("location", location);
 
   const toast = useToast();
   const toastIdRef = useRef<any>();
@@ -49,7 +50,7 @@ export const Root: React.FC = () => {
     []
   );
 
-  const { accountId, networkConfig } = useWalletSelector();
+  const { accountId, networkConfig, selector } = useWalletSelector();
   const { updateTxn } = useTxnsStore();
 
   const matchMutate = useMatchMutate();
@@ -117,6 +118,8 @@ export const Root: React.FC = () => {
     const transactionHashes = urlParams.get("transactionHashes") || "";
     const errorMessage = urlParams.get("errorMessage") || "";
 
+    console.log("transactionHashes", transactionHashes);
+
     if (errorMessage) {
       Toast.error(decodeURIComponent(errorMessage));
       clearMessageAndHashes();
@@ -127,9 +130,9 @@ export const Root: React.FC = () => {
       return;
     }
 
-    const provider = new providers.JsonRpcProvider(
-      networkConfig?.near.archivalUrl
-    );
+    const provider = new providers.JsonRpcProvider({
+      url: selector.options.network.nodeUrl,
+    });
 
     const txHashes = transactionHashes.split(",");
 
@@ -232,6 +235,8 @@ export const Root: React.FC = () => {
   }, [urlParams]);
 
   const clearMessageAndHashes = useCallback(() => {
+    console.log("clearMessageAndHashes", urlParams);
+
     const { protocol, host, pathname, hash } = window.location;
     urlParams.delete("errorMessage");
     urlParams.delete("errorCode");

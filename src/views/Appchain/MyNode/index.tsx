@@ -184,7 +184,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
     validatorSessionKey = validatorSessionKeys[validator.validator_id];
   }
 
-  const { oauthUser, onRequestAccessToken, accessToken } = useGCP(
+  const { onRequestAccessToken, accessToken } = useGCP(
     currentVendor === CloudVendor.GCP
   );
 
@@ -221,9 +221,6 @@ export const MyNode: React.FC<MyNodeProps> = ({
         return;
       }
     } else if (currentVendor === CloudVendor.GCP) {
-      if (!oauthUser) {
-        return Toast.error("Please login with your Google account first");
-      }
       if (!accessToken) {
         onRequestAccessToken((t) => {
           if (!t.access_token) {
