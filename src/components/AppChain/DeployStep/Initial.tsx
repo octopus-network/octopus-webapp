@@ -19,6 +19,15 @@ const VendorIcons = {
   [CloudVendor.GCP]: SiGooglecloud,
 };
 
+const Tips = {
+  [CloudVendor.AWS]:
+    "It seems you're a validator already, enter Access Key to check your node status",
+  [CloudVendor.DO]:
+    "It seems you're a validator already, enter Digital Ocean Token Name to check your node status",
+  [CloudVendor.GCP]:
+    "It seems you're a validator already, sign in with Google to check your node status",
+};
+
 const customComponents = {
   Option: ({ children, ...props }: any) => {
     return (
@@ -139,11 +148,7 @@ export default function Initial({
         </Flex>
         {!!validator && (
           <Text fontSize="sm" variant="gray" mt={1}>
-            It seems you're a validator already, enter{" "}
-            {cloudVendor === CloudVendor.AWS
-              ? "Access Key"
-              : "Digital Ocean Token Name"}{" "}
-            to check your node status
+            {Tips[cloudVendor]}
           </Text>
         )}
       </Flex>
