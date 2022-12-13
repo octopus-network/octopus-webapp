@@ -1,5 +1,5 @@
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { b64utoutf8, KJUR } from "jsrsasign";
 
 const OAUTH_SCOPE =
@@ -55,20 +55,6 @@ export default function useGCP(request = false) {
           xhr.onload = () => {
             setProjects(JSON.parse(xhr.response).projects);
           };
-
-          const profileXhr = new XMLHttpRequest();
-          profileXhr.open(
-            "GET",
-            "https://www.googleapis.com/oauth2/v1/userinfo?alt=json"
-          );
-          profileXhr.setRequestHeader(
-            "Authorization",
-            "Bearer " + tokenResponse.access_token
-          );
-          profileXhr.send();
-          profileXhr.onload = () => {
-            setOAuthUser(JSON.parse(profileXhr.response));
-          };
         },
         error_callback(error: any) {
           console.log("error", error);
@@ -76,15 +62,9 @@ export default function useGCP(request = false) {
       });
       tokenClient.requestAccessToken();
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [CLIENT_ID]
   );
-
-  useEffect(() => {
-    if (!oauthUser && request) {
-      // onLogin();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [request, oauthUser]);
 
   return {
     projects,
