@@ -116,8 +116,6 @@ export const WalletSelectorContextProvider = ({
         distinctUntilChanged()
       )
       .subscribe((nextAccounts) => {
-        console.log("Accounts Update", nextAccounts);
-
         setAccounts(nextAccounts);
       });
 

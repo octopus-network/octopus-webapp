@@ -87,8 +87,6 @@ export default function NodeDeploy({
 
     setStep(DeployStep.CONFIRMED_ACCESS_KEY);
     if (cloudVendor === CloudVendor.GCP) {
-      console.log("oauthUser", oauthUser);
-
       if (!oauthUser) {
         return Toast.error("Please login with Google first");
       }
