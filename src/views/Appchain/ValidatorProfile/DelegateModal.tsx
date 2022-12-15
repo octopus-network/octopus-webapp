@@ -79,7 +79,7 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
         );
       });
     }
-  }, [isOpen]);
+  }, [isOpen, anchor]);
 
   const onDeposit = async () => {
     try {

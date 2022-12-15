@@ -2,7 +2,6 @@ import {
   Button,
   Center,
   Flex,
-  Img,
   Link,
   Spinner,
   Text,
@@ -25,7 +24,6 @@ import NodeManager from "utils/NodeManager";
 import { CLOUD_NODE_INSTANCES } from "config/constants";
 import useLocalStorage from "hooks/useLocalStorage";
 import useGCP from "hooks/useGCP";
-import GoogleSignIn from "assets/google_signin.png";
 
 enum DeployStep {
   NEED_ACCESS_KEY,
