@@ -37,6 +37,7 @@ import { Toast } from "components/common/toast";
 import { ANCHOR_METHODS } from "config/constants";
 import { useAppChain } from "hooks/useAppChain";
 import SetupEmail from "./SetupEmail";
+import useNearAccount from "hooks/useNearAccount";
 
 export const Appchain: React.FC = () => {
   const { id = "", validatorId = "" } = useParams();
@@ -51,8 +52,8 @@ export const Appchain: React.FC = () => {
     appchainValidators,
   } = useAppChain(id);
 
-  const { accountId, networkConfig, registry, nearAccount, selector } =
-    useWalletSelector();
+  const { accountId, networkConfig, selector } = useWalletSelector();
+  const nearAccount = useNearAccount();
 
   const { data: userVotes } = useSWR<UserVotes>(
     accountId ? `votes/${accountId}/${id}` : null
@@ -134,7 +135,7 @@ export const Appchain: React.FC = () => {
       const wallet = await selector.wallet();
       await wallet.signAndSendTransaction({
         signerId: accountId,
-        receiverId: registry?.contractId,
+        receiverId: networkConfig?.octopus.registryContractId,
         actions: [
           {
             type: "FunctionCall",

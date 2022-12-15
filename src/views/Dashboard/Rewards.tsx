@@ -17,6 +17,7 @@ import { Toast } from "components/common/toast";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
 import { ANCHOR_METHODS } from "config/constants";
 import Decimal from "decimal.js";
+import useNearAccount from "hooks/useNearAccount";
 import { Account, providers } from "near-api-js";
 import { CodeResult } from "near-api-js/lib/providers/provider";
 import { COMPLEX_CALL_GAS, SIMPLE_CALL_GAS } from "primitives";
@@ -145,10 +146,10 @@ const Rewards = ({ viewingAccount }: { viewingAccount?: string }) => {
   const [isClaiming, setIsClaiming] = useBoolean(false);
   const {
     networkConfig,
-    nearAccount,
     selector,
     accountId: myAccountId,
   } = useWalletSelector();
+  const nearAccount = useNearAccount();
 
   const accountId = viewingAccount;
 

@@ -232,6 +232,7 @@ export const Root: React.FC = () => {
       });
 
     clearMessageAndHashes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlParams]);
 
   const clearMessageAndHashes = useCallback(() => {

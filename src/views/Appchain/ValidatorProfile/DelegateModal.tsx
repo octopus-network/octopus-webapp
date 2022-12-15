@@ -32,7 +32,7 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
   const [max, setMax] = useState(0);
   const [amount, setAmount] = useState("");
 
-  const { accountId, octToken, selector } = useWalletSelector();
+  const { accountId, networkConfig, selector } = useWalletSelector();
 
   const [isDepositing, setIsDepositing] = useBoolean(false);
   const [minimumDeposit, setMinimumDeposit] = useState(ZERO_DECIMAL);
@@ -87,7 +87,7 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
       const wallet = await selector.wallet();
       await wallet.signAndSendTransaction({
         signerId: accountId,
-        receiverId: octToken?.contractId,
+        receiverId: networkConfig?.octopus.octTokenContractId,
         actions: [
           {
             type: "FunctionCall",
