@@ -673,7 +673,7 @@ export async function getAppchainNFTs(
     const ress = await Promise.all(promises);
     const tmpArr: any[] = ress?.length ? ress.flat(Infinity) : [];
 
-    return tmpArr;
+    return tmpArr.filter((t) => t);
   } catch (error) {
     return [];
   }
