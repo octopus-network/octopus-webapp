@@ -592,9 +592,6 @@ export async function getAppchainNFTs(
             if (res) {
               const unique = res.toJSON() as any;
 
-              if (!(unique && unique.data.creator === account)) {
-                return null;
-              }
               const metadata = JSON.parse(hexToString(unique.metadata));
 
               return {
@@ -605,7 +602,8 @@ export async function getAppchainNFTs(
               };
             }
             return null;
-          });
+          })
+          .catch(console.log);
       });
     } else {
       promises = classIds.map((classId) => {
