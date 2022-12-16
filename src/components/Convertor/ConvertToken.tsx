@@ -32,6 +32,7 @@ import { Transaction } from "@near-wallet-selector/core";
 import { Toast } from "components/common/toast";
 import { providers } from "near-api-js";
 import { CodeResult } from "near-api-js/lib/providers/provider";
+import useNearAccount from "hooks/useNearAccount";
 
 const TokenInput = ({
   value,
@@ -98,7 +99,8 @@ export default function ConvertToken({
   const [inTokenValue, setInTokenValue] = useState<string | number>("");
   const [outTokenValue, setOutTokenValue] = useState<string | number>("");
   const [isReversed, setIsReversed] = useState(false);
-  const { accountId, selector, near } = useWalletSelector();
+  const { accountId, selector } = useWalletSelector();
+  const nearAccount = useNearAccount();
 
   const bg = useColorModeValue("white", "#15172c");
 
@@ -208,8 +210,8 @@ export default function ConvertToken({
       }
 
       const receiveTokenId = !isReversed ? pool.out_token : pool.in_token;
-      const account = await near?.account("dontcare");
-      const storageBalance = await account?.viewFunction(
+
+      const storageBalance = await nearAccount?.viewFunction(
         receiveTokenId,
         "storage_balance_of",
         { account_id: accountId }

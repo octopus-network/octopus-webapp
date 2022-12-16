@@ -578,46 +578,43 @@ export async function getAppchainNFTs(
   appchainId: string
 ) {
   try {
-    // const allEntries = await appchainApi.query.ormlNFT.tokensByOwner.entries();
-    // const owned = ownedRes.toJSON() as any;
-    // allEntries.forEach(([a, b]) => {
-    //   console.log(`${a.toString()} : ${b.toString()}`);
-    // });
+    let promises: any[] = [];
+    if (appchainId === "uniqueone-appchain") {
+      const allEntries = await appchainApi.query.ormlNFT.tokensByOwner.entries(
+        account
+      );
+      promises = allEntries.map(([a, b]) => {
+        const [, [classId, instanceId]] = a.toHuman() as any;
 
-    const promises = classIds.map((classId) => {
-      return appchainApi.query.octopusUniques.class(classId).then((info) => {
-        const { instances, items } = (info?.toJSON() as any) || {};
+        return appchainApi.query.ormlNFT
+          .tokens(classId, instanceId)
+          .then((res) => {
+            if (res) {
+              const unique = res.toJSON() as any;
 
-        const count = instances || items || 0;
+              const metadata = JSON.parse(hexToString(unique.metadata));
 
-        const tmpPromises = [];
+              return {
+                id: instanceId,
+                class: classId,
+                metadata: metadata,
+                owner: account,
+              };
+            }
+            return null;
+          })
+          .catch(console.log);
+      });
+    } else {
+      promises = classIds.map((classId) => {
+        return appchainApi.query.octopusUniques.class(classId).then((info) => {
+          const { instances, items } = (info?.toJSON() as any) || {};
 
-        for (let i = 0; i <= count; i++) {
-          if (appchainId === "uniqueone-appchain") {
-            const p = appchainApi.query.ormlNFT
-              .tokens(classId, i)
-              .then((res) => {
-                if (res) {
-                  const unique = res.toJSON() as any;
+          const count = instances || items || 0;
 
-                  console.log("unique", classId, i, unique);
-                  if (!(unique && unique.data.creator === account)) {
-                    return null;
-                  }
-                  const metadata = JSON.parse(hexToString(unique.metadata));
-                  // console.log("metadata", metadata);
+          const tmpPromises = [];
 
-                  return {
-                    id: i,
-                    class: classId,
-                    metadata: metadata,
-                    owner: account,
-                  };
-                }
-                return null;
-              });
-            tmpPromises.push(p);
-          } else {
+          for (let i = 0; i <= count; i++) {
             const p = appchainApi.query.octopusUniques
               .asset(classId, i)
               .then(async (res) => {
@@ -664,20 +661,18 @@ export async function getAppchainNFTs(
               });
             tmpPromises.push(p);
           }
-        }
 
-        return Promise.all(tmpPromises as any).then((res) => {
-          return res?.filter((item) => !!item);
+          return Promise.all(tmpPromises as any).then((res) => {
+            return res?.filter((item) => !!item);
+          });
         });
       });
-    });
+    }
     const ress = await Promise.all(promises);
     const tmpArr: any[] = ress?.length ? ress.flat(Infinity) : [];
 
-    return tmpArr;
+    return tmpArr.filter((t) => t);
   } catch (error) {
-    console.log("error", error);
-
     return [];
   }
 }

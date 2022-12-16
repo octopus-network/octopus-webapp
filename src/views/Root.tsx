@@ -41,7 +41,6 @@ export const Root: React.FC = () => {
   const location = useLocation();
 
   const navigate = useNavigate();
-  console.log("location", location);
 
   const toast = useToast();
   const toastIdRef = useRef<any>();
@@ -117,8 +116,6 @@ export const Root: React.FC = () => {
 
     const transactionHashes = urlParams.get("transactionHashes") || "";
     const errorMessage = urlParams.get("errorMessage") || "";
-
-    console.log("transactionHashes", transactionHashes);
 
     if (errorMessage) {
       Toast.error(decodeURIComponent(errorMessage));
@@ -232,11 +229,10 @@ export const Root: React.FC = () => {
       });
 
     clearMessageAndHashes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlParams]);
 
   const clearMessageAndHashes = useCallback(() => {
-    console.log("clearMessageAndHashes", urlParams);
-
     const { protocol, host, pathname, hash } = window.location;
     urlParams.delete("errorMessage");
     urlParams.delete("errorCode");

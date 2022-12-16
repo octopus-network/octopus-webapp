@@ -7,15 +7,9 @@ import type { WalletSelectorModal } from "@near-wallet-selector/modal-ui";
 import { setupMyNearWallet } from "@near-wallet-selector/my-near-wallet";
 import axios from "axios";
 import { API_HOST } from "config";
-import { Account, keyStores, Near, WalletConnection } from "near-api-js";
 import { setupLedger } from "@near-wallet-selector/ledger";
 import { setupOptoWallet } from "@near-wallet-selector/opto-wallet";
-import {
-  NetworkConfig,
-  NetworkType,
-  RegistryContract,
-  TokenContract,
-} from "types";
+import { NetworkConfig, NetworkType } from "types";
 import { setupNearWallet } from "@near-wallet-selector/near-wallet";
 import posthog from "posthog-js";
 
@@ -32,11 +26,7 @@ interface WalletSelectorContextValue {
   modal: WalletSelectorModal;
   accounts: Array<AccountState>;
   accountId: string | undefined;
-  near: Near | null;
-  registry: RegistryContract | null;
   networkConfig: NetworkConfig | null;
-  octToken: TokenContract | null;
-  nearAccount: Account | undefined;
   network: NetworkType;
 }
 
@@ -51,14 +41,8 @@ export const WalletSelectorContextProvider = ({
   const [selector, setSelector] = useState<WalletSelector | null>(null);
   const [modal, setModal] = useState<WalletSelectorModal | null>(null);
   const [accounts, setAccounts] = useState<Array<AccountState>>([]);
-  const [near, setNear] = useState<Near | null>(null);
-  const [registry, setRegistry] = useState<RegistryContract | null>(null);
   const [networkConfig, setNetworkConfig] = useState<NetworkConfig | null>(
     null
-  );
-  const [octToken, setOctToken] = useState<TokenContract | null>(null);
-  const [nearAccount, setNearAccount] = useState<Account | undefined>(
-    undefined
   );
   const [network, setNetwork] = useState<NetworkType>(NetworkType.MAINNET);
 
@@ -87,48 +71,6 @@ export const WalletSelectorContextProvider = ({
         setupOptoWallet(),
       ],
     });
-    const near = new Near({
-      keyStore: new keyStores.BrowserLocalStorageKeyStore(),
-      headers: {},
-      ...config.near,
-    });
-    setNear(near);
-
-    const wallet = new WalletConnection(
-      near,
-      config.octopus.registryContractId
-    );
-
-    const nearAccount = wallet.account();
-    setNearAccount(nearAccount);
-    const registry = new RegistryContract(
-      nearAccount,
-      config.octopus.registryContractId,
-      {
-        viewMethods: [
-          "get_owner",
-          "get_upvote_deposit_for",
-          "get_downvote_deposit_for",
-          "get_registry_settings",
-          "get_protocol_settings",
-        ],
-        changeMethods: [
-          "withdraw_upvote_deposit_of",
-          "withdraw_downvote_deposit_of",
-        ],
-      }
-    );
-    setRegistry(registry);
-
-    const octToken = new TokenContract(
-      nearAccount,
-      config.octopus.octTokenContractId,
-      {
-        viewMethods: ["ft_balance_of", "ft_total_supply"],
-        changeMethods: ["ft_transfer_call"],
-      }
-    );
-    setOctToken(octToken);
 
     const _modal = setupModal(_selector, {
       contractId: config.octopus.registryContractId,
@@ -174,8 +116,6 @@ export const WalletSelectorContextProvider = ({
         distinctUntilChanged()
       )
       .subscribe((nextAccounts) => {
-        console.log("Accounts Update", nextAccounts);
-
         setAccounts(nextAccounts);
       });
 
@@ -196,11 +136,7 @@ export const WalletSelectorContextProvider = ({
         modal,
         accounts,
         accountId,
-        registry,
-        near,
-        octToken,
         networkConfig,
-        nearAccount,
         network,
       }}
     >

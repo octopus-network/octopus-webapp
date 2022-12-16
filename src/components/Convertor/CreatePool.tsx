@@ -17,20 +17,21 @@ import {
   Link,
   UnorderedList,
   ListItem,
-} from "@chakra-ui/react"
-import BN from "bn.js"
-import { Select, chakraComponents } from "chakra-react-select"
-import { SIMPLE_CALL_GAS } from "primitives"
-import { useState } from "react"
-import { AccountId, FungibleTokenMetadata } from "types"
+} from "@chakra-ui/react";
+import BN from "bn.js";
+import { Select, chakraComponents } from "chakra-react-select";
+import { SIMPLE_CALL_GAS } from "primitives";
+import { useState } from "react";
+import { AccountId, FungibleTokenMetadata } from "types";
 import {
   MdOutlineSwapVert,
   MdOutlineArrowDownward,
   MdOutlineAdd,
-} from "react-icons/md"
-import NEP141 from "assets/icons/nep141-token.png"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
-import { Toast } from "components/common/toast"
+} from "react-icons/md";
+import NEP141 from "assets/icons/nep141-token.png";
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
+import { Toast } from "components/common/toast";
+import useNearAccount from "hooks/useNearAccount";
 
 const customComponents = {
   Option: ({ children, ...props }: any) => {
@@ -39,15 +40,15 @@ const customComponents = {
         {props.data.icon}
         <Box ml={2}>{children}</Box>
       </chakraComponents.Option>
-    )
+    );
   },
   Input: ({ children, ...props }: any) => {
-    let icon = null
-    let label = ""
+    let icon = null;
+    let label = "";
     if (props.hasValue) {
-      const value = props.getValue()[0]
-      icon = value.icon
-      label = value.label
+      const value = props.getValue()[0];
+      icon = value.icon;
+      label = value.label;
     }
     return (
       <chakraComponents.Option {...props} selectProps={{ size: "sm" }}>
@@ -56,19 +57,19 @@ const customComponents = {
           {label}
         </Text>
       </chakraComponents.Option>
-    )
+    );
   },
   SingleValue: () => null,
-}
+};
 
 interface PoolProps {
-  in_token: string
-  out_token: string
-  is_reversible: boolean
-  in_token_rate: string
-  out_token_rate: string
-  in_token_decimals: number
-  out_token_decimals: number
+  in_token: string;
+  out_token: string;
+  is_reversible: boolean;
+  in_token_rate: string;
+  out_token_rate: string;
+  in_token_decimals: number;
+  out_token_decimals: number;
 }
 
 const DEFAULT_POOL = {
@@ -79,33 +80,33 @@ const DEFAULT_POOL = {
   is_reversible: false,
   in_token_decimals: 0,
   out_token_decimals: 0,
-}
+};
 
 export default function CreatePool({
   whitelist,
   contractId,
 }: {
-  whitelist: FungibleTokenMetadata[]
-  contractId: AccountId
+  whitelist: FungibleTokenMetadata[];
+  contractId: AccountId;
 }) {
-  const { isOpen, onOpen, onClose } = useDisclosure()
-  const [pool, setPool] = useState<PoolProps>(DEFAULT_POOL)
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [pool, setPool] = useState<PoolProps>(DEFAULT_POOL);
 
-  const { selector, accountId, near } = useWalletSelector()
+  const { selector, accountId } = useWalletSelector();
+  const nearAccount = useNearAccount();
   const onCreate = async () => {
     try {
       if (!accountId) {
-        Toast.error("Please login first")
-        return
+        Toast.error("Please login first");
+        return;
       }
 
-      const account = await near?.account("dontcare")
-      const attachedDeposit = await account?.viewFunction(
+      const attachedDeposit = await nearAccount?.viewFunction(
         contractId,
         "get_deposit_amount_of_pool_creation"
-      )
+      );
 
-      const wallet = await selector.wallet()
+      const wallet = await selector.wallet();
       await wallet.signAndSendTransaction({
         signerId: accountId,
         receiverId: contractId,
@@ -127,15 +128,15 @@ export default function CreatePool({
           },
         ],
         callbackUrl: window.location.href,
-      })
+      });
 
-      onClose()
-      Toast.success("Created!")
+      onClose();
+      Toast.success("Created!");
     } catch (error) {
-      console.error(error)
-      Toast.error(error)
+      console.error(error);
+      Toast.error(error);
     }
-  }
+  };
 
   return (
     <Flex w="100%" direction="column">
@@ -170,8 +171,8 @@ export default function CreatePool({
       <Modal
         isOpen={isOpen}
         onClose={() => {
-          onClose()
-          setPool(DEFAULT_POOL)
+          onClose();
+          setPool(DEFAULT_POOL);
         }}
         isCentered
         size="lg"
@@ -193,7 +194,7 @@ export default function CreatePool({
                   value={pool.in_token_rate}
                   onChange={(e) => {
                     if (/^[0-9]{0,}$/.test(e.target.value)) {
-                      setPool({ ...pool, in_token_rate: e.target.value })
+                      setPool({ ...pool, in_token_rate: e.target.value });
                     }
                   }}
                 />
@@ -206,9 +207,9 @@ export default function CreatePool({
                           return (
                             t.token_id !== pool.out_token &&
                             t.decimals === pool.out_token_decimals
-                          )
+                          );
                         }
-                        return true
+                        return true;
                       })
                       .map((t) => ({
                         label: t.symbol,
@@ -229,7 +230,7 @@ export default function CreatePool({
                         ...pool,
                         in_token: newValue?.value || "",
                         in_token_decimals: newValue?.decimals || 0,
-                      })
+                      });
                     }}
                     components={customComponents}
                   />
@@ -253,7 +254,7 @@ export default function CreatePool({
                   value={pool.out_token_rate}
                   onChange={(e) => {
                     if (/^[0-9]{0,}$/.test(e.target.value)) {
-                      setPool({ ...pool, out_token_rate: e.target.value })
+                      setPool({ ...pool, out_token_rate: e.target.value });
                     }
                   }}
                 />
@@ -267,9 +268,9 @@ export default function CreatePool({
                           return (
                             t.token_id !== pool.in_token &&
                             t.decimals === pool.in_token_decimals
-                          )
+                          );
                         }
-                        return true
+                        return true;
                       })
                       .map((t) => ({
                         label: t.symbol,
@@ -290,7 +291,7 @@ export default function CreatePool({
                         ...pool,
                         out_token: newValue?.value || "",
                         out_token_decimals: newValue?.decimals || 0,
-                      })
+                      });
                     }}
                     components={customComponents}
                   />
@@ -342,5 +343,5 @@ export default function CreatePool({
         </ModalContent>
       </Modal>
     </Flex>
-  )
+  );
 }

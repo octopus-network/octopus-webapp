@@ -1,21 +1,21 @@
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
-import { TOKEN_METHODS } from "config/constants"
-import { useEffect, useState } from "react"
-import { TokenContract } from "types"
+import { TOKEN_METHODS } from "config/constants";
+import { useEffect, useState } from "react";
+import { TokenContract } from "types";
+import useNearAccount from "./useNearAccount";
 
 export function useTokenContract(contractId?: string) {
-  const [tokenContract, setTokenContract] = useState<TokenContract>()
-  const { nearAccount } = useWalletSelector()
+  const [tokenContract, setTokenContract] = useState<TokenContract>();
+  const nearAccount = useNearAccount();
 
   useEffect(() => {
     if (nearAccount && contractId) {
       setTokenContract(
         new TokenContract(nearAccount!, contractId, TOKEN_METHODS)
-      )
+      );
     } else {
-      setTokenContract(undefined)
+      setTokenContract(undefined);
     }
-  }, [contractId, nearAccount])
+  }, [contractId, nearAccount]);
 
-  return tokenContract
+  return tokenContract;
 }

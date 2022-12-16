@@ -39,6 +39,8 @@ import Decimal from "decimal.js";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
 import { Toast } from "components/common/toast";
 import { EMAIL_REGEX } from "config/constants";
+import { providers } from "near-api-js";
+import { CodeResult } from "near-api-js/lib/providers/provider";
 
 export const RegisterForm: React.FC = () => {
   const bg = useColorModeValue("white", "#15172c");
@@ -57,8 +59,7 @@ export const RegisterForm: React.FC = () => {
     icon: "",
     decimals: 18,
   });
-  const { accountId, registry, octToken, networkConfig, selector } =
-    useWalletSelector();
+  const { accountId, networkConfig, selector } = useWalletSelector();
 
   const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null);
 
@@ -70,15 +71,31 @@ export const RegisterForm: React.FC = () => {
   const initialFieldRef = React.useRef(null);
 
   useEffect(() => {
-    registry?.get_registry_settings().then((settings) => {
-      setAuditingFee(
-        DecimalUtil.fromString(
-          settings.minimum_register_deposit,
-          OCT_TOKEN_DECIMALS
-        )
-      );
+    const provider = new providers.JsonRpcProvider({
+      url: selector.options.network.nodeUrl,
     });
-  }, [registry]);
+    provider
+      .query<CodeResult>({
+        request_type: "call_function",
+        account_id: networkConfig?.octopus.registryContractId,
+        method_name: "get_registry_settings",
+        args_base64: "",
+        finality: "final",
+      })
+      .then((res) => {
+        const result = JSON.parse(Buffer.from(res.result).toString());
+        setAuditingFee(
+          DecimalUtil.fromString(
+            result.minimum_register_deposit,
+            OCT_TOKEN_DECIMALS
+          )
+        );
+      })
+      .catch(console.log);
+  }, [
+    selector.options.network.nodeUrl,
+    networkConfig?.octopus.registryContractId,
+  ]);
 
   const validateAppchainId = (value: string) => {
     const reg = /^[a-z]([-a-z0-9]*[a-z0-9]){1,20}$/;
@@ -146,7 +163,7 @@ export const RegisterForm: React.FC = () => {
       const wallet = await selector.wallet();
       await wallet.signAndSendTransaction({
         signerId: accountId,
-        receiverId: octToken?.contractId,
+        receiverId: networkConfig?.octopus.octTokenContractId,
         actions: [
           {
             type: "FunctionCall",

@@ -21,8 +21,8 @@ import { Empty, BaseModal } from "components";
 import failedToLoad from "assets/failed_to_load.svg";
 import { ApiPromise } from "@polkadot/api";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
-import { hexToString } from "@polkadot/util";
 import { getAppchainNFTs } from "utils/bridge";
+import useNearAccount from "hooks/useNearAccount";
 
 type SelectTokenModalProps = {
   isOpen: boolean;
@@ -56,27 +56,26 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
   const [tabIdx, setTabIdx] = useState(0);
   const [collectibles, setCollectibles] = useState<Collectible[]>();
 
-  const { registry, nearAccount } = useWalletSelector();
+  const { networkConfig } = useWalletSelector();
+  const nearAccount = useNearAccount();
 
   useEffect(() => {
     if (
       !collectibleClasses?.length ||
       !appchainId ||
-      !registry ||
+      !networkConfig ||
       !fromAccount
     ) {
       setCollectibles([]);
       return;
     }
 
-    console.log("isReverse", isReverse);
-
     if (isReverse) {
       const promises = collectibleClasses.map((classId) => {
         try {
           const contract = new CollectibleContract(
             nearAccount!,
-            `${classId}.${appchainId}.${registry?.contractId}`,
+            `${classId}.${appchainId}.${networkConfig?.octopus.registryContractId}`,
             {
               viewMethods: ["nft_tokens_for_owner"],
               changeMethods: [],

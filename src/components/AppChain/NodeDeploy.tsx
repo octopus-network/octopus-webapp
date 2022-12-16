@@ -2,7 +2,6 @@ import {
   Button,
   Center,
   Flex,
-  Img,
   Link,
   Spinner,
   Text,
@@ -25,7 +24,6 @@ import NodeManager from "utils/NodeManager";
 import { CLOUD_NODE_INSTANCES } from "config/constants";
 import useLocalStorage from "hooks/useLocalStorage";
 import useGCP from "hooks/useGCP";
-import GoogleSignIn from "assets/google_signin.png";
 
 enum DeployStep {
   NEED_ACCESS_KEY,
@@ -87,8 +85,6 @@ export default function NodeDeploy({
 
     setStep(DeployStep.CONFIRMED_ACCESS_KEY);
     if (cloudVendor === CloudVendor.GCP) {
-      console.log("oauthUser", oauthUser);
-
       if (!oauthUser) {
         return Toast.error("Please login with Google first");
       }

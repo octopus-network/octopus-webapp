@@ -46,7 +46,7 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
   const [amount, setAmount] = useState("");
   const [appchainAccount, setAppchainAccount] = useState("");
 
-  const { accountId, octToken, selector } = useWalletSelector();
+  const { accountId, networkConfig, selector } = useWalletSelector();
   const [email, setEmail] = useState("");
   const [socialMediaHandle, setSocialMediaHandle] = useState("");
   const [canBeDelegatedTo, setCanBeDelegatedTo] = useState(false);
@@ -98,7 +98,7 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
       const wallet = await selector.wallet();
       await wallet.signAndSendTransaction({
         signerId: accountId,
-        receiverId: octToken?.contractId,
+        receiverId: networkConfig?.octopus.octTokenContractId,
         actions: [
           {
             type: "FunctionCall",

@@ -81,7 +81,7 @@ export const BridgePanel: React.FC = () => {
   const [isTransferring, setIsTransferring] = useBoolean();
   const [isHistoryDrawerOpen, setIsHistoryDrawerOpen] = useBoolean();
 
-  const { accountId, registry, networkConfig, selector } = useWalletSelector();
+  const { accountId, networkConfig, selector } = useWalletSelector();
   const { txns, updateTxn, clearTxnsOfAppchain } = useTxnsStore();
   const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(
     appchainId ? `appchain/${appchainId}` : null,
@@ -407,7 +407,7 @@ export const BridgePanel: React.FC = () => {
 
   const burnCollectible = async () => {
     const wallet = await selector.wallet();
-    const anchorId = `${appchainId}.${registry?.contractId}`;
+    const anchorId = `${appchainId}.${networkConfig?.octopus.registryContractId}`;
     await nearBurnNft({
       wallet,
       anchorId,
@@ -466,8 +466,6 @@ export const BridgePanel: React.FC = () => {
 
     await tx.signAndSend(from, ({ events = [] }: any) => {
       events.forEach(({ event: { data, method, section } }: any) => {
-        console.log("events", method, section);
-
         if (
           (section === "octopusAppchain" && method === "NftLocked") ||
           (section === "octopusBridge" && method === "NonfungibleLocked")

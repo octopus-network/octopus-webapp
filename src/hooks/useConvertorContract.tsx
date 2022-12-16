@@ -7,6 +7,7 @@ import {
   ConvertorContract,
   FungibleTokenMetadata,
 } from "types";
+import useNearAccount from "./useNearAccount";
 
 export const useConvertorContract = (account: Account, contractId: string) => {
   const [contract, setContract] = useState<ConvertorContract | null>(null);
@@ -68,10 +69,11 @@ export const usePools = (
 export const useWhitelist = (contractId: string) => {
   const [whitelist, setWhitelist] = useState<FungibleTokenMetadata[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { selector, near } = useWalletSelector();
+  const { selector } = useWalletSelector();
+  const nearAccount = useNearAccount();
   useEffect(() => {
     async function fetch() {
-      if (!(contractId && near)) {
+      if (!(contractId && nearAccount)) {
         return;
       }
       try {
@@ -88,7 +90,7 @@ export const useWhitelist = (contractId: string) => {
         });
         const _whitelist = JSON.parse(Buffer.from(res.result).toString());
 
-        const viewAccount = new Account(near.connection, "dontcare");
+        const viewAccount = new Account(nearAccount.connection, "dontcare");
         const metas = await Promise.all(
           _whitelist.map((t: any) => {
             return viewAccount
@@ -104,7 +106,7 @@ export const useWhitelist = (contractId: string) => {
       }
     }
     fetch();
-  }, [contractId, near, selector.options.network.nodeUrl]);
+  }, [contractId, nearAccount, selector.options.network.nodeUrl]);
 
   return { whitelist, isLoading };
 };

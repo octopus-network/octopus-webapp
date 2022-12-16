@@ -56,7 +56,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
 
   const [isSubmitting, setIsSubmitting] = useBoolean(false);
 
-  const { accountId, octToken, selector } = useWalletSelector();
+  const { accountId, networkConfig, selector } = useWalletSelector();
 
   const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null);
   const octBalance = useMemo(
@@ -126,7 +126,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
 
         await wallet.signAndSendTransaction({
           signerId: accountId,
-          receiverId: octToken?.contractId,
+          receiverId: networkConfig?.octopus.octTokenContractId,
           actions: [
             {
               type: "FunctionCall",
