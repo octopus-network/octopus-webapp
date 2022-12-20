@@ -149,7 +149,7 @@ export default function NodeDeploy({
         network,
         region: deployRegion,
         secret_key: secretKey,
-        accessKey: accessToken?.access_token || "",
+        accessKey: accessToken?.access_token || accessKey,
         instance_type: instance.instance_type,
         volume_size: instance.volume_size,
         gcpId: cloudVendor === CloudVendor.GCP ? oauthUser?.sub : undefined,
