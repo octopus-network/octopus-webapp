@@ -1,5 +1,5 @@
-import React, { useMemo } from "react"
-import dayjs from "dayjs"
+import React, { useMemo } from "react";
+import dayjs from "dayjs";
 
 import {
   DrawerHeader,
@@ -11,55 +11,53 @@ import {
   Tooltip,
   Text,
   Box,
-  Button,
   HStack,
   Avatar,
   Tag,
   CircularProgress,
   useColorModeValue,
-} from "@chakra-ui/react"
+} from "@chakra-ui/react";
 
 import {
   AppchainInfoWithAnchorStatus,
   BridgeHistory,
   BridgeHistoryStatus,
   TokenAsset,
-} from "types"
+} from "types";
 
-import { isHex } from "@polkadot/util"
-import { DecimalUtil } from "utils"
-import { Empty } from "components"
-import nearLogo from "assets/near.svg"
-import relativeTime from "dayjs/plugin/relativeTime"
-import { formatAppChainAddress } from "utils/format"
+import { isHex } from "@polkadot/util";
+import { DecimalUtil } from "utils";
+import { Empty } from "components";
+import nearLogo from "assets/near.svg";
+import relativeTime from "dayjs/plugin/relativeTime";
+import { formatAppChainAddress } from "utils/format";
 
 type HistoryProps = {
-  appchain: AppchainInfoWithAnchorStatus | undefined
-  histories: BridgeHistory[]
-  tokenAssets: TokenAsset[] | undefined
-  onDrawerClose: VoidFunction
-  onClearHistory: VoidFunction
-}
+  appchain: AppchainInfoWithAnchorStatus | undefined;
+  histories: BridgeHistory[];
+  tokenAssets: TokenAsset[] | undefined;
+  onDrawerClose: VoidFunction;
+};
 
 type HistoryItemProps = {
-  appchain: AppchainInfoWithAnchorStatus | undefined
-  history: BridgeHistory
-  tokenAssets: TokenAsset[] | undefined
-}
+  appchain: AppchainInfoWithAnchorStatus | undefined;
+  history: BridgeHistory;
+  tokenAssets: TokenAsset[] | undefined;
+};
 
-dayjs.extend(relativeTime)
+dayjs.extend(relativeTime);
 
 const HistoryItem: React.FC<HistoryItemProps> = ({
   appchain,
   history,
   tokenAssets,
 }) => {
-  const bg = useColorModeValue("#f6f7fa", "#15172c")
+  const bg = useColorModeValue("#f6f7fa", "#15172c");
 
   const tokenAsset = useMemo(
     () => tokenAssets?.find((t) => t.contractId === history.tokenContractId),
     [tokenAssets, history]
-  )
+  );
 
   return (
     <Box p={3} bg={bg} borderRadius="lg">
@@ -170,14 +168,13 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
         </Text>
       </Flex>
     </Box>
-  )
-}
+  );
+};
 
 export const History: React.FC<HistoryProps> = ({
   appchain,
   histories,
   onDrawerClose,
-  onClearHistory,
   tokenAssets,
 }) => {
   return (
@@ -186,14 +183,6 @@ export const History: React.FC<HistoryProps> = ({
         <Flex justifyContent="space-between" alignItems="center">
           <HStack>
             <Heading fontSize="lg">History</Heading>
-            <Button
-              size="sm"
-              onClick={onClearHistory}
-              colorScheme="octo-blue"
-              variant="ghost"
-            >
-              Clear
-            </Button>
           </HStack>
           <CloseButton onClick={onDrawerClose} />
         </Flex>
@@ -215,5 +204,5 @@ export const History: React.FC<HistoryProps> = ({
         )}
       </DrawerBody>
     </>
-  )
-}
+  );
+};
