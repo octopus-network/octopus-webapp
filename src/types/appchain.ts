@@ -149,6 +149,7 @@ export type Collectible = {
   metadata: {
     name: string;
     mediaUri: string;
+    image: string;
   };
 };
 

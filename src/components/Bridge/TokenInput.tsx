@@ -235,7 +235,12 @@ export default function TokenInpput({
             width="100%"
           >
             <Box w="20%">
-              <Image src={collectible.metadata.mediaUri} w="100%" />
+              <Image
+                src={
+                  collectible.metadata.mediaUri || collectible.metadata.image
+                }
+                w="100%"
+              />
             </Box>
             <VStack alignItems="flex-start" ml={3}>
               <Heading fontSize="md">{collectible.metadata.name}</Heading>

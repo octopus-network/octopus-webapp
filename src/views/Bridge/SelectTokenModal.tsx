@@ -218,7 +218,12 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                   onClick={() => onSelectToken(c, true)}
                 >
                   <Box bg={bg} borderRadius="lg" overflow="hidden">
-                    <Image src={c.metadata?.mediaUri ?? failedToLoad} />
+                    <Image
+                      src={
+                        (c.metadata?.mediaUri || c.metadata?.image) ??
+                        failedToLoad
+                      }
+                    />
                   </Box>
                   <Heading fontSize="md" mt={2} textAlign="center">
                     {c.metadata.name}
