@@ -11,19 +11,15 @@ import {
   Flex,
   useColorModeValue,
   Center,
-  HStack,
   Text,
   Icon,
   IconButton,
   Spinner,
-  CircularProgress,
-  CircularProgressLabel,
   Button,
   useBoolean,
   Drawer,
   DrawerOverlay,
   DrawerContent,
-  useInterval,
   Alert,
   AlertIcon,
   AlertTitle,
@@ -53,7 +49,6 @@ import {
   Link as RouterLink,
 } from "react-router-dom";
 import { DecimalUtil } from "utils";
-import { useTxnsStore } from "stores";
 
 import useAccounts from "hooks/useAccounts";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
@@ -81,7 +76,6 @@ export const BridgePanel: React.FC = () => {
   const [isHistoryDrawerOpen, setIsHistoryDrawerOpen] = useBoolean();
 
   const { accountId, networkConfig, selector } = useWalletSelector();
-  const { updateTxn } = useTxnsStore();
   const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(
     appchainId ? `appchain/${appchainId}` : null,
     { refreshInterval: 10 * 1000 }
@@ -266,7 +260,7 @@ export const BridgePanel: React.FC = () => {
     tokenAsset,
   ]);
 
-  const { data: history, error } = useSWR(
+  const { data: history } = useSWR(
     `bridge-helper/history?from=${accountId}&appchain=${appchainId}&direction=${
       isNearToAppchain ? "near_to_appchain" : "near_to_appchain"
     }`
@@ -429,7 +423,7 @@ export const BridgePanel: React.FC = () => {
                     "https:"
                   ),
                 ],
-                blockExplorerUrls: [], // TODO
+                blockExplorerUrls: null,
               },
             ],
           });

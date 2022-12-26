@@ -18,12 +18,9 @@ import { Header, Footer } from "components";
 
 import { providers } from "near-api-js";
 
-import { BridgeHistory, BridgeHistoryStatus } from "types";
-
 import { Outlet } from "react-router-dom";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useMatchMutate } from "hooks";
-import { useTxnsStore } from "stores";
 
 import { API_HOST } from "config";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
@@ -50,7 +47,6 @@ export const Root: React.FC = () => {
   );
 
   const { accountId, networkConfig, selector } = useWalletSelector();
-  const { updateTxn } = useTxnsStore();
 
   const matchMutate = useMatchMutate();
 
@@ -74,39 +70,6 @@ export const Root: React.FC = () => {
       });
     }
   }, [location.pathname, navigate, matchMutate]);
-
-  const onAppchainTokenBurnt = ({
-    hash,
-    appchainId,
-    nearAccount,
-    appchainAccount,
-    amount,
-    notificationIndex,
-    contractId,
-  }: {
-    hash: string;
-    appchainId: string;
-    nearAccount: string;
-    appchainAccount: string;
-    amount: string;
-    notificationIndex: string;
-    contractId: string;
-  }) => {
-    const tmpHistory: BridgeHistory = {
-      isAppchainSide: false,
-      appchainId,
-      hash,
-      sequenceId: (notificationIndex as any) * 1,
-      fromAccount: nearAccount,
-      toAccount: appchainAccount,
-      amount,
-      status: BridgeHistoryStatus.Pending,
-      timestamp: new Date().getTime(),
-      tokenContractId: contractId,
-    };
-
-    updateTxn(appchainId, tmpHistory);
-  };
 
   // check tx status
   useEffect(() => {
@@ -146,48 +109,6 @@ export const Root: React.FC = () => {
             message = JSON.stringify((outcome.status as any).Failure);
             break;
           }
-
-          let res;
-
-          if (outcome.logs?.length) {
-            for (let j = 0; j < outcome.logs.length; j++) {
-              const log = outcome.logs[j];
-
-              const reg1 =
-                  /Wrapped appchain token burnt in contract '(.+)' by '(.+)' for '(.+)' of appchain. Amount: '(.+)', Crosschain notification index: '(.+)'/,
-                reg2 =
-                  /Received fungible token in contract '(.+)' from '(.+)'. Start transfer to '(.+)' of appchain. Amount: '(.+)', Crosschain notification index: '(.+)'/,
-                reg3 =
-                  /Received NFT in contract '(.+)' from '(.+)'. Start transfer to '(.+)' of appchain. Crosschain notification index: '(.+)'./;
-
-              res = reg1.exec(log) ?? reg2.exec(log) ?? reg3.exec(log);
-
-              if (res?.length) {
-                const isNFT = res.length === 5;
-
-                const appchainId = (outcome as any).executor_id.split(".")?.[0];
-
-                const contractId = res[1],
-                  nearAccount = res[2],
-                  appchainAccount = res[3],
-                  amount = isNFT ? "1" : res[4],
-                  notificationIndex = isNFT ? res[4] : res[5];
-
-                onAppchainTokenBurnt({
-                  hash: status.transaction.hash,
-                  appchainId,
-                  nearAccount,
-                  appchainAccount,
-                  amount,
-                  notificationIndex,
-                  contractId,
-                });
-                break;
-              }
-            }
-          }
-
-          if (res) break;
         }
         if (message) {
           throw new Error(message);
