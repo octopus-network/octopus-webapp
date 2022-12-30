@@ -55,6 +55,7 @@ import { FiCopy, FiExternalLink } from "react-icons/fi";
 import LinkBox from "components/common/LinkBox";
 import useChainState from "hooks/useChainState";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
+import { Toast } from "components/common/toast";
 
 dayjs.extend(duration);
 dayjs.extend(relativeTime);
@@ -204,7 +205,21 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
               </Link>
             </MenuItem>
             <MenuItem>
-              <HStack gap={2} onClick={onCopyRpcEndpoint}>
+              <HStack
+                gap={2}
+                onClick={() => {
+                  if (!appchainSettings?.rpc_endpoint) {
+                    Toast.error("RPC Endpoint is not available");
+                    return;
+                  }
+                  onCopyRpcEndpoint();
+                  Toast.success("Copied!");
+                }}
+                opacity={appchainSettings?.rpc_endpoint ? 1 : 0.7}
+                cursor={
+                  appchainSettings?.rpc_endpoint ? "pointer" : "not-allowed"
+                }
+              >
                 <Text>RPC Endpoint</Text>
                 <FiCopy />
               </HStack>
