@@ -367,6 +367,13 @@ export const BridgePanel: React.FC = () => {
 
     await tx.signAndSend(from, ({ events = [] }: any) => {
       events.forEach(({ event: { data, method, section } }: any) => {
+        if (section === "system" && method === "ExtrinsicFailed") {
+          Toast.error("Extrinsic failed");
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+          return;
+        }
         if (
           (section === "octopusAppchain" && method === "NftLocked") ||
           (section === "octopusBridge" && method === "NonfungibleLocked")
