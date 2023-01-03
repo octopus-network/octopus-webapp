@@ -1,7 +1,5 @@
 import React from "react";
-
 import { Box, Flex, Text, List, Divider, Heading } from "@chakra-ui/react";
-
 import { AppchainInfo } from "types";
 import { DecimalUtil } from "utils";
 
