@@ -20,7 +20,6 @@ import { QuestionOutlineIcon, ChevronRightIcon } from "@chakra-ui/icons";
 import { DecimalUtil } from "utils";
 import { AppchainInfo } from "types";
 import { useNavigate } from "react-router-dom";
-import { OCT_TOKEN_DECIMALS } from "primitives";
 
 import { Empty } from "components";
 
@@ -72,10 +71,7 @@ const BootingItem: React.FC<BootingItemProps> = ({ data }) => {
         </GridItem>
         <GridItem colSpan={3}>
           <Heading fontSize="md">
-            {DecimalUtil.beautify(
-              DecimalUtil.fromString(data.total_stake, OCT_TOKEN_DECIMALS)
-            )}{" "}
-            OCT
+            {DecimalUtil.formatAmount(data.total_stake)} OCT
           </Heading>
         </GridItem>
         <GridItem colSpan={1}>

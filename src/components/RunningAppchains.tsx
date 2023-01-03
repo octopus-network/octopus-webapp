@@ -18,7 +18,6 @@ import { useNavigate } from "react-router-dom";
 import { ChevronRightIcon } from "@chakra-ui/icons";
 import { Link as RouterLink } from "react-router-dom";
 import { DecimalUtil } from "utils";
-import { OCT_TOKEN_DECIMALS } from "primitives";
 
 import { AppchainInfo, AppchainInfoWithAnchorStatus } from "types";
 import useLocalStorage from "hooks/useLocalStorage";
@@ -94,10 +93,7 @@ const RunningItem: React.FC<RunningItemProps> = ({ whiteBg = false, data }) => {
             Staked OCT
           </Text>
           <Heading fontSize="lg">
-            {DecimalUtil.beautify(
-              DecimalUtil.fromString(data.total_stake, OCT_TOKEN_DECIMALS),
-              0
-            )}
+            {DecimalUtil.formatAmount(data.total_stake)}
           </Heading>
         </VStack>
         <VStack alignItems="flex-start">

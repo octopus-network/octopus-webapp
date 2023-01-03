@@ -2,6 +2,7 @@ import Decimal from "decimal.js";
 import BN from "bn.js";
 
 import { beautify } from "../utils";
+import { OCT_TOKEN_DECIMALS } from "primitives";
 
 export const ZERO_DECIMAL = new Decimal(0);
 export const ONE_DECIMAL = new Decimal(1);
@@ -16,6 +17,16 @@ export class DecimalUtil {
   }
 
   public static fromNumber(input: number, shift = 0): Decimal {
+    return new Decimal(input).div(new Decimal(10).pow(shift));
+  }
+
+  public static fromValue(
+    input: string | number | undefined,
+    shift = 0
+  ): Decimal {
+    if (!input) {
+      return ZERO_DECIMAL;
+    }
     return new Decimal(input).div(new Decimal(10).pow(shift));
   }
 
@@ -57,5 +68,13 @@ export class DecimalUtil {
 
     const str = input.toFixed(fixed, Decimal.ROUND_DOWN);
     return beautify(str, trim);
+  }
+
+  public static formatAmount(
+    input: string | number | undefined,
+    decimals = OCT_TOKEN_DECIMALS,
+    fixed = 0
+  ): string {
+    return DecimalUtil.beautify(DecimalUtil.fromValue(input, decimals), fixed);
   }
 }

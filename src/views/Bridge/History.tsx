@@ -87,15 +87,11 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
         </HStack>
         <HStack alignItems="flex-end" justifyContent="center">
           <Heading fontSize="lg">
-            {DecimalUtil.beautify(
-              DecimalUtil.fromString(
-                history.amount,
-                Array.isArray(tokenAsset?.metadata?.decimals)
-                  ? tokenAsset?.metadata?.decimals[
-                      history.isAppchainSide ? 0 : 0
-                    ]
-                  : tokenAsset?.metadata?.decimals
-              )
+            {DecimalUtil.formatAmount(
+              history.amount,
+              Array.isArray(tokenAsset?.metadata?.decimals)
+                ? tokenAsset?.metadata?.decimals[history.isAppchainSide ? 0 : 0]
+                : tokenAsset?.metadata?.decimals
             )}
           </Heading>
           <Heading fontSize="lg">{tokenAsset?.metadata?.symbol}</Heading>

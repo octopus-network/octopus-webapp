@@ -25,7 +25,6 @@ import {
   ValidatorStatus,
 } from "types";
 import dayjs from "dayjs";
-import { OCT_TOKEN_DECIMALS } from "primitives";
 import { RippleDot } from "components";
 import { ChevronRightIcon } from "@chakra-ui/icons";
 import { useNavigate } from "react-router-dom";
@@ -191,21 +190,10 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
       <GridItem colSpan={2} textAlign="center">
         <HStack justify="center">
           <Heading fontSize="md">
-            {DecimalUtil.beautify(
-              DecimalUtil.fromString(
-                validator.deposit_amount,
-                OCT_TOKEN_DECIMALS
-              ),
-              0
-            )}{" "}
-            /
+            {DecimalUtil.formatAmount(validator.deposit_amount)} /
           </Heading>
           <Heading fontSize="md">
-            {DecimalUtil.beautify(
-              DecimalUtil.fromString(validator.total_stake, OCT_TOKEN_DECIMALS),
-              0
-            )}{" "}
-            OCT
+            {DecimalUtil.formatAmount(validator.total_stake)} OCT
           </Heading>
         </HStack>
       </GridItem>

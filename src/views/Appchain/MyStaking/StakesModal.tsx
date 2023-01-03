@@ -1,4 +1,4 @@
-import React, { useMemo } from "react"
+import React, { useMemo } from "react";
 
 import {
   Flex,
@@ -15,28 +15,28 @@ import {
   Td,
   Box,
   useColorModeValue,
-} from "@chakra-ui/react"
+} from "@chakra-ui/react";
 
-import { AnchorContract, UnbondedHistory } from "types"
+import { AnchorContract, UnbondedHistory } from "types";
 
-import { BaseModal, Empty } from "components"
-import { DecimalUtil, ZERO_DECIMAL } from "utils"
-import dayjs from "dayjs"
-import relativeTime from "dayjs/plugin/relativeTime"
+import { BaseModal, Empty } from "components";
+import { DecimalUtil, ZERO_DECIMAL } from "utils";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 
-import { COMPLEX_CALL_GAS, OCT_TOKEN_DECIMALS } from "primitives"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
-import { Toast } from "components/common/toast"
-import { onTxSent } from "utils/helper"
+import { COMPLEX_CALL_GAS, OCT_TOKEN_DECIMALS } from "primitives";
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
+import { Toast } from "components/common/toast";
+import { onTxSent } from "utils/helper";
 
 type RewardsModalProps = {
-  stakes: UnbondedHistory[] | undefined
-  anchor: AnchorContract | undefined
-  isOpen: boolean
-  onClose: () => void
-}
+  stakes: UnbondedHistory[] | undefined;
+  anchor: AnchorContract | undefined;
+  isOpen: boolean;
+  onClose: () => void;
+};
 
-dayjs.extend(relativeTime)
+dayjs.extend(relativeTime);
 
 export const StakesModal: React.FC<RewardsModalProps> = ({
   isOpen,
@@ -44,11 +44,11 @@ export const StakesModal: React.FC<RewardsModalProps> = ({
   stakes,
   anchor,
 }) => {
-  const bg = useColorModeValue("#f6f7fa", "#15172c")
+  const bg = useColorModeValue("#f6f7fa", "#15172c");
 
-  const { accountId, selector } = useWalletSelector()
+  const { accountId, selector } = useWalletSelector();
 
-  const [isWithdrawing, setIsWithdrawing] = useBoolean(false)
+  const [isWithdrawing, setIsWithdrawing] = useBoolean(false);
 
   const totalStakes = useMemo(
     () =>
@@ -62,11 +62,11 @@ export const StakesModal: React.FC<RewardsModalProps> = ({
           )
         : ZERO_DECIMAL,
     [stakes]
-  )
+  );
 
   const withdrawableStakes = useMemo(() => {
     if (!stakes?.length) {
-      return ZERO_DECIMAL
+      return ZERO_DECIMAL;
     }
 
     return stakes.reduce(
@@ -77,13 +77,13 @@ export const StakesModal: React.FC<RewardsModalProps> = ({
             : DecimalUtil.fromString(next.amount, OCT_TOKEN_DECIMALS)
         ),
       ZERO_DECIMAL
-    )
-  }, [stakes])
+    );
+  }, [stakes]);
 
   const onWithdrawStakes = async () => {
     try {
-      setIsWithdrawing.on()
-      const wallet = await selector.wallet()
+      setIsWithdrawing.on();
+      const wallet = await selector.wallet();
       await wallet.signAndSendTransaction({
         signerId: accountId,
         receiverId: anchor?.contractId,
@@ -98,14 +98,14 @@ export const StakesModal: React.FC<RewardsModalProps> = ({
             },
           },
         ],
-      })
-      Toast.success("Withdrawed")
-      setIsWithdrawing.off()
-      onTxSent()
+      });
+      Toast.success("Withdrawed");
+      setIsWithdrawing.off();
+      onTxSent();
     } catch (error) {
-      setIsWithdrawing.off()
+      setIsWithdrawing.off();
     }
-  }
+  };
 
   return (
     <BaseModal
@@ -160,11 +160,7 @@ export const StakesModal: React.FC<RewardsModalProps> = ({
                   }
                 >
                   <Td>{s.era_number}</Td>
-                  <Td isNumeric>
-                    {DecimalUtil.beautify(
-                      DecimalUtil.fromString(s.amount, OCT_TOKEN_DECIMALS)
-                    )}
-                  </Td>
+                  <Td isNumeric>{DecimalUtil.formatAmount(s.amount)}</Td>
                   <Td isNumeric>
                     <Text>
                       {dayjs(
@@ -184,5 +180,5 @@ export const StakesModal: React.FC<RewardsModalProps> = ({
         />
       )}
     </BaseModal>
-  )
-}
+  );
+};

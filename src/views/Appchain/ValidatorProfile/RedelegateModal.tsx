@@ -19,7 +19,7 @@ import { useWalletSelector } from "components/WalletSelectorContextProvider";
 import dayjs from "dayjs";
 import Decimal from "decimal.js";
 import _ from "lodash";
-import { COMPLEX_CALL_GAS, OCT_TOKEN_DECIMALS } from "primitives";
+import { COMPLEX_CALL_GAS } from "primitives";
 import { useEffect, useState } from "react";
 import { AnchorContract, Validator } from "types";
 import { DecimalUtil } from "utils";
@@ -188,14 +188,7 @@ export default function RedelegateModal({
                               {formatNearAddress(v.validator_id)}
                             </Radio>
                           </Td>
-                          <Td>
-                            {DecimalUtil.beautify(
-                              DecimalUtil.fromString(
-                                v.total_stake,
-                                OCT_TOKEN_DECIMALS
-                              )
-                            )}
-                          </Td>
+                          <Td>{DecimalUtil.formatAmount(v.total_stake)}</Td>
                           <Td textAlign="center">{v.delegators_count}</Td>
                           <Td textAlign="center">{v.registered_from || "-"}</Td>
                         </Tr>

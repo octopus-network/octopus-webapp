@@ -15,14 +15,10 @@ import {
   Skeleton,
   SkeletonCircle,
 } from "@chakra-ui/react";
-
 import { useNavigate } from "react-router-dom";
 import { ChevronRightIcon } from "@chakra-ui/icons";
 import { Link as RouterLink } from "react-router-dom";
 import { DecimalUtil } from "utils";
-
-import { OCT_TOKEN_DECIMALS } from "primitives";
-
 import { AppchainInfo, Delegator, Validator } from "types";
 
 type RunningAppchainsProps = {
@@ -113,10 +109,7 @@ const FrozenItem: React.FC<FrozenItemProps> = ({ whiteBg = false, data }) => {
             Staked OCT
           </Text>
           <Heading fontSize="lg">
-            {DecimalUtil.beautify(
-              DecimalUtil.fromString(data.total_stake, OCT_TOKEN_DECIMALS),
-              0
-            )}
+            {DecimalUtil.formatAmount(data.total_stake)}
           </Heading>
         </VStack>
         <VStack alignItems="flex-start">

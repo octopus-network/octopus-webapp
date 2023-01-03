@@ -299,15 +299,8 @@ export default function TokenInpput({
               Fee
             </Text>
             <Text fontSize="xs" color="gray">
-              {DecimalUtil.beautify(
-                DecimalUtil.shift(
-                  new Decimal(
-                    tokenAsset
-                      ? crosschainFee.fungible
-                      : crosschainFee.nonfungible
-                  ),
-                  decimals
-                ),
+              {DecimalUtil.formatAmount(
+                tokenAsset ? crosschainFee.fungible : crosschainFee.nonfungible,
                 decimals
               )}
             </Text>

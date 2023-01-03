@@ -324,12 +324,9 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
           isLoaded
           value={
             appchainSettings?.era_reward && wrappedAppchainToken
-              ? DecimalUtil.beautify(
-                  DecimalUtil.fromString(
-                    appchainSettings?.era_reward,
-                    wrappedAppchainToken.metadata.decimals
-                  ),
-                  0
+              ? DecimalUtil.formatAmount(
+                  appchainSettings?.era_reward,
+                  wrappedAppchainToken.metadata.decimals
                 )
               : "-"
           }
@@ -354,13 +351,9 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
           isLoaded={!!totalIssuance}
           value={
             totalIssuance && appchain?.appchain_metadata
-              ? DecimalUtil.beautify(
-                  DecimalUtil.fromString(
-                    totalIssuance,
-                    appchain?.appchain_metadata?.fungible_token_metadata
-                      .decimals
-                  ),
-                  0
+              ? DecimalUtil.formatAmount(
+                  totalIssuance,
+                  appchain?.appchain_metadata?.fungible_token_metadata.decimals
                 )
               : "loading"
           }
@@ -370,14 +363,10 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
           isLoaded
           value={
             appchain?.appchain_metadata?.ido_amount_of_wrapped_appchain_token
-              ? DecimalUtil.beautify(
-                  DecimalUtil.fromString(
-                    appchain?.appchain_metadata
-                      ?.ido_amount_of_wrapped_appchain_token,
-                    appchain?.appchain_metadata?.fungible_token_metadata
-                      .decimals
-                  ),
-                  0
+              ? DecimalUtil.formatAmount(
+                  appchain?.appchain_metadata
+                    ?.ido_amount_of_wrapped_appchain_token,
+                  appchain?.appchain_metadata?.fungible_token_metadata.decimals
                 )
               : "-"
           }
