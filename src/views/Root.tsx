@@ -1,35 +1,15 @@
 import React, { useEffect, useMemo, useCallback, useRef } from "react";
-
 import { SWRConfig } from "swr";
 import axios from "axios";
-
-import {
-  Box,
-  useColorModeValue,
-  useToast,
-  Link,
-  Img,
-  Flex,
-  CloseButton,
-  Portal,
-} from "@chakra-ui/react";
-
+import { Box, useColorModeValue, useToast, Link } from "@chakra-ui/react";
 import { Header, Footer } from "components";
-
 import { providers } from "near-api-js";
-
 import { Outlet } from "react-router-dom";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useMatchMutate } from "hooks";
-
 import { API_HOST } from "config";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
 import { Toast } from "components/common/toast";
-import OptoBannerBg from "assets/opto-banner.png";
-import AvatarBannerBg from "assets/avatar-banner.png";
-import Carousel from "nuka-carousel/lib/carousel";
-import useLocalStorage from "hooks/useLocalStorage";
-import posthog from "posthog-js";
 
 export const Root: React.FC = () => {
   const headerBg = useColorModeValue("whiteAlpha.800", "whiteAlpha.50");
@@ -165,11 +145,6 @@ export const Root: React.FC = () => {
     window.history.pushState({ path: newUrl }, "", newUrl);
   }, [urlParams]);
 
-  const [showWalletBanner, setShowWalletBanner] = useLocalStorage(
-    "walletBanner",
-    true
-  );
-
   return (
     <SWRConfig
       value={{
@@ -185,63 +160,6 @@ export const Root: React.FC = () => {
       <Box mt={16}>
         <Footer />
       </Box>
-      {showWalletBanner && (
-        <Portal>
-          <Box
-            position="fixed"
-            right="10px"
-            bottom="10px"
-            zIndex={100}
-            width="300px"
-          >
-            <Flex direction="row" justify="flex-end">
-              <CloseButton
-                onClick={() => {
-                  setShowWalletBanner(false);
-                }}
-              />
-            </Flex>
-            <Carousel
-              autoplay
-              autoplayInterval={5000}
-              swiping
-              pauseOnHover
-              withoutControls
-              dragging
-              wrapAround
-            >
-              <a
-                href="https://optowallet.com"
-                target="_blank"
-                rel="noreferrer"
-                onClick={() => posthog.capture("click_opto")}
-              >
-                <Img
-                  src={OptoBannerBg}
-                  width="300px"
-                  height="200px"
-                  alt="Opto Wallet"
-                  borderRadius={10}
-                />
-              </a>
-              <a
-                href="https://chrome.google.com/webstore/detail/avatar-wallet/ckfhnogibicdkfkijinnacpmmobbhbjk"
-                target="_blank"
-                rel="noreferrer"
-                onClick={() => posthog.capture("click_avatar")}
-              >
-                <Img
-                  src={AvatarBannerBg}
-                  width="300px"
-                  height="200px"
-                  alt="Avatar Wallet"
-                  borderRadius={10}
-                />
-              </a>
-            </Carousel>
-          </Box>
-        </Portal>
-      )}
     </SWRConfig>
   );
 };
