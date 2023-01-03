@@ -1,35 +1,20 @@
-import { Box, Image, Text, useBoolean, VStack } from "@chakra-ui/react"
-import { useSpring, animated } from "react-spring"
+import { Box, Text, VStack } from "@chakra-ui/react";
+import React from "react";
 
 type LinkBoxProps = {
-  label: string
-  icon: any
-  to?: string
-  href?: string
-}
+  label: string;
+  icon: React.ReactElement;
+  to?: string;
+  href?: string;
+};
 
 const LinkBox: React.FC<LinkBoxProps> = ({ label, icon }) => {
-  const [isHovering, setIsHovering] = useBoolean(false)
-
-  const iconHoveringProps = useSpring({
-    transform: isHovering ? "translateY(-5pxpx)" : "translateY(0px)",
-  })
-
   return (
-    <Box
-      p={2}
-      cursor="pointer"
-      onMouseEnter={setIsHovering.on}
-      onMouseLeave={setIsHovering.off}
-    >
+    <Box p={4} cursor="pointer">
       <VStack spacing={1}>
-        <animated.div style={iconHoveringProps}>
-          <Box boxSize={8}>
-            <Image src={icon} w="100%" />
-          </Box>
-        </animated.div>
+        {icon}
         <Text
-          fontSize="sm"
+          fontSize={12}
           whiteSpace="nowrap"
           textOverflow="ellipsis"
           overflow="hidden"
@@ -39,7 +24,7 @@ const LinkBox: React.FC<LinkBoxProps> = ({ label, icon }) => {
         </Text>
       </VStack>
     </Box>
-  )
-}
+  );
+};
 
-export default LinkBox
+export default LinkBox;

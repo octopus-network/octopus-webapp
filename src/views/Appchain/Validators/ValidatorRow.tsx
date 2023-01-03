@@ -153,6 +153,8 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
       }}
       pl={6}
       pr={6}
+      pt={2}
+      pb={2}
       gap={2}
       minH="65px"
       cursor="pointer"
