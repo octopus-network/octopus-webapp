@@ -15,6 +15,7 @@
     "@near-wallet-selector/my-near-wallet": "^7.3.0",
     "@near-wallet-selector/near-wallet": "^7.3.0",
     "@near-wallet-selector/opto-wallet": "^7.3.0",
+    "@near-wallet-selector/sender": "^7.4.0",
     "@polkadot/api": "9.6.2",
     "@polkadot/extension-dapp": "0.44.6",
     "@polkadot/react-identicon": "2.9.12",

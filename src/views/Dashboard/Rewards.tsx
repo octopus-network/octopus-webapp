@@ -239,7 +239,7 @@ const Rewards = ({ viewingAccount }: { viewingAccount?: string }) => {
         return Toast.error("No rewards to claim");
       }
       const wallet = await selector.wallet();
-      wallet.signAndSendTransactions({
+      await wallet.signAndSendTransactions({
         transactions,
       });
       setIsClaiming.off();

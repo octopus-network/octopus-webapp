@@ -10,7 +10,7 @@ type LinkBoxProps = {
 
 const LinkBox: React.FC<LinkBoxProps> = ({ label, icon }) => {
   return (
-    <Box p={4} cursor="pointer">
+    <Box pt={4} pb={3} cursor="pointer">
       <VStack spacing={1}>
         {icon}
         <Text

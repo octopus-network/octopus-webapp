@@ -2934,6 +2934,13 @@
   dependencies:
     rxjs "^7.5.7"
 
+"@near-wallet-selector/core@7.4.0":
+  version "7.4.0"
+  resolved "https://registry.npmjs.org/@near-wallet-selector/core/-/core-7.4.0.tgz#4a898f9ba5f7c07723b78b4f3a16d37713055cb8"
+  integrity sha512-7dq8MTgJ5nQjxK06L+r95E1qvEjBqyBgHK0Mt0aJf8EaQff+U7AhI3WyjXhLN4/f0q/qxthWuV7cjrDYFojZ5Q==
+  dependencies:
+    rxjs "^7.5.7"
+
 "@near-wallet-selector/default-wallets@^7.3.0":
   version "7.3.0"
   resolved "https://registry.npmjs.org/@near-wallet-selector/default-wallets/-/default-wallets-7.3.0.tgz#6a84c06212184cc0fc689e0cfeb4b609870efeae"
@@ -2989,6 +2996,14 @@
   dependencies:
     "@near-wallet-selector/core" "7.3.0"
     "@near-wallet-selector/wallet-utils" "7.3.0"
+
+"@near-wallet-selector/sender@^7.4.0":
+  version "7.4.0"
+  resolved "https://registry.npmjs.org/@near-wallet-selector/sender/-/sender-7.4.0.tgz#88275b1617a0d8ddc83da49947372161ff86c0c6"
+  integrity sha512-xGB+Qnr1uQop3PlHWHPMasXLMsfIzu20rUSF2sAsGpLuJYAlHHmKfrliwbhvQOqeT5y3KKNgb8EPLw4mo8d/0w==
+  dependencies:
+    "@near-wallet-selector/core" "7.4.0"
+    is-mobile "^3.1.1"
 
 "@near-wallet-selector/wallet-utils@7.3.0":
   version "7.3.0"

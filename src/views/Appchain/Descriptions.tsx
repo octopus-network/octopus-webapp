@@ -150,7 +150,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
 
       <SimpleGrid
         columns={{ base: 3, md: 5 }}
-        spacing={4}
+        spacing={1}
         mt={8}
         bg={linksBg}
         borderRadius="lg"
