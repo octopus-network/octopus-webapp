@@ -258,7 +258,7 @@ const Rewards = ({ viewingAccount }: { viewingAccount?: string }) => {
     }
   };
   return (
-    <Box bg={bg} p={6} borderRadius="lg">
+    <Box bg={bg} p={6} borderRadius="md">
       <Flex direction="row" align="center" justify="space-between">
         <Heading fontSize="2xl">Rewards</Heading>
         {myAccountId === viewingAccount && claimable && (

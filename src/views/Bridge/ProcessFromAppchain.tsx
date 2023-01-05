@@ -140,7 +140,7 @@ export const ProcessFromAppchain: React.FC<Props> = ({ data, network }) => {
               .concat(details?.staging_msgs_in_near)
               .filter((i) => !!i)
               .map((item) => (
-                <List borderWidth={1} borderRadius="lg" spacing={1} p={1}>
+                <List borderWidth={1} borderRadius="md" spacing={1} p={1}>
                   <Flex
                     fontSize="sm"
                     alignItems="center"

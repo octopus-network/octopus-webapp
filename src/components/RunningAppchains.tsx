@@ -49,7 +49,7 @@ const RunningItem: React.FC<RunningItemProps> = ({ whiteBg = false, data }) => {
   return (
     <Box
       bg={bg}
-      borderRadius="lg"
+      borderRadius="md"
       p={6}
       cursor="pointer"
       transition="all .3s ease"
@@ -111,7 +111,7 @@ const BlankItem: React.FC<Omit<RunningItemProps, "data">> = ({ whiteBg }) => {
   const bg = useColorModeValue(whiteBg ? "white" : "#f6f7fa", "#15172c");
 
   return (
-    <Box bg={bg} borderRadius="lg" p={6}>
+    <Box bg={bg} borderRadius="md" p={6}>
       <Flex justifyContent="space-between">
         <HStack>
           <SkeletonCircle boxSize={10} />

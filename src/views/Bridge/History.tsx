@@ -60,7 +60,7 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
   );
 
   return (
-    <Box p={3} bg={bg} borderRadius="lg">
+    <Box p={3} bg={bg} borderRadius="md">
       <Flex justifyContent="space-between" alignItems="center">
         <HStack maxW="50%">
           <Text variant="gray" fontSize="sm">

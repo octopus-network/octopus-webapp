@@ -100,7 +100,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
   );
 
   return (
-    <Box bg={bg} p={6} borderRadius="lg">
+    <Box bg={bg} p={6} borderRadius="md">
       <Flex alignItems="center" justifyContent="space-between" minH="68px">
         <HStack spacing={4}>
           <SkeletonCircle size="16" isLoaded={!!appchain}>
@@ -153,7 +153,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
         spacing={1}
         mt={8}
         bg={linksBg}
-        borderRadius="lg"
+        borderRadius="md"
       >
         <Link
           href={toValidUrl(appchain?.appchain_metadata?.website_url)}

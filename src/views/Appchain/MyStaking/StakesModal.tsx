@@ -114,7 +114,7 @@ export const StakesModal: React.FC<RewardsModalProps> = ({
       maxW="640px"
       title="Withdraw Stakes"
     >
-      <Box p={4} bg={bg} borderRadius="lg">
+      <Box p={4} bg={bg} borderRadius="md">
         <Flex justifyContent="space-between" alignItems="center">
           <Text variant="gray">Total Unbonded Stakes</Text>
           <Heading fontSize="md">

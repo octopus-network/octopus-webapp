@@ -13,17 +13,17 @@ import {
   Text,
   useBoolean,
   useColorModeValue,
-} from "@chakra-ui/react"
-import nearLogo from "assets/near.svg"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
-import useAccounts from "hooks/useAccounts"
-import { useCallback, useEffect, useState } from "react"
-import { AppchainInfoWithAnchorStatus } from "types"
-import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types"
-import { SelectWeb3AccountModal } from "views/Bridge/SelectWeb3AccountModal"
-import { Toast } from "components/common/toast"
-import { AiFillCloseCircle } from "react-icons/ai"
-import { WarningIcon } from "@chakra-ui/icons"
+} from "@chakra-ui/react";
+import nearLogo from "assets/near.svg";
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
+import useAccounts from "hooks/useAccounts";
+import { useCallback, useEffect, useState } from "react";
+import { AppchainInfoWithAnchorStatus } from "types";
+import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
+import { SelectWeb3AccountModal } from "views/Bridge/SelectWeb3AccountModal";
+import { Toast } from "components/common/toast";
+import { AiFillCloseCircle } from "react-icons/ai";
+import { WarningIcon } from "@chakra-ui/icons";
 
 export default function AddressInpput({
   label,
@@ -34,95 +34,95 @@ export default function AddressInpput({
   targetAccountNeedDepositStorage,
   onDepositStorage,
 }: {
-  label: string
-  chain: string
-  appchain?: AppchainInfoWithAnchorStatus
-  onChange: (value: string | undefined) => void
-  isDepositingStorage?: boolean
-  targetAccountNeedDepositStorage?: boolean
-  onDepositStorage?: () => void
+  label: string;
+  chain: string;
+  appchain?: AppchainInfoWithAnchorStatus;
+  onChange: (value: string | undefined) => void;
+  isDepositingStorage?: boolean;
+  targetAccountNeedDepositStorage?: boolean;
+  onDepositStorage?: () => void;
 }) {
-  const grayBg = useColorModeValue("#f2f4f7", "#1e1f34")
-  const isEvm = appchain?.appchain_metadata.template_type === "BarnacleEvm"
+  const grayBg = useColorModeValue("#f2f4f7", "#1e1f34");
+  const isEvm = appchain?.appchain_metadata.template_type === "BarnacleEvm";
 
-  const [selectAccountModalOpen, setSelectAccountModalOpen] = useBoolean()
-  const [address, setAddress] = useState<string | undefined>()
-  const { accountId, modal, selector } = useWalletSelector()
+  const [selectAccountModalOpen, setSelectAccountModalOpen] = useBoolean();
+  const [address, setAddress] = useState<string | undefined>();
+  const { accountId, modal, selector } = useWalletSelector();
   const { accounts, currentAccount, setCurrentAccount } = useAccounts(
     isEvm,
     !!chain
-  )
-  const isNear = chain === "NEAR"
-  const isFrom = label === "From"
+  );
+  const isNear = chain === "NEAR";
+  const isFrom = label === "From";
 
   const onUpdateAddress = useCallback(
     (value: string | undefined) => {
-      setAddress(value)
-      onChange(value)
+      setAddress(value);
+      onChange(value);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
-  )
+  );
 
   useEffect(() => {
     if (isNear) {
-      onUpdateAddress(accountId)
+      onUpdateAddress(accountId);
     } else {
-      onUpdateAddress(currentAccount?.address)
+      onUpdateAddress(currentAccount?.address);
     }
-  }, [accountId, currentAccount, isNear, onUpdateAddress])
+  }, [accountId, currentAccount, isNear, onUpdateAddress]);
 
   const onSelectAccount = (account: InjectedAccountWithMeta) => {
-    setCurrentAccount(account)
-    onUpdateAddress(account.address)
-    setSelectAccountModalOpen.off()
-  }
+    setCurrentAccount(account);
+    onUpdateAddress(account.address);
+    setSelectAccountModalOpen.off();
+  };
 
   const onLogin = () => {
     if (isNear) {
-      modal.show()
+      modal.show();
     } else if (isEvm) {
       if (typeof window.ethereum !== "undefined") {
-        console.log("MetaMask is installed!")
+        console.log("MetaMask is installed!");
         window.ethereum
           .request({
             method: "eth_requestAccounts",
           })
           .then((res: any) => {
-            console.log("res", res)
+            console.log("res", res);
           })
-          .catch(console.error)
-        setSelectAccountModalOpen.on()
+          .catch(console.error);
+        setSelectAccountModalOpen.on();
       } else {
-        Toast.error("Please install MetaMask first")
+        Toast.error("Please install MetaMask first");
       }
     } else {
       // polkadot
-      setSelectAccountModalOpen.on()
+      setSelectAccountModalOpen.on();
     }
-  }
+  };
 
   const onLogout = () => {
     if (isNear) {
       selector
         .wallet()
         .then((w) => {
-          w.signOut()
+          w.signOut();
 
-          window.location.reload()
+          window.location.reload();
         })
-        .catch(Toast.error)
+        .catch(Toast.error);
     } else {
-      setSelectAccountModalOpen.on()
+      setSelectAccountModalOpen.on();
     }
-  }
+  };
 
   const onClear = () => {
-    onUpdateAddress("")
-  }
+    onUpdateAddress("");
+  };
 
   return (
-    <Box bg={grayBg} p={4} borderRadius="lg" pt={2}>
+    <Box bg={grayBg} p={4} borderRadius="md" pt={2}>
       <Flex alignItems="center" justifyContent="space-between" minH="25px">
         <Heading fontSize="md" className="octo-gray">
           {label}
@@ -205,5 +205,5 @@ export default function AddressInpput({
         selectedAccount={currentAccount}
       />
     </Box>
-  )
+  );
 }

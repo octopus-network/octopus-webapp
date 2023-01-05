@@ -89,7 +89,7 @@ export default function Initial({
   return (
     <>
       <Flex pt={4} pb={4} justifyContent="center" flexDirection="column">
-        <Flex bg={inputBg} p={1} borderRadius="lg">
+        <Flex bg={inputBg} p={1} borderRadius="md">
           <Box>
             <Select
               value={{

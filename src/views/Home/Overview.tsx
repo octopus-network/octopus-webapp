@@ -35,14 +35,14 @@ const Card: React.FC<
     <Box
       p="1px"
       bg={bg}
-      borderRadius="lg"
+      borderRadius="md"
       boxShadow="0px 0px 30px 0px rgba(0,29,97,0.10)"
       {...restProps}
       onClick={() => (to ? navigate(to) : null)}
     >
       <Box
         p={6}
-        borderRadius="lg"
+        borderRadius="md"
         bg={innerBg}
         transition="all .3s ease"
         _hover={to ? { cursor: "pointer", filter: "brightness(110%)" } : {}}

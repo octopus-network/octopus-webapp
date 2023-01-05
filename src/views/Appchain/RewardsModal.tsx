@@ -216,7 +216,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
           Claim All
         </Button>
       </Flex>
-      <Box p={4} mb={4} mt={4} bg={bg} borderRadius="lg">
+      <Box p={4} mb={4} mt={4} bg={bg} borderRadius="md">
         <>
           <Flex>
             <HStack color="red">

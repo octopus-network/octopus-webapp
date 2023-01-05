@@ -35,7 +35,7 @@ const BootingItem: React.FC<BootingItemProps> = ({ data }) => {
     <Box
       p={4}
       cursor="pointer"
-      borderRadius="lg"
+      borderRadius="md"
       className="transition"
       backgroundColor="transparent"
       _hover={{
@@ -104,7 +104,7 @@ export const Booting: React.FC = () => {
           </HStack>
         </Tooltip>
       </Flex>
-      <Box mt={8} bg={bg} p={6} borderRadius="lg">
+      <Box mt={8} bg={bg} p={6} borderRadius="md">
         {appchains?.length ? (
           <>
             <Box p={4}>

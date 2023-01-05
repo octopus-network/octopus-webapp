@@ -50,7 +50,7 @@ export const InstanceInfoModal: React.FC<Props> = ({
                           metrics.cpu[c].percentage > 0.9 ? "red" : "blue"
                         }
                         size="sm"
-                        borderRadius="lg"
+                        borderRadius="md"
                       />
                     </Box>
                     <Text fontSize="xs" color="gray">
@@ -73,7 +73,7 @@ export const InstanceInfoModal: React.FC<Props> = ({
                 value={metrics?.memory.percentage * 100}
                 colorScheme={metrics?.memory.percentage > 0.9 ? "red" : "blue"}
                 size="sm"
-                borderRadius="lg"
+                borderRadius="md"
               />
             </Box>
             <Text fontSize="xs" color="gray">
@@ -95,7 +95,7 @@ export const InstanceInfoModal: React.FC<Props> = ({
                   metrics?.filesystem.percentage > 0.9 ? "red" : "blue"
                 }
                 size="sm"
-                borderRadius="lg"
+                borderRadius="md"
               />
             </Box>
             <Text fontSize="xs" color="gray">

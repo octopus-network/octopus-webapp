@@ -232,11 +232,11 @@ export const RegisterForm: React.FC = () => {
   };
 
   return (
-    <Box bg={bg} p={6} borderRadius="lg">
+    <Box bg={bg} p={6} borderRadius="md">
       <Heading fontSize="3xl" mb={6}>
         Join Octopus
       </Heading>
-      <Box p={4} borderRadius="lg" borderWidth={1}>
+      <Box p={4} borderRadius="sm" borderWidth={1}>
         <HStack>
           <Box borderRadius="full" boxSize={10} bg={grayBg} overflow="hidden">
             <Image src={tokenInfo.icon} w="100%" />

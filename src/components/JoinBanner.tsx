@@ -66,7 +66,7 @@ export const JoinBanner: React.FC = () => {
 
   return (
     <Box
-      borderRadius="lg"
+      borderRadius="md"
       bgColor="#1486ff"
       p={4}
       bgImage={joinBannerBg}

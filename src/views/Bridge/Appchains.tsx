@@ -57,7 +57,7 @@ const AppchainItem: React.FC<AppchainItemProps> = ({
       bg={isSelected ? selectedBg : bg}
       p={4}
       pr={6}
-      borderRadius="lg"
+      borderRadius="md"
       cursor="pointer"
       onMouseEnter={setIsHovering.on}
       onMouseLeave={setIsHovering.off}
@@ -105,7 +105,7 @@ export const Appchains: React.FC = () => {
   );
 
   return (
-    <Box bg={bg} pt={6} pb={6} borderRadius="lg" h="100%">
+    <Box bg={bg} pt={6} pb={6} borderRadius="md" h="100%">
       <Box pl={6} pr={6}>
         <Heading fontSize="xl">Appchains</Heading>
       </Box>

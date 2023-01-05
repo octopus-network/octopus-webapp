@@ -23,7 +23,7 @@ const DescriptionItem: React.FC<DescriptionItemProps> = ({ name, value }) => {
 
 export const Descriptions: React.FC<DescriptionsProps> = ({ data }) => {
   return (
-    <Box p={4} borderWidth={1} borderRadius="lg">
+    <Box p={4} borderWidth={1} borderRadius="md">
       <List spacing={3}>
         <DescriptionItem
           name="Initial Supply"

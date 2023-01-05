@@ -141,7 +141,7 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
   return (
     <Grid
       transition="transform 0.2s ease-in-out 0s, box-shadow 0.2s ease-in-out 0s"
-      borderRadius="lg"
+      borderRadius="md"
       _hover={{
         boxShadow: "rgb(0 0 123 / 10%) 0px 0px 15px",
         transform: "scaleX(0.99)",

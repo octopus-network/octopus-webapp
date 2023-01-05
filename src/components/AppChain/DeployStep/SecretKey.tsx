@@ -45,7 +45,7 @@ export default function SecretKey({
   return (
     <Flex pt={2} pb={4} justifyContent="center" flexDirection="column" gap={4}>
       <RecommendInstance appchainId={appchainId} cloudVendor={cloudVendor} />
-      <Flex bg={inputBg} p={1} borderRadius="lg">
+      <Flex bg={inputBg} p={1} borderRadius="md">
         {cloudVendor === CloudVendor.GCP ? (
           <>
             <Box p={2}>
@@ -82,7 +82,7 @@ export default function SecretKey({
           />
         )}
       </Flex>
-      <Flex bg={inputBg} p={1} borderRadius="lg" alignItems="center">
+      <Flex bg={inputBg} p={1} borderRadius="md" alignItems="center">
         <Box p={2}>
           <Text variant="gray">Deploy region</Text>
         </Box>
