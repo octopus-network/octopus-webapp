@@ -153,21 +153,26 @@ const Rewards = ({ viewingAccount }: { viewingAccount?: string }) => {
 
   const accountId = viewingAccount;
 
+  const fetchRewards = () => {
+    setIsLoading.on();
+
+    Promise.all(
+      appchains.map((appchain: AppchainInfo) =>
+        getAppchainRewards(appchain.appchain_id, accountId!, networkConfig!)
+      )
+    )
+      .then((rewards) => {
+        setIsLoading.off();
+        setAppchainRewards(rewards);
+      })
+      .catch((e) => {
+        setIsLoading.off();
+      });
+  };
+
   useEffect(() => {
     if (appchains && networkConfig && accountId) {
-      setIsLoading.on();
-      Promise.all(
-        appchains.map((appchain: AppchainInfo) =>
-          getAppchainRewards(appchain.appchain_id, accountId, networkConfig)
-        )
-      )
-        .then((rewards) => {
-          setIsLoading.off();
-          setAppchainRewards(rewards);
-        })
-        .catch((e) => {
-          setIsLoading.off();
-        });
+      fetchRewards();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appchains, accountId, networkConfig]);
@@ -242,6 +247,10 @@ const Rewards = ({ viewingAccount }: { viewingAccount?: string }) => {
       await wallet.signAndSendTransactions({
         transactions,
       });
+      if (wallet.type !== "browser") {
+        Toast.success("Claimed rewards");
+        fetchRewards();
+      }
       setIsClaiming.off();
     } catch (error) {
       setIsClaiming.off();
@@ -263,54 +272,57 @@ const Rewards = ({ viewingAccount }: { viewingAccount?: string }) => {
         )}
       </Flex>
       <List spacing={4} mt={6}>
-        {appchainRewards.map((appchainReward) => {
-          if (!appchainReward) {
-            return null;
-          }
-          const appchainId = appchainReward.appchain.appchain_id;
-          const decimals =
-            appchainReward.appchain.appchain_metadata.fungible_token_metadata
-              .decimals;
-          const symbol =
-            appchainReward.appchain.appchain_metadata.fungible_token_metadata
-              .symbol;
-          const vTotal = calcUnwithdrawnReward(
-            appchainReward.validatorRewards || [],
-            decimals
-          );
-          const dTotal = Object.values(appchainReward.delegatorRewards).reduce(
-            (total, rewards) =>
-              total.plus(calcUnwithdrawnReward(rewards, decimals)),
-            ZERO_DECIMAL
-          );
-          const total = DecimalUtil.beautify(vTotal.plus(dTotal));
+        {!isLoading &&
+          appchainRewards.map((appchainReward) => {
+            if (!appchainReward) {
+              return null;
+            }
+            const appchainId = appchainReward.appchain.appchain_id;
+            const decimals =
+              appchainReward.appchain.appchain_metadata.fungible_token_metadata
+                .decimals;
+            const symbol =
+              appchainReward.appchain.appchain_metadata.fungible_token_metadata
+                .symbol;
+            const vTotal = calcUnwithdrawnReward(
+              appchainReward.validatorRewards || [],
+              decimals
+            );
+            const dTotal = Object.values(
+              appchainReward.delegatorRewards
+            ).reduce(
+              (total, rewards) =>
+                total.plus(calcUnwithdrawnReward(rewards, decimals)),
+              ZERO_DECIMAL
+            );
+            const total = DecimalUtil.beautify(vTotal.plus(dTotal));
 
-          if (vTotal.plus(dTotal).isZero()) {
-            return null;
-          }
+            if (vTotal.plus(dTotal).isZero()) {
+              return null;
+            }
 
-          return (
-            <Box key={appchainId}>
-              <Flex direction="row" align="center" justify="space-between">
-                <Flex direction="row" align="center" gap={4}>
-                  <Avatar
-                    src={
-                      appchainReward.appchain.appchain_metadata
-                        .fungible_token_metadata.icon!
-                    }
-                    name={appchainId}
-                    size="sm"
-                  />
-                  <Text fontSize="1xl">{appchainId}</Text>
+            return (
+              <Box key={appchainId}>
+                <Flex direction="row" align="center" justify="space-between">
+                  <Flex direction="row" align="center" gap={4}>
+                    <Avatar
+                      src={
+                        appchainReward.appchain.appchain_metadata
+                          .fungible_token_metadata.icon!
+                      }
+                      name={appchainId}
+                      size="sm"
+                    />
+                    <Text fontSize="1xl">{appchainId}</Text>
+                  </Flex>
+
+                  <Text fontWeight="bold">
+                    {total} {symbol}
+                  </Text>
                 </Flex>
-
-                <Text fontWeight="bold">
-                  {total} {symbol}
-                </Text>
-              </Flex>
-            </Box>
-          );
-        })}
+              </Box>
+            );
+          })}
       </List>
       {!isLoading && (!appchainRewards.length || !claimable) && (
         <Empty message="No rewards" />

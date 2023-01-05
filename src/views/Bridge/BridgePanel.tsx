@@ -516,6 +516,7 @@ export const BridgePanel: React.FC = () => {
           },
         ],
       });
+      setAmount("");
       setIsDepositingStorage.off();
     } catch (err) {
       setIsDepositingStorage.off();
