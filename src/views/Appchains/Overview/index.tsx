@@ -93,7 +93,7 @@ export const Overview: React.FC<OverviewProps> = ({
         </Box>
       </DrawerBody>
       <DrawerFooter justifyContent="flex-start">
-        <Box bg={footerBg} p={4} borderRadius="lg" w="100%">
+        <Box bg={footerBg} p={4} borderRadius="md" w="100%">
           <Flex justifyContent="space-between">
             {accountId ? (
               <HStack>

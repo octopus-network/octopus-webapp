@@ -134,7 +134,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
     <Skeleton isLoaded={!!appchain || !network}>
       <Box left={0} top={0} right={0} pb={1} opacity={0.6}>
         <Flex justifyContent="space-between">
-          <Box p={1} borderRadius="lg">
+          <Box p={1} borderRadius="md">
             <HStack>
               <HStack spacing={1}>
                 <Avatar
@@ -167,7 +167,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
               </HStack>
             </HStack>
           </Box>
-          <Box p={1} borderRadius="lg">
+          <Box p={1} borderRadius="md">
             <HStack spacing={1}>
               <Icon as={BiTimeFive} boxSize={3} />
               <Text fontSize="xs">{dayjs(data.timestamp).fromNow()}</Text>
@@ -181,7 +181,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
           p={6}
           pr={4}
           bg={bg}
-          borderRadius="lg"
+          borderRadius="md"
           gap={6}
           alignItems="center"
           cursor="pointer"

@@ -80,7 +80,7 @@ export const Airdrops = ({ viewingAccount }: { viewingAccount?: string }) => {
   }
 
   return (
-    <Box bg={bg} p={6} borderRadius="lg" mt={6}>
+    <Box bg={bg} p={6} borderRadius="md" mt={6}>
       <Heading fontSize="2xl">Airdrops</Heading>
       {!airdrops && !airdropsError ? (
         <Center minH="160px">

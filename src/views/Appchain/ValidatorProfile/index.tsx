@@ -304,7 +304,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
           </Flex>
         </DrawerHeader>
         <DrawerBody>
-          <Box p={4} bg={bg} borderRadius="lg">
+          <Box p={4} bg={bg} borderRadius="md">
             <Skeleton isLoaded={validatorState !== "Unknown"}>
               <Flex justifyContent="space-between" alignItems="center">
                 <HStack maxW="calc(100% - 120px)">
@@ -401,7 +401,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
             ) : null}
           </Box>
           {isDelegated ? (
-            <Box mt={4} p={4} borderWidth={1} borderRadius="lg">
+            <Box mt={4} p={4} borderWidth={1} borderRadius="md">
               <Flex alignItems="center" justifyContent="space-between">
                 <Heading fontSize="md">Delegated</Heading>
                 <HStack spacing={4}>
@@ -461,7 +461,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
             </Box>
           ) : null}
 
-          <Box mt={4} p={4} borderWidth={1} borderRadius="lg">
+          <Box mt={4} p={4} borderWidth={1} borderRadius="md">
             <Flex alignItems="center" justifyContent="space-between">
               <Heading fontSize="md">Delegators</Heading>
               {accountId && validator && !isDelegated ? (
@@ -505,7 +505,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
           </Box>
         </DrawerBody>
         <DrawerFooter justifyContent="flex-start">
-          <Box bg={footerBg} p={4} borderRadius="lg" w="100%">
+          <Box bg={footerBg} p={4} borderRadius="md" w="100%">
             <Flex justifyContent="space-between" alignItems="center">
               {accountId ? (
                 <HStack>

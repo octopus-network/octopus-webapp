@@ -72,7 +72,7 @@ const LinkBox: React.FC<LinkBoxProps> = ({
   return (
     <Box
       bg={bg}
-      borderRadius="lg"
+      borderRadius="md"
       p="12px 24px"
       cursor="pointer"
       onMouseEnter={setIsHovering.on}

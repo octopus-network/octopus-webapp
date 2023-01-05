@@ -79,7 +79,7 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
         </Flex>
       </DrawerHeader>
       <DrawerBody pb={6}>
-        <Box bg={grayBg} borderRadius="lg" pl={3} pr={3}>
+        <Box bg={grayBg} borderRadius="md" pl={3} pr={3}>
           <Flex
             alignItems="center"
             justifyContent="space-between"

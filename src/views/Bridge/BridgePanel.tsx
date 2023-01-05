@@ -526,7 +526,7 @@ export const BridgePanel: React.FC = () => {
 
   return (
     <>
-      <Box bg={bg} p={6} borderRadius="lg" minH="520px">
+      <Box bg={bg} p={6} borderRadius="md" minH="520px">
         <Flex justifyContent="space-between" alignItems="center" minH="32px">
           <Heading fontSize="xl">Bridge</Heading>
           {appchainTxns.length ? (

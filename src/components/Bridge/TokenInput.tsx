@@ -194,7 +194,7 @@ export default function TokenInpput({
       p={4}
       borderColor={isAmountInputFocused ? "#2468f2" : grayBg}
       bg={isAmountInputFocused ? bg : grayBg}
-      borderRadius="lg"
+      borderRadius="md"
       pt={2}
       mt={6}
     >
@@ -229,7 +229,7 @@ export default function TokenInpput({
             borderWidth={1}
             p={2}
             borderColor="octo-blue.500"
-            borderRadius="lg"
+            borderRadius="md"
             overflow="hidden"
             position="relative"
             width="100%"

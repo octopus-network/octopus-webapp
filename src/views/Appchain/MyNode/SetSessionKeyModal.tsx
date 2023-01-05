@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react";
 
 import {
   Input,
@@ -13,34 +13,34 @@ import {
   Icon,
   useBoolean,
   Button,
-} from "@chakra-ui/react"
+} from "@chakra-ui/react";
 
-import type { ApiPromise } from "@polkadot/api"
-import { isHex } from "@polkadot/util"
-import { ChevronRightIcon } from "@chakra-ui/icons"
-import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types"
-import { web3FromSource } from "@polkadot/extension-dapp"
-import { Empty } from "components"
+import type { ApiPromise } from "@polkadot/api";
+import { isHex } from "@polkadot/util";
+import { ChevronRightIcon } from "@chakra-ui/icons";
+import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
+import { web3FromSource } from "@polkadot/extension-dapp";
+import { Empty } from "components";
 
-import { BaseModal } from "components"
-import { AppchainInfo, Validator, ValidatorSessionKey } from "types"
-import AccountItem from "components/common/AccountItem"
-import detectEthereumProvider from "@metamask/detect-provider"
-import useAccounts from "hooks/useAccounts"
-import { Toast } from "components/common/toast"
-import { setSessionKey } from "utils/bridge"
-import { onTxSent } from "utils/helper"
-import { formatAppChainAddress } from "utils/format"
+import { BaseModal } from "components";
+import { AppchainInfo, Validator, ValidatorSessionKey } from "types";
+import AccountItem from "components/common/AccountItem";
+import detectEthereumProvider from "@metamask/detect-provider";
+import useAccounts from "hooks/useAccounts";
+import { Toast } from "components/common/toast";
+import { setSessionKey } from "utils/bridge";
+import { onTxSent } from "utils/helper";
+import { formatAppChainAddress } from "utils/format";
 
 type SetSessionKeyModalProps = {
-  isOpen: boolean
-  onClose: () => void
-  appchainApi?: ApiPromise
-  appchain?: AppchainInfo
-  skey?: string
-  validatorSessionKey?: ValidatorSessionKey
-  validator?: Validator
-}
+  isOpen: boolean;
+  onClose: () => void;
+  appchainApi?: ApiPromise;
+  appchain?: AppchainInfo;
+  skey?: string;
+  validatorSessionKey?: ValidatorSessionKey;
+  validator?: Validator;
+};
 
 export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
   isOpen,
@@ -51,113 +51,115 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
   validator,
   validatorSessionKey,
 }) => {
-  const bg = useColorModeValue("#f6f7fa", "#15172c")
+  const bg = useColorModeValue("#f6f7fa", "#15172c");
 
-  const [key, setKey] = useState(skey ?? "")
-  const [isSubmitting, setIsSubmitting] = useBoolean(false)
+  const [key, setKey] = useState(skey ?? "");
+  const [isSubmitting, setIsSubmitting] = useBoolean(false);
 
-  const [isInAccountsPage, setIsInAccountsPage] = useBoolean()
+  const [isInAccountsPage, setIsInAccountsPage] = useBoolean();
 
   useEffect(() => {
     if (isOpen) {
-      setIsInAccountsPage.off()
+      setIsInAccountsPage.off();
     }
-  }, [isOpen])
+  }, [isOpen]);
 
   useEffect(() => {
-    setKey(skey ?? "")
-  }, [skey])
+    setKey(skey ?? "");
+  }, [skey]);
 
-  const isEvm = appchain?.appchain_metadata?.template_type === "BarnacleEvm"
+  const isEvm = appchain?.appchain_metadata?.template_type === "BarnacleEvm";
   const { accounts, currentAccount, setCurrentAccount } = useAccounts(
     isEvm,
     isOpen
-  )
+  );
 
   const onChooseAccount = (account: InjectedAccountWithMeta) => {
-    setCurrentAccount(account)
-    setIsInAccountsPage.off()
-  }
+    setCurrentAccount(account);
+    setIsInAccountsPage.off();
+  };
 
   useEffect(() => {
     if (validator && appchain) {
       const ss58Address = formatAppChainAddress(
         validator?.validator_id_in_appchain,
         appchain
-      )
+      );
 
       const account = accounts.find(
         (account) => account.address === ss58Address
-      )
+      );
       if (account) {
-        setCurrentAccount(account)
+        setCurrentAccount(account);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [validator, appchain, accounts])
+  }, [validator, appchain, accounts]);
 
   const isValidKey =
     isHex(key) &&
-    ((!isEvm && key.length === 324) || (isEvm && key.length === 326))
+    ((!isEvm && key.length === 324) || (isEvm && key.length === 326));
 
   const onSubmit = async () => {
     try {
-      setIsSubmitting.on()
+      setIsSubmitting.on();
       const res = await appchainApi?.query.system.account(
         currentAccount?.address
-      )
-      const resJSON: any = res?.toJSON()
+      );
+      const resJSON: any = res?.toJSON();
       if (resJSON?.data.free === 0) {
         throw new Error(
           "Insufficient balance, need to wait for a few minutes to receive gas airdrop."
-        )
+        );
       }
 
       if (isEvm) {
-        await setSessionKey(key)
-        Toast.success("Set session keys success")
-        onTxSent()
+        await setSessionKey(key);
+        Toast.success("Set session keys success");
+        onTxSent();
       } else {
-        const injected = await web3FromSource(currentAccount?.meta.source || "")
-        appchainApi?.setSigner(injected.signer)
+        const injected = await web3FromSource(
+          currentAccount?.meta.source || ""
+        );
+        appchainApi?.setSigner(injected.signer);
 
-        const tx = appchainApi?.tx.session.setKeys(key, "0x00")
+        const tx = appchainApi?.tx.session.setKeys(key, "0x00");
         if (!tx) {
-          setIsSubmitting.off()
-          throw new Error("Set session keys failed")
+          setIsSubmitting.off();
+          throw new Error("Set session keys failed");
         }
 
         await tx.signAndSend(currentAccount?.address as any, (res: any) => {
           if (res.isInBlock) {
-            Toast.success("Set session keys success")
-            onTxSent()
+            Toast.success("Set session keys success");
+            onTxSent();
           }
-        })
+        });
       }
-      setIsSubmitting.off()
+      setIsSubmitting.off();
     } catch (err: any) {
-      setIsSubmitting.off()
-      Toast.error(err)
+      setIsSubmitting.off();
+      Toast.error(err);
     }
-  }
+  };
 
   const onConnect = async () => {
     if (!isEvm) {
-      return
+      return;
     }
 
     try {
-      const provider = await detectEthereumProvider({ mustBeMetaMask: true })
+      const provider = await detectEthereumProvider({ mustBeMetaMask: true });
       await (provider as any)?.request({
         method: "eth_requestAccounts",
-      })
+      });
     } catch (error) {
-      console.log("error", error)
+      console.log("error", error);
     }
-  }
+  };
 
   if (!isOpen) {
-    return null
+    return null;
   }
 
   return (
@@ -178,7 +180,7 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
                   p={2}
                   _hover={{ background: bg }}
                   key={account.address}
-                  borderRadius="lg"
+                  borderRadius="md"
                   cursor="pointer"
                   onClick={() => onChooseAccount(account)}
                 >
@@ -194,15 +196,15 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
             <Flex
               p={3}
               bg={bg}
-              borderRadius="lg"
+              borderRadius="md"
               cursor="pointer"
               justifyContent="space-between"
               alignItems="center"
               onClick={() => {
                 if (isEvm && !currentAccount) {
-                  onConnect()
+                  onConnect();
                 } else {
-                  setIsInAccountsPage.on()
+                  setIsInAccountsPage.on();
                 }
               }}
             >
@@ -274,5 +276,5 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
         </>
       )}
     </BaseModal>
-  )
-}
+  );
+};

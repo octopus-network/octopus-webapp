@@ -35,7 +35,7 @@ export const AmountInput: React.FC<AmountInputPropos> = ({
     <Box
       p={unstyled ? "" : "10px 15px"}
       bg={unstyled ? "" : bg}
-      borderRadius="lg"
+      borderRadius="md"
       w="100%"
     >
       <Input

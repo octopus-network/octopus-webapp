@@ -1,40 +1,36 @@
-import React from 'react';
+import React from "react";
 
-import {
-  useColorMode,
-  useColorModeValue,
-  HStack,
-  Box
-} from '@chakra-ui/react';
+import { useColorMode, useColorModeValue, HStack, Box } from "@chakra-ui/react";
 
-import { FaMoon, FaSun } from 'react-icons/fa'
+import { FaMoon, FaSun } from "react-icons/fa";
 
 export const ColorModeSwitcher: React.FC = () => {
-
   const { setColorMode, colorMode } = useColorMode();
-  const bg = useColorModeValue('gray.100', 'whiteAlpha.100');
+  const bg = useColorModeValue("gray.100", "whiteAlpha.100");
 
   return (
-    <Box bg={bg} p="4px" borderRadius="lg">
+    <Box bg={bg} p="4px" borderRadius="md">
       <HStack spacing={0}>
-        <Box 
+        <Box
           p="8px 12px"
-          borderRadius="lg"
+          borderRadius="md"
           cursor="pointer"
-          bg={colorMode === 'light' ? 'white' : 'transparent'}
-          onClick={() => setColorMode('light')}>
+          bg={colorMode === "light" ? "white" : "transparent"}
+          onClick={() => setColorMode("light")}
+        >
           <FaSun />
         </Box>
-        <Box 
+        <Box
           p="8px 12px"
-          borderRadius="lg"
+          borderRadius="md"
           cursor="pointer"
-          bg={colorMode === 'dark' ? 'white' : 'transparent'}
+          bg={colorMode === "dark" ? "white" : "transparent"}
           color="black"
-          onClick={() => setColorMode('dark')}>
+          onClick={() => setColorMode("dark")}
+        >
           <FaMoon />
         </Box>
       </HStack>
     </Box>
   );
-}
+};

@@ -214,7 +214,7 @@ export const Dashboard: React.FC = () => {
         gap={6}
       >
         <GridItem colSpan={{ base: 4, lg: 3 }}>
-          <Box p={6} borderRadius="lg" bg={bg} h="100%">
+          <Box p={6} borderRadius="md" bg={bg} h="100%">
             <Assets viewingAccount={viewingAccount} />
           </Box>
         </GridItem>

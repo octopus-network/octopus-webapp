@@ -121,7 +121,7 @@ export const Appchain: React.FC = () => {
               wrappedAppchainToken={wrappedAppchainToken}
             />
           </GridItem>
-          <GridItem colSpan={{ base: 3, lg: 2 }} borderRadius="lg">
+          <GridItem colSpan={{ base: 3, lg: 2 }} borderRadius="md">
             <MyNode
               appchain={appchain}
               appchainId={id}
