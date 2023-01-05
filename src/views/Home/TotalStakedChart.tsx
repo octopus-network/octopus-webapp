@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { DecimalUtil } from "utils";
 import useSWR from "swr";
-
 import {
   AreaChart,
   Area,
@@ -11,7 +10,6 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from "recharts";
-
 import {
   Box,
   Button,
@@ -21,7 +19,6 @@ import {
   Skeleton,
   Text,
 } from "@chakra-ui/react";
-
 import { OCT_TOKEN_DECIMALS } from "primitives";
 import Decimal from "decimal.js";
 import dayjs from "dayjs";

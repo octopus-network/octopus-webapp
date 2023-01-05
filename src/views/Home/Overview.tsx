@@ -1,6 +1,5 @@
-import React from "react"
-import useSWR from "swr"
-
+import React from "react";
+import useSWR from "swr";
 import {
   Container,
   BoxProps,
@@ -11,26 +10,26 @@ import {
   useColorModeValue,
   Box,
   SimpleGrid,
-} from "@chakra-ui/react"
+} from "@chakra-ui/react";
 
-import { TotalStakedChart } from "./TotalStakedChart"
-import { DecimalUtil } from "utils"
-import { useNavigate } from "react-router-dom"
-import { OCT_TOKEN_DECIMALS } from "primitives"
-import Decimal from "decimal.js"
+import { TotalStakedChart } from "./TotalStakedChart";
+import { DecimalUtil } from "utils";
+import { useNavigate } from "react-router-dom";
+import { OCT_TOKEN_DECIMALS } from "primitives";
+import Decimal from "decimal.js";
 
 const Card: React.FC<
   BoxProps & {
-    to?: string
+    to?: string;
   }
 > = ({ children, to, ...restProps }) => {
-  const bg = useColorModeValue("white", "#25263c")
-  const navigate = useNavigate()
+  const bg = useColorModeValue("white", "#25263c");
+  const navigate = useNavigate();
 
   const innerBg = useColorModeValue(
     "linear-gradient(180deg, #f4f5fb, #ffffff)",
     "linear-gradient(180deg, #0f1025 0%, #25263c)"
-  )
+  );
 
   return (
     <Box
@@ -51,11 +50,11 @@ const Card: React.FC<
         {children}
       </Box>
     </Box>
-  )
-}
+  );
+};
 
 export const Overview: React.FC = () => {
-  const { data } = useSWR("overview")
+  const { data } = useSWR("overview");
 
   return (
     <Container>
@@ -160,5 +159,5 @@ export const Overview: React.FC = () => {
         <TotalStakedChart />
       </Card>
     </Container>
-  )
-}
+  );
+};

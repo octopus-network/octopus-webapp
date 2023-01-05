@@ -104,6 +104,7 @@ const ActivityItem: React.FC<{
               overflow="hidden"
               textOverflow="ellipsis"
               maxW="160px"
+              fontFamily="monospace"
             >
               {activityTranslator.getActionConnect()}
             </Text>

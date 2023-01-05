@@ -193,12 +193,10 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
                 textOverflow="ellipsis"
               >
                 {appchain
-                  ? DecimalUtil.beautify(
-                      DecimalUtil.fromString(
-                        transaction?.summary.amount.replaceAll(",", ""),
-                        appchain?.appchain_metadata?.fungible_token_metadata
-                          ?.decimals
-                      )
+                  ? DecimalUtil.formatAmount(
+                      transaction?.summary.amount.replaceAll(",", ""),
+                      appchain?.appchain_metadata?.fungible_token_metadata
+                        ?.decimals
                     )
                   : "-"}
               </Heading>

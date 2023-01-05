@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo } from 'react';
-import useSWR from 'swr';
+import React, { useEffect, useMemo } from "react";
+import useSWR from "swr";
 
 import {
   Heading,
@@ -12,45 +12,44 @@ import {
   Icon,
   useBoolean,
   Center,
-  Spinner
-} from '@chakra-ui/react';
+  Spinner,
+} from "@chakra-ui/react";
 
-import {
-  useSpring,
-  animated,
-} from 'react-spring';
+import { useSpring, animated } from "react-spring";
 
-import { AppchainInfoWithAnchorStatus } from 'types';
-import { HiOutlineArrowNarrowRight } from 'react-icons/hi';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { AppchainInfoWithAnchorStatus } from "types";
+import { HiOutlineArrowNarrowRight } from "react-icons/hi";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 
 type AppchainItemProps = {
   appchain: AppchainInfoWithAnchorStatus;
   isSelected?: boolean;
   isReverse?: boolean;
-}
+};
 
-const AppchainItem: React.FC<AppchainItemProps> = ({ appchain, isSelected, isReverse }) => {
-
+const AppchainItem: React.FC<AppchainItemProps> = ({
+  appchain,
+  isSelected,
+  isReverse,
+}) => {
   const [isHovering, setIsHovering] = useBoolean(false);
   const navigate = useNavigate();
 
-  const bg = useColorModeValue('#f5f7fa', '#1e1f34');
-  const selectedBg = useColorModeValue('#e2f3fe', '#1a2954');
+  const bg = useColorModeValue("#f5f7fa", "#1e1f34");
+  const selectedBg = useColorModeValue("#e2f3fe", "#1a2954");
 
   const [arrowHoveringProps, arrowHoveringApi] = useSpring(() => ({
-    transform: 'translateX(-10px)',
-    opacity: 0
+    transform: "translateX(-10px)",
+    opacity: 0,
   }));
-
 
   useEffect(() => {
     if (isHovering || isSelected) {
-      arrowHoveringApi.start({ transform: 'translateX(0px)', opacity: 1 });
+      arrowHoveringApi.start({ transform: "translateX(0px)", opacity: 1 });
     } else {
-      arrowHoveringApi.start({ transform: 'translateX(-10px)', opacity: 0 });
+      arrowHoveringApi.start({ transform: "translateX(-10px)", opacity: 0 });
     }
-
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isHovering, isSelected]);
 
   return (
@@ -64,12 +63,23 @@ const AppchainItem: React.FC<AppchainItemProps> = ({ appchain, isSelected, isRev
       onMouseLeave={setIsHovering.off}
       transition="all 0.2s ease-in-out 0s, box-shadow 0.2s ease-in-out 0s"
       _hover={{
-        transform: !isSelected ? 'scaleX(1.02)' : 'scaleX(1)'
+        transform: !isSelected ? "scaleX(1.02)" : "scaleX(1)",
       }}
-      onClick={() => navigate(isReverse ? `/bridge/near/${appchain.appchain_id}` : `/bridge/${appchain.appchain_id}/near`)}>
+      onClick={() =>
+        navigate(
+          isReverse
+            ? `/bridge/near/${appchain.appchain_id}`
+            : `/bridge/${appchain.appchain_id}/near`
+        )
+      }
+    >
       <Flex justifyContent="space-between" alignItems="center">
         <HStack spacing={4}>
-          <Avatar src={appchain.appchain_metadata.fungible_token_metadata.icon as any} name={appchain.appchain_id} boxSize={8} />
+          <Avatar
+            src={appchain.appchain_metadata.fungible_token_metadata.icon as any}
+            name={appchain.appchain_id}
+            boxSize={8}
+          />
           <Heading fontSize="lg">{appchain.appchain_id}</Heading>
         </HStack>
         <animated.div style={arrowHoveringProps} className="octo-blue">
@@ -78,39 +88,45 @@ const AppchainItem: React.FC<AppchainItemProps> = ({ appchain, isSelected, isRev
       </Flex>
     </Box>
   );
-}
+};
 
 export const Appchains: React.FC = () => {
-  const bg = useColorModeValue('white', '#15172c');
+  const bg = useColorModeValue("white", "#15172c");
 
   const { appchainId } = useParams();
 
-  const { data: appchains } = useSWR<AppchainInfoWithAnchorStatus[]>('appchains/running');
+  const { data: appchains } =
+    useSWR<AppchainInfoWithAnchorStatus[]>("appchains/running");
 
   const { pathname } = useLocation();
-  const isReverse = useMemo(() => !appchainId || new RegExp(`^/bridge/near/`).test(pathname), [pathname]);
+  const isReverse = useMemo(
+    () => !appchainId || new RegExp(`^/bridge/near/`).test(pathname),
+    [pathname]
+  );
 
   return (
     <Box bg={bg} pt={6} pb={6} borderRadius="lg" h="100%">
       <Box pl={6} pr={6}>
         <Heading fontSize="xl">Appchains</Heading>
       </Box>
-      {
-        appchains === undefined ?
-          <Center h="450px">
-            <Spinner size="md" thickness="4px" speed="1s" color="octo-blue.500" />
-          </Center> :
-          <Box pl={6} pr={6} pb={6} mt={6} overflowY="scroll" h="425px">
-            <List spacing={4}>
-              {
-                appchains?.map((appchain, idx) => (
-                  <AppchainItem appchain={appchain} key={`appchain-${idx}`} isSelected={appchainId === appchain.appchain_id} isReverse={isReverse} />
-                ))
-              }
-            </List>
-          </Box>
-      }
-
+      {appchains === undefined ? (
+        <Center h="450px">
+          <Spinner size="md" thickness="4px" speed="1s" color="octo-blue.500" />
+        </Center>
+      ) : (
+        <Box pl={6} pr={6} pb={6} mt={6} overflowY="scroll" h="425px">
+          <List spacing={4}>
+            {appchains?.map((appchain, idx) => (
+              <AppchainItem
+                appchain={appchain}
+                key={`appchain-${idx}`}
+                isSelected={appchainId === appchain.appchain_id}
+                isReverse={isReverse}
+              />
+            ))}
+          </List>
+        </Box>
+      )}
     </Box>
   );
-}
+};

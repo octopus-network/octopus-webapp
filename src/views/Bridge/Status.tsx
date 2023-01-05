@@ -208,11 +208,9 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
                   className="tx-hash-ellipsis"
                 >
                   {appchain && data.token
-                    ? DecimalUtil.beautify(
-                        DecimalUtil.fromString(
-                          data.amount.replaceAll(",", ""),
-                          data.token.decimals
-                        )
+                    ? DecimalUtil.formatAmount(
+                        data.amount.replaceAll(",", ""),
+                        data.token.decimals
                       )
                     : "-"}
                 </Heading>

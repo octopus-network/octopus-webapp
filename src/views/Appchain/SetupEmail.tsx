@@ -1,11 +1,11 @@
-import { Button, Flex, Input, Text } from "@chakra-ui/react"
-import { BaseModal } from "components"
-import { Toast } from "components/common/toast"
-import { useWalletSelector } from "components/WalletSelectorContextProvider"
-import { EMAIL_REGEX } from "config/constants"
-import { SIMPLE_CALL_GAS } from "primitives"
-import { useEffect, useState } from "react"
-import { AnchorContract, Validator, ValidatorProfile } from "types"
+import { Button, Flex, Input, Text, useBoolean } from "@chakra-ui/react";
+import { BaseModal } from "components";
+import { Toast } from "components/common/toast";
+import { useWalletSelector } from "components/WalletSelectorContextProvider";
+import { EMAIL_REGEX } from "config/constants";
+import { SIMPLE_CALL_GAS } from "primitives";
+import { useEffect, useState } from "react";
+import { AnchorContract, Validator, ValidatorProfile } from "types";
 
 export default function SetupEmail({
   anchor,
@@ -14,36 +14,38 @@ export default function SetupEmail({
   oldValidatorProfile,
   onClose,
 }: {
-  anchor?: AnchorContract
-  validator?: Validator
-  isUpdate?: boolean
-  oldValidatorProfile?: ValidatorProfile
-  onClose?: () => void
+  anchor?: AnchorContract;
+  validator?: Validator;
+  isUpdate?: boolean;
+  oldValidatorProfile?: ValidatorProfile;
+  onClose?: () => void;
 }) {
-  const { selector, accountId } = useWalletSelector()
+  const { selector, accountId } = useWalletSelector();
   const [validatorProfile, setValidatorProfile] = useState<
     ValidatorProfile | undefined
-  >(oldValidatorProfile)
-  const [email, setEmail] = useState("")
+  >(oldValidatorProfile);
+  const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useBoolean(false);
 
   useEffect(() => {
     if (!(anchor && validator) || oldValidatorProfile) {
-      return
+      return;
     }
     anchor
       .get_validator_profile({ validator_id: validator.validator_id })
       .then((vp) => {
-        setValidatorProfile(vp)
-      })
-  }, [validator, anchor, oldValidatorProfile])
+        setValidatorProfile(vp);
+      });
+  }, [validator, anchor, oldValidatorProfile]);
 
   const onConfirm = async () => {
     if (!EMAIL_REGEX.test(email)) {
-      return Toast.error("Invalid email")
+      return Toast.error("Invalid email");
     }
 
     try {
-      const wallet = await selector.wallet()
+      const wallet = await selector.wallet();
+      setIsLoading.on();
       await wallet.signAndSendTransaction({
         signerId: accountId,
         receiverId: anchor?.contractId,
@@ -63,11 +65,13 @@ export default function SetupEmail({
             },
           },
         ],
-      })
+      });
+      setIsLoading.off();
     } catch (error) {
-      Toast.error(error)
+      setIsLoading.off();
+      Toast.error(error);
     }
-  }
+  };
 
   return (
     <BaseModal
@@ -79,9 +83,9 @@ export default function SetupEmail({
       }
       onClose={() => {
         if (isUpdate) {
-          onClose && onClose()
+          onClose && onClose();
         } else {
-          setValidatorProfile(undefined)
+          setValidatorProfile(undefined);
         }
       }}
       title="Setup Email"
@@ -105,11 +109,12 @@ export default function SetupEmail({
           colorScheme="octo-blue"
           size="lg"
           disabled={!EMAIL_REGEX.test(email)}
+          isLoading={isLoading}
           onClick={onConfirm}
         >
           Confirm
         </Button>
       </Flex>
     </BaseModal>
-  )
+  );
 }

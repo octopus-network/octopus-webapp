@@ -40,14 +40,9 @@ import {
 import type { ApiPromise } from "@polkadot/api";
 import { Link as RouterLink } from "react-router-dom";
 
-import websiteIcon from "assets/icons/website.png";
-import explorerIcon from "assets/icons/explorer.png";
-import bridgeIcon from "assets/icons/bridge.png";
-import githubIcon from "assets/icons/github.png";
-
 import { DecimalUtil, toValidUrl } from "utils";
 import { EPOCH_DURATION_MS } from "primitives";
-import { FaUser } from "react-icons/fa";
+import { FaExchangeAlt, FaGithub, FaGlobe, FaUser } from "react-icons/fa";
 import useChainData from "hooks/useChainData";
 import DescItem from "components/common/DescItem";
 import { BsThreeDots } from "react-icons/bs";
@@ -56,6 +51,7 @@ import LinkBox from "components/common/LinkBox";
 import useChainState from "hooks/useChainState";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
 import { Toast } from "components/common/toast";
+import { MdExplore } from "react-icons/md";
 
 dayjs.extend(duration);
 dayjs.extend(relativeTime);
@@ -154,7 +150,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
 
       <SimpleGrid
         columns={{ base: 3, md: 5 }}
-        spacing={4}
+        spacing={1}
         mt={8}
         bg={linksBg}
         borderRadius="lg"
@@ -163,23 +159,25 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
           href={toValidUrl(appchain?.appchain_metadata?.website_url)}
           isExternal
         >
-          <LinkBox icon={websiteIcon} label="Website" />
+          <LinkBox icon={<FaGlobe size={24} />} label="Website" />
         </Link>
 
         <Link
           href={`${networkConfig?.octopus.explorerUrl}/${appchain?.appchain_id}`}
           isExternal
         >
-          <LinkBox icon={explorerIcon} label="Explorer" />
+          <LinkBox icon={<MdExplore size={28} />} label="Explorer" />
         </Link>
-        <RouterLink to={`/bridge/near/${appchain?.appchain_id}`}>
-          <LinkBox icon={bridgeIcon} label="Bridge" />
-        </RouterLink>
+        <Link>
+          <RouterLink to={`/bridge/near/${appchain?.appchain_id}`}>
+            <LinkBox icon={<FaExchangeAlt size={24} />} label="Bridge" />
+          </RouterLink>
+        </Link>
         <Link
           href={toValidUrl(appchain?.appchain_metadata?.github_address)}
           isExternal
         >
-          <LinkBox icon={githubIcon} label="Github" />
+          <LinkBox icon={<FaGithub size={24} />} label="Github" />
         </Link>
         <Menu>
           <Center>
@@ -324,12 +322,9 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
           isLoaded
           value={
             appchainSettings?.era_reward && wrappedAppchainToken
-              ? DecimalUtil.beautify(
-                  DecimalUtil.fromString(
-                    appchainSettings?.era_reward,
-                    wrappedAppchainToken.metadata.decimals
-                  ),
-                  0
+              ? DecimalUtil.formatAmount(
+                  appchainSettings?.era_reward,
+                  wrappedAppchainToken.metadata.decimals
                 )
               : "-"
           }
@@ -354,13 +349,9 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
           isLoaded={!!totalIssuance}
           value={
             totalIssuance && appchain?.appchain_metadata
-              ? DecimalUtil.beautify(
-                  DecimalUtil.fromString(
-                    totalIssuance,
-                    appchain?.appchain_metadata?.fungible_token_metadata
-                      .decimals
-                  ),
-                  0
+              ? DecimalUtil.formatAmount(
+                  totalIssuance,
+                  appchain?.appchain_metadata?.fungible_token_metadata.decimals
                 )
               : "loading"
           }
@@ -370,14 +361,10 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
           isLoaded
           value={
             appchain?.appchain_metadata?.ido_amount_of_wrapped_appchain_token
-              ? DecimalUtil.beautify(
-                  DecimalUtil.fromString(
-                    appchain?.appchain_metadata
-                      ?.ido_amount_of_wrapped_appchain_token,
-                    appchain?.appchain_metadata?.fungible_token_metadata
-                      .decimals
-                  ),
-                  0
+              ? DecimalUtil.formatAmount(
+                  appchain?.appchain_metadata
+                    ?.ido_amount_of_wrapped_appchain_token,
+                  appchain?.appchain_metadata?.fungible_token_metadata.decimals
                 )
               : "-"
           }
