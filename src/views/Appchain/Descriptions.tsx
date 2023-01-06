@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 
 import relativeTime from "dayjs/plugin/relativeTime";
 import duration from "dayjs/plugin/duration";
@@ -82,9 +82,16 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
     appchainSettings?.subql_endpoint
   );
 
-  const { onCopy: onCopyRpcEndpoint } = useClipboard(
+  const { onCopy: onCopyRpcEndpoint, setValue } = useClipboard(
     appchainSettings?.rpc_endpoint || ""
   );
+
+  useEffect(() => {
+    if (appchainSettings?.rpc_endpoint) {
+      setValue(appchainSettings?.rpc_endpoint);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appchainSettings?.rpc_endpoint]);
 
   const {
     totalAsset,
