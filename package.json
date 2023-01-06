@@ -41,7 +41,6 @@
     "jsrsasign": "^10.6.1",
     "lodash": "^4.17.21",
     "near-api-js": "^1.1.0",
-    "nuka-carousel": "^5.4.0",
     "os-browserify": "^0.3.0",
     "posthog-js": "^1.32.2",
     "react": "^18.2.0",
@@ -86,9 +85,9 @@
       "not op_mini all"
     ],
     "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
     ]
   },
   "devDependencies": {
