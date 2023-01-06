@@ -62,6 +62,7 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
     if (isOpen) {
       setIsInAccountsPage.off();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   useEffect(() => {

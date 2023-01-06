@@ -101,7 +101,7 @@ export const Appchains: React.FC = () => {
   const { pathname } = useLocation();
   const isReverse = useMemo(
     () => !appchainId || new RegExp(`^/bridge/near/`).test(pathname),
-    [pathname]
+    [pathname, appchainId]
   );
 
   return (

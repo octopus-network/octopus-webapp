@@ -270,20 +270,22 @@ export const BridgePanel: React.FC = () => {
     if (!history) {
       return [];
     }
-    return history?.map((h: any) => {
-      return {
-        amount: h.amount,
-        appchainId: h.appchainId,
-        fromAccount: h.from,
-        hash: h.outHash,
-        isAppchainSide: !isNearToAppchain,
-        sequenceId: 1,
-        status: BridgeHistoryStatus.Succeed,
-        timestamp: h.timestamp,
-        toAccount: h.to,
-        tokenContractId: h.token.contract_id,
-      };
-    });
+    return history
+      ?.filter((h: any) => h.token)
+      .map((h: any) => {
+        return {
+          amount: h.amount,
+          appchainId: h.appchainId,
+          fromAccount: h.from,
+          hash: h.outHash,
+          isAppchainSide: !isNearToAppchain,
+          sequenceId: 1,
+          status: BridgeHistoryStatus.Succeed,
+          timestamp: h.timestamp,
+          toAccount: h.to,
+          tokenContractId: h.token.contract_id,
+        };
+      });
   }, [history, isNearToAppchain]);
 
   const amountInputRef = React.useRef<any>();
