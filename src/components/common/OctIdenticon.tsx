@@ -1,18 +1,18 @@
-import Jazzicon, { jsNumberForAddress } from "react-jazzicon"
-import Identicon from "@polkadot/react-identicon"
+import Jazzicon, { jsNumberForAddress } from "react-jazzicon";
+import Identicon from "@polkadot/react-identicon";
 
 export default function OctIdenticon({
   value,
   size,
 }: {
-  value: string
-  size: number
+  value: string;
+  size: number;
 }) {
   if (!value) {
-    return null
+    return null;
   }
   if (value.startsWith("0x")) {
-    return <Jazzicon diameter={size} seed={jsNumberForAddress(value)} />
+    return <Jazzicon diameter={size} seed={jsNumberForAddress(value)} />;
   }
-  return <Identicon value={value} size={size} />
+  return <Identicon value={value} size={size} />;
 }

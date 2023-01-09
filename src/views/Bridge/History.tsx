@@ -31,6 +31,7 @@ import { Empty } from "components";
 import nearLogo from "assets/near.svg";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { formatAppChainAddress } from "utils/format";
+import OctIdenticon from "components/common/OctIdenticon";
 
 type HistoryProps = {
   appchain: AppchainInfoWithAnchorStatus | undefined;
@@ -66,16 +67,13 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
           <Text variant="gray" fontSize="sm">
             From
           </Text>
-          <Avatar
-            boxSize={5}
-            name={history.fromAccount}
-            src={
-              history.isAppchainSide
-                ? (appchain?.appchain_metadata?.fungible_token_metadata
-                    ?.icon as any)
-                : nearLogo
-            }
-          />
+          {history.isAppchainSide ? (
+            <Box boxSize={6}>
+              <OctIdenticon value={history.fromAccount} size={26} />
+            </Box>
+          ) : (
+            <Avatar boxSize={6} name={history.fromAccount} src={nearLogo} />
+          )}
           <Heading
             fontSize="md"
             overflow="hidden"
@@ -91,7 +89,8 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
               history.amount,
               Array.isArray(tokenAsset?.metadata?.decimals)
                 ? tokenAsset?.metadata?.decimals[history.isAppchainSide ? 0 : 0]
-                : tokenAsset?.metadata?.decimals
+                : tokenAsset?.metadata?.decimals,
+              4
             )}
           </Heading>
           <Heading fontSize="lg">{tokenAsset?.metadata?.symbol}</Heading>
@@ -138,16 +137,15 @@ const HistoryItem: React.FC<HistoryItemProps> = ({
           <Text fontSize="md" variant="gray">
             to
           </Text>
-          <Avatar
-            boxSize={4}
-            name={history.toAccount}
-            src={
-              !history.isAppchainSide
-                ? (appchain?.appchain_metadata?.fungible_token_metadata
-                    ?.icon as any)
-                : nearLogo
-            }
-          />
+
+          {!history.isAppchainSide ? (
+            <Box boxSize={6}>
+              <OctIdenticon value={history.toAccount} size={26} />
+            </Box>
+          ) : (
+            <Avatar boxSize={6} name={history.toAccount} src={nearLogo} />
+          )}
+
           <Text
             fontSize="md"
             overflow="hidden"
