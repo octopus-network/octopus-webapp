@@ -11,6 +11,7 @@ import { setupLedger } from "@near-wallet-selector/ledger";
 import { setupOptoWallet } from "@near-wallet-selector/opto-wallet";
 import { NetworkConfig, NetworkType } from "types";
 import { setupNearWallet } from "@near-wallet-selector/near-wallet";
+import { setupSender } from "@near-wallet-selector/sender";
 import posthog from "posthog-js";
 
 declare global {
@@ -68,6 +69,7 @@ export const WalletSelectorContextProvider = ({
         }),
         setupMyNearWallet(),
         setupLedger(),
+        setupSender(),
         setupOptoWallet(),
       ],
     });

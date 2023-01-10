@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 import {
   Table,
@@ -8,19 +8,20 @@ import {
   Tr,
   Th,
   Td,
-  useColorModeValue
-} from '@chakra-ui/react';
+  useColorModeValue,
+} from "@chakra-ui/react";
 
-import { Delegator } from 'types';
-import { DecimalUtil } from 'utils';
-import { OCT_TOKEN_DECIMALS } from 'primitives'; 
+import { Delegator } from "types";
+import { DecimalUtil } from "utils";
 
 type DelegatorsTableProps = {
   delegators: Delegator[];
-}
+};
 
-export const DelegatorsTable: React.FC<DelegatorsTableProps> = ({ delegators }) => {
-  const bg = useColorModeValue('#f6f7fa', '#15172c');
+export const DelegatorsTable: React.FC<DelegatorsTableProps> = ({
+  delegators,
+}) => {
+  const bg = useColorModeValue("#f6f7fa", "#15172c");
   return (
     <Table>
       <Thead bg={bg}>
@@ -30,25 +31,24 @@ export const DelegatorsTable: React.FC<DelegatorsTableProps> = ({ delegators }) 
         </Tr>
       </Thead>
       <Tbody>
-      {
-        delegators.map(delegator => (
+        {delegators.map((delegator) => (
           <Tr key={`tr-${delegator.delegator_id}`}>
             <Td maxW="180px">
-              <Text whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden" w="100%">
+              <Text
+                whiteSpace="nowrap"
+                textOverflow="ellipsis"
+                overflow="hidden"
+                w="100%"
+              >
                 {delegator.delegator_id}
               </Text>
             </Td>
             <Td isNumeric>
-              {
-                DecimalUtil.beautify(
-                  DecimalUtil.fromString(delegator.delegation_amount, OCT_TOKEN_DECIMALS)
-                )
-              }
+              {DecimalUtil.formatAmount(delegator.delegation_amount)}
             </Td>
           </Tr>
-        ))
-      }
+        ))}
       </Tbody>
     </Table>
   );
-}
+};

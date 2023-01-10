@@ -8,12 +8,7 @@ import { BigNumber, ethers } from "ethers";
 import { providers } from "near-api-js";
 import { CodeResult } from "near-api-js/lib/providers/provider";
 import { COMPLEX_CALL_GAS } from "primitives";
-import {
-  BridgeHistoryStatus,
-  TokenAsset,
-  BridgeConfig,
-  BridgeHistory,
-} from "types";
+import { TokenAsset, BridgeConfig, BridgeHistory } from "types";
 import OctopusAppchain from "./abis/OctopusAppchain.json";
 import OctopusSession from "./abis/OctopusSession.json";
 import { DecimalUtil, ZERO_DECIMAL } from "./decimal";
@@ -361,9 +356,6 @@ export async function substrateBurn({
   amount,
   targetAccount,
   fromAccount,
-  appchainId,
-  updateTxn,
-  crosschainFee,
 }: {
   api: ApiPromise;
   asset?: TokenAsset;
@@ -371,9 +363,6 @@ export async function substrateBurn({
   amount: string;
   targetAccount: string;
   fromAccount: string;
-  appchainId: string;
-  updateTxn: (key: string, value: any) => void;
-  crosschainFee: number;
 }) {
   const amountInDec = DecimalUtil.power(
     new Decimal(amount),
@@ -382,7 +371,6 @@ export async function substrateBurn({
       : asset?.metadata.decimals
   );
 
-  let rawAmount = amountInDec.toString();
   const targetAccountInHex = stringToHex(targetAccount);
   let tx: any = null;
 
@@ -391,14 +379,12 @@ export async function substrateBurn({
       asset?.assetId === undefined
         ? api?.tx.octopusBridge.lock(
             targetAccountInHex,
-            amountInDec.toFixed(0, Decimal.ROUND_DOWN),
-            crosschainFee
+            amountInDec.toFixed(0, Decimal.ROUND_DOWN)
           )
         : api?.tx.octopusAppchain.burnNep141(
             asset?.assetId,
             targetAccountInHex,
-            amountInDec.toFixed(0, Decimal.ROUND_DOWN),
-            crosschainFee
+            amountInDec.toFixed(0, Decimal.ROUND_DOWN)
           );
   } else {
     tx =
@@ -433,7 +419,6 @@ export async function substrateBurn({
       const _amount = amountInDec
         .minus(new Decimal(fee).mul(2))
         .toFixed(0, Decimal.ROUND_DOWN);
-      rawAmount = _amount;
 
       tx =
         asset?.assetId === undefined
@@ -454,27 +439,7 @@ export async function substrateBurn({
         (section === "octopusBridge" &&
           (method === "Locked" || method === "BurnNep141"))
       ) {
-        let sequenceId: number;
-        if (crosschainFee) {
-          sequenceId = data.toJSON()[method === "Locked" ? 4 : 5];
-        } else {
-          sequenceId = data[method === "Locked" ? 3 : 4].toNumber();
-        }
-        updateTxn(appchainId || "", {
-          isAppchainSide: true,
-          appchainId,
-          hash: tx.hash.toString(),
-          sequenceId,
-          amount: rawAmount,
-          status: BridgeHistoryStatus.Pending,
-          timestamp: new Date().getTime(),
-          fromAccount,
-          toAccount: targetAccount,
-          tokenContractId: asset?.contractId,
-        });
-        setTimeout(() => {
-          window.location.reload();
-        }, 100);
+        window.location.reload();
       }
     });
   });
@@ -484,14 +449,12 @@ export async function evmBurn({
   asset,
   amount,
   receiver_id,
-  updateTxn,
   appchainId,
   fromAccount,
 }: {
   asset?: TokenAsset;
   amount: string;
   receiver_id: string;
-  updateTxn: (key: string, value: any) => void;
   appchainId?: string;
   fromAccount?: string;
 }) {
@@ -512,18 +475,6 @@ export async function evmBurn({
   } else {
     hash = await evmLock(amountInU64.toString(), receiver_id);
   }
-  updateTxn(appchainId || "", {
-    isAppchainSide: true,
-    appchainId,
-    hash,
-    amount,
-    status: BridgeHistoryStatus.Pending,
-    timestamp: new Date().getTime(),
-    fromAccount,
-    toAccount: receiver_id,
-    tokenContractId: asset?.assetId,
-    isEvm: true,
-  });
   return hash;
 }
 

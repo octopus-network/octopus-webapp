@@ -11,19 +11,15 @@ import {
   Flex,
   useColorModeValue,
   Center,
-  HStack,
   Text,
   Icon,
   IconButton,
   Spinner,
-  CircularProgress,
-  CircularProgressLabel,
   Button,
   useBoolean,
   Drawer,
   DrawerOverlay,
   DrawerContent,
-  useInterval,
   Alert,
   AlertIcon,
   AlertTitle,
@@ -53,14 +49,12 @@ import {
   Link as RouterLink,
 } from "react-router-dom";
 import { DecimalUtil } from "utils";
-import { useTxnsStore } from "stores";
 
 import useAccounts from "hooks/useAccounts";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
 import { Toast } from "components/common/toast";
 import { CodeResult } from "near-api-js/lib/providers/provider";
 import {
-  checkEvmTxSequence,
   evmBurn,
   isValidAddress,
   isValidAmount,
@@ -82,7 +76,6 @@ export const BridgePanel: React.FC = () => {
   const [isHistoryDrawerOpen, setIsHistoryDrawerOpen] = useBoolean();
 
   const { accountId, networkConfig, selector } = useWalletSelector();
-  const { txns, updateTxn, clearTxnsOfAppchain } = useTxnsStore();
   const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(
     appchainId ? `appchain/${appchainId}` : null,
     { refreshInterval: 10 * 1000 }
@@ -267,121 +260,33 @@ export const BridgePanel: React.FC = () => {
     tokenAsset,
   ]);
 
-  const appchainTxns = useMemo(
-    () =>
-      Object.values(appchainId ? txns?.[appchainId] || {} : {})
-        .filter(
-          (t) =>
-            t.fromAccount === from ||
-            t.toAccount === from ||
-            t.fromAccount === accountId ||
-            t.toAccount === accountId
-        )
-        .sort((a, b) => b.timestamp - a.timestamp),
-    [appchainId, txns, accountId, from]
+  const { data: history } = useSWR(
+    `bridge-helper/history?from=${accountId}&appchain=${appchainId}&direction=${
+      isNearToAppchain ? "near_to_appchain" : "near_to_appchain"
+    }`
   );
 
-  const pendingTxns = useMemo(
-    () =>
-      appchainTxns.filter((txn) => txn.status === BridgeHistoryStatus.Pending),
-    [appchainTxns]
-  );
-
-  useEffect(() => {
-    pendingTxns
-      .filter((t) => t.isEvm && !t.sequenceId)
-      .forEach((t) => {
-        checkEvmTxSequence(t)
-          .then((sequenceId) => {
-            if (typeof sequenceId === "number") {
-              updateTxn(t.appchainId, {
-                ...t,
-                sequenceId,
-              });
-            }
-          })
-          .catch(console.log);
+  const appchainTxns = useMemo(() => {
+    if (!history) {
+      return [];
+    }
+    return history
+      ?.filter((h: any) => h.token)
+      .map((h: any) => {
+        return {
+          amount: h.amount,
+          appchainId: h.appchainId,
+          fromAccount: h.from,
+          hash: h.outHash,
+          isAppchainSide: !isNearToAppchain,
+          sequenceId: 1,
+          status: BridgeHistoryStatus.Succeed,
+          timestamp: h.timestamp,
+          toAccount: h.to,
+          tokenContractId: h.token.contract_id,
+        };
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pendingTxns]);
-
-  const pendingTxnsChecker = React.useRef<any>();
-  const isCheckingTxns = React.useRef(false);
-  pendingTxnsChecker.current = async () => {
-    if (isCheckingTxns.current) {
-      return;
-    }
-
-    isCheckingTxns.current = true;
-
-    // eslint-disable-next-line array-callback-return
-    const promises = pendingTxns.map((txn) => {
-      if (txn.isAppchainSide) {
-        const provider = new providers.JsonRpcProvider({
-          url: selector.options.network.nodeUrl,
-        });
-
-        return provider
-          .query<CodeResult>({
-            request_type: "call_function",
-            account_id: appchain?.appchain_anchor,
-            method_name: "get_appchain_message_processing_result_of",
-            args_base64: btoa(
-              JSON.stringify({
-                nonce: txn.sequenceId,
-              })
-            ),
-            finality: "final",
-          })
-          .then((res) => {
-            const result = JSON.parse(Buffer.from(res.result).toString());
-            if (result?.["Ok"]) {
-              updateTxn(txn.appchainId, {
-                ...txn,
-                status: BridgeHistoryStatus.Succeed,
-              });
-            } else if (result?.["Error"]) {
-              updateTxn(txn.appchainId, {
-                ...txn,
-                status: BridgeHistoryStatus.Failed,
-                message: result["Error"].message || "Unknown error",
-              });
-            }
-          });
-      } else {
-        if (!(txn.isEvm && !txn.sequenceId)) {
-          return appchainApi?.query.octopusAppchain
-            .notificationHistory(txn.sequenceId)
-            .then((res) => {
-              const jsonRes: string | null = res?.toJSON() as any;
-              if (jsonRes === "Success") {
-                updateTxn(txn.appchainId, {
-                  ...txn,
-                  status: BridgeHistoryStatus.Succeed,
-                });
-              } else if (jsonRes !== null) {
-                updateTxn(txn.appchainId, {
-                  ...txn,
-                  status: BridgeHistoryStatus.Failed,
-                  message: jsonRes,
-                });
-              }
-            });
-        }
-      }
-    });
-    try {
-      await Promise.all(promises);
-    } catch (err) {
-      console.log(err);
-    }
-
-    isCheckingTxns.current = false;
-  };
-
-  useInterval(() => {
-    pendingTxnsChecker.current();
-  }, 5 * 1000);
+  }, [history, isNearToAppchain]);
 
   const amountInputRef = React.useRef<any>();
 
@@ -424,7 +329,6 @@ export const BridgePanel: React.FC = () => {
         asset: tokenAsset,
         amount,
         receiver_id: targetAccountInHex,
-        updateTxn,
         appchainId,
         fromAccount: from,
       });
@@ -435,10 +339,7 @@ export const BridgePanel: React.FC = () => {
         amount,
         asset: tokenAsset,
         fromAccount: from!,
-        appchainId: appchainId!,
         bridgeConfig,
-        updateTxn,
-        crosschainFee: crosschainFee.fungible,
       });
     }
   };
@@ -452,9 +353,7 @@ export const BridgePanel: React.FC = () => {
       tx = appchainApi?.tx.octopusBridge.lockNonfungible(
         collectible?.class,
         collectible?.id,
-        targetAccountInHex,
-        crosschainFee.nonfungible,
-        1 // TODO: metadata_length
+        targetAccountInHex
       );
     } else {
       tx = appchainApi?.tx.octopusAppchain.lockNft(
@@ -466,6 +365,13 @@ export const BridgePanel: React.FC = () => {
 
     await tx.signAndSend(from, ({ events = [] }: any) => {
       events.forEach(({ event: { data, method, section } }: any) => {
+        if (section === "system" && method === "ExtrinsicFailed") {
+          Toast.error("Extrinsic failed");
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+          return;
+        }
         if (
           (section === "octopusAppchain" && method === "NftLocked") ||
           (section === "octopusBridge" && method === "NonfungibleLocked")
@@ -478,10 +384,6 @@ export const BridgePanel: React.FC = () => {
         }
       });
     });
-  };
-
-  const onClearHistory = () => {
-    clearTxnsOfAppchain(appchainId || "");
   };
 
   const onSubmit = async () => {
@@ -526,7 +428,7 @@ export const BridgePanel: React.FC = () => {
                     "https:"
                   ),
                 ],
-                blockExplorerUrls: [], // TODO
+                blockExplorerUrls: null,
               },
             ],
           });
@@ -612,6 +514,7 @@ export const BridgePanel: React.FC = () => {
           },
         ],
       });
+      setAmount("");
       setIsDepositingStorage.off();
     } catch (err) {
       setIsDepositingStorage.off();
@@ -621,7 +524,7 @@ export const BridgePanel: React.FC = () => {
 
   return (
     <>
-      <Box bg={bg} p={6} borderRadius="lg" minH="520px">
+      <Box bg={bg} p={6} borderRadius="md" minH="520px">
         <Flex justifyContent="space-between" alignItems="center" minH="32px">
           <Heading fontSize="xl">Bridge</Heading>
           {appchainTxns.length ? (
@@ -631,20 +534,7 @@ export const BridgePanel: React.FC = () => {
               size="sm"
               onClick={setIsHistoryDrawerOpen.on}
             >
-              <HStack>
-                {pendingTxns.length ? (
-                  <CircularProgress
-                    color="octo-blue.400"
-                    isIndeterminate
-                    size="18px"
-                  >
-                    <CircularProgressLabel fontSize="10px">
-                      {pendingTxns.length}
-                    </CircularProgressLabel>
-                  </CircularProgress>
-                ) : null}
-                <Text>History</Text>
-              </HStack>
+              <Text>History</Text>
             </Button>
           ) : networkConfig &&
             !appchainId &&
@@ -761,7 +651,6 @@ export const BridgePanel: React.FC = () => {
             appchain={appchain}
             histories={appchainTxns}
             onDrawerClose={setIsHistoryDrawerOpen.off}
-            onClearHistory={onClearHistory}
             tokenAssets={filteredTokens}
           />
         </DrawerContent>

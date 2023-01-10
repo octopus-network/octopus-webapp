@@ -180,7 +180,7 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                   bg={selectedToken === token.metadata.symbol ? bg : ""}
                   _hover={{ background: bg }}
                   key={token.contractId}
-                  borderRadius="lg"
+                  borderRadius="md"
                   cursor="pointer"
                   onClick={() => onSelectToken(token)}
                 >
@@ -217,8 +217,13 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
                   cursor="pointer"
                   onClick={() => onSelectToken(c, true)}
                 >
-                  <Box bg={bg} borderRadius="lg" overflow="hidden">
-                    <Image src={c.metadata?.mediaUri ?? failedToLoad} />
+                  <Box bg={bg} borderRadius="md" overflow="hidden">
+                    <Image
+                      src={
+                        (c.metadata?.mediaUri || c.metadata?.image) ??
+                        failedToLoad
+                      }
+                    />
                   </Box>
                   <Heading fontSize="md" mt={2} textAlign="center">
                     {c.metadata.name}

@@ -11,15 +11,11 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
-
 import { StakingHistory } from "types";
-
 import { BaseModal, Empty } from "components";
 import { DecimalUtil } from "utils";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-
-import { OCT_TOKEN_DECIMALS } from "primitives";
 
 type StakingHistoryModalProps = {
   histories: StakingHistory[] | undefined;
@@ -101,14 +97,7 @@ export const StakingHistoryModal: React.FC<StakingHistoryModalProps> = ({
                           </Text>
                         )}
                       </Td>
-                      <Td>
-                        {DecimalUtil.beautify(
-                          DecimalUtil.fromString(
-                            fact.amount,
-                            OCT_TOKEN_DECIMALS
-                          )
-                        )}
-                      </Td>
+                      <Td>{DecimalUtil.formatAmount(fact.amount)}</Td>
                     </Tr>
                   );
                 })}

@@ -73,7 +73,9 @@ export const Footer: React.FC = () => {
           </Link>
         </HStack>
         <HStack spacing={3}>
-          <Text variant="gray">&copy; 2022 Octopus Network</Text>
+          <Text variant="gray">
+            &copy; {new Date().getFullYear()} Octopus Network
+          </Text>
           <Link
             variant="gray-hover-blue"
             href="https://twitter.com/oct_network"

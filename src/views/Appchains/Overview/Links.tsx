@@ -16,33 +16,24 @@ import {
   useClipboard,
   Link,
 } from "@chakra-ui/react";
-
 import { useSpring, animated } from "react-spring";
-
 import { HiOutlineArrowNarrowRight } from "react-icons/hi";
-
-import website1 from "assets/icons/website1.png";
-import website2 from "assets/icons/website2.png";
-import anchor1 from "assets/icons/anchor1.png";
-import anchor2 from "assets/icons/anchor2.png";
-import github1 from "assets/icons/github1.png";
-import github2 from "assets/icons/github2.png";
-import email1 from "assets/icons/email1.png";
-import email2 from "assets/icons/email2.png";
 import astro from "assets/icons/astro.png";
 import { AppchainInfo } from "types";
 import { toValidUrl } from "utils";
 import { Toast } from "components/common/toast";
+import { FaAnchor, FaGithub, FaGlobe } from "react-icons/fa";
+import { MdEmail } from "react-icons/md";
 
 type LinkBoxProps = BoxProps & {
-  icons: any[];
+  icon: React.ReactElement;
   title: string;
   href?: string;
   copy?: string;
 };
 
 const LinkBox: React.FC<LinkBoxProps> = ({
-  icons,
+  icon,
   href,
   copy,
   title,
@@ -52,7 +43,7 @@ const LinkBox: React.FC<LinkBoxProps> = ({
 
   const [isHovering, setIsHovering] = useBoolean(false);
 
-  const [iconHoveringProps, iconHoveringApi] = useSpring(() => ({
+  const [, iconHoveringApi] = useSpring(() => ({
     transform: "translate3d(0, 0, 0)",
   }));
 
@@ -75,12 +66,13 @@ const LinkBox: React.FC<LinkBoxProps> = ({
       arrowHoveringApi.start({ transform: "translateX(-10px)", opacity: 0 });
       onCopyApi.start({ opacity: 0 });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isHovering]);
 
   return (
     <Box
       bg={bg}
-      borderRadius="lg"
+      borderRadius="md"
       p="12px 24px"
       cursor="pointer"
       onMouseEnter={setIsHovering.on}
@@ -90,18 +82,7 @@ const LinkBox: React.FC<LinkBoxProps> = ({
       <Flex justifyContent="space-between" alignItems="center">
         <HStack spacing={4}>
           <Box boxSize="24px" position="relative">
-            <Box
-              boxSize="16px"
-              position="absolute"
-              top="-3px"
-              left="-5px"
-              zIndex={0}
-            >
-              <Image src={icons[0]} w="100%" />
-            </Box>
-            <animated.div style={iconHoveringProps}>
-              <Image src={icons[1]} w="100%" />
-            </animated.div>
+            {icon}
           </Box>
           <VStack
             alignItems="flex-start"
@@ -165,7 +146,7 @@ export const Links: React.FC<LinksProps> = ({ data }) => {
     <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
       <Link href={toValidUrl(data?.appchain_metadata?.website_url)} isExternal>
         <LinkBox
-          icons={[website1, website2]}
+          icon={<FaGlobe size={24} />}
           title="Website"
           href={data?.appchain_metadata?.website_url}
         />
@@ -175,13 +156,13 @@ export const Links: React.FC<LinksProps> = ({ data }) => {
         isExternal
       >
         <LinkBox
-          icons={[github1, github2]}
+          icon={<FaGithub size={24} />}
           title="Github Repo"
           href={data?.appchain_metadata?.github_address}
         />
       </Link>
       <LinkBox
-        icons={[email1, email2]}
+        icon={<MdEmail size={24} />}
         title="Email"
         onClick={onCopyEmail}
         copy={data?.appchain_metadata?.contact_email}
@@ -189,7 +170,7 @@ export const Links: React.FC<LinksProps> = ({ data }) => {
       {data?.appchain_state === "Voting" && (
         <Link href={data.dao_proposal_url} isExternal>
           <LinkBox
-            icons={[github1, astro]}
+            icon={<Image src={astro} width={24} />}
             title="AstroDAO Proposal"
             href={data.dao_proposal_url}
           />
@@ -197,7 +178,7 @@ export const Links: React.FC<LinksProps> = ({ data }) => {
       )}
       {data?.appchain_anchor ? (
         <LinkBox
-          icons={[anchor1, anchor2]}
+          icon={<FaAnchor size={24} />}
           title="Anchor"
           onClick={onCopyAnchor}
           copy={data?.appchain_anchor}

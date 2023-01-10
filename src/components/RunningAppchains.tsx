@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo } from "react";
 import useSWR from "swr";
-
 import {
   Flex,
   Heading,
@@ -15,15 +14,12 @@ import {
   Skeleton,
   SkeletonCircle,
 } from "@chakra-ui/react";
-
 import { useNavigate } from "react-router-dom";
 import { ChevronRightIcon } from "@chakra-ui/icons";
 import { Link as RouterLink } from "react-router-dom";
-import { DecimalUtil, ZERO_DECIMAL } from "utils";
+import { DecimalUtil } from "utils";
 
-import { OCT_TOKEN_DECIMALS } from "primitives";
-
-import { AppchainInfo, AppchainSettings, Delegator, Validator } from "types";
+import { AppchainInfo, AppchainInfoWithAnchorStatus } from "types";
 import useLocalStorage from "hooks/useLocalStorage";
 
 type RunningAppchainsProps = {
@@ -46,52 +42,14 @@ const RunningItem: React.FC<RunningItemProps> = ({ whiteBg = false, data }) => {
     [data]
   );
 
-  const { data: prices } = useSWR(
-    `prices/OCT,${data.appchain_metadata?.fungible_token_metadata?.symbol}`
+  const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(
+    `appchain/${data.appchain_id}`
   );
-  const { data: appchainSettings } = useSWR<AppchainSettings>(
-    `appchain-settings/${data.appchain_id}`
-  );
-  const { data: validators } = useSWR<Validator[]>(
-    `validators/${data.appchain_id}`
-  );
-
-  const { data: delegatorsArr } = useSWR<Delegator[][]>(
-    validators?.length
-      ? `${validators.map((v) => v.validator_id).join(",")}/${
-          data.appchain_id
-        }/delegators`
-      : null
-  );
-
-  const delegatorsCount = useMemo(
-    () => delegatorsArr?.flat(Infinity).length,
-    [delegatorsArr]
-  );
-
-  const apy = useMemo(() => {
-    if (!appchainSettings || !prices) return ZERO_DECIMAL;
-    const { fungible_token_metadata } = data.appchain_metadata || {};
-    const rewardsPerYear = DecimalUtil.fromString(
-      appchainSettings.era_reward,
-      fungible_token_metadata.decimals
-    )
-      .mul(365)
-      .mul(prices[fungible_token_metadata.symbol]);
-
-    return rewardsPerYear
-      .mul(100)
-      .div(
-        DecimalUtil.fromString(data.total_stake, OCT_TOKEN_DECIMALS).mul(
-          prices["OCT"]
-        )
-      );
-  }, [prices, data, appchainSettings]);
 
   return (
     <Box
       bg={bg}
-      borderRadius="lg"
+      borderRadius="md"
       p={6}
       cursor="pointer"
       transition="all .3s ease"
@@ -123,9 +81,10 @@ const RunningItem: React.FC<RunningItemProps> = ({ whiteBg = false, data }) => {
           <Text variant="gray" fontSize="sm">
             Delegators
           </Text>
-          <Skeleton isLoaded={delegatorsCount !== undefined}>
+          <Skeleton isLoaded={!!appchain}>
             <Heading fontSize="lg">
-              {delegatorsCount === undefined ? "loading" : delegatorsCount}
+              {appchain?.anchor_status?.delegator_count_in_next_era ||
+                "loading"}
             </Heading>
           </Skeleton>
         </VStack>
@@ -134,19 +93,14 @@ const RunningItem: React.FC<RunningItemProps> = ({ whiteBg = false, data }) => {
             Staked OCT
           </Text>
           <Heading fontSize="lg">
-            {DecimalUtil.beautify(
-              DecimalUtil.fromString(data.total_stake, OCT_TOKEN_DECIMALS),
-              0
-            )}
+            {DecimalUtil.formatAmount(data.total_stake)}
           </Heading>
         </VStack>
         <VStack alignItems="flex-start">
           <Text variant="gray" fontSize="sm">
             APY
           </Text>
-          <Heading fontSize="lg">
-            {apy.gt(ZERO_DECIMAL) ? `${DecimalUtil.beautify(apy, 2)}%` : "-"}
-          </Heading>
+          <Heading fontSize="lg">{appchain?.apy || "-"}</Heading>
         </VStack>
       </Flex>
     </Box>
@@ -157,7 +111,7 @@ const BlankItem: React.FC<Omit<RunningItemProps, "data">> = ({ whiteBg }) => {
   const bg = useColorModeValue(whiteBg ? "white" : "#f6f7fa", "#15172c");
 
   return (
-    <Box bg={bg} borderRadius="lg" p={6}>
+    <Box bg={bg} borderRadius="md" p={6}>
       <Flex justifyContent="space-between">
         <HStack>
           <SkeletonCircle boxSize={10} />
@@ -252,7 +206,6 @@ export const RunningAppchains: React.FC<RunningAppchainsProps> = ({
       <SimpleGrid gap={8} mt={8} columns={{ base: 1, md: 2 }}>
         {!data?.length ? (
           <>
-            <BlankItem whiteBg={!showMore} />
             <BlankItem whiteBg={!showMore} />
           </>
         ) : (

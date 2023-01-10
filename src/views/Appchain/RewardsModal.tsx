@@ -211,11 +211,12 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
           colorScheme="octo-blue"
           isDisabled={isClaiming || Number(total) === 0}
           onClick={() => onClaimRewards(undefined)}
+          isLoading={isClaiming}
         >
           Claim All
         </Button>
       </Flex>
-      <Box p={4} mb={4} mt={4} bg={bg} borderRadius="lg">
+      <Box p={4} mb={4} mt={4} bg={bg} borderRadius="md">
         <>
           <Flex>
             <HStack color="red">

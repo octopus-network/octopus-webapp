@@ -33,7 +33,7 @@ const AppchainItem: React.FC<AppchainItemProps> = ({ data }) => {
     <Box
       p={4}
       cursor="pointer"
-      borderRadius="lg"
+      borderRadius="md"
       className="transition"
       backgroundColor="transparent"
       _hover={{
@@ -93,7 +93,7 @@ export const Established: React.FC = () => {
           <Icon as={QuestionOutlineIcon} boxSize={4} className="octo-gray" />
         </HStack>
       </Flex>
-      <Box mt={8} bg={bg} p={6} borderRadius="lg">
+      <Box mt={8} bg={bg} p={6} borderRadius="md">
         {appchains?.length ? (
           <>
             <Box p={4}>
@@ -142,7 +142,7 @@ export const Registered: React.FC = () => {
           <Icon as={QuestionOutlineIcon} boxSize={4} className="octo-gray" />
         </HStack>
       </Flex>
-      <Box mt={8} bg={bg} p={6} borderRadius="lg">
+      <Box mt={8} bg={bg} p={6} borderRadius="md">
         {appchains?.length ? (
           <>
             <Box p={4}>

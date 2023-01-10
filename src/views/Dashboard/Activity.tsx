@@ -104,6 +104,7 @@ const ActivityItem: React.FC<{
               overflow="hidden"
               textOverflow="ellipsis"
               maxW="160px"
+              fontFamily="monospace"
             >
               {activityTranslator.getActionConnect()}
             </Text>
@@ -152,7 +153,7 @@ export const Activity = ({ viewingAccount }: { viewingAccount?: string }) => {
   );
 
   return (
-    <Box minH="320px" bg={bg} p={6} borderRadius="lg" mt={6}>
+    <Box minH="320px" bg={bg} p={6} borderRadius="md" mt={6}>
       <Heading fontSize="2xl">Recent Activity</Heading>
       {accountId ? (
         !activity && !activityError ? (

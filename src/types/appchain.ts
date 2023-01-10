@@ -45,6 +45,7 @@ export type AppchainInfo = {
   voting_score: string;
   evm_chain_id: string;
   dao_proposal_url: string;
+  apy: string;
 };
 
 export type IndexRange = {
@@ -149,6 +150,7 @@ export type Collectible = {
   metadata: {
     name: string;
     mediaUri: string;
+    image: string;
   };
 };
 

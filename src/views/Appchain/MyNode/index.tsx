@@ -263,7 +263,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
 
   return (
     <>
-      <Box position="relative" mb={5} p={4} borderRadius="lg" bg={validatorBg}>
+      <Box position="relative" mb={5} p={4} borderRadius="md" bg={validatorBg}>
         <Image
           position="absolute"
           bottom="0"
@@ -275,7 +275,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
         <MyStaking appchain={appchain} anchor={anchor} validator={validator} />
       </Box>
 
-      <Box position="relative" p={4} borderRadius="lg" bg={bg}>
+      <Box position="relative" p={4} borderRadius="md" bg={bg}>
         <Flex justifyContent="space-between" alignItems="center">
           <Heading fontSize="lg">My Node</Heading>
           <Menu>

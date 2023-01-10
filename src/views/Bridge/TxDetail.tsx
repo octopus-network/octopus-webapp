@@ -79,7 +79,7 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
         </Flex>
       </DrawerHeader>
       <DrawerBody pb={6}>
-        <Box bg={grayBg} borderRadius="lg" pl={3} pr={3}>
+        <Box bg={grayBg} borderRadius="md" pl={3} pr={3}>
           <Flex
             alignItems="center"
             justifyContent="space-between"
@@ -193,12 +193,10 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
                 textOverflow="ellipsis"
               >
                 {appchain
-                  ? DecimalUtil.beautify(
-                      DecimalUtil.fromString(
-                        transaction?.summary.amount.replaceAll(",", ""),
-                        appchain?.appchain_metadata?.fungible_token_metadata
-                          ?.decimals
-                      )
+                  ? DecimalUtil.formatAmount(
+                      transaction?.summary.amount.replaceAll(",", ""),
+                      appchain?.appchain_metadata?.fungible_token_metadata
+                        ?.decimals
                     )
                   : "-"}
               </Heading>

@@ -194,7 +194,7 @@ export default function TokenInpput({
       p={4}
       borderColor={isAmountInputFocused ? "#2468f2" : grayBg}
       bg={isAmountInputFocused ? bg : grayBg}
-      borderRadius="lg"
+      borderRadius="md"
       pt={2}
       mt={6}
     >
@@ -229,13 +229,18 @@ export default function TokenInpput({
             borderWidth={1}
             p={2}
             borderColor="octo-blue.500"
-            borderRadius="lg"
+            borderRadius="md"
             overflow="hidden"
             position="relative"
             width="100%"
           >
             <Box w="20%">
-              <Image src={collectible.metadata.mediaUri} w="100%" />
+              <Image
+                src={
+                  collectible.metadata.mediaUri || collectible.metadata.image
+                }
+                w="100%"
+              />
             </Box>
             <VStack alignItems="flex-start" ml={3}>
               <Heading fontSize="md">{collectible.metadata.name}</Heading>
@@ -294,15 +299,8 @@ export default function TokenInpput({
               Fee
             </Text>
             <Text fontSize="xs" color="gray">
-              {DecimalUtil.beautify(
-                DecimalUtil.shift(
-                  new Decimal(
-                    tokenAsset
-                      ? crosschainFee.fungible
-                      : crosschainFee.nonfungible
-                  ),
-                  decimals
-                ),
+              {DecimalUtil.formatAmount(
+                tokenAsset ? crosschainFee.fungible : crosschainFee.nonfungible,
                 decimals
               )}
             </Text>

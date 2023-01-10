@@ -1,38 +1,15 @@
 import React, { useEffect, useMemo, useCallback, useRef } from "react";
-
 import { SWRConfig } from "swr";
 import axios from "axios";
-
-import {
-  Box,
-  useColorModeValue,
-  useToast,
-  Link,
-  Img,
-  Flex,
-  CloseButton,
-  Portal,
-} from "@chakra-ui/react";
-
+import { Box, useColorModeValue, useToast, Link } from "@chakra-ui/react";
 import { Header, Footer } from "components";
-
 import { providers } from "near-api-js";
-
-import { BridgeHistory, BridgeHistoryStatus } from "types";
-
 import { Outlet } from "react-router-dom";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useMatchMutate } from "hooks";
-import { useTxnsStore } from "stores";
-
 import { API_HOST } from "config";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
 import { Toast } from "components/common/toast";
-import OptoBannerBg from "assets/opto-banner.png";
-import AvatarBannerBg from "assets/avatar-banner.png";
-import Carousel from "nuka-carousel/lib/carousel";
-import useLocalStorage from "hooks/useLocalStorage";
-import posthog from "posthog-js";
 
 export const Root: React.FC = () => {
   const headerBg = useColorModeValue("whiteAlpha.800", "whiteAlpha.50");
@@ -50,7 +27,6 @@ export const Root: React.FC = () => {
   );
 
   const { accountId, networkConfig, selector } = useWalletSelector();
-  const { updateTxn } = useTxnsStore();
 
   const matchMutate = useMatchMutate();
 
@@ -74,39 +50,6 @@ export const Root: React.FC = () => {
       });
     }
   }, [location.pathname, navigate, matchMutate]);
-
-  const onAppchainTokenBurnt = ({
-    hash,
-    appchainId,
-    nearAccount,
-    appchainAccount,
-    amount,
-    notificationIndex,
-    contractId,
-  }: {
-    hash: string;
-    appchainId: string;
-    nearAccount: string;
-    appchainAccount: string;
-    amount: string;
-    notificationIndex: string;
-    contractId: string;
-  }) => {
-    const tmpHistory: BridgeHistory = {
-      isAppchainSide: false,
-      appchainId,
-      hash,
-      sequenceId: (notificationIndex as any) * 1,
-      fromAccount: nearAccount,
-      toAccount: appchainAccount,
-      amount,
-      status: BridgeHistoryStatus.Pending,
-      timestamp: new Date().getTime(),
-      tokenContractId: contractId,
-    };
-
-    updateTxn(appchainId, tmpHistory);
-  };
 
   // check tx status
   useEffect(() => {
@@ -146,48 +89,6 @@ export const Root: React.FC = () => {
             message = JSON.stringify((outcome.status as any).Failure);
             break;
           }
-
-          let res;
-
-          if (outcome.logs?.length) {
-            for (let j = 0; j < outcome.logs.length; j++) {
-              const log = outcome.logs[j];
-
-              const reg1 =
-                  /Wrapped appchain token burnt in contract '(.+)' by '(.+)' for '(.+)' of appchain. Amount: '(.+)', Crosschain notification index: '(.+)'/,
-                reg2 =
-                  /Received fungible token in contract '(.+)' from '(.+)'. Start transfer to '(.+)' of appchain. Amount: '(.+)', Crosschain notification index: '(.+)'/,
-                reg3 =
-                  /Received NFT in contract '(.+)' from '(.+)'. Start transfer to '(.+)' of appchain. Crosschain notification index: '(.+)'./;
-
-              res = reg1.exec(log) ?? reg2.exec(log) ?? reg3.exec(log);
-
-              if (res?.length) {
-                const isNFT = res.length === 5;
-
-                const appchainId = (outcome as any).executor_id.split(".")?.[0];
-
-                const contractId = res[1],
-                  nearAccount = res[2],
-                  appchainAccount = res[3],
-                  amount = isNFT ? "1" : res[4],
-                  notificationIndex = isNFT ? res[4] : res[5];
-
-                onAppchainTokenBurnt({
-                  hash: status.transaction.hash,
-                  appchainId,
-                  nearAccount,
-                  appchainAccount,
-                  amount,
-                  notificationIndex,
-                  contractId,
-                });
-                break;
-              }
-            }
-          }
-
-          if (res) break;
         }
         if (message) {
           throw new Error(message);
@@ -244,11 +145,6 @@ export const Root: React.FC = () => {
     window.history.pushState({ path: newUrl }, "", newUrl);
   }, [urlParams]);
 
-  const [showWalletBanner, setShowWalletBanner] = useLocalStorage(
-    "walletBanner",
-    true
-  );
-
   return (
     <SWRConfig
       value={{
@@ -264,63 +160,6 @@ export const Root: React.FC = () => {
       <Box mt={16}>
         <Footer />
       </Box>
-      {showWalletBanner && (
-        <Portal>
-          <Box
-            position="fixed"
-            right="10px"
-            bottom="10px"
-            zIndex={100}
-            width="300px"
-          >
-            <Flex direction="row" justify="flex-end">
-              <CloseButton
-                onClick={() => {
-                  setShowWalletBanner(false);
-                }}
-              />
-            </Flex>
-            <Carousel
-              autoplay
-              autoplayInterval={5000}
-              swiping
-              pauseOnHover
-              withoutControls
-              dragging
-              wrapAround
-            >
-              <a
-                href="https://optowallet.com"
-                target="_blank"
-                rel="noreferrer"
-                onClick={() => posthog.capture("click_opto")}
-              >
-                <Img
-                  src={OptoBannerBg}
-                  width="300px"
-                  height="200px"
-                  alt="Opto Wallet"
-                  borderRadius={10}
-                />
-              </a>
-              <a
-                href="https://chrome.google.com/webstore/detail/avatar-wallet/ckfhnogibicdkfkijinnacpmmobbhbjk"
-                target="_blank"
-                rel="noreferrer"
-                onClick={() => posthog.capture("click_avatar")}
-              >
-                <Img
-                  src={AvatarBannerBg}
-                  width="300px"
-                  height="200px"
-                  alt="Avatar Wallet"
-                  borderRadius={10}
-                />
-              </a>
-            </Carousel>
-          </Box>
-        </Portal>
-      )}
     </SWRConfig>
   );
 };

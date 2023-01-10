@@ -12,11 +12,9 @@ import {
 } from "@chakra-ui/react";
 
 import { RunningAppchains } from "components";
-
 import { Booting } from "./Booting";
 import { Voting } from "./Voting";
 import { Established, Registered } from "./Established";
-
 import { Overview } from "./Overview";
 import { useParams, useNavigate } from "react-router-dom";
 import JOIN_DISCORD from "../../assets/join-discord.png";
@@ -80,15 +78,11 @@ export const Appchains: React.FC = () => {
         <Box mt={10}>
           <RunningAppchains showMore={false} />
         </Box>
-        {/* <Box mt={10}>
-          <Statistics />
-        </Box> */}
         <Box mt={10}>
           <Booting />
         </Box>
         <VerticalTimeline layout="1-column-left">
           <VerticalTimelineElement
-            // className="vertical-timeline-element--work"
             contentStyle={{
               color: "#fff",
               background: "transparent",
@@ -101,7 +95,6 @@ export const Appchains: React.FC = () => {
 
           <Voting />
           <VerticalTimelineElement
-            // className="vertical-timeline-element--work"
             contentStyle={{
               color: "#fff",
               background: "transparent",
@@ -113,7 +106,6 @@ export const Appchains: React.FC = () => {
           ></VerticalTimelineElement>
           <Established />
           <VerticalTimelineElement
-            // className="vertical-timeline-element--work"
             contentStyle={{
               color: "#fff",
               background: "transparent",

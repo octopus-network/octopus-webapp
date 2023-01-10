@@ -15,14 +15,10 @@ import {
   Skeleton,
   SkeletonCircle,
 } from "@chakra-ui/react";
-
 import { useNavigate } from "react-router-dom";
 import { ChevronRightIcon } from "@chakra-ui/icons";
 import { Link as RouterLink } from "react-router-dom";
 import { DecimalUtil } from "utils";
-
-import { OCT_TOKEN_DECIMALS } from "primitives";
-
 import { AppchainInfo, Delegator, Validator } from "types";
 
 type RunningAppchainsProps = {
@@ -64,7 +60,7 @@ const FrozenItem: React.FC<FrozenItemProps> = ({ whiteBg = false, data }) => {
   return (
     <Box
       bg={bg}
-      borderRadius="lg"
+      borderRadius="md"
       p={6}
       cursor="pointer"
       transition="all .3s ease"
@@ -113,10 +109,7 @@ const FrozenItem: React.FC<FrozenItemProps> = ({ whiteBg = false, data }) => {
             Staked OCT
           </Text>
           <Heading fontSize="lg">
-            {DecimalUtil.beautify(
-              DecimalUtil.fromString(data.total_stake, OCT_TOKEN_DECIMALS),
-              0
-            )}
+            {DecimalUtil.formatAmount(data.total_stake)}
           </Heading>
         </VStack>
         <VStack alignItems="flex-start">
@@ -134,7 +127,7 @@ const BlankItem: React.FC<Omit<FrozenItemProps, "data">> = ({ whiteBg }) => {
   const bg = useColorModeValue(whiteBg ? "white" : "#f6f7fa", "#15172c");
 
   return (
-    <Box bg={bg} borderRadius="lg" p={6}>
+    <Box bg={bg} borderRadius="md" p={6}>
       <Flex justifyContent="space-between">
         <HStack>
           <SkeletonCircle boxSize={10} />

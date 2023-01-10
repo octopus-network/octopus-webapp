@@ -30,14 +30,10 @@ export default function RewardList({
                 <Tr key={`tr-${idx}`}>
                   <Td>{r.era_number}</Td>
                   <Td isNumeric>
-                    {DecimalUtil.beautify(
-                      DecimalUtil.fromString(r.total_reward, decimals)
-                    )}
+                    {DecimalUtil.formatAmount(r.total_reward, decimals)}
                   </Td>
                   <Td isNumeric>
-                    {DecimalUtil.beautify(
-                      DecimalUtil.fromString(r.unwithdrawn_reward, decimals)
-                    )}
+                    {DecimalUtil.formatAmount(r.unwithdrawn_reward, decimals)}
                     {DecimalUtil.fromString(r.unwithdrawn_reward).gt(
                       ZERO_DECIMAL
                     ) && r.expired ? (

@@ -1,4 +1,4 @@
-import React from "react"
+import React from "react";
 
 import {
   Box,
@@ -8,20 +8,20 @@ import {
   VStack,
   useColorModeValue,
   Text,
-} from "@chakra-ui/react"
+} from "@chakra-ui/react";
 
-import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types"
+import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 
-import { Empty, BaseModal } from "components"
-import OctIdenticon from "components/common/OctIdenticon"
+import { Empty, BaseModal } from "components";
+import OctIdenticon from "components/common/OctIdenticon";
 
 type SelectWeb3AccountModalProps = {
-  isOpen: boolean
-  onClose: VoidFunction
-  selectedAccount?: InjectedAccountWithMeta
-  accounts: InjectedAccountWithMeta[] | undefined
-  onChooseAccount: (account: InjectedAccountWithMeta) => void
-}
+  isOpen: boolean;
+  onClose: VoidFunction;
+  selectedAccount?: InjectedAccountWithMeta;
+  accounts: InjectedAccountWithMeta[] | undefined;
+  onChooseAccount: (account: InjectedAccountWithMeta) => void;
+};
 
 export const SelectWeb3AccountModal: React.FC<SelectWeb3AccountModalProps> = ({
   accounts,
@@ -30,7 +30,7 @@ export const SelectWeb3AccountModal: React.FC<SelectWeb3AccountModalProps> = ({
   onChooseAccount,
   selectedAccount,
 }) => {
-  const bg = useColorModeValue("#f6f7fa", "#15172c")
+  const bg = useColorModeValue("#f6f7fa", "#15172c");
 
   return (
     <BaseModal
@@ -47,7 +47,7 @@ export const SelectWeb3AccountModal: React.FC<SelectWeb3AccountModalProps> = ({
             {accounts?.map((account) => {
               const isSelected =
                 account.address === selectedAccount?.address &&
-                selectedAccount?.meta.source === account.meta.source
+                selectedAccount?.meta.source === account.meta.source;
 
               return (
                 <Box
@@ -55,7 +55,7 @@ export const SelectWeb3AccountModal: React.FC<SelectWeb3AccountModalProps> = ({
                   bg={isSelected ? bg : ""}
                   _hover={{ background: bg }}
                   key={account.address}
-                  borderRadius="lg"
+                  borderRadius="md"
                   cursor="pointer"
                   onClick={() => onChooseAccount(account)}
                 >
@@ -80,11 +80,11 @@ export const SelectWeb3AccountModal: React.FC<SelectWeb3AccountModalProps> = ({
                     </VStack>
                   </HStack>
                 </Box>
-              )
+              );
             })}
           </List>
         )}
       </Box>
     </BaseModal>
-  )
-}
+  );
+};

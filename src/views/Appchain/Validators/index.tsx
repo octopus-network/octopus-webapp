@@ -214,7 +214,7 @@ export const Validators: React.FC<ValidatorsProps> = ({
           </Link>
         </HStack>
       </Flex>
-      <Box p={2} bg={bg} mt={4} borderRadius="lg" pb={6} minH="320px">
+      <Box p={2} bg={bg} mt={4} borderRadius="md" pb={6} minH="320px">
         <Box p={6}>
           <Grid
             templateColumns={{
