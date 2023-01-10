@@ -339,9 +339,7 @@ export const BridgePanel: React.FC = () => {
         amount,
         asset: tokenAsset,
         fromAccount: from!,
-        appchainId: appchainId!,
         bridgeConfig,
-        crosschainFee: crosschainFee.fungible,
       });
     }
   };
@@ -355,9 +353,7 @@ export const BridgePanel: React.FC = () => {
       tx = appchainApi?.tx.octopusBridge.lockNonfungible(
         collectible?.class,
         collectible?.id,
-        targetAccountInHex,
-        crosschainFee.nonfungible,
-        1 // TODO: metadata_length
+        targetAccountInHex
       );
     } else {
       tx = appchainApi?.tx.octopusAppchain.lockNft(

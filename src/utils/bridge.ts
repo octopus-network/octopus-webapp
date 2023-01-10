@@ -356,8 +356,6 @@ export async function substrateBurn({
   amount,
   targetAccount,
   fromAccount,
-  appchainId,
-  crosschainFee,
 }: {
   api: ApiPromise;
   asset?: TokenAsset;
@@ -365,8 +363,6 @@ export async function substrateBurn({
   amount: string;
   targetAccount: string;
   fromAccount: string;
-  appchainId: string;
-  crosschainFee: number;
 }) {
   const amountInDec = DecimalUtil.power(
     new Decimal(amount),
@@ -383,14 +379,12 @@ export async function substrateBurn({
       asset?.assetId === undefined
         ? api?.tx.octopusBridge.lock(
             targetAccountInHex,
-            amountInDec.toFixed(0, Decimal.ROUND_DOWN),
-            crosschainFee
+            amountInDec.toFixed(0, Decimal.ROUND_DOWN)
           )
         : api?.tx.octopusAppchain.burnNep141(
             asset?.assetId,
             targetAccountInHex,
-            amountInDec.toFixed(0, Decimal.ROUND_DOWN),
-            crosschainFee
+            amountInDec.toFixed(0, Decimal.ROUND_DOWN)
           );
   } else {
     tx =
