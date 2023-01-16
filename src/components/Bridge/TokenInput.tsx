@@ -188,6 +188,8 @@ export default function TokenInpput({
       : nativeToken.metadata.decimals;
   }
 
+  console.log("crosschainFee", crosschainFee, decimals);
+
   return (
     <Box
       borderWidth={1}
@@ -301,7 +303,8 @@ export default function TokenInpput({
             <Text fontSize="xs" color="gray">
               {DecimalUtil.formatAmount(
                 tokenAsset ? crosschainFee.fungible : crosschainFee.nonfungible,
-                decimals
+                decimals,
+                6
               )}
             </Text>
           </HStack>
