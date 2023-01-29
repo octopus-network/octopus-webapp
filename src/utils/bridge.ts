@@ -8,7 +8,7 @@ import { BigNumber, ethers } from "ethers";
 import { providers } from "near-api-js";
 import { CodeResult } from "near-api-js/lib/providers/provider";
 import { COMPLEX_CALL_GAS } from "primitives";
-import { TokenAsset, BridgeConfig, BridgeHistory } from "types";
+import { TokenAsset, BridgeConfig, BridgeHistory, AppchainInfo } from "types";
 import OctopusAppchain from "./abis/OctopusAppchain.json";
 import OctopusSession from "./abis/OctopusSession.json";
 import { DecimalUtil, ZERO_DECIMAL } from "./decimal";
@@ -526,7 +526,8 @@ export async function getAppchainNFTs(
   classIds: number[],
   appchainApi: ApiPromise,
   account: string,
-  appchainId: string
+  appchainId: string,
+  wrappedNFTs: any[]
 ) {
   try {
     let promises: any[] = [];
@@ -537,24 +538,27 @@ export async function getAppchainNFTs(
       promises = allEntries.map(([a, b]) => {
         const [, [classId, instanceId]] = a.toHuman() as any;
 
-        return appchainApi.query.ormlNFT
-          .tokens(classId, instanceId)
-          .then((res) => {
-            if (res) {
-              const unique = res.toJSON() as any;
+        if (wrappedNFTs.some((t) => t.class_id === classId)) {
+          return appchainApi.query.ormlNFT
+            .tokens(classId, instanceId)
+            .then((res) => {
+              if (res) {
+                const unique = res.toJSON() as any;
 
-              const metadata = JSON.parse(hexToString(unique.metadata));
+                const metadata = JSON.parse(hexToString(unique.metadata));
 
-              return {
-                id: instanceId,
-                class: classId,
-                metadata: metadata,
-                owner: account,
-              };
-            }
-            return null;
-          })
-          .catch(console.log);
+                return {
+                  id: instanceId,
+                  class: classId,
+                  metadata: metadata,
+                  owner: account,
+                };
+              }
+              return null;
+            })
+            .catch(console.log);
+        }
+        return null;
       });
     } else {
       promises = classIds.map((classId) => {

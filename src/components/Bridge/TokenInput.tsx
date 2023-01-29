@@ -23,7 +23,7 @@ import Decimal from "decimal.js";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AiFillCloseCircle } from "react-icons/ai";
 import useSWR from "swr";
-import { BridgeConfig, Collectible, TokenAsset } from "types";
+import { AppchainInfo, BridgeConfig, Collectible, TokenAsset } from "types";
 import { DecimalUtil, ZERO_DECIMAL } from "utils";
 import { getNearTokenBalance, getPolkaTokenBalance } from "utils/bridge";
 import { SelectTokenModal } from "views/Bridge/SelectTokenModal";
@@ -37,6 +37,7 @@ export default function TokenInpput({
   appchainApi,
   nativeToken,
   crosschainFee,
+  appchain,
 }: {
   chain: string;
   from: string;
@@ -46,6 +47,7 @@ export default function TokenInpput({
   appchainApi?: ApiPromise;
   nativeToken?: TokenAsset;
   crosschainFee: { fungible: number; nonfungible: number };
+  appchain: AppchainInfo;
 }) {
   const { accountId, selector } = useWalletSelector();
 
@@ -188,8 +190,6 @@ export default function TokenInpput({
       : nativeToken.metadata.decimals;
   }
 
-  console.log("crosschainFee", crosschainFee, decimals);
-
   return (
     <Box
       borderWidth={1}
@@ -321,6 +321,7 @@ export default function TokenInpput({
         collectibleClasses={collectibleClasses}
         onSelectToken={onSelectToken}
         selectedToken={tokenAsset?.metadata?.symbol}
+        appchain={appchain}
       />
     </Box>
   );

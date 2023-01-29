@@ -77,8 +77,7 @@ export const BridgePanel: React.FC = () => {
 
   const { accountId, networkConfig, selector } = useWalletSelector();
   const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(
-    appchainId ? `appchain/${appchainId}` : null,
-    { refreshInterval: 10 * 1000 }
+    appchainId ? `appchain/${appchainId}` : null
   );
   const { data: appchainSettings } = useSWR<AppchainSettings>(
     appchainId ? `appchain-settings/${appchainId}` : null
@@ -593,6 +592,7 @@ export const BridgePanel: React.FC = () => {
               nativeToken={filteredTokens.find((t) => !t.assetId)}
               crosschainFee={crosschainFee}
               appchainApi={appchainApi}
+              appchain={appchain}
               from={from}
               appchainId={appchainId}
               onChangeAmount={(amount) => setAmount(amount)}
