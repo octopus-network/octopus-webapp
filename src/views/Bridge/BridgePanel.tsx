@@ -146,7 +146,7 @@ export const BridgePanel: React.FC = () => {
   }, [isHistoryDrawerOpen]);
 
   useEffect(() => {
-    if (!appchainSettings) {
+    if (!appchainSettings?.rpc_endpoint) {
       return;
     }
 

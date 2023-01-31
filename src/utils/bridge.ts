@@ -8,7 +8,7 @@ import { BigNumber, ethers } from "ethers";
 import { providers } from "near-api-js";
 import { CodeResult } from "near-api-js/lib/providers/provider";
 import { COMPLEX_CALL_GAS } from "primitives";
-import { TokenAsset, BridgeConfig, BridgeHistory, AppchainInfo } from "types";
+import { TokenAsset, BridgeConfig, BridgeHistory } from "types";
 import OctopusAppchain from "./abis/OctopusAppchain.json";
 import OctopusSession from "./abis/OctopusSession.json";
 import { DecimalUtil, ZERO_DECIMAL } from "./decimal";

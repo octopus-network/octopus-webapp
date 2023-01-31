@@ -25,7 +25,7 @@ export function useAppChain(appchainId?: string) {
   );
 
   useEffect(() => {
-    if (!appchainSettings) {
+    if (!appchainSettings?.rpc_endpoint) {
       return;
     }
 
