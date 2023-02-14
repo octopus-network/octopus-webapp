@@ -381,7 +381,7 @@ export async function substrateBurn({
             targetAccountInHex,
             amountInDec.toFixed(0, Decimal.ROUND_DOWN)
           )
-        : api?.tx.octopusAppchain.burnNep141(
+        : api?.tx.octopusBridge.burnNep141(
             asset?.assetId,
             targetAccountInHex,
             amountInDec.toFixed(0, Decimal.ROUND_DOWN)
