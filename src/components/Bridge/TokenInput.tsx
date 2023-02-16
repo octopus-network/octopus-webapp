@@ -305,7 +305,8 @@ export default function TokenInpput({
                 tokenAsset ? crosschainFee.fungible : crosschainFee.nonfungible,
                 decimals,
                 6
-              )}
+              )}{" "}
+              {appchain.appchain_metadata.fungible_token_metadata.symbol}
             </Text>
           </HStack>
         )}
