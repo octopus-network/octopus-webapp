@@ -381,7 +381,7 @@ export async function substrateBurn({
             targetAccountInHex,
             amountInDec.toFixed(0, Decimal.ROUND_DOWN)
           )
-        : api?.tx.octopusAppchain.burnNep141(
+        : api?.tx.octopusBridge.burnNep141(
             asset?.assetId,
             targetAccountInHex,
             amountInDec.toFixed(0, Decimal.ROUND_DOWN)
@@ -526,7 +526,8 @@ export async function getAppchainNFTs(
   classIds: number[],
   appchainApi: ApiPromise,
   account: string,
-  appchainId: string
+  appchainId: string,
+  wrappedNFTs: any[]
 ) {
   try {
     let promises: any[] = [];
@@ -537,24 +538,27 @@ export async function getAppchainNFTs(
       promises = allEntries.map(([a, b]) => {
         const [, [classId, instanceId]] = a.toHuman() as any;
 
-        return appchainApi.query.ormlNFT
-          .tokens(classId, instanceId)
-          .then((res) => {
-            if (res) {
-              const unique = res.toJSON() as any;
+        if (wrappedNFTs.some((t) => t.class_id === classId)) {
+          return appchainApi.query.ormlNFT
+            .tokens(classId, instanceId)
+            .then((res) => {
+              if (res) {
+                const unique = res.toJSON() as any;
 
-              const metadata = JSON.parse(hexToString(unique.metadata));
+                const metadata = JSON.parse(hexToString(unique.metadata));
 
-              return {
-                id: instanceId,
-                class: classId,
-                metadata: metadata,
-                owner: account,
-              };
-            }
-            return null;
-          })
-          .catch(console.log);
+                return {
+                  id: instanceId,
+                  class: classId,
+                  metadata: metadata,
+                  owner: account,
+                };
+              }
+              return null;
+            })
+            .catch(console.log);
+        }
+        return null;
       });
     } else {
       promises = classIds.map((classId) => {

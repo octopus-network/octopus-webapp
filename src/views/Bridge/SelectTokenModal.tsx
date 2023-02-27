@@ -15,7 +15,12 @@ import {
   SimpleGrid,
 } from "@chakra-ui/react";
 
-import { TokenAsset, CollectibleContract, Collectible } from "types";
+import {
+  TokenAsset,
+  CollectibleContract,
+  Collectible,
+  AppchainInfo,
+} from "types";
 
 import { Empty, BaseModal } from "components";
 import failedToLoad from "assets/failed_to_load.svg";
@@ -23,6 +28,8 @@ import { ApiPromise } from "@polkadot/api";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
 import { getAppchainNFTs } from "utils/bridge";
 import useNearAccount from "hooks/useNearAccount";
+import { providers } from "near-api-js";
+import { CodeResult } from "near-api-js/lib/providers/provider";
 
 type SelectTokenModalProps = {
   isOpen: boolean;
@@ -38,6 +45,7 @@ type SelectTokenModalProps = {
     account: TokenAsset | Collectible,
     isCollectible?: boolean
   ) => void;
+  appchain: AppchainInfo;
 };
 
 export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
@@ -51,12 +59,13 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
   fromAccount,
   isReverse = false,
   collectibleClasses = [],
+  appchain,
 }) => {
   const bg = useColorModeValue("#f6f7fa", "#15172c");
   const [tabIdx, setTabIdx] = useState(0);
   const [collectibles, setCollectibles] = useState<Collectible[]>();
 
-  const { networkConfig } = useWalletSelector();
+  const { networkConfig, selector } = useWalletSelector();
   const nearAccount = useNearAccount();
 
   useEffect(() => {
@@ -64,76 +73,92 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
       !collectibleClasses?.length ||
       !appchainId ||
       !networkConfig ||
-      !fromAccount
+      !fromAccount ||
+      !appchain
     ) {
       setCollectibles([]);
       return;
     }
 
-    if (isReverse) {
-      const promises = collectibleClasses.map((classId) => {
-        try {
-          const contract = new CollectibleContract(
-            nearAccount!,
-            `${classId}.${appchainId}.${networkConfig?.octopus.registryContractId}`,
-            {
-              viewMethods: ["nft_tokens_for_owner"],
-              changeMethods: [],
-            }
-          );
+    async function getNFTs() {
+      if (isReverse) {
+        const promises = collectibleClasses.map((classId) => {
+          try {
+            const contract = new CollectibleContract(
+              nearAccount!,
+              `${classId}.${appchainId}.${networkConfig?.octopus.registryContractId}`,
+              {
+                viewMethods: ["nft_tokens_for_owner"],
+                changeMethods: [],
+              }
+            );
 
-          return contract
-            .nft_tokens_for_owner({
-              account_id: fromAccount,
-              from_index: "0",
-            })
-            .then((res) => {
-              return res
-                ? res.map((item: any) => ({ ...item, class: classId }))
-                : null;
-            })
-            .catch(console.error);
-        } catch (error) {
-          console.log("error", error);
+            return contract
+              .nft_tokens_for_owner({
+                account_id: fromAccount!,
+                from_index: "0",
+              })
+              .then((res) => {
+                return res
+                  ? res.map((item: any) => ({ ...item, class: classId }))
+                  : null;
+              })
+              .catch(console.error);
+          } catch (error) {
+            console.log("error", error);
 
-          return null;
+            return null;
+          }
+        });
+
+        Promise.all(promises).then((res) => {
+          const tmpArr: any[] = res?.length
+            ? res
+                .filter((t) => t)
+                .flat(Infinity)
+                .map((item: any) => ({
+                  id: item.token_id,
+                  class: item.class,
+                  owner: item.owner_id,
+                  metadata: {
+                    name: item.metadata?.title,
+                    mediaUri: item.metadata?.media,
+                  },
+                }))
+            : [];
+
+          setCollectibles(tmpArr);
+        });
+      } else {
+        if (!appchainApi?.isReady) {
+          return;
         }
-      });
 
-      Promise.all(promises).then((res) => {
-        const tmpArr: any[] = res?.length
-          ? res
-              .filter((t) => t)
-              .flat(Infinity)
-              .map((item: any) => ({
-                id: item.token_id,
-                class: item.class,
-                owner: item.owner_id,
-                metadata: {
-                  name: item.metadata?.title,
-                  mediaUri: item.metadata?.media,
-                },
-              }))
-          : [];
+        const provider = new providers.JsonRpcProvider({
+          url: selector.options.network.nodeUrl,
+        });
+        const res = await provider.query<CodeResult>({
+          request_type: "call_function",
+          account_id: appchain.appchain_anchor,
+          method_name: "get_wrapped_appchain_nfts",
+          args_base64: "",
+          finality: "final",
+        });
+        const result = JSON.parse(Buffer.from(res.result).toString());
 
-        setCollectibles(tmpArr);
-      });
-    } else {
-      if (!appchainApi?.isReady) {
-        return;
+        getAppchainNFTs(
+          collectibleClasses,
+          appchainApi,
+          fromAccount!,
+          appchainId!,
+          result
+        ).then((res) => {
+          setCollectibles(res);
+        });
       }
-
-      getAppchainNFTs(
-        collectibleClasses,
-        appchainApi,
-        fromAccount,
-        appchainId
-      ).then((res) => {
-        console.log("getAppchainNFTs", res);
-
-        setCollectibles(res);
-      });
     }
+
+    getNFTs();
   }, [
     appchainId,
     JSON.stringify(collectibleClasses),
@@ -141,6 +166,7 @@ export const SelectTokenModal: React.FC<SelectTokenModalProps> = ({
     fromAccount,
     appchainApi,
     isOpen,
+    appchain,
   ]);
 
   return (
