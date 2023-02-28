@@ -38,6 +38,8 @@ export default function TokenInpput({
   nativeToken,
   crosschainFee,
   appchain,
+  collectible,
+  setCollectible,
 }: {
   chain: string;
   from: string;
@@ -48,6 +50,8 @@ export default function TokenInpput({
   nativeToken?: TokenAsset;
   crosschainFee: { fungible: number; nonfungible: number };
   appchain: AppchainInfo;
+  collectible?: Collectible;
+  setCollectible: (value: Collectible | undefined) => void;
 }) {
   const { accountId, selector } = useWalletSelector();
 
@@ -55,7 +59,6 @@ export default function TokenInpput({
   const grayBg = useColorModeValue("#f2f4f7", "#1e1f34");
   const [amount, setAmount] = useState("");
   const [tokenAsset, setTokenAsset] = useState<TokenAsset>();
-  const [collectible, setCollectible] = useState<Collectible>();
   const [balance, setBalance] = useState<Decimal>();
   const [isAmountInputFocused, setIsAmountInputFocused] = useBoolean();
   const [selectTokenModalOpen, setSelectTokenModalOpen] = useBoolean();
@@ -304,7 +307,7 @@ export default function TokenInpput({
               {DecimalUtil.formatAmount(
                 tokenAsset ? crosschainFee.fungible : crosschainFee.nonfungible,
                 decimals,
-                6
+                0
               )}{" "}
               {appchain.appchain_metadata.fungible_token_metadata.symbol}
             </Text>

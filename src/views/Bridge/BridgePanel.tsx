@@ -173,6 +173,8 @@ export const BridgePanel: React.FC = () => {
           }),
       ])
         .then((results) => {
+          console.log("results", results);
+
           setCrosschainFee({
             fungible: results[0] || 0,
             nonfungible: results[1] || 0,
@@ -295,6 +297,7 @@ export const BridgePanel: React.FC = () => {
     } else {
       navigate(`/bridge/near/${appchainId}`);
     }
+    setCollectible(undefined);
   };
 
   const burnToken = async () => {
@@ -595,6 +598,8 @@ export const BridgePanel: React.FC = () => {
               appchain={appchain}
               from={from}
               appchainId={appchainId}
+              collectible={collectible}
+              setCollectible={setCollectible}
               onChangeAmount={(amount) => setAmount(amount)}
               onChangeTokenAsset={(ta, isCollectible) => {
                 if (isCollectible) {
