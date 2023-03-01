@@ -102,8 +102,8 @@ export const BridgePanel: React.FC = () => {
 
   const [appchainApi, setAppchainApi] = useState<ApiPromise>();
   const [crosschainFee, setCrosschainFee] = useState({
-    fungible: 0,
-    nonfungible: 0,
+    fungible: "0",
+    nonfungible: "0",
   });
 
   const [tokenAsset, setTokenAsset] = useState<TokenAsset>();
@@ -114,6 +114,7 @@ export const BridgePanel: React.FC = () => {
   const [targetAccountNeedDepositStorage, setTargetAccountNeedDepositStorage] =
     useBoolean();
   const [isDepositingStorage, setIsDepositingStorage] = useBoolean();
+  const [balanceNotEngough, setBalanceNotEngough] = useState(true);
 
   const filteredTokens = useMemo(() => {
     if (!tokens?.length) {
@@ -173,11 +174,9 @@ export const BridgePanel: React.FC = () => {
           }),
       ])
         .then((results) => {
-          console.log("results", results);
-
           setCrosschainFee({
-            fungible: results[0] || 0,
-            nonfungible: results[1] || 0,
+            fungible: results[0] || "0",
+            nonfungible: results[1] || "0",
           });
         })
         .catch((e) => {
@@ -185,8 +184,8 @@ export const BridgePanel: React.FC = () => {
         });
     } else {
       setCrosschainFee({
-        fungible: 0,
-        nonfungible: 0,
+        fungible: "0",
+        nonfungible: "0",
       });
     }
   }, [appchainApi, bridgeConfig]);
@@ -302,6 +301,9 @@ export const BridgePanel: React.FC = () => {
 
   const burnToken = async () => {
     const wallet = await selector.wallet();
+    if (wallet.id === "ledger") {
+      Toast.info("Please confirm your transaction on your Ledger device.");
+    }
     await nearBurn({
       token: tokenAsset!,
       wallet,
@@ -314,6 +316,9 @@ export const BridgePanel: React.FC = () => {
 
   const burnCollectible = async () => {
     const wallet = await selector.wallet();
+    if (wallet.id === "ledger") {
+      Toast.info("Please confirm your transaction on your Ledger device.");
+    }
     const anchorId = `${appchainId}.${networkConfig?.octopus.registryContractId}`;
     await nearBurnNft({
       wallet,
@@ -341,7 +346,11 @@ export const BridgePanel: React.FC = () => {
         amount,
         asset: tokenAsset,
         fromAccount: from!,
-        bridgeConfig,
+        crosschainFee: crosschainFee.fungible,
+        callback: () => {
+          setAmount("");
+          console.log("burn success");
+        },
       });
     }
   };
@@ -600,6 +609,8 @@ export const BridgePanel: React.FC = () => {
               appchainId={appchainId}
               collectible={collectible}
               setCollectible={setCollectible}
+              setBalanceNotEngough={setBalanceNotEngough}
+              amount={amount}
               onChangeAmount={(amount) => setAmount(amount)}
               onChangeTokenAsset={(ta, isCollectible) => {
                 if (isCollectible) {
@@ -629,7 +640,8 @@ export const BridgePanel: React.FC = () => {
                   (!collectible && !amount) ||
                   isTransferring ||
                   targetAccountNeedDepositStorage ||
-                  isDepositingStorage
+                  isDepositingStorage ||
+                  balanceNotEngough
                 }
                 isLoading={isTransferring}
                 spinner={

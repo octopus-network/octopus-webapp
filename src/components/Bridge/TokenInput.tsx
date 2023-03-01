@@ -34,30 +34,33 @@ export default function TokenInpput({
   appchainId,
   onChangeAmount,
   onChangeTokenAsset,
+  amount,
   appchainApi,
   nativeToken,
   crosschainFee,
   appchain,
   collectible,
   setCollectible,
+  setBalanceNotEngough,
 }: {
   chain: string;
   from: string;
   appchainId: string;
+  amount: string;
   onChangeAmount: (value: string) => void;
   onChangeTokenAsset: (value: any, isCollectible: boolean) => void;
   appchainApi?: ApiPromise;
   nativeToken?: TokenAsset;
-  crosschainFee: { fungible: number; nonfungible: number };
+  crosschainFee: { fungible: string; nonfungible: string };
   appchain: AppchainInfo;
   collectible?: Collectible;
   setCollectible: (value: Collectible | undefined) => void;
+  setBalanceNotEngough: (value: boolean) => void;
 }) {
   const { accountId, selector } = useWalletSelector();
 
   const bg = useColorModeValue("white", "#15172c");
   const grayBg = useColorModeValue("#f2f4f7", "#1e1f34");
-  const [amount, setAmount] = useState("");
   const [tokenAsset, setTokenAsset] = useState<TokenAsset>();
   const [balance, setBalance] = useState<Decimal>();
   const [isAmountInputFocused, setIsAmountInputFocused] = useBoolean();
@@ -73,6 +76,15 @@ export default function TokenInpput({
   const { data: collectibleClasses } = useSWR<number[]>(
     appchainId ? `collectible-classes/${appchainId}` : null
   );
+
+  const isNear = chain === "NEAR";
+
+  let decimals = 0;
+  if (nativeToken) {
+    decimals = Array.isArray(nativeToken.metadata.decimals)
+      ? nativeToken.metadata.decimals[0]
+      : nativeToken.metadata.decimals;
+  }
 
   const filteredTokens = useMemo(() => {
     if (!tokens?.length) {
@@ -94,21 +106,30 @@ export default function TokenInpput({
     );
   }, [tokens, bridgeConfig, accountId]);
 
-  const onUpdateAmount = useCallback((v: string) => {
-    setAmount(v);
-    onChangeAmount(v);
+  const onUpdateAmount = useCallback(
+    (v: string) => {
+      onChangeAmount(v);
+      setBalanceNotEngough(
+        !DecimalUtil.power(v, decimals)
+          .plus(new Decimal(crosschainFee.fungible))
+          .lte(balance!)
+      );
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  const isNear = chain === "NEAR";
+    [balance]
+  );
+
   const onSetMax = () => {
-    onUpdateAmount(
-      balance?.toPrecision(
-        (Array.isArray(tokenAsset?.metadata.decimals)
-          ? tokenAsset?.metadata.decimals[0]
-          : tokenAsset?.metadata.decimals)!,
-        Decimal.ROUND_DOWN
-      ) || ""
-    );
+    if (bridgeConfig?.crosschainFee) {
+      onUpdateAmount(
+        DecimalUtil.shift(
+          balance?.minus(crosschainFee.fungible),
+          decimals
+        ).toString() || ""
+      );
+    } else {
+      onUpdateAmount(DecimalUtil.formatAmount(balance, decimals, decimals));
+    }
   };
 
   const onUpdateTokenAsset = useCallback((t: TokenAsset) => {
@@ -117,6 +138,7 @@ export default function TokenInpput({
     localStorage.setItem(`bridge-token-${chain}`, String(t.assetId));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
   useEffect(() => {
     if (filteredTokens.length) {
       const prevTokenId = localStorage.getItem(`bridge-token-${chain}`);
@@ -182,16 +204,9 @@ export default function TokenInpput({
       onUpdateTokenAsset(token as TokenAsset);
     }
 
-    onUpdateAmount("");
+    onChangeAmount("");
     setSelectTokenModalOpen.off();
   };
-
-  let decimals = 0;
-  if (nativeToken) {
-    decimals = Array.isArray(nativeToken.metadata.decimals)
-      ? nativeToken.metadata.decimals[0]
-      : nativeToken.metadata.decimals;
-  }
 
   return (
     <Box
@@ -211,9 +226,10 @@ export default function TokenInpput({
           <Skeleton isLoaded={!isLoadingBalance}>
             <HStack>
               <Text fontSize="sm" variant="gray">
-                Balance: {balance ? DecimalUtil.beautify(balance) : "-"}
+                Balance:{" "}
+                {balance ? DecimalUtil.formatAmount(balance, decimals, 2) : "-"}
               </Text>
-              {balance?.gt(ZERO_DECIMAL) ? (
+              {balance?.gt(crosschainFee.fungible || ZERO_DECIMAL) ? (
                 <Button
                   size="xs"
                   variant="ghost"
@@ -298,7 +314,7 @@ export default function TokenInpput({
             </Button>
           </Flex>
         )}
-        {nativeToken && crosschainFee.fungible !== 0 && chain !== "NEAR" && (
+        {nativeToken && crosschainFee.fungible !== "0" && chain !== "NEAR" && (
           <HStack justify="flex-start" width="100%" gap={1}>
             <Text fontSize="xs" color="gray">
               Fee

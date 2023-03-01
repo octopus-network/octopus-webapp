@@ -21,7 +21,7 @@ export class DecimalUtil {
   }
 
   public static fromValue(
-    input: string | number | undefined,
+    input: string | number | undefined | Decimal,
     shift = 0
   ): Decimal {
     if (!input) {
@@ -47,12 +47,18 @@ export class DecimalUtil {
     return shiftedValue;
   }
 
-  public static shift(input: Decimal, shift = 0): Decimal {
-    return input.div(new Decimal(10).pow(new Decimal(shift)));
+  public static shift(
+    input: Decimal | number | string | undefined,
+    shift = 0
+  ): Decimal {
+    return new Decimal(input || 0).div(new Decimal(10).pow(new Decimal(shift)));
   }
 
-  public static power(input: Decimal, shift = 0): Decimal {
-    return input.mul(new Decimal(10).pow(new Decimal(shift)));
+  public static power(
+    input: Decimal | number | string | undefined,
+    shift = 0
+  ): Decimal {
+    return new Decimal(input || 0).mul(new Decimal(10).pow(new Decimal(shift)));
   }
 
   public static beautify(input: Decimal, fixed?: number, trim = true): string {
@@ -71,7 +77,7 @@ export class DecimalUtil {
   }
 
   public static formatAmount(
-    input: string | number | undefined,
+    input: string | number | undefined | Decimal,
     decimals = OCT_TOKEN_DECIMALS,
     fixed = 0
   ): string {
