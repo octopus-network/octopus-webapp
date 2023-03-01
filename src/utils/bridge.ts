@@ -150,12 +150,7 @@ export async function getPolkaTokenBalance({
     if (tokenAsset.assetId === undefined) {
       const res = await appchainApi?.query.system.account(account);
       const resJSON: any = res?.toJSON();
-      balance = DecimalUtil.fromString(
-        resJSON?.data?.free,
-        Array.isArray(tokenAsset?.metadata.decimals)
-          ? tokenAsset?.metadata.decimals[1]
-          : tokenAsset?.metadata.decimals
-      );
+      balance = resJSON?.data?.free;
     } else {
       const query =
         appchainApi?.query[bridgeConfig.tokenPallet.section]?.[
@@ -172,16 +167,11 @@ export async function getPolkaTokenBalance({
 
       const resJSON: any = res?.toJSON();
 
-      balance = DecimalUtil.fromString(
-        resJSON?.[bridgeConfig.tokenPallet.valueKey],
-        Array.isArray(tokenAsset?.metadata.decimals)
-          ? tokenAsset?.metadata.decimals[1]
-          : tokenAsset?.metadata.decimals
-      );
+      balance = resJSON?.[bridgeConfig.tokenPallet.valueKey];
     }
   } catch (error) {}
 
-  return balance;
+  return new Decimal(balance);
 }
 
 export async function getNearTokenBalance({
@@ -207,12 +197,7 @@ export async function getNearTokenBalance({
 
     const bal = JSON.parse(Buffer.from(res.result).toString());
 
-    return DecimalUtil.fromString(
-      bal,
-      Array.isArray(tokenAsset?.metadata.decimals)
-        ? tokenAsset?.metadata.decimals[0]
-        : tokenAsset?.metadata.decimals
-    );
+    return new Decimal(bal);
   } catch (error) {
     return ZERO_DECIMAL;
   }
@@ -356,6 +341,8 @@ export async function substrateBurn({
   amount,
   targetAccount,
   fromAccount,
+  crosschainFee,
+  callback,
 }: {
   api: ApiPromise;
   asset?: TokenAsset;
@@ -363,6 +350,8 @@ export async function substrateBurn({
   amount: string;
   targetAccount: string;
   fromAccount: string;
+  crosschainFee: string;
+  callback: () => void;
 }) {
   const amountInDec = DecimalUtil.power(
     new Decimal(amount),
@@ -408,7 +397,7 @@ export async function substrateBurn({
       bridgeConfig: bridgeConfig!,
     });
 
-    if (balance.lt(amount)) {
+    if (balance.lt(new Decimal(amount).plus(crosschainFee))) {
       amount = balance.toString();
     }
 
@@ -439,7 +428,7 @@ export async function substrateBurn({
         (section === "octopusBridge" &&
           (method === "Locked" || method === "BurnNep141"))
       ) {
-        window.location.reload();
+        callback();
       }
     });
   });
