@@ -346,6 +346,7 @@ export const BridgePanel: React.FC = () => {
         amount,
         asset: tokenAsset,
         fromAccount: from!,
+        bridgeConfig,
         crosschainFee: crosschainFee.fungible,
         callback: () => {
           setAmount("");
