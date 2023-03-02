@@ -120,7 +120,7 @@ export default function TokenInpput({
   );
 
   const onSetMax = () => {
-    if (bridgeConfig?.crosschainFee) {
+    if (bridgeConfig?.crosschainFee && !isNear) {
       onUpdateAmount(
         DecimalUtil.shift(
           balance?.minus(crosschainFee.fungible),
