@@ -83,7 +83,9 @@ export default function TokenInpput({
 
   if (tokenAsset) {
     decimals = Array.isArray(tokenAsset.metadata.decimals)
-      ? tokenAsset.metadata.decimals[0]
+      ? isNear
+        ? tokenAsset.metadata.decimals[1]
+        : tokenAsset.metadata.decimals[0]
       : tokenAsset.metadata.decimals;
   }
 
