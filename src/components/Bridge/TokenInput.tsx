@@ -87,8 +87,6 @@ export default function TokenInpput({
         ? tokenAsset.metadata.decimals[0]
         : tokenAsset.metadata.decimals[1]
       : tokenAsset.metadata.decimals;
-
-    console.log("isNear", isNear, tokenAsset.metadata.decimals);
   }
 
   const filteredTokens = useMemo(() => {
