@@ -80,10 +80,11 @@ export default function TokenInpput({
   const isNear = chain === "NEAR";
 
   let decimals = 0;
-  if (nativeToken) {
-    decimals = Array.isArray(nativeToken.metadata.decimals)
-      ? nativeToken.metadata.decimals[0]
-      : nativeToken.metadata.decimals;
+
+  if (tokenAsset) {
+    decimals = Array.isArray(tokenAsset.metadata.decimals)
+      ? tokenAsset.metadata.decimals[0]
+      : tokenAsset.metadata.decimals;
   }
 
   const filteredTokens = useMemo(() => {
@@ -120,7 +121,7 @@ export default function TokenInpput({
   );
 
   const onSetMax = () => {
-    if (bridgeConfig?.crosschainFee && !isNear) {
+    if (bridgeConfig?.crosschainFee && !isNear && !nativeToken?.assetId) {
       onUpdateAmount(
         DecimalUtil.shift(
           balance?.minus(crosschainFee.fungible),
@@ -322,7 +323,7 @@ export default function TokenInpput({
             <Text fontSize="xs" color="gray">
               {DecimalUtil.formatAmount(
                 tokenAsset ? crosschainFee.fungible : crosschainFee.nonfungible,
-                decimals,
+                appchain.appchain_metadata.fungible_token_metadata.decimals,
                 0
               )}{" "}
               {appchain.appchain_metadata.fungible_token_metadata.symbol}
