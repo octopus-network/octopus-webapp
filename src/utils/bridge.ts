@@ -422,11 +422,13 @@ export async function substrateBurn({
 
   await tx.signAndSend(fromAccount, (res: any) => {
     res.events.forEach(({ event: { data, method, section } }: any) => {
+      console.log("section", section, method);
+
       if (
         (section === "octopusAppchain" &&
           (method === "Locked" || method === "AssetBurned")) ||
         (section === "octopusBridge" &&
-          (method === "Locked" || method === "BurnNep141"))
+          (method === "Locked" || method === "Nep141Burned"))
       ) {
         callback();
       }

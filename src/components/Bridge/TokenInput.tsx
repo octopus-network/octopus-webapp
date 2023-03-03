@@ -110,18 +110,22 @@ export default function TokenInpput({
   const onUpdateAmount = useCallback(
     (v: string) => {
       onChangeAmount(v);
-      setBalanceNotEngough(
-        !DecimalUtil.power(v, decimals)
-          .plus(new Decimal(crosschainFee.fungible))
-          .lte(balance!)
-      );
+      if (bridgeConfig?.crosschainFee && !isNear && !tokenAsset?.assetId) {
+        setBalanceNotEngough(
+          !DecimalUtil.power(v, decimals)
+            .plus(new Decimal(crosschainFee.fungible))
+            .lte(balance!)
+        );
+      } else {
+        setBalanceNotEngough(false);
+      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [balance]
   );
 
   const onSetMax = () => {
-    if (bridgeConfig?.crosschainFee && !isNear && !nativeToken?.assetId) {
+    if (bridgeConfig?.crosschainFee && !isNear && !tokenAsset?.assetId) {
       onUpdateAmount(
         DecimalUtil.shift(
           balance?.minus(crosschainFee.fungible),
@@ -230,7 +234,11 @@ export default function TokenInpput({
                 Balance:{" "}
                 {balance ? DecimalUtil.formatAmount(balance, decimals, 2) : "-"}
               </Text>
-              {balance?.gt(crosschainFee.fungible || ZERO_DECIMAL) ? (
+              {(
+                tokenAsset && tokenAsset.assetId === undefined
+                  ? balance?.gt(crosschainFee.fungible || ZERO_DECIMAL)
+                  : true
+              ) ? (
                 <Button
                   size="xs"
                   variant="ghost"
