@@ -158,9 +158,17 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
   const { hasCopied: hasSS58AddressCopied, onCopy: onSS58AddressCopy } =
     useClipboard(ss58Address);
 
-  const { hasCopied: hasEmailCopied, onCopy: onEmailCopy } = useClipboard(
-    validatorProfile?.profile?.email ?? ""
-  );
+  const {
+    hasCopied: hasEmailCopied,
+    onCopy: onEmailCopy,
+    setValue: setEmail,
+  } = useClipboard(validatorProfile?.profile?.email ?? "");
+
+  useEffect(() => {
+    if (validatorProfile?.profile?.email) {
+      setEmail(validatorProfile?.profile?.email);
+    }
+  }, [setEmail, validatorProfile?.profile?.email]);
 
   const isMyself = useMemo(
     () => validator && accountId === validator.validator_id,
