@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import useSWR from "swr";
 
 import {
   Box,
@@ -24,7 +23,7 @@ import { DeleteIcon } from "@chakra-ui/icons";
 import myStakingBg from "assets/my-staking-bg.png";
 import { TiKey } from "react-icons/ti";
 import { BsThreeDots } from "react-icons/bs";
-import { API_HOST } from "config";
+import { API_HOST, DEPLOY_CONFIG } from "config";
 import type { ApiPromise } from "@polkadot/api";
 
 import { InstanceInfoModal } from "./InstanceInfoModal";
@@ -83,8 +82,6 @@ export const MyNode: React.FC<MyNodeProps> = ({
 
   const [instanceInfoModalOpen, setInstanceInfoModalOpen] = useBoolean();
   const [setSessionKeyModalOpen, setSetSessionKeyModalOpen] = useBoolean(false);
-
-  const { data: deployConfig } = useSWR("deploy-config");
 
   const { accountId, network } = useWalletSelector();
 
@@ -192,7 +189,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
     setIsDestroying.on();
     Toast.info("Destroying node, check details on your instance");
     axios
-      .delete(`${deployConfig.deployApiHost}/tasks/${node?.uuid}`, {
+      .delete(`${DEPLOY_CONFIG.deployApiHost}/tasks/${node?.uuid}`, {
         data: {
           secret_key: secretKey,
         },

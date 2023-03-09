@@ -6,8 +6,8 @@ import {
   Text,
   useColorModeValue,
 } from "@chakra-ui/react";
+import { DEPLOY_CONFIG } from "config";
 import { useEffect } from "react";
-import useSWR from "swr";
 import { CloudVendor } from "types";
 import RecommendInstance from "./RecommendInstance";
 
@@ -27,7 +27,6 @@ export default function SecretKey({
   projects: any[];
 }) {
   const inputBg = useColorModeValue("#f5f7fa", "whiteAlpha.100");
-  const { data: deployConfig } = useSWR("deploy-config");
 
   useEffect(() => {
     if (!secretKey && cloudVendor === CloudVendor.GCP && projects) {
@@ -94,7 +93,7 @@ export default function SecretKey({
             onChange={(e) => setDeployRegion(e.target.value)}
             textAlign="right"
           >
-            {deployConfig?.regions.map((region: any, idx: number) => (
+            {DEPLOY_CONFIG?.regions.map((region: any, idx: number) => (
               <option value={region.value} key={`option-${idx}`}>
                 {region.label}
               </option>

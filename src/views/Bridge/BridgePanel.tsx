@@ -66,6 +66,7 @@ import AddressInpput from "components/Bridge/AddressInput";
 import TokenInput from "components/Bridge/TokenInput";
 import Decimal from "decimal.js";
 import { SIMPLE_CALL_GAS } from "primitives";
+import { BRIDGE_CONFIG } from "config";
 
 export const BridgePanel: React.FC = () => {
   const bg = useColorModeValue("white", "#15172c");
@@ -86,9 +87,7 @@ export const BridgePanel: React.FC = () => {
   const { data: tokens } = useSWR<TokenAsset[]>(
     appchainId ? `tokens/${appchainId}` : null
   );
-  const { data: bridgeConfig } = useSWR<BridgeConfig>(
-    appchainId ? `bridge-config/${appchainId}` : null
-  );
+  const bridgeConfig = BRIDGE_CONFIG(appchainId);
 
   const isEvm = appchain?.appchain_metadata.template_type === "BarnacleEvm";
 
