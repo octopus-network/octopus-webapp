@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
 import useSWR from "swr";
-import Decimal from "decimal.js";
 
 import {
   DrawerHeader,
@@ -64,6 +63,8 @@ import { Toast } from "components/common/toast";
 import { onTxSent } from "utils/helper";
 import SetupEmail from "../SetupEmail";
 import RedelegateModal from "./RedelegateModal";
+import useBalance from "hooks/useBalance";
+import { NETWORK_CONFIG } from "config";
 
 type ValidatorProfileProps = {
   appchain?: AppchainInfoWithAnchorStatus;
@@ -120,7 +121,7 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
     [delegators, accountId]
   );
 
-  const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null);
+  const octBalance = useBalance(NETWORK_CONFIG.octopus.octTokenContractId);
 
   useEffect(() => {
     if (!anchor || !appchain || !accountId) {
@@ -537,24 +538,9 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                       Balance:
                     </Text>
                     <Heading fontSize="md" color="octo-blue.500">
-                      {DecimalUtil.beautify(
-                        new Decimal(
-                          balances?.[
-                            appchain?.appchain_metadata?.fungible_token_metadata
-                              ?.symbol as any
-                          ] || 0
-                        )
-                      )}{" "}
-                      {
-                        appchain?.appchain_metadata?.fungible_token_metadata
-                          ?.symbol
-                      }
+                      {DecimalUtil.beautify(octBalance)} OCT
                     </Heading>
                   </HStack>
-                  <Text fontSize="sm" className="octo-gray">
-                    {DecimalUtil.beautify(new Decimal(balances?.["OCT"] || 0))}{" "}
-                    OCT
-                  </Text>
                 </VStack>
               ) : null}
             </Flex>

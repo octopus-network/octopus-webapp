@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
-import useSWR from "swr";
+import React, { useState, useEffect } from "react";
 import FocusLock from "react-focus-lock";
 
 import {
@@ -41,6 +40,8 @@ import { Toast } from "components/common/toast";
 import { EMAIL_REGEX } from "config/constants";
 import { providers } from "near-api-js";
 import { CodeResult } from "near-api-js/lib/providers/provider";
+import useBalance from "hooks/useBalance";
+import { NETWORK_CONFIG } from "config";
 
 export const RegisterForm: React.FC = () => {
   const bg = useColorModeValue("white", "#15172c");
@@ -61,12 +62,7 @@ export const RegisterForm: React.FC = () => {
   });
   const { accountId, networkConfig, selector } = useWalletSelector();
 
-  const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null);
-
-  const octBalance = useMemo(
-    () => DecimalUtil.fromString(balances?.["OCT"]),
-    [balances]
-  );
+  const octBalance = useBalance(NETWORK_CONFIG.octopus.octTokenContractId);
 
   const initialFieldRef = React.useRef(null);
 
@@ -597,15 +593,9 @@ export const RegisterForm: React.FC = () => {
                     <Heading fontSize="md">OCT</Heading>
                   </HStack>
                   {accountId ? (
-                    <Skeleton isLoaded={!!balances}>
-                      <Text variant="gray" fontSize="sm">
-                        Balance:{" "}
-                        {!!balances
-                          ? DecimalUtil.beautify(octBalance)
-                          : "loading"}{" "}
-                        OCT
-                      </Text>
-                    </Skeleton>
+                    <Text variant="gray" fontSize="sm">
+                      Balance: {DecimalUtil.beautify(octBalance)} OCT
+                    </Text>
                   ) : null}
                 </VStack>
                 <Box>
@@ -622,7 +612,7 @@ export const RegisterForm: React.FC = () => {
                   >
                     {!accountId
                       ? "Please Login"
-                      : auditingFee && balances && octBalance.lt(auditingFee)
+                      : auditingFee && octBalance.lt(auditingFee)
                       ? "Insufficient Balance"
                       : "Register"}
                   </Button>

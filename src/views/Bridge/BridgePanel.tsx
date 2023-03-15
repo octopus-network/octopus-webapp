@@ -30,7 +30,6 @@ import {
   TokenAsset,
   AppchainSettings,
   BridgeHistoryStatus,
-  BridgeConfig,
   Collectible,
 } from "types";
 

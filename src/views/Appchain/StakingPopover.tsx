@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useEffect } from "react";
-import useSWR from "swr";
 
 import {
   Box,
@@ -25,6 +24,8 @@ import { useWalletSelector } from "components/WalletSelectorContextProvider";
 import { Toast } from "components/common/toast";
 import { onTxSent } from "utils/helper";
 import { getDelegateLimit, getStakeLimit } from "utils/delegate";
+import useBalance from "hooks/useBalance";
+import { NETWORK_CONFIG } from "config";
 
 type StakingPopoverProps = {
   type: "increase" | "decrease";
@@ -58,11 +59,7 @@ export const StakingPopover: React.FC<StakingPopoverProps> = ({
 
   const { accountId, networkConfig, selector } = useWalletSelector();
 
-  const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null);
-  const octBalance = useMemo(
-    () => DecimalUtil.fromString(balances?.["OCT"]),
-    [balances]
-  );
+  const octBalance = useBalance(NETWORK_CONFIG.octopus.octTokenContractId);
 
   const amountInDecimal = useMemo(
     () => DecimalUtil.fromString(String(amount)),

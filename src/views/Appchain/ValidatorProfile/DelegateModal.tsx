@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from "react";
-import useSWR from "swr";
 
 import { Text, Button, Box, Flex, useBoolean, Input } from "@chakra-ui/react";
 
@@ -14,6 +13,8 @@ import { Toast } from "components/common/toast";
 import { onTxSent } from "utils/helper";
 import Decimal from "decimal.js";
 import { getDelegateLimit } from "utils/delegate";
+import useBalance from "hooks/useBalance";
+import { NETWORK_CONFIG } from "config";
 
 type DelegateModalProps = {
   isOpen: boolean;
@@ -37,17 +38,11 @@ export const DelegateModal: React.FC<DelegateModalProps> = ({
   const [isDepositing, setIsDepositing] = useBoolean(false);
   const [minimumDeposit, setMinimumDeposit] = useState(ZERO_DECIMAL);
   const inputRef = React.useRef<any>();
-
-  const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null);
-
   const amountInDecimal = useMemo(
     () => DecimalUtil.fromString(amount),
     [amount]
   );
-  const octBalance = useMemo(
-    () => DecimalUtil.fromString(balances?.["OCT"]),
-    [balances]
-  );
+  const octBalance = useBalance(NETWORK_CONFIG.octopus.octTokenContractId);
 
   useEffect(() => {
     if (anchor && validatorId) {
