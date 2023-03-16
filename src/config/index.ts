@@ -17,6 +17,10 @@ export const AWS_API_HOST = isMainnet
   ? "https://1fus85rip4.execute-api.ap-northeast-1.amazonaws.com/api/tasks"
   : "https://3jd9s8zf1l.execute-api.us-west-2.amazonaws.com/api/tasks";
 
+export const BRIDGE_HELPER_API = isMainnet
+  ? "https://bridge-tx-fetcher.mainnet.octopus.network/query"
+  : "https://bridge-tx-fetcher.testnet.octopus.network/query";
+
 export const DEPLOY_CONFIG = {
   deployApiHost: isMainnet
     ? "https://1fus85rip4.execute-api.ap-northeast-1.amazonaws.com/api"

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 import {
   DrawerHeader,
@@ -33,6 +33,7 @@ import { ProcessFromNear } from "./ProcessFromNear";
 import { formatAppChainAddress } from "utils/format";
 import OctIdenticon from "components/common/OctIdenticon";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
+import useBridgeTx from "hooks/useBridgeTx";
 
 type TxDetailProps = {
   onDrawerClose: VoidFunction;
@@ -44,14 +45,20 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
 
   const grayBg = useColorModeValue("#f2f4f7", "#1e1f34");
 
-  const { data: transaction } = useSWR(
-    txId ? `bridge-helper/bridgeTx/${txId}` : null,
-    { refreshInterval: 1000 }
-  );
+  const transaction = useBridgeTx(txId);
 
-  const { hasCopied: hasTxIdCopied, onCopy: onTxIdCopy } = useClipboard(
-    transaction?.summary.id
-  );
+  const {
+    hasCopied: hasTxIdCopied,
+    onCopy: onTxIdCopy,
+    setValue,
+  } = useClipboard(transaction?.summary.id);
+
+  useEffect(() => {
+    if (transaction) {
+      setValue(transaction?.summary.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transaction]);
 
   const [isAppchainSide, appchainId] = useMemo(
     () => [
