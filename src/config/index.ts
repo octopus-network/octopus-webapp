@@ -6,12 +6,16 @@ import {
 
 export * from "./theme";
 
-const env: NetworkType = (process.env.ENV || "mainnet") as NetworkType;
+export const env: NetworkType = (process.env.ENV || "mainnet") as NetworkType;
 const isMainnet = env === "mainnet";
 
 export const API_HOST = isMainnet
   ? "https://api-worker.octopus-network.workers.dev"
   : "https://api-worker-testnet.octopus-network.workers.dev";
+
+export const AWS_API_HOST = isMainnet
+  ? "https://1fus85rip4.execute-api.ap-northeast-1.amazonaws.com/api/tasks"
+  : "https://3jd9s8zf1l.execute-api.us-west-2.amazonaws.com/api/tasks";
 
 export const DEPLOY_CONFIG = {
   deployApiHost: isMainnet

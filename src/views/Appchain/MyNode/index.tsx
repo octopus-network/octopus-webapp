@@ -23,7 +23,7 @@ import { DeleteIcon } from "@chakra-ui/icons";
 import myStakingBg from "assets/my-staking-bg.png";
 import { TiKey } from "react-icons/ti";
 import { BsThreeDots } from "react-icons/bs";
-import { API_HOST, DEPLOY_CONFIG } from "config";
+import { DEPLOY_CONFIG } from "config";
 import type { ApiPromise } from "@polkadot/api";
 
 import { InstanceInfoModal } from "./InstanceInfoModal";
@@ -47,6 +47,7 @@ import { Toast } from "components/common/toast";
 import { AiOutlineClear } from "react-icons/ai";
 import useLocalStorage from "hooks/useLocalStorage";
 import useGCP from "hooks/useGCP";
+import _ from "lodash";
 
 type MyNodeProps = {
   appchainId: string | undefined;
@@ -137,17 +138,21 @@ export const MyNode: React.FC<MyNodeProps> = ({
 
   const fetchMetrics = async (node: NodeDetail | undefined) => {
     if (accountId && node && appchainId) {
-      axios
-        .get(
-          `
-        ${API_HOST}/node-metrics/${node.uuid}/${currentVendor}/${currentKey}/${appchainId}/${accountId}
-      `
-        )
-        .then((res) => res.data)
+      NodeManager.getNodeMetrics({
+        appchainId,
+        currentVendor,
+        currentKey,
+        accountId,
+        uuid: node.uuid,
+      })
         .then((res) => {
-          if (res?.memory) {
+          if (_.has(res, "memory") && res?.memory) {
             setNodeMetrics(res);
           }
+        })
+        .catch((e) => {
+          setNodeMetrics(undefined);
+          Toast.error(e);
         });
     }
   };
