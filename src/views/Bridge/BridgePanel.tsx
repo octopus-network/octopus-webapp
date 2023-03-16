@@ -28,7 +28,6 @@ import {
 import {
   AppchainInfoWithAnchorStatus,
   TokenAsset,
-  AppchainSettings,
   BridgeHistoryStatus,
   Collectible,
 } from "types";
@@ -65,7 +64,7 @@ import AddressInpput from "components/Bridge/AddressInput";
 import TokenInput from "components/Bridge/TokenInput";
 import Decimal from "decimal.js";
 import { SIMPLE_CALL_GAS } from "primitives";
-import { BRIDGE_CONFIG } from "config";
+import { APPCHAIN_SETTINGS, BRIDGE_CONFIG } from "config";
 
 export const BridgePanel: React.FC = () => {
   const bg = useColorModeValue("white", "#15172c");
@@ -79,9 +78,9 @@ export const BridgePanel: React.FC = () => {
   const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(
     appchainId ? `appchain/${appchainId}` : null
   );
-  const { data: appchainSettings } = useSWR<AppchainSettings>(
-    appchainId ? `appchain-settings/${appchainId}` : null
-  );
+  const appchainSettings = appchainId
+    ? APPCHAIN_SETTINGS[appchainId]
+    : undefined;
 
   const { data: tokens } = useSWR<TokenAsset[]>(
     appchainId ? `tokens/${appchainId}` : null
