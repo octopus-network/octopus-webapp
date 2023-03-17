@@ -72,7 +72,7 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
   );
 
   const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(
-    `appchain/${appchainId}`
+    appchainId ? `appchain/${appchainId}` : null
   );
 
   return (

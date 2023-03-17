@@ -6,7 +6,8 @@ import {
 
 export * from "./theme";
 
-export const env: NetworkType = (process.env.ENV || "mainnet") as NetworkType;
+export const env: NetworkType = (process.env.REACT_APP_NETWORK ||
+  "mainnet") as NetworkType;
 const isMainnet = env === "mainnet";
 
 export const API_HOST = isMainnet
@@ -22,9 +23,7 @@ export const BRIDGE_HELPER_API = isMainnet
   : "https://bridge-tx-fetcher.testnet.octopus.network/query";
 
 export const DEPLOY_CONFIG = {
-  deployApiHost: isMainnet
-    ? "https://1fus85rip4.execute-api.ap-northeast-1.amazonaws.com/api"
-    : "https://3jd9s8zf1l.execute-api.us-west-2.amazonaws.com/api",
+  deployApiHost: AWS_API_HOST,
   regions: [
     {
       label: "Random",

@@ -128,7 +128,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
   );
 
   const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(
-    `appchain/${appchainId}`
+    appchainId ? `appchain/${appchainId}` : null
   );
 
   return (
@@ -397,7 +397,7 @@ function Page({
 
   useEffect(() => {
     fetch(
-      `${BRIDGE_HELPER_API}/bridge-helper/bridge_txs?start=${
+      `${BRIDGE_HELPER_API}/bridge_txs?start=${
         (page - 1) * pageSize
       }&size=${pageSize}&appchain=${appchain}&direction=${direction}&token=${token}&by_status=${byStatus}`
     )

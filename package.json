@@ -68,8 +68,8 @@
   },
   "scripts": {
     "start": "react-app-rewired start",
-    "start:mainnet": "ENV=mainnet react-app-rewired start",
-    "start:testnet": "ENV=testnet react-app-rewired start",
+    "start:mainnet": "REACT_APP_NETWORK=mainnet react-app-rewired start",
+    "start:testnet": "REACT_APP_NETWORK=testnet react-app-rewired start",
     "start:selfhost": "HOST=testnet.oct.network PORT=8080 ENV=mainnet HTTPS=true KEY=ssl/testnet.oct.key CERT=ssl/testnet.oct.crt react-app-rewired start",
     "build": "react-app-rewired build",
     "test": "react-app-rewired test",
