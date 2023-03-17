@@ -96,6 +96,7 @@ export type AppchainSettings = {
   rpc_endpoint: string;
   subql_endpoint: string;
   era_reward: string;
+  bonus_for_new_validator: string;
 };
 
 export type WrappedAppchainToken = {

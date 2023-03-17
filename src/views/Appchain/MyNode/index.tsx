@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import useSWR from "swr";
 
 import {
   Box,
@@ -24,7 +23,7 @@ import { DeleteIcon } from "@chakra-ui/icons";
 import myStakingBg from "assets/my-staking-bg.png";
 import { TiKey } from "react-icons/ti";
 import { BsThreeDots } from "react-icons/bs";
-import { API_HOST } from "config";
+import { DEPLOY_CONFIG } from "config";
 import type { ApiPromise } from "@polkadot/api";
 
 import { InstanceInfoModal } from "./InstanceInfoModal";
@@ -48,6 +47,7 @@ import { Toast } from "components/common/toast";
 import { AiOutlineClear } from "react-icons/ai";
 import useLocalStorage from "hooks/useLocalStorage";
 import useGCP from "hooks/useGCP";
+import _ from "lodash";
 
 type MyNodeProps = {
   appchainId: string | undefined;
@@ -83,8 +83,6 @@ export const MyNode: React.FC<MyNodeProps> = ({
 
   const [instanceInfoModalOpen, setInstanceInfoModalOpen] = useBoolean();
   const [setSessionKeyModalOpen, setSetSessionKeyModalOpen] = useBoolean(false);
-
-  const { data: deployConfig } = useSWR("deploy-config");
 
   const { accountId, network } = useWalletSelector();
 
@@ -140,17 +138,21 @@ export const MyNode: React.FC<MyNodeProps> = ({
 
   const fetchMetrics = async (node: NodeDetail | undefined) => {
     if (accountId && node && appchainId) {
-      axios
-        .get(
-          `
-        ${API_HOST}/node-metrics/${node.uuid}/${currentVendor}/${currentKey}/${appchainId}/${accountId}
-      `
-        )
-        .then((res) => res.data)
+      NodeManager.getNodeMetrics({
+        appchainId,
+        currentVendor,
+        currentKey,
+        accountId,
+        uuid: node.uuid,
+      })
         .then((res) => {
-          if (res?.memory) {
+          if (_.has(res, "memory") && res?.memory) {
             setNodeMetrics(res);
           }
+        })
+        .catch((e) => {
+          setNodeMetrics(undefined);
+          Toast.error(e);
         });
     }
   };
@@ -192,7 +194,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
     setIsDestroying.on();
     Toast.info("Destroying node, check details on your instance");
     axios
-      .delete(`${deployConfig.deployApiHost}/tasks/${node?.uuid}`, {
+      .delete(`${DEPLOY_CONFIG.deployApiHost}/tasks/${node?.uuid}`, {
         data: {
           secret_key: secretKey,
         },

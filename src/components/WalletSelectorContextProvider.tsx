@@ -5,8 +5,7 @@ import type { WalletSelector, AccountState } from "@near-wallet-selector/core";
 import { setupModal } from "@near-wallet-selector/modal-ui";
 import type { WalletSelectorModal } from "@near-wallet-selector/modal-ui";
 import { setupMyNearWallet } from "@near-wallet-selector/my-near-wallet";
-import axios from "axios";
-import { API_HOST } from "config";
+import { NETWORK_CONFIG } from "config";
 import { setupLedger } from "@near-wallet-selector/ledger";
 import { setupOptoWallet } from "@near-wallet-selector/opto-wallet";
 import { NetworkConfig, NetworkType } from "types";
@@ -42,26 +41,19 @@ export const WalletSelectorContextProvider = ({
   const [selector, setSelector] = useState<WalletSelector | null>(null);
   const [modal, setModal] = useState<WalletSelectorModal | null>(null);
   const [accounts, setAccounts] = useState<Array<AccountState>>([]);
-  const [networkConfig, setNetworkConfig] = useState<NetworkConfig | null>(
-    null
-  );
+  const networkConfig = NETWORK_CONFIG;
   const [network, setNetwork] = useState<NetworkType>(NetworkType.MAINNET);
 
   const init = useCallback(async () => {
-    const config = await axios
-      .get(`${API_HOST}/network-config`)
-      .then((res) => res.data);
-    setNetworkConfig(config);
+    setNetwork(networkConfig.near.networkId ?? NetworkType.MAINNET);
 
-    setNetwork(config?.near.networkId ?? NetworkType.MAINNET);
-
-    if (config?.near.networkId === NetworkType.MAINNET) {
+    if (networkConfig.near.networkId === NetworkType.MAINNET) {
       posthog.init("phc_CG8GjxmGGO5GXbBYuQ8THW0lR9szjTNp05ox5VLkX1z", {
         api_host: "https://app.posthog.com",
       });
     }
     const _selector = await setupWalletSelector({
-      network: config?.near.networkId,
+      network: networkConfig.near.networkId,
       debug: false,
       modules: [
         setupNearWallet({
@@ -75,7 +67,7 @@ export const WalletSelectorContextProvider = ({
     });
 
     const _modal = setupModal(_selector, {
-      contractId: config.octopus.registryContractId,
+      contractId: networkConfig.octopus.registryContractId,
       methodNames: [
         "get_vesting",
         "create_linear_vesting",
@@ -98,7 +90,7 @@ export const WalletSelectorContextProvider = ({
 
     setSelector(_selector);
     setModal(_modal);
-  }, []);
+  }, [networkConfig]);
 
   useEffect(() => {
     init().catch((err) => {

@@ -1,4 +1,4 @@
-import { CloudVendor, NodeState, OCTNetwork } from "types";
+import { CloudVendor, NetworkType, NodeState, OCTNetwork } from "types";
 
 export const EMAIL_REGEX = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,15})+$/;
 
@@ -261,4 +261,39 @@ export const CLOUD_NODE_INSTANCES: Record<string, any> = {
     [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb"],
     [CloudVendor.GCP]: INSTANCES["e2-standard-2"],
   },
+};
+
+export const APPCHAIN_TOKEN_PALLET: Record<
+  string,
+  {
+    section: string;
+    method: string;
+    paramsType: "Tuple" | "Array";
+    valueKey: string;
+  }
+> = {
+  default: {
+    section: "octopusAssets",
+    method: "account",
+    paramsType: "Array",
+    valueKey: "balance",
+  },
+  fusotao: {
+    section: "token",
+    method: "balances",
+    paramsType: "Tuple",
+    valueKey: "free",
+  },
+};
+
+export const APPCHAIN_COLLECTIBLE_CLASSES: Record<
+  NetworkType,
+  Record<string, number[]>
+> = {
+  testnet: {
+    "barnacle-evm": [1],
+    barnacle0928: [0],
+    "uniqueone-appchain": [0, 1, 2],
+  },
+  mainnet: {},
 };

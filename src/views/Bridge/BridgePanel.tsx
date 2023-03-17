@@ -28,9 +28,7 @@ import {
 import {
   AppchainInfoWithAnchorStatus,
   TokenAsset,
-  AppchainSettings,
   BridgeHistoryStatus,
-  BridgeConfig,
   Collectible,
 } from "types";
 
@@ -66,6 +64,8 @@ import AddressInpput from "components/Bridge/AddressInput";
 import TokenInput from "components/Bridge/TokenInput";
 import Decimal from "decimal.js";
 import { SIMPLE_CALL_GAS } from "primitives";
+import { APPCHAIN_SETTINGS, BRIDGE_CONFIG } from "config";
+import useBridgeHistory from "hooks/useBridgeHistory";
 
 export const BridgePanel: React.FC = () => {
   const bg = useColorModeValue("white", "#15172c");
@@ -79,16 +79,14 @@ export const BridgePanel: React.FC = () => {
   const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(
     appchainId ? `appchain/${appchainId}` : null
   );
-  const { data: appchainSettings } = useSWR<AppchainSettings>(
-    appchainId ? `appchain-settings/${appchainId}` : null
-  );
+  const appchainSettings = appchainId
+    ? APPCHAIN_SETTINGS[appchainId]
+    : undefined;
 
   const { data: tokens } = useSWR<TokenAsset[]>(
     appchainId ? `tokens/${appchainId}` : null
   );
-  const { data: bridgeConfig } = useSWR<BridgeConfig>(
-    appchainId ? `bridge-config/${appchainId}` : null
-  );
+  const bridgeConfig = BRIDGE_CONFIG(appchainId);
 
   const isEvm = appchain?.appchain_metadata.template_type === "BarnacleEvm";
 
@@ -260,16 +258,13 @@ export const BridgePanel: React.FC = () => {
     tokenAsset,
   ]);
 
-  const { data: history } = useSWR(
-    `bridge-helper/history?from=${accountId}&appchain=${appchainId}&direction=${
-      isNearToAppchain ? "near_to_appchain" : "near_to_appchain"
-    }`
+  const history = useBridgeHistory(
+    isNearToAppchain ? "near_to_appchain" : "near_to_appchain",
+    appchainId,
+    accountId
   );
 
   const appchainTxns = useMemo(() => {
-    if (!history) {
-      return [];
-    }
     return history
       ?.filter((h: any) => h.token)
       .map((h: any) => {

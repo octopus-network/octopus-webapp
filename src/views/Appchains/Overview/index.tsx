@@ -1,7 +1,6 @@
 import React from "react";
 import useSWR from "swr";
 import dayjs from "dayjs";
-import Decimal from "decimal.js";
 
 import {
   DrawerHeader,
@@ -29,6 +28,8 @@ import { DecimalUtil } from "utils";
 
 import octoAvatar from "assets/icons/avatar.png";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
+import useBalance from "hooks/useBalance";
+import { NETWORK_CONFIG } from "config";
 
 type OverviewProps = {
   appchainId: string | undefined;
@@ -44,7 +45,7 @@ export const Overview: React.FC<OverviewProps> = ({
   const { data: appchain } = useSWR<AppchainInfo>(`appchain/${appchainId}`);
   const footerBg = useColorModeValue("#f6f7fa", "#15172c");
 
-  const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null);
+  const octBalance = useBalance(NETWORK_CONFIG.octopus.octTokenContractId);
 
   return (
     <>
@@ -113,8 +114,7 @@ export const Overview: React.FC<OverviewProps> = ({
                   Balance:
                 </Text>
                 <Heading fontSize="md" color="octo-blue.500">
-                  {DecimalUtil.beautify(new Decimal(balances?.["OCT"] || 0))}{" "}
-                  OCT
+                  {DecimalUtil.beautify(octBalance)} OCT
                 </Heading>
               </HStack>
             ) : null}
