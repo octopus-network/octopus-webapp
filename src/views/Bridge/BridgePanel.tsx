@@ -86,7 +86,9 @@ export const BridgePanel: React.FC = () => {
   const { data: tokens } = useSWR<TokenAsset[]>(
     appchainId ? `tokens/${appchainId}` : null
   );
-  const bridgeConfig = BRIDGE_CONFIG(appchainId);
+  const bridgeConfig = useMemo(() => {
+    return BRIDGE_CONFIG(appchainId);
+  }, [appchainId]);
 
   const isEvm = appchain?.appchain_metadata.template_type === "BarnacleEvm";
 

@@ -71,7 +71,9 @@ export default function TokenInpput({
   const { data: tokens } = useSWR<TokenAsset[]>(
     appchainId ? `tokens/${appchainId}` : null
   );
-  const bridgeConfig = BRIDGE_CONFIG(appchainId);
+  const bridgeConfig = useMemo(() => {
+    return BRIDGE_CONFIG(appchainId);
+  }, [appchainId]);
 
   const collectibleClasses = COLLECTIBLE_CLASSES(appchainId);
 
