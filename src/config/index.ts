@@ -62,29 +62,47 @@ export const COLLECTIBLE_CLASSES = (appchainId?: string) => {
   return appchainId ? APPCHAIN_COLLECTIBLE_CLASSES[env]?.[appchainId] : [];
 };
 
-export const NETWORK_CONFIG = {
-  near: {
-    networkId: env,
-    nodeUrl: `https://rpc.${env}.near.org`,
-    archivalUrl: `https://archival-rpc.${env}.near.org`,
-    walletUrl: `https://wallet.${env}.near.org`,
-    helperUrl: `https://helper.${env}.near.org`,
-    explorerUrl: `https://explorer.${env}.near.org`,
-    restApiUrl: "https://rest.nearapi.org",
-  },
-  octopus: {
-    explorerUrl: `https://explorer.${env}.oct.network`,
-    registryContractId: isMainnet
-      ? "octopus-registry.near"
-      : "dev-oct-registry.testnet",
-    octTokenContractId: isMainnet
-      ? "f5cfbc74057c610c8ef151a439252680ac68c6dc.factory.bridge.near"
-      : "oct.beta_oct_relay.testnet",
-    councilContractId: isMainnet
-      ? "octopus-council.octopus-registry.near"
-      : "octopus-council.registry.test_oct.testnet",
-  },
-};
+export const NETWORK_CONFIG = isMainnet
+  ? {
+      near: {
+        networkId: env,
+        nodeUrl: `https://rpc.${env}.near.org`,
+        archivalUrl: `https://archival-rpc.${env}.near.org`,
+        walletUrl: `https://wallet.${env}.near.org`,
+        helperUrl: `https://helper.${env}.near.org`,
+        explorerUrl: `https://explorer.${env}.near.org`,
+        restApiUrl: "https://rest.nearapi.org",
+      },
+      octopus: {
+        explorerUrl: `https://explorer.${env}.oct.network`,
+        registryContractId: isMainnet
+          ? "octopus-registry.near"
+          : "dev-oct-registry.testnet",
+        octTokenContractId: isMainnet
+          ? "f5cfbc74057c610c8ef151a439252680ac68c6dc.factory.bridge.near"
+          : "oct.beta_oct_relay.testnet",
+        councilContractId: isMainnet
+          ? "octopus-council.octopus-registry.near"
+          : "octopus-council.registry.test_oct.testnet",
+      },
+    }
+  : {
+      near: {
+        networkId: "testnet",
+        nodeUrl: "https://rpc.testnet.near.org",
+        archivalUrl: "https://archival-rpc.testnet.near.org",
+        walletUrl: "https://wallet.testnet.near.org",
+        helperUrl: "https://helper.testnet.near.org",
+        explorerUrl: "https://explorer.testnet.near.org",
+        restApiUrl: "https://rest.nearapi.org",
+      },
+      octopus: {
+        explorerUrl: "https://explorer.testnet.oct.network",
+        registryContractId: "registry.test_oct.testnet",
+        octTokenContractId: "oct.beta_oct_relay.testnet",
+        councilContractId: "octopus-council.registry.test_oct.testnet",
+      },
+    };
 
 export const APPCHAIN_SETTINGS: Record<string, AppchainSettings> = isMainnet
   ? {
