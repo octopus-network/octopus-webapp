@@ -88,7 +88,7 @@ export const NETWORK_CONFIG = isMainnet
     }
   : {
       near: {
-        networkId: "testnet",
+        networkId: env,
         nodeUrl: "https://rpc.testnet.near.org",
         archivalUrl: "https://archival-rpc.testnet.near.org",
         walletUrl: "https://wallet.testnet.near.org",
