@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useEffect } from "react";
-import useSWR from "swr";
 
 import {
   List,
@@ -29,6 +28,8 @@ import { Toast } from "components/common/toast";
 import { onTxSent } from "utils/helper";
 import { EMAIL_REGEX } from "config/constants";
 import Decimal from "decimal.js";
+import useBalance from "hooks/useBalance";
+import { NETWORK_CONFIG } from "config";
 
 type RegisterValidatorModalProps = {
   appchain: AppchainInfoWithAnchorStatus | undefined;
@@ -54,15 +55,11 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
   const [minimumDeposit, setMinimumDeposit] = useState(ZERO_DECIMAL);
 
   const [isSubmitting, setIsSubmitting] = useBoolean();
-  const { data: balances } = useSWR(accountId ? `balances/${accountId}` : null);
+  const octBalance = useBalance(NETWORK_CONFIG.octopus.octTokenContractId);
 
   const amountInDecimal = useMemo(
     () => DecimalUtil.fromString(amount),
     [amount]
-  );
-  const octBalance = useMemo(
-    () => DecimalUtil.fromString(balances?.["OCT"]),
-    [balances]
   );
 
   useEffect(() => {

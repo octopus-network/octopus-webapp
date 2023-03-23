@@ -49,6 +49,7 @@ import { TxDetail } from "./TxDetail";
 import { formatAppChainAddress } from "utils/format";
 import OctIdenticon from "components/common/OctIdenticon";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
+import { BRIDGE_HELPER_API } from "config";
 
 enum BridgeStatus {
   Pending,
@@ -89,7 +90,7 @@ type RowProps = {
 };
 
 type Filters = {
-  appchian: string;
+  appchain: string;
   direction: string;
   token: string;
   byStatus: string;
@@ -127,7 +128,7 @@ const Row: React.FC<RowProps> = ({ data, network }) => {
   );
 
   const { data: appchain } = useSWR<AppchainInfoWithAnchorStatus>(
-    `appchain/${appchainId}`
+    appchainId ? `appchain/${appchainId}` : null
   );
 
   return (
@@ -391,16 +392,24 @@ function Page({
   loaded: Function;
 }) {
   const pageSize = 20;
-  const { appchian, direction, token, byStatus } = filters;
-  const { data: txns } = useSWR<any[]>(
-    `bridge-helper/bridge_txs?start=${
-      (page - 1) * pageSize
-    }&size=${pageSize}&appchain=${appchian}&direction=${direction}&token=${token}&by_status=${byStatus}`
-  );
+  const { appchain, direction, token, byStatus } = filters;
+  const [txns, setTxns] = useState();
 
-  if (txns) {
-    loaded();
-  }
+  useEffect(() => {
+    fetch(
+      `${BRIDGE_HELPER_API}/bridge_txs?start=${
+        (page - 1) * pageSize
+      }&size=${pageSize}&appchain=${appchain}&direction=${direction}&token=${token}&by_status=${byStatus}`
+    )
+      .then((res) => res.json())
+      .then((res) => {
+        setTxns(res);
+        loaded();
+      })
+      .catch(() => {
+        console.log("error");
+      });
+  }, [page, appchain, direction, token, byStatus]);
 
   return (
     <>
@@ -418,7 +427,7 @@ export const Status: React.FC = () => {
   const [selectedTokenType, setSlectedTokenType] = useState("all");
   const [selectedStatus, setSlectedStatus] = useState("all");
   const [filters, setFilters] = useState({
-    appchian: "all",
+    appchain: "all",
     direction: "all",
     token: "all",
     byStatus: "all",
@@ -543,7 +552,7 @@ export const Status: React.FC = () => {
     setIsApplying.on();
     setPage(1);
     setFilters({
-      appchian: selectedAppchain,
+      appchain: selectedAppchain,
       direction: selectedDirection,
       token: selectedTokenType,
       byStatus: selectedStatus,

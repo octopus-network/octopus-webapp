@@ -19,11 +19,12 @@ import { ApiPromise } from "@polkadot/api";
 
 import { AmountInput } from "components/AmountInput";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
+import { BRIDGE_CONFIG, COLLECTIBLE_CLASSES } from "config";
 import Decimal from "decimal.js";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AiFillCloseCircle } from "react-icons/ai";
 import useSWR from "swr";
-import { AppchainInfo, BridgeConfig, Collectible, TokenAsset } from "types";
+import { AppchainInfo, Collectible, TokenAsset } from "types";
 import { DecimalUtil, ZERO_DECIMAL } from "utils";
 import { getNearTokenBalance, getPolkaTokenBalance } from "utils/bridge";
 import { SelectTokenModal } from "views/Bridge/SelectTokenModal";
@@ -70,12 +71,11 @@ export default function TokenInpput({
   const { data: tokens } = useSWR<TokenAsset[]>(
     appchainId ? `tokens/${appchainId}` : null
   );
-  const { data: bridgeConfig } = useSWR<BridgeConfig>(
-    appchainId ? `bridge-config/${appchainId}` : null
-  );
-  const { data: collectibleClasses } = useSWR<number[]>(
-    appchainId ? `collectible-classes/${appchainId}` : null
-  );
+  const bridgeConfig = useMemo(() => {
+    return BRIDGE_CONFIG(appchainId);
+  }, [appchainId]);
+
+  const collectibleClasses = COLLECTIBLE_CLASSES(appchainId);
 
   const isNear = chain === "NEAR";
 

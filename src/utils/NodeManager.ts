@@ -1,10 +1,7 @@
 import axios from "axios";
-import { CloudVendor, NetworkType, NodeDetail } from "types";
+import { AWS_API_HOST, env } from "config";
+import { CloudVendor, NetworkType, NodeDetail, NodeMetric } from "types";
 
-const API_HOST = {
-  testnet: `https://3jd9s8zf1l.execute-api.us-west-2.amazonaws.com/api/tasks`,
-  mainnet: `https://1fus85rip4.execute-api.ap-northeast-1.amazonaws.com/api/tasks`,
-};
 export default class NodeManager {
   static async getNodeDetail({
     appchainId,
@@ -42,14 +39,14 @@ export default class NodeManager {
 
     let res = { data: [] };
     try {
-      res = await axios.get(`${API_HOST[network]}`, {
+      res = await axios.get(`${AWS_API_HOST}`, {
         headers: {
           "Content-Type": "application/json; charset=utf-8",
           authorization: authStr,
         },
       });
     } catch (error) {
-      res = await axios.get(`${API_HOST[network]}`, {
+      res = await axios.get(`${AWS_API_HOST}`, {
         headers: {
           "Content-Type": "application/json; charset=utf-8",
           authorization: oldAuthStr,
@@ -107,7 +104,7 @@ export default class NodeManager {
       project = secret_key;
     }
     const task = await axios.post(
-      `${API_HOST[network]}`,
+      `${AWS_API_HOST}`,
       {
         cloud_vendor: cloudVendor,
         region,
@@ -141,7 +138,7 @@ export default class NodeManager {
     network: NetworkType;
   }) {
     return await axios.put(
-      `${API_HOST[network]}/${uuid}`,
+      `${AWS_API_HOST}/${uuid}`,
       {
         action: "update_image",
         secret_key: secret_key,
@@ -162,7 +159,7 @@ export default class NodeManager {
     user: string;
     network: NetworkType;
   }) {
-    await axios.delete(`${API_HOST[network]}/${uuid}`, {
+    await axios.delete(`${AWS_API_HOST}/${uuid}`, {
       headers: { authorization: user },
     });
   }
@@ -179,7 +176,7 @@ export default class NodeManager {
     secretKey: string;
   }) {
     await axios.put(
-      `${API_HOST[network]}/${uuid}`,
+      `${AWS_API_HOST}/${uuid}`,
       {
         action: "apply",
         secret_key: secretKey,
@@ -189,4 +186,51 @@ export default class NodeManager {
       }
     );
   }
+
+  static async getNodeMetrics({
+    accountId,
+    currentVendor,
+    currentKey,
+    appchainId,
+    uuid,
+  }: {
+    accountId: string;
+    currentVendor: CloudVendor;
+    currentKey: string;
+    appchainId: string;
+    uuid: string;
+  }): Promise<NodeMetric> {
+    try {
+      const authKey = getAuthKey(
+        currentVendor,
+        currentKey,
+        appchainId,
+        accountId
+      );
+      return await axios.get(`${AWS_API_HOST}/tasks/${uuid}/metrics`, {
+        headers: { authorization: authKey },
+      });
+    } catch (error) {
+      try {
+        const authKey = getAuthKey(currentVendor, currentKey, appchainId, "");
+        return await axios.get(`${AWS_API_HOST}/tasks/${uuid}/metrics`, {
+          headers: { authorization: authKey },
+        });
+      } catch (error) {
+        throw error;
+      }
+    }
+  }
+}
+
+function getAuthKey(
+  cloudVendor: string,
+  accessKey: string,
+  appchainId: string,
+  accountId: string
+): string {
+  if (!accountId) {
+    return `appchain-${appchainId}-network-${env}-cloud-${cloudVendor}-${accessKey}`;
+  }
+  return `appchain-${appchainId}-network-${env}-cloud-${cloudVendor}-account-${accountId}-${accessKey}`;
 }

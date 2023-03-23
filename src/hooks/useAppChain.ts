@@ -1,9 +1,9 @@
 import { ApiPromise, WsProvider } from "@polkadot/api";
+import { APPCHAIN_SETTINGS } from "config";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 import {
   AppchainInfoWithAnchorStatus,
-  AppchainSettings,
   Validator,
   ValidatorSessionKey,
 } from "types";
@@ -20,9 +20,9 @@ export function useAppChain(appchainId?: string) {
   const { data: validators, error: validatorsError } = useSWR<Validator[]>(
     appchainId ? `validators/${appchainId}` : null
   );
-  const { data: appchainSettings } = useSWR<AppchainSettings>(
-    appchainId ? `appchain-settings/${appchainId}` : null
-  );
+  const appchainSettings = appchainId
+    ? APPCHAIN_SETTINGS[appchainId]
+    : undefined;
 
   useEffect(() => {
     if (!appchainSettings?.rpc_endpoint) {
