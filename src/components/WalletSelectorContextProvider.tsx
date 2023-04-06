@@ -7,7 +7,6 @@ import type { WalletSelectorModal } from "@near-wallet-selector/modal-ui";
 import { setupMyNearWallet } from "@near-wallet-selector/my-near-wallet";
 import { NETWORK_CONFIG } from "config";
 import { setupLedger } from "@near-wallet-selector/ledger";
-import { setupOptoWallet } from "@near-wallet-selector/opto-wallet";
 import { NetworkConfig, NetworkType } from "types";
 import { setupNearWallet } from "@near-wallet-selector/near-wallet";
 import { setupSender } from "@near-wallet-selector/sender";
@@ -62,7 +61,6 @@ export const WalletSelectorContextProvider = ({
         setupMyNearWallet(),
         setupLedger(),
         setupSender(),
-        setupOptoWallet(),
       ],
     });
 

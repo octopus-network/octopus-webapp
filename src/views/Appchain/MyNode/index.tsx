@@ -47,7 +47,7 @@ import { Toast } from "components/common/toast";
 import { AiOutlineClear } from "react-icons/ai";
 import useLocalStorage from "hooks/useLocalStorage";
 import useGCP from "hooks/useGCP";
-import _ from "lodash";
+import has from "lodash.has";
 
 type MyNodeProps = {
   appchainId: string | undefined;
@@ -146,7 +146,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
         uuid: node.uuid,
       })
         .then((res) => {
-          if (_.has(res, "memory") && res?.memory) {
+          if (has(res, "memory") && res?.memory) {
             setNodeMetrics(res);
           }
         })

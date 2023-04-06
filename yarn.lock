@@ -3079,14 +3079,6 @@
     "@near-wallet-selector/core" "7.4.0"
     "@near-wallet-selector/my-near-wallet" "7.4.0"
 
-"@near-wallet-selector/opto-wallet@^7.3.0":
-  version "7.4.0"
-  resolved "https://registry.npmjs.org/@near-wallet-selector/opto-wallet/-/opto-wallet-7.4.0.tgz#fa26b29f176f79ff143c97b39a82542bc04348c9"
-  integrity sha512-azhd1+1x12pqLztrKXujNkKswbe68elfqMXn1evpstgQxPBErgaLuOUb9MO3hm0UPdJkMPkoI3biA1KsePK7ig==
-  dependencies:
-    "@near-wallet-selector/core" "7.4.0"
-    "@near-wallet-selector/wallet-utils" "7.4.0"
-
 "@near-wallet-selector/sender@^7.4.0":
   version "7.4.0"
   resolved "https://registry.npmjs.org/@near-wallet-selector/sender/-/sender-7.4.0.tgz#88275b1617a0d8ddc83da49947372161ff86c0c6"
@@ -4210,16 +4202,6 @@
     "@types/qs" "*"
     "@types/serve-static" "*"
 
-"@types/gapi@^0.0.42":
-  version "0.0.42"
-  resolved "https://registry.yarnpkg.com/@types/gapi/-/gapi-0.0.42.tgz#772aa461660de09e7a78258064e075818373493c"
-  integrity sha512-kskWpouTGqutaIVRo/swiGnMVoRxOYdRwvaDrh0yavfR9vQoHvJJ7Enp4KE9MEGS8qF7F5KiP6bRNOYcCgRXCA==
-
-"@types/google.accounts@^0.0.4":
-  version "0.0.4"
-  resolved "https://registry.npmjs.org/@types/google.accounts/-/google.accounts-0.0.4.tgz#e72e7922bb658057e391b1c460fa88dfb292f625"
-  integrity sha512-X42obEgMx+Ptt3RZShgfRNLxGfm9PTLB/zdQkVBYtjnQnbQvTdbU02kZuS6pahp7LA9a5tUxB5vGBnD81SUhjg==
-
 "@types/graceful-fs@^4.1.2":
   version "4.1.5"
   resolved "https://registry.npmjs.org/@types/graceful-fs/-/graceful-fs-4.1.5.tgz#21ffba0d98da4350db64891f92a9e5db3cdb4e15"
@@ -4312,10 +4294,24 @@
   resolved "https://registry.npmjs.org/@types/jsrsasign/-/jsrsasign-10.5.4.tgz#e8a147c70e017198fd161600e24c938af7b5ae2f"
   integrity sha512-05S2f4lGaWgCwFHsa3OEirc4VJf/sJRfhofzxUbuFbmm6NbffPXZrnJqquQAtS3g4C8Z0L9NHgW0znmtDxNoTQ==
 
+"@types/lodash.has@^4.5.7":
+  version "4.5.7"
+  resolved "https://registry.npmjs.org/@types/lodash.has/-/lodash.has-4.5.7.tgz#9e1c3da3ee67f68fadc3d168ffdf8e11a3f3ccd3"
+  integrity sha512-nfbAzRbsZBdzSAkL9iiLy4SQk89uuFcXBFwZ7pf6oZhBgPvNys8BY5Twp/w8XvZKGt1o6cAa85wX4QhqO3uQ7A==
+  dependencies:
+    "@types/lodash" "*"
+
 "@types/lodash.mergewith@4.6.6":
   version "4.6.6"
   resolved "https://registry.npmjs.org/@types/lodash.mergewith/-/lodash.mergewith-4.6.6.tgz#c4698f5b214a433ff35cb2c75ee6ec7f99d79f10"
   integrity sha512-RY/8IaVENjG19rxTZu9Nukqh0W2UrYgmBj5sdns4hWRZaV8PqR7wIKHFKzvOTjo4zVRV7sVI+yFhAJql12Kfqg==
+  dependencies:
+    "@types/lodash" "*"
+
+"@types/lodash.min@^4.0.7":
+  version "4.0.7"
+  resolved "https://registry.npmjs.org/@types/lodash.min/-/lodash.min-4.0.7.tgz#e25b528746220c01ade1ff81a3f77b7e35beeb48"
+  integrity sha512-hq4vF5lDCiPIgI79BhHcYAxd9PDPvOWXPwTjh6e33d4E2OLieYjptVei2WMwUBW8OZ0X+V57EIdCiQVAG2agOA==
   dependencies:
     "@types/lodash" "*"
 
@@ -9557,6 +9553,11 @@ lodash.debounce@^4.0.8:
   resolved "https://registry.npmjs.org/lodash.debounce/-/lodash.debounce-4.0.8.tgz#82d79bff30a67c4005ffd5e2515300ad9ca4d7af"
   integrity sha1-gteb/zCmfEAF/9XiUVMArZyk168=
 
+lodash.has@^4.5.2:
+  version "4.5.2"
+  resolved "https://registry.npmjs.org/lodash.has/-/lodash.has-4.5.2.tgz#d19f4dc1095058cccbe2b0cdf4ee0fe4aa37c862"
+  integrity sha512-rnYUdIo6xRCJnQmbVFEwcxF144erlD+M3YcJUVesflU9paQaE8p+fJDcIQrlMYbxoANFL+AB9hZrzSBBk5PL+g==
+
 lodash.memoize@^4.1.2:
   version "4.1.2"
   resolved "https://registry.npmjs.org/lodash.memoize/-/lodash.memoize-4.1.2.tgz#bcc6c49a42a2840ed997f323eada5ecd182e0bfe"
@@ -9571,6 +9572,11 @@ lodash.mergewith@4.6.2:
   version "4.6.2"
   resolved "https://registry.npmjs.org/lodash.mergewith/-/lodash.mergewith-4.6.2.tgz#617121f89ac55f59047c7aec1ccd6654c6590f55"
   integrity sha512-GK3g5RPZWTRSeLSpgP8Xhra+pnjBC56q9FZYe1d5RN3TJ35dbkGy3YqBSMbyCrlbi+CM9Z3Jk5yTL7RCsqboyQ==
+
+lodash.min@^4.0.1:
+  version "4.0.1"
+  resolved "https://registry.npmjs.org/lodash.min/-/lodash.min-4.0.1.tgz#4ac1b9a8baf8b6d28a690d716512510cfc14708c"
+  integrity sha512-evqGbKKpUlPcSIMoPamfAEL2byHsyzQjgj67Mw3sInyNO3Q3vytHKkoXbWOgOONY1Mmj6vPHlL9JDJFTZ0DTUA==
 
 lodash.sortby@^4.7.0:
   version "4.7.0"
