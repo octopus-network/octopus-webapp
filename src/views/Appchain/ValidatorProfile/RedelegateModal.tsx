@@ -18,7 +18,7 @@ import { Toast } from "components/common/toast";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
 import dayjs from "dayjs";
 import Decimal from "decimal.js";
-import _ from "lodash";
+import min from "lodash.min";
 import { COMPLEX_CALL_GAS } from "primitives";
 import { useEffect, useState } from "react";
 import { AnchorContract, Validator } from "types";
@@ -104,7 +104,7 @@ export default function RedelegateModal({
         .then((results) => {
           const froms: string[] = [];
           results.forEach((r, i) => {
-            const time = _.min(r.map((t) => Number(t.timestamp)));
+            const time = min(r.map((t) => Number(t.timestamp)));
             if (time) {
               froms.push(dayjs(Math.floor(time / 1e6)).fromNow());
             } else {

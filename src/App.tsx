@@ -43,12 +43,6 @@ export const App = () => (
             <Route path="bridge/near/:appchainId" element={<Bridge />} />
             <Route path="bridge/txs" element={<Bridge />} />
             <Route path="bridge/txs/:txId" element={<Bridge />} />
-            {/* <Route path="converter" element={<Converter />} />
-            <Route path="converter/pool/:poolId" element={<Converter />} />
-            <Route
-              path="converter/pool/:poolId/manage"
-              element={<Converter />}
-            /> */}
             <Route path="register" element={<Register />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="policy" element={<Policy />} />

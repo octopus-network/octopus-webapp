@@ -32,7 +32,7 @@ import { formatAppChainAddress, formatNearAddress } from "utils/format";
 import OctIdenticon from "components/common/OctIdenticon";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
 import ValidatorStatusTag from "components/Validator/Tag";
-import _ from "lodash";
+import min from "lodash.min";
 import relativeTime from "dayjs/plugin/relativeTime";
 
 dayjs.extend(relativeTime);
@@ -72,7 +72,7 @@ export const ValidatorRow: React.FC<ValidatorRowProps> = ({
       anchor
         .get_user_staking_histories_of({ account_id: validator.validator_id })
         .then((result) => {
-          const time = _.min(result.map((t) => Number(t.timestamp)));
+          const time = min(result.map((t) => Number(t.timestamp)));
           if (time) {
             setRegisteredDays(dayjs(Math.floor(time / 1e6)).fromNow());
           }
