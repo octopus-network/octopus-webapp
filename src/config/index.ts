@@ -171,6 +171,14 @@ export const APPCHAIN_SETTINGS: Record<string, AppchainSettings> = isMainnet
         era_reward: "1000000000000000000000",
         bonus_for_new_validator: "0",
       },
+      "barnacle-latest": {
+        rpc_endpoint:
+          "wss://gateway.testnet.octopus.network/barnacle-latest/ubmp83h7khynzohqzlumb3focllbh12e",
+        subql_endpoint:
+          "https://api.subquery.network/sq/octopus-appchains/barnacle-evm",
+        era_reward: "1000000000000000000000",
+        bonus_for_new_validator: "0",
+      },
       fusotao: {
         rpc_endpoint:
           "wss://gateway.testnet.octopus.network/fusotao/erc8ygm5qvmi2fw23ijpvzgpzzto47mi",
