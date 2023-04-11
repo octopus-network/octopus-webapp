@@ -52,7 +52,7 @@ export const BRIDGE_CONFIG = (appchainId?: string): BridgeConfig => {
     crosschainFee: appchainId
       ? (isMainnet
           ? ["myriad", "fusotao"]
-          : ["barnacle0928", "uniqueone-appchain", "myriad"]
+          : ["barnacle0928", "uniqueone-appchain", "myriad", "barnacle-latest"]
         ).includes(appchainId)
       : false,
   };
