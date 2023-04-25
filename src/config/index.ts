@@ -52,7 +52,7 @@ export const BRIDGE_CONFIG = (appchainId?: string): BridgeConfig => {
     crosschainFee: appchainId
       ? (isMainnet
           ? ["myriad", "fusotao"]
-          : ["barnacle0928", "uniqueone-appchain", "myriad"]
+          : ["barnacle0928", "uniqueone-appchain", "myriad", "barnacle-latest"]
         ).includes(appchainId)
       : false,
   };
@@ -71,7 +71,7 @@ export const NETWORK_CONFIG = isMainnet
         walletUrl: `https://wallet.${env}.near.org`,
         helperUrl: `https://helper.${env}.near.org`,
         explorerUrl: `https://explorer.${env}.near.org`,
-        restApiUrl: "https://rest.nearapi.org",
+        restApiUrl: "https://explorer.mainnet.oct.network/api",
       },
       octopus: {
         explorerUrl: `https://explorer.${env}.oct.network`,
@@ -94,7 +94,7 @@ export const NETWORK_CONFIG = isMainnet
         walletUrl: "https://wallet.testnet.near.org",
         helperUrl: "https://helper.testnet.near.org",
         explorerUrl: "https://explorer.testnet.near.org",
-        restApiUrl: "https://rest.nearapi.org",
+        restApiUrl: "https://explorer.mainnet.oct.network/api",
       },
       octopus: {
         explorerUrl: "https://explorer.testnet.oct.network",
@@ -166,6 +166,14 @@ export const APPCHAIN_SETTINGS: Record<string, AppchainSettings> = isMainnet
       "barnacle-evm": {
         rpc_endpoint:
           "wss://gateway.testnet.octopus.network/barnacle-evm/wj1hhcverunusc35jifki19otd4od1n5",
+        subql_endpoint:
+          "https://api.subquery.network/sq/octopus-appchains/barnacle-evm",
+        era_reward: "1000000000000000000000",
+        bonus_for_new_validator: "0",
+      },
+      "barnacle-latest": {
+        rpc_endpoint:
+          "wss://gateway.testnet.octopus.network/barnacle-latest/ubmp83h7khynzohqzlumb3focllbh12e",
         subql_endpoint:
           "https://api.subquery.network/sq/octopus-appchains/barnacle-evm",
         era_reward: "1000000000000000000000",
