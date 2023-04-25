@@ -71,7 +71,7 @@ export const NETWORK_CONFIG = isMainnet
         walletUrl: `https://wallet.${env}.near.org`,
         helperUrl: `https://helper.${env}.near.org`,
         explorerUrl: `https://explorer.${env}.near.org`,
-        restApiUrl: "https://rest.nearapi.org",
+        restApiUrl: "https://explorer.mainnet.oct.network/api",
       },
       octopus: {
         explorerUrl: `https://explorer.${env}.oct.network`,
@@ -94,7 +94,7 @@ export const NETWORK_CONFIG = isMainnet
         walletUrl: "https://wallet.testnet.near.org",
         helperUrl: "https://helper.testnet.near.org",
         explorerUrl: "https://explorer.testnet.near.org",
-        restApiUrl: "https://rest.nearapi.org",
+        restApiUrl: "https://explorer.mainnet.oct.network/api",
       },
       octopus: {
         explorerUrl: "https://explorer.testnet.oct.network",
