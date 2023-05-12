@@ -207,13 +207,13 @@ export default class NodeManager {
         appchainId,
         accountId
       );
-      return await axios.get(`${AWS_API_HOST}/tasks/${uuid}/metrics`, {
+      return await axios.get(`${AWS_API_HOST}/${uuid}/metrics`, {
         headers: { authorization: authKey },
       });
     } catch (error) {
       try {
         const authKey = getAuthKey(currentVendor, currentKey, appchainId, "");
-        return await axios.get(`${AWS_API_HOST}/tasks/${uuid}/metrics`, {
+        return await axios.get(`${AWS_API_HOST}/${uuid}/metrics`, {
           headers: { authorization: authKey },
         });
       } catch (error) {
