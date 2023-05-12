@@ -137,7 +137,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
   };
 
   const fetchMetrics = async (node: NodeDetail | undefined) => {
-    if (accountId && node && appchainId) {
+    if (accountId && node && node.uuid && appchainId) {
       NodeManager.getNodeMetrics({
         appchainId,
         currentVendor,
