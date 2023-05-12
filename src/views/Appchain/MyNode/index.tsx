@@ -194,7 +194,7 @@ export const MyNode: React.FC<MyNodeProps> = ({
     setIsDestroying.on();
     Toast.info("Destroying node, check details on your instance");
     axios
-      .delete(`${DEPLOY_CONFIG.deployApiHost}/tasks/${node?.uuid}`, {
+      .delete(`${DEPLOY_CONFIG.deployApiHost}/${node?.uuid}`, {
         data: {
           secret_key: secretKey,
         },
