@@ -51,7 +51,7 @@ export const BRIDGE_CONFIG = (appchainId?: string): BridgeConfig => {
     whitelist: {},
     crosschainFee: appchainId
       ? (isMainnet
-          ? ["myriad", "fusotao"]
+          ? ["myriad", "fusotao", "debionetwork"]
           : ["barnacle0928", "uniqueone-appchain", "myriad", "barnacle-latest"]
         ).includes(appchainId)
       : false,
