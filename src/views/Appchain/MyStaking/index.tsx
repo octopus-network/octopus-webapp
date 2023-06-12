@@ -147,15 +147,19 @@ export const MyStaking: React.FC<MyStakingProps> = ({
       return ZERO_DECIMAL;
     }
 
-    return unbonedStakes.reduce(
-      (total, next) =>
-        total.plus(
+    return unbonedStakes.reduce((total, next) => {
+      if (Number(next.unlock_time) === 0) {
+        return total.plus(
+          DecimalUtil.fromString(next.amount, OCT_TOKEN_DECIMALS)
+        );
+      } else {
+        return total.plus(
           dayjs(Math.floor((next.unlock_time as any) / 1e6)).diff() > 0
             ? 0
             : DecimalUtil.fromString(next.amount, OCT_TOKEN_DECIMALS)
-        ),
-      ZERO_DECIMAL
-    );
+        );
+      }
+    }, ZERO_DECIMAL);
   }, [unbonedStakes]);
 
   useEffect(() => {
