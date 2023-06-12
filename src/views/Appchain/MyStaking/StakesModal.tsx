@@ -69,15 +69,19 @@ export const StakesModal: React.FC<RewardsModalProps> = ({
       return ZERO_DECIMAL;
     }
 
-    return stakes.reduce(
-      (total, next) =>
-        total.plus(
+    return stakes.reduce((total, next) => {
+      if (Number(next.unlock_time) === 0) {
+        return total.plus(
+          DecimalUtil.fromString(next.amount, OCT_TOKEN_DECIMALS)
+        );
+      } else {
+        return total.plus(
           dayjs(Math.floor((next.unlock_time as any) / 1e6)).diff() > 0
             ? 0
             : DecimalUtil.fromString(next.amount, OCT_TOKEN_DECIMALS)
-        ),
-      ZERO_DECIMAL
-    );
+        );
+      }
+    }, ZERO_DECIMAL);
   }, [stakes]);
 
   const onWithdrawStakes = async () => {
@@ -154,7 +158,10 @@ export const StakesModal: React.FC<RewardsModalProps> = ({
                 <Tr
                   key={`tr-${idx}`}
                   opacity={
-                    dayjs(Math.floor((s.unlock_time as any) / 1e6)).diff() > 0
+                    Number(s.unlock_time) === 0
+                      ? 1
+                      : dayjs(Math.floor((s.unlock_time as any) / 1e6)).diff() >
+                        0
                       ? 0.6
                       : 1
                   }
@@ -163,9 +170,11 @@ export const StakesModal: React.FC<RewardsModalProps> = ({
                   <Td isNumeric>{DecimalUtil.formatAmount(s.amount)}</Td>
                   <Td isNumeric>
                     <Text>
-                      {dayjs(
-                        Math.floor((s.unlock_time as any) / 1e6)
-                      ).fromNow()}
+                      {Number(s.unlock_time) === 0
+                        ? "-"
+                        : dayjs(
+                            Math.floor((s.unlock_time as any) / 1e6)
+                          ).fromNow()}
                     </Text>
                   </Td>
                 </Tr>
