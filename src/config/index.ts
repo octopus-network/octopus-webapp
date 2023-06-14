@@ -110,7 +110,7 @@ export const APPCHAIN_SETTINGS: Record<string, AppchainSettings> = isMainnet
         rpc_endpoint:
           "wss://gateway.mainnet.octopus.network/fusotao/0efwa9v0crdx4dg3uj8jdmc5y7dj4ir2",
         subql_endpoint:
-          "https://api.subquery.network/sq/octopus-appchains/fusotao",
+          "https://api.subquery.network/sq/octopus-appchains/fusotao-index",
         era_reward: "4109000000000000000000",
         bonus_for_new_validator: "1000000000000000000",
       },
@@ -118,7 +118,7 @@ export const APPCHAIN_SETTINGS: Record<string, AppchainSettings> = isMainnet
         rpc_endpoint:
           "wss://gateway.mainnet.octopus.network/discovol/afpft46l1egfhrv8at5pfyrld03zseo1",
         subql_endpoint:
-          "https://api.subquery.network/sq/octopus-appchains/discovol",
+          "https://api.subquery.network/sq/octopus-appchains/discovol-op1",
         era_reward: "5479500000000000000",
         bonus_for_new_validator: "100000000000000",
       },
@@ -126,7 +126,7 @@ export const APPCHAIN_SETTINGS: Record<string, AppchainSettings> = isMainnet
         rpc_endpoint:
           "wss://gateway.mainnet.octopus.network/atocha/jungxomf4hdcfocwcalgoiz64g9avjim",
         subql_endpoint:
-          "https://api.subquery.network/sq/octopus-appchains/atocha",
+          "https://api.subquery.network/sq/octopus-appchains/atocha-index",
         era_reward: "13699000000000000000000",
         bonus_for_new_validator: "1000000000000000000",
       },
@@ -134,7 +134,7 @@ export const APPCHAIN_SETTINGS: Record<string, AppchainSettings> = isMainnet
         rpc_endpoint:
           "wss://gateway.mainnet.octopus.network/myriad/a4cb0a6e30ff5233a3567eb4e8cb71e0",
         subql_endpoint:
-          "https://api.subquery.network/sq/octopus-appchains/myriad",
+          "https://api.subquery.network/sq/octopus-appchains/myriad-index",
         era_reward: "68493000000000000000000",
         bonus_for_new_validator: "1000000000000000000",
       },
@@ -142,7 +142,7 @@ export const APPCHAIN_SETTINGS: Record<string, AppchainSettings> = isMainnet
         rpc_endpoint:
           "wss://gateway.mainnet.octopus.network/debionetwork/ae48005a0c7ecb4053394559a7f4069e",
         subql_endpoint:
-          "https://api.subquery.network/sq/octopus-appchains/debionetwork",
+          "https://api.subquery.network/sq/octopus-appchains/debionetwork-index",
         era_reward: "13699000000000000000000",
         bonus_for_new_validator: "1000000000000000000",
       },
