@@ -468,7 +468,9 @@ export const Status: React.FC = () => {
   };
 
   const { data: appchains } = useSWR<any[]>("appchains/running");
-  const { data: tokensMap } = useSWR<TokensMap>(`bridge-helper/bridge_tokens`);
+  const { data: tokensMap } = useSWR<TokensMap>(
+    `${BRIDGE_HELPER_API}/bridge-helper/bridge_tokens`
+  );
 
   const appchainNames = appchains?.map(({ appchain_id }) => appchain_id);
   const appchainOptions = [

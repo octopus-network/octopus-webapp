@@ -39,8 +39,9 @@ import { StakesModal } from "./StakesModal";
 import { StakingPopover } from "../StakingPopover";
 
 import { DecimalUtil, ZERO_DECIMAL } from "utils";
+import groupBy from "lodash.groupby";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
-import { calcUnwithdrawnReward, getDelegatedValidators } from "utils/appchain";
+import { calcUnwithdrawnReward } from "utils/appchain";
 import { API_HOST } from "config";
 
 type MyStakingProps = {
@@ -63,7 +64,7 @@ export const MyStaking: React.FC<MyStakingProps> = ({
   const [delegatorRewards, setDelegatorRewards] = useState<{
     [key: string]: RewardHistory[];
   }>({});
-  const { accountId, networkConfig } = useWalletSelector();
+  const { accountId } = useWalletSelector();
   const [deposit, setDeposit] = useState(ZERO_DECIMAL);
 
   const [unbonedStakes, setUnbondedStakes] = useState<UnbondedHistory[]>();
@@ -77,17 +78,24 @@ export const MyStaking: React.FC<MyStakingProps> = ({
   );
 
   useEffect(() => {
-    async function fetchDelegatorRewards() {
-      if (!(appchain && accountId && networkConfig)) {
+    async function fetchDelegateRewards() {
+      if (!(accountId && anchor && appchain?.appchain_id)) {
         return;
       }
-      try {
-        const delegatedValidatorIds = await getDelegatedValidators(
-          networkConfig,
-          appchain.appchain_anchor,
-          accountId
-        );
 
+      try {
+        const dRewards = await anchor.get_delegator_rewards({
+          delegator_id: accountId,
+        });
+        const unwithdrawnRewards = dRewards.sort(
+          (a, b) => Number(b.era_number) - Number(a.era_number)
+        );
+        const groupedRewards = groupBy(
+          unwithdrawnRewards,
+          "delegated_validator"
+        );
+        setDelegatorRewards(groupedRewards);
+        const delegatedValidatorIds = Object.keys(groupedRewards);
         const delegated = await Promise.all(
           delegatedValidatorIds.map(async (id) => {
             return await fetch(
@@ -109,27 +117,11 @@ export const MyStaking: React.FC<MyStakingProps> = ({
         setDelegatedAmount(
           DecimalUtil.fromString(delegatedAmount, OCT_TOKEN_DECIMALS)
         );
-
-        const delegatorRewards = await Promise.all(
-          delegatedValidatorIds.map(async (id) => {
-            return await fetch(
-              `${API_HOST}/rewards/${id}/${appchain.appchain_id}/${accountId}/${appchain?.anchor_status?.index_range_of_validator_set_history?.end_index}`
-            ).then((res) => res.json());
-          })
-        );
-        const rewards: { [key: string]: RewardHistory[] } = {};
-
-        delegatorRewards.forEach((reward, idx) => {
-          rewards[delegatedValidatorIds[idx]] = reward;
-        });
-        setDelegatorRewards(rewards);
-      } catch (error) {
-        console.log("error", error);
-      }
+      } catch (e) {}
     }
 
-    fetchDelegatorRewards();
-  }, [appchain, accountId, networkConfig]);
+    fetchDelegateRewards();
+  }, [accountId, anchor, appchain?.appchain_id]);
 
   const decimals =
     appchain?.appchain_metadata?.fungible_token_metadata.decimals;
@@ -171,11 +163,13 @@ export const MyStaking: React.FC<MyStakingProps> = ({
       anchor.get_validator_deposit_of({ validator_id: accountId }),
       anchor.get_unbonded_stakes_of({ account_id: accountId }),
       anchor.get_user_staking_histories_of({ account_id: accountId }),
-    ]).then(([deposit, stakes, histories]) => {
-      setDeposit(DecimalUtil.fromString(deposit, OCT_TOKEN_DECIMALS));
-      setUnbondedStakes(stakes);
-      setStakingHistories(histories);
-    });
+    ])
+      .then(([deposit, stakes, histories]) => {
+        setDeposit(DecimalUtil.fromString(deposit, OCT_TOKEN_DECIMALS));
+        setUnbondedStakes(stakes);
+        setStakingHistories(histories);
+      })
+      .catch(console.log);
   }, [anchor, accountId]);
 
   return (

@@ -237,6 +237,14 @@ export class AnchorContract extends Contract {
   }): Promise<StakingHistory[]> {
     return this.get_user_staking_histories_of(args);
   }
+
+  get_validator_rewards(args: { validator_id: string }): Promise<any[]> {
+    return this.get_validator_rewards(args);
+  }
+
+  get_delegator_rewards(args: { delegator_id: string }): Promise<any[]> {
+    return this.get_delegator_rewards(args);
+  }
 }
 
 export class ConvertorContract extends Contract {

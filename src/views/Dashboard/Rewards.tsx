@@ -158,7 +158,11 @@ const Rewards = ({ viewingAccount }: { viewingAccount?: string }) => {
 
     Promise.all(
       appchains.map((appchain: AppchainInfo) =>
-        getAppchainRewards(appchain.appchain_id, accountId!, networkConfig!)
+        getAppchainRewards(
+          appchain.appchain_id,
+          accountId!,
+          selector.options.network.nodeUrl
+        )
       )
     )
       .then((rewards) => {

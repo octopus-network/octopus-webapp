@@ -523,7 +523,9 @@ export const ValidatorProfile: React.FC<ValidatorProfileProps> = ({
                     src={octoAvatar}
                     display={{ base: "none", md: "block" }}
                   />
-                  <Heading fontSize="lg">{accountId}</Heading>
+                  <Heading fontSize="lg" maxW="50%">
+                    {accountId}
+                  </Heading>
                 </HStack>
               ) : (
                 <LoginButton />

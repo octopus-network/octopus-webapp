@@ -15,6 +15,8 @@ export const ANCHOR_METHODS = {
     "get_validator_list_of",
     "get_validator_set_info_of",
     "get_user_staking_histories_of",
+    "get_validator_rewards",
+    "get_delegator_rewards",
   ],
   changeMethods: [
     "enable_delegation",
