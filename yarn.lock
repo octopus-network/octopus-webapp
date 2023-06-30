@@ -4419,6 +4419,13 @@
   resolved "https://registry.npmjs.org/@types/jsrsasign/-/jsrsasign-10.5.4.tgz#e8a147c70e017198fd161600e24c938af7b5ae2f"
   integrity sha512-05S2f4lGaWgCwFHsa3OEirc4VJf/sJRfhofzxUbuFbmm6NbffPXZrnJqquQAtS3g4C8Z0L9NHgW0znmtDxNoTQ==
 
+"@types/lodash.groupby@^4.6.7":
+  version "4.6.7"
+  resolved "https://registry.npmjs.org/@types/lodash.groupby/-/lodash.groupby-4.6.7.tgz#35fdb9647f100450d1004f65f74cbd964cdb567a"
+  integrity sha512-dFUR1pqdMgjIBbgPJ/8axJX6M1C7zsL+HF4qdYMQeJ7XOp0Qbf37I3zh9gpXr/ks6tgEYPDRqyZRAnFYvewYHQ==
+  dependencies:
+    "@types/lodash" "*"
+
 "@types/lodash.has@^4.5.7":
   version "4.5.7"
   resolved "https://registry.npmjs.org/@types/lodash.has/-/lodash.has-4.5.7.tgz#9e1c3da3ee67f68fadc3d168ffdf8e11a3f3ccd3"
@@ -9687,6 +9694,11 @@ lodash.debounce@^4.0.8:
   version "4.0.8"
   resolved "https://registry.npmjs.org/lodash.debounce/-/lodash.debounce-4.0.8.tgz#82d79bff30a67c4005ffd5e2515300ad9ca4d7af"
   integrity sha1-gteb/zCmfEAF/9XiUVMArZyk168=
+
+lodash.groupby@^4.6.0:
+  version "4.6.0"
+  resolved "https://registry.npmjs.org/lodash.groupby/-/lodash.groupby-4.6.0.tgz#0b08a1dcf68397c397855c3239783832df7403d1"
+  integrity sha512-5dcWxm23+VAoz+awKmBaiBvzox8+RqMgFhi7UvX9DHZr2HdxHXM/Wrf8cfKpsW37RNrvtPn6hSwNqurSILbmJw==
 
 lodash.has@^4.5.2:
   version "4.5.2"

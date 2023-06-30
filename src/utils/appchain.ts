@@ -3,33 +3,9 @@ import { NetworkConfig, RewardHistory } from "types";
 import { DecimalUtil, ZERO_DECIMAL } from "./decimal";
 import { API_HOST } from "config";
 import posthog from "posthog-js";
-
-export const getUnbondedValidators = async (
-  networkConfig: NetworkConfig,
-  appchain_anchor: string
-) => {
-  try {
-    const res = await axios.post(`${networkConfig?.near.restApiUrl}/explorer`, {
-      user: "public_readonly",
-      host: `${networkConfig?.near.networkId}.db.explorer.indexer.near.dev`,
-      database: `${networkConfig?.near.networkId}_explorer`,
-      password: "nearprotocol",
-      port: 5432,
-      parameters: [appchain_anchor],
-      query: `
-          SELECT * FROM public.action_receipt_actions 
-          WHERE receipt_receiver_account_id = $1
-          AND args->>'method_name' = 'unbond_stake'
-          LIMIT 100;
-        `,
-    });
-
-    const tmpArr = res.data.map((r: any) => r.receipt_predecessor_account_id);
-    return Array.from(new Set(tmpArr));
-  } catch (error) {
-    return [];
-  }
-};
+import { providers } from "near-api-js";
+import { CodeResult } from "near-api-js/lib/providers/provider";
+import groupBy from "lodash.groupby";
 
 export const getRedelegateHistory = async (
   networkConfig: NetworkConfig,
@@ -167,7 +143,7 @@ async function getRewards(url: string) {
 export const getAppchainRewards = async (
   appchainId: string,
   accountId: string,
-  networkConfig: NetworkConfig
+  nodeUrl: string
 ) => {
   try {
     const appchainRes = await axios.get(`${API_HOST}/appchain/${appchainId}`);
@@ -175,29 +151,37 @@ export const getAppchainRewards = async (
     const validatorRewards = await getRewards(
       `${API_HOST}/rewards/${accountId}/${appchain.appchain_id}/${appchain?.anchor_status?.index_range_of_validator_set_history?.end_index}`
     );
-    const delegatedValidatorIds = await getDelegatedValidators(
-      networkConfig,
-      appchain.appchain_anchor,
-      accountId
-    );
 
-    const delegatorRewards = await Promise.all(
-      delegatedValidatorIds.map(async (id) => {
-        return await fetch(
-          `${API_HOST}/rewards/${id}/${appchain.appchain_id}/${accountId}/${appchain?.anchor_status?.index_range_of_validator_set_history?.end_index}`
-        ).then((res) => res.json());
-      })
-    );
-    const rewards: { [key: string]: RewardHistory[] } = {};
-
-    delegatorRewards.forEach((reward, idx) => {
-      rewards[delegatedValidatorIds[idx]] = reward;
+    const provider = new providers.JsonRpcProvider({
+      url: nodeUrl,
     });
+
+    console.log("appchain.appchain_anchor", appchain.appchain_anchor);
+    const res = await provider.query<CodeResult>({
+      request_type: "call_function",
+      account_id: appchain.appchain_anchor,
+      method_name: "get_delegator_rewards",
+      args_base64: btoa(
+        JSON.stringify({
+          delegator_id: accountId,
+        })
+      ),
+      finality: "final",
+    });
+
+    const dRewards = JSON.parse(Buffer.from(res.result).toString());
+
+    const unwithdrawnRewards = dRewards.sort(
+      (a: any, b: any) => Number(b.era_number) - Number(a.era_number)
+    );
+    const groupedRewards = groupBy(unwithdrawnRewards, "delegated_validator");
 
     return {
       appchain,
       validatorRewards: validatorRewards,
-      delegatorRewards: rewards,
+      delegatorRewards: groupedRewards,
     };
-  } catch (error) {}
+  } catch (error) {
+    console.error(error);
+  }
 };
