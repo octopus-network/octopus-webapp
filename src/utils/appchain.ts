@@ -156,7 +156,6 @@ export const getAppchainRewards = async (
       url: nodeUrl,
     });
 
-    console.log("appchain.appchain_anchor", appchain.appchain_anchor);
     const res = await provider.query<CodeResult>({
       request_type: "call_function",
       account_id: appchain.appchain_anchor,
@@ -171,17 +170,20 @@ export const getAppchainRewards = async (
 
     const dRewards = JSON.parse(Buffer.from(res.result).toString());
 
+    console.log("dRewards", dRewards);
+    console.log("## 1");
     const unwithdrawnRewards = dRewards.sort(
       (a: any, b: any) => Number(b.era_number) - Number(a.era_number)
     );
     const groupedRewards = groupBy(unwithdrawnRewards, "delegated_validator");
-
+    console.log("## 2");
     return {
       appchain,
       validatorRewards: validatorRewards,
       delegatorRewards: groupedRewards,
     };
   } catch (error) {
+    console.log("appchain", appchainId);
     console.error(error);
   }
 };

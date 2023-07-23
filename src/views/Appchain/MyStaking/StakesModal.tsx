@@ -107,6 +107,7 @@ export const StakesModal: React.FC<RewardsModalProps> = ({
       setIsWithdrawing.off();
       onTxSent();
     } catch (error) {
+      Toast.error(error);
       setIsWithdrawing.off();
     }
   };
