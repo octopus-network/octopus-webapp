@@ -46,8 +46,12 @@ export const DEPLOY_CONFIG = {
 };
 
 export const BRIDGE_CONFIG = (appchainId?: string): BridgeConfig => {
+  let tokenPallet = APPCHAIN_TOKEN_PALLET["default"];
+  if (appchainId) {
+    tokenPallet = APPCHAIN_TOKEN_PALLET[appchainId] || tokenPallet;
+  }
   return {
-    tokenPallet: APPCHAIN_TOKEN_PALLET[appchainId || "default"],
+    tokenPallet,
     whitelist: {},
     crosschainFee: appchainId
       ? (isMainnet
