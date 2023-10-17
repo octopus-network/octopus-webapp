@@ -237,28 +237,82 @@ export const CLOUD_NODE_INSTANCES: Record<string, any> = {
     [CloudVendor.AWS]: {
       ...INSTANCES["t3"],
       volume_size: "200",
+      storage: {
+        desc: "200GB",
+        price: "30",
+        unit: "m",
+      },
+      total: {
+        price: "100.2",
+        unit: "m",
+      },
     },
     [CloudVendor.DO]: {
       ...INSTANCES["s-4vcpu-8gb"],
       volume_size: "200",
+      storage: {
+        desc: "200GB",
+        price: "20",
+        unit: "m",
+      },
+      total: {
+        price: "68",
+        unit: "m",
+      },
     },
     [CloudVendor.GCP]: {
       ...INSTANCES["e2-standard-2"],
       volume_size: "200",
+      storage: {
+        desc: "200GB",
+        price: "28.4",
+        unit: "m",
+      },
+      total: {
+        price: "90",
+        unit: "m",
+      },
     },
   },
   [OCTNetwork.MYRIAD]: {
     [CloudVendor.AWS]: {
       ...INSTANCES["t3"],
       volume_size: "200",
+      storage: {
+        desc: "200GB",
+        price: "20",
+        unit: "m",
+      },
+      total: {
+        price: "100.2",
+        unit: "m",
+      },
     },
     [CloudVendor.DO]: {
       ...INSTANCES["s-4vcpu-8gb"],
       volume_size: "200",
+      storage: {
+        desc: "200GB",
+        price: "20",
+        unit: "m",
+      },
+      total: {
+        price: "68",
+        unit: "m",
+      },
     },
     [CloudVendor.GCP]: {
       ...INSTANCES["e2-standard-2"],
       volume_size: "200",
+      storage: {
+        desc: "200GB",
+        price: "28.4",
+        unit: "m",
+      },
+      total: {
+        price: "90",
+        unit: "m",
+      },
     },
   },
   [OCTNetwork.FUSOTAO]: {
