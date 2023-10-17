@@ -92,7 +92,7 @@ const INSTANCES: Record<
   },
   t5: {
     instance_type: "c5.large",
-    volume_size: "250",
+    volume_size: "260",
     type: {
       desc: "ec2 c5.large",
       price: "61.2",
@@ -146,7 +146,7 @@ const INSTANCES: Record<
   },
   "s-4vcpu-8gb-fusotao": {
     instance_type: "s-4vcpu-8gb",
-    volume_size: "250",
+    volume_size: "260",
     type: {
       desc: "s-4vcpu-8gb",
       price: "48",
@@ -200,7 +200,7 @@ const INSTANCES: Record<
   },
   "e2-standard-4": {
     instance_type: "e2-standard-2",
-    volume_size: "250",
+    volume_size: "260",
     type: {
       desc: "e2-standard-2",
       price: "49.92",
@@ -233,20 +233,33 @@ export const CLOUD_NODE_INSTANCES: Record<string, any> = {
     [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb"],
     [CloudVendor.GCP]: INSTANCES["e2-standard-2"],
   },
-  [OCTNetwork.DEIP]: {
-    [CloudVendor.AWS]: INSTANCES["t3"],
-    [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb"],
-    [CloudVendor.GCP]: INSTANCES["e2-standard-2"],
-  },
   [OCTNetwork.DEBIO_NETWORK]: {
-    [CloudVendor.AWS]: INSTANCES["t3"],
-    [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb"],
-    [CloudVendor.GCP]: INSTANCES["e2-standard-2"],
+    [CloudVendor.AWS]: {
+      ...INSTANCES["t3"],
+      volume_size: "200",
+    },
+    [CloudVendor.DO]: {
+      ...INSTANCES["s-4vcpu-8gb"],
+      volume_size: "200",
+    },
+    [CloudVendor.GCP]: {
+      ...INSTANCES["e2-standard-2"],
+      volume_size: "200",
+    },
   },
   [OCTNetwork.MYRIAD]: {
-    [CloudVendor.AWS]: INSTANCES["t3"],
-    [CloudVendor.DO]: INSTANCES["s-4vcpu-8gb"],
-    [CloudVendor.GCP]: INSTANCES["e2-standard-2"],
+    [CloudVendor.AWS]: {
+      ...INSTANCES["t3"],
+      volume_size: "200",
+    },
+    [CloudVendor.DO]: {
+      ...INSTANCES["s-4vcpu-8gb"],
+      volume_size: "200",
+    },
+    [CloudVendor.GCP]: {
+      ...INSTANCES["e2-standard-2"],
+      volume_size: "200",
+    },
   },
   [OCTNetwork.FUSOTAO]: {
     [CloudVendor.AWS]: INSTANCES["t5"],
