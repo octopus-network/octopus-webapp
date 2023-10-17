@@ -133,7 +133,9 @@ export const RegisterValidatorModal: React.FC<RegisterValidatorModalProps> = ({
     }
   };
 
-  const isEvm = appchain?.appchain_metadata.template_type === "BarnacleEvm";
+  const isEvm =
+    appchain?.appchain_metadata.appchain_type !== "Cosmos" &&
+    appchain?.appchain_metadata.appchain_type?.Substrate === "BarnacleEvm";
 
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} title="Register Validator">

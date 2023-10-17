@@ -31,7 +31,11 @@ export type AppchainInfo = {
     premined_wrapped_appchain_token_beneficiary: string;
     initial_supply_of_wrapped_appchain_token: string;
     website_url: string;
-    template_type: "Barnacle" | "BarnacleEvm";
+    appchain_type:
+      | {
+          Substrate: "Barnacle" | "BarnacleEvm";
+        }
+      | "Cosmos";
   };
   appchain_owner: string;
   appchain_state: AppchainState;

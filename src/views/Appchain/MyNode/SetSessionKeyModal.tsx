@@ -69,7 +69,9 @@ export const SetSessionKeyModal: React.FC<SetSessionKeyModalProps> = ({
     setKey(skey ?? "");
   }, [skey]);
 
-  const isEvm = appchain?.appchain_metadata?.template_type === "BarnacleEvm";
+  const isEvm =
+    appchain?.appchain_metadata.appchain_type !== "Cosmos" &&
+    appchain?.appchain_metadata.appchain_type?.Substrate === "BarnacleEvm";
   const { accounts, currentAccount, setCurrentAccount } = useAccounts(
     isEvm,
     isOpen

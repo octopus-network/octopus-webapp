@@ -90,7 +90,9 @@ export const BridgePanel: React.FC = () => {
     return BRIDGE_CONFIG(appchainId);
   }, [appchainId]);
 
-  const isEvm = appchain?.appchain_metadata.template_type === "BarnacleEvm";
+  const isEvm =
+    appchain?.appchain_metadata.appchain_type !== "Cosmos" &&
+    appchain?.appchain_metadata.appchain_type?.Substrate === "BarnacleEvm";
 
   const { pathname } = useLocation();
   const isNearToAppchain = useMemo(

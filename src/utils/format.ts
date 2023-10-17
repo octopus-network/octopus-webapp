@@ -9,7 +9,10 @@ export const formatAppChainAddress = (
     return "";
   }
 
-  if (appchain?.appchain_metadata?.template_type === "BarnacleEvm") {
+  if (
+    appchain?.appchain_metadata.appchain_type !== "Cosmos" &&
+    appchain?.appchain_metadata.appchain_type?.Substrate === "BarnacleEvm"
+  ) {
     return addr;
   }
   try {

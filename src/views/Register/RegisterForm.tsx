@@ -178,7 +178,9 @@ export const RegisterForm: React.FC = () => {
                     description: description || "",
                     github_address: githubAddress,
                     contact_email: email,
-                    template_type: templateType,
+                    template_type: {
+                      Substrate: templateType,
+                    },
                     evm_chain_id:
                       templateType === "BarnacleEvm" ? evmChainId : null,
                     premined_wrapped_appchain_token_beneficiary:

@@ -43,7 +43,9 @@ export default function AddressInpput({
   onDepositStorage?: () => void;
 }) {
   const grayBg = useColorModeValue("#f2f4f7", "#1e1f34");
-  const isEvm = appchain?.appchain_metadata.template_type === "BarnacleEvm";
+  const isEvm =
+    appchain?.appchain_metadata.appchain_type !== "Cosmos" &&
+    appchain?.appchain_metadata.appchain_type?.Substrate === "BarnacleEvm";
 
   const [selectAccountModalOpen, setSelectAccountModalOpen] = useBoolean();
   const [address, setAddress] = useState<string | undefined>();
