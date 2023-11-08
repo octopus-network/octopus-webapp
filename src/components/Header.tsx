@@ -104,7 +104,7 @@ export const Header: React.FC = () => {
     <Container pt={4} pb={4}>
       <Flex justifyContent="space-between" alignItems="center">
         <RouterLink to="/">
-          <Image src={logo} w="90px" />
+          <Image src={logo} h="45px" />
         </RouterLink>
         <HStack spacing={6}>
           <HStack spacing={8} display={{ base: "none", md: "flex" }}>
