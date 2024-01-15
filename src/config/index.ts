@@ -8,7 +8,7 @@ export * from "./theme";
 
 export const env: NetworkType = (process.env.REACT_APP_NETWORK ||
   "mainnet") as NetworkType;
-const isMainnet = env === "mainnet";
+export const isMainnet = env === "mainnet";
 
 export const API_HOST = isMainnet
   ? "https://api-worker.octopus-network.workers.dev"

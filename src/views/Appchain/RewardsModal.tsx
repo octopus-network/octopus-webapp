@@ -18,16 +18,15 @@ import {
 
 import {
   AppchainInfoWithAnchorStatus,
-  RewardHistory,
   AnchorContract,
   WrappedAppchainToken,
 } from "types";
+import { RewardItem } from "hooks/useRewards";
 
 import { BaseModal, Empty } from "components";
-import { DecimalUtil, ZERO_DECIMAL } from "utils";
+import { DecimalUtil } from "utils";
 
 import RewardList from "components/AppChain/RewardList";
-import { calcUnwithdrawnReward } from "utils/appchain";
 import { Toast } from "components/common/toast";
 import { useTokenContract } from "hooks/useTokenContract";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
@@ -39,15 +38,16 @@ import { COMPLEX_CALL_GAS, SIMPLE_CALL_GAS } from "primitives";
 import { WarningTwoIcon } from "@chakra-ui/icons";
 
 type RewardsModalProps = {
-  validatorRewards?: RewardHistory[];
+  validatorRewards?: RewardItem[];
   delegatorRewards?: {
-    [key: string]: RewardHistory[];
+    [key: string]: RewardItem[];
   };
   appchain?: AppchainInfoWithAnchorStatus;
   anchor?: AnchorContract;
   validatorId?: string;
   isOpen: boolean;
   onClose: () => void;
+  total: Decimal;
 };
 
 export const RewardsModal: React.FC<RewardsModalProps> = ({
@@ -58,6 +58,7 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
   anchor,
   validatorId,
   delegatorRewards = {},
+  total,
 }) => {
   const decimals =
     appchain?.appchain_metadata?.fungible_token_metadata?.decimals;
@@ -92,15 +93,6 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
   useEffect(() => {
     setIndex(!!validatorRewards?.length ? 0 : 1);
   }, [validatorRewards]);
-
-  const total = useMemo(() => {
-    const vTotal = calcUnwithdrawnReward(validatorRewards || [], decimals);
-    const dTotal = Object.values(delegatorRewards).reduce(
-      (total, rewards) => total.plus(calcUnwithdrawnReward(rewards, decimals)),
-      ZERO_DECIMAL
-    );
-    return DecimalUtil.beautify(vTotal.plus(dTotal));
-  }, [validatorRewards, delegatorRewards, decimals]);
 
   const onClaimRewards = async (action: Action | undefined) => {
     if (!anchor || !tokenContract || !accountId) {
@@ -205,7 +197,8 @@ export const RewardsModal: React.FC<RewardsModalProps> = ({
     <BaseModal isOpen={isOpen} onClose={onClose} maxW="800px" title={"Rewards"}>
       <Flex align="center" justify="flex-end" gap={4}>
         <Heading fontSize="md">
-          {total} {appchain?.appchain_metadata?.fungible_token_metadata.symbol}
+          {DecimalUtil.beautify(total.div(10 ** (decimals ?? 18)))}{" "}
+          {appchain?.appchain_metadata?.fungible_token_metadata.symbol}
         </Heading>
         <Button
           colorScheme="octo-blue"

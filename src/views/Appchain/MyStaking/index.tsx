@@ -1,5 +1,4 @@
 import React, { useMemo, useState, useEffect } from "react";
-import useSWR from "swr";
 import dayjs from "dayjs";
 
 import {
@@ -20,7 +19,6 @@ import {
 
 import {
   AnchorContract,
-  RewardHistory,
   AppchainInfoWithAnchorStatus,
   UnbondedHistory,
   StakingHistory,
@@ -39,9 +37,8 @@ import { StakesModal } from "./StakesModal";
 import { StakingPopover } from "../StakingPopover";
 
 import { DecimalUtil, ZERO_DECIMAL } from "utils";
-import groupBy from "lodash.groupby";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
-import { calcUnwithdrawnReward } from "utils/appchain";
+import useRewards from "hooks/useRewards";
 import { API_HOST } from "config";
 
 type MyStakingProps = {
@@ -61,22 +58,19 @@ export const MyStaking: React.FC<MyStakingProps> = ({
   const [stakesModalOpen, setStakesModalOpen] = useBoolean(false);
   const [stakingHistoryModalOpen, setStakingHistoryModalOpen] =
     useBoolean(false);
-  const [delegatorRewards, setDelegatorRewards] = useState<{
-    [key: string]: RewardHistory[];
-  }>({});
   const { accountId } = useWalletSelector();
   const [deposit, setDeposit] = useState(ZERO_DECIMAL);
 
   const [unbonedStakes, setUnbondedStakes] = useState<UnbondedHistory[]>();
   const [stakingHistories, setStakingHistories] = useState<StakingHistory[]>();
+
   const [delegatedAmount, setDelegatedAmount] = useState(ZERO_DECIMAL);
 
-  const { data: validatorRewards } = useSWR<RewardHistory[]>(
-    appchain?.anchor_status && accountId
-      ? `rewards/${accountId}/${appchain.appchain_id}/${appchain?.anchor_status?.index_range_of_validator_set_history?.end_index}`
-      : null
+  const { validatorRewards, delegatorRewards, total } = useRewards(
+    appchain?.appchain_anchor
   );
 
+  const delegatedValidatorIds = Object.keys(delegatorRewards);
   useEffect(() => {
     async function fetchDelegateRewards() {
       if (!(accountId && anchor && appchain?.appchain_id)) {
@@ -84,18 +78,6 @@ export const MyStaking: React.FC<MyStakingProps> = ({
       }
 
       try {
-        const dRewards = await anchor.get_delegator_rewards({
-          delegator_id: accountId,
-        });
-        const unwithdrawnRewards = dRewards.sort(
-          (a, b) => Number(b.era_number) - Number(a.era_number)
-        );
-        const groupedRewards = groupBy(
-          unwithdrawnRewards,
-          "delegated_validator"
-        );
-        setDelegatorRewards(groupedRewards);
-        const delegatedValidatorIds = Object.keys(groupedRewards);
         const delegated = await Promise.all(
           delegatedValidatorIds.map(async (id) => {
             return await fetch(
@@ -107,7 +89,6 @@ export const MyStaking: React.FC<MyStakingProps> = ({
               );
           })
         );
-
         const delegatedAmount = delegated.reduce((acc, cur) => {
           if (cur) {
             return acc.plus(cur.delegation_amount);
@@ -121,18 +102,14 @@ export const MyStaking: React.FC<MyStakingProps> = ({
     }
 
     fetchDelegateRewards();
-  }, [accountId, anchor, appchain?.appchain_id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountId, anchor, appchain?.appchain_id, delegatedValidatorIds.length]);
 
   const decimals =
     appchain?.appchain_metadata?.fungible_token_metadata.decimals;
-  const total = useMemo(() => {
-    const vTotal = calcUnwithdrawnReward(validatorRewards || [], decimals);
-    const dTotal = Object.values(delegatorRewards).reduce(
-      (total, rewards) => total.plus(calcUnwithdrawnReward(rewards, decimals)),
-      ZERO_DECIMAL
-    );
-    return DecimalUtil.beautify(vTotal.plus(dTotal));
-  }, [validatorRewards, delegatorRewards, decimals]);
+  const _total = useMemo(() => {
+    return DecimalUtil.beautify(total.div(10 ** (decimals ?? 18)));
+  }, [total, decimals]);
 
   const withdrawableStakes = useMemo(() => {
     if (!unbonedStakes?.length) {
@@ -232,7 +209,7 @@ export const MyStaking: React.FC<MyStakingProps> = ({
           </Flex>
           <VStack p={6} alignItems="center" justify="center">
             <Heading fontSize="4xl" color="white">
-              {total}{" "}
+              {_total}{" "}
               {appchain?.appchain_metadata?.fungible_token_metadata.symbol}
             </Heading>
           </VStack>
@@ -282,6 +259,7 @@ export const MyStaking: React.FC<MyStakingProps> = ({
         anchor={anchor}
         validatorRewards={validatorRewards}
         delegatorRewards={delegatorRewards}
+        total={total}
       />
 
       <StakesModal

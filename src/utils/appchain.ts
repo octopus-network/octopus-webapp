@@ -42,6 +42,7 @@ export const getAppchainRewards = async (
   try {
     const appchainRes = await axios.get(`${API_HOST}/appchain/${appchainId}`);
     const appchain = appchainRes.data;
+
     const validatorRewards = await getRewards(
       `${API_HOST}/rewards/${accountId}/${appchain.appchain_id}/${appchain?.anchor_status?.index_range_of_validator_set_history?.end_index}`
     );

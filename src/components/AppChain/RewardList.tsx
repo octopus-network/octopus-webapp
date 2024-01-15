@@ -1,13 +1,14 @@
 import { Box, Table, Tag, Tbody, Td, Th, Thead, Tr } from "@chakra-ui/react";
 import { Empty } from "components/Empty";
-import { AppchainInfoWithAnchorStatus, RewardHistory } from "types";
-import { DecimalUtil, ZERO_DECIMAL } from "utils";
+import { AppchainInfoWithAnchorStatus } from "types";
+import { DecimalUtil } from "utils";
+import { RewardItem } from "hooks/useRewards";
 
 export default function RewardList({
   rewards,
   appchain,
 }: {
-  rewards: RewardHistory[];
+  rewards: RewardItem[];
   appchain?: AppchainInfoWithAnchorStatus;
 }) {
   const decimals =
@@ -22,19 +23,21 @@ export default function RewardList({
               <Tr>
                 <Th>Day</Th>
                 <Th isNumeric>Reward</Th>
-                <Th isNumeric>Unclaimed</Th>
+                <Th isNumeric>Withdrawn</Th>
               </Tr>
             </Thead>
             <Tbody>
-              {rewards?.map((r, idx) => (
-                <Tr key={`tr-${idx}`}>
-                  <Td>{r.era_number}</Td>
-                  <Td isNumeric>
-                    {DecimalUtil.formatAmount(r.total_reward, decimals)}
-                  </Td>
-                  <Td isNumeric>
-                    {DecimalUtil.formatAmount(r.unwithdrawn_reward, decimals)}
-                    {DecimalUtil.fromString(r.unwithdrawn_reward).gt(
+              {rewards
+                ?.sort((a, b) => b.era - a.era)
+                .map((r, idx) => (
+                  <Tr key={`tr-${idx}`}>
+                    <Td>{r.era}</Td>
+                    <Td isNumeric>
+                      {DecimalUtil.formatAmount(r.amount, decimals)}
+                    </Td>
+                    <Td isNumeric>
+                      {r.is_withdrawn ? "Yes" : "No"}
+                      {/* {DecimalUtil.fromString(r.unwithdrawn_reward).gt(
                       ZERO_DECIMAL
                     ) && r.expired ? (
                       <Tag
@@ -45,10 +48,10 @@ export default function RewardList({
                       >
                         Expired
                       </Tag>
-                    ) : null}
-                  </Td>
-                </Tr>
-              ))}
+                    ) : null} */}
+                    </Td>
+                  </Tr>
+                ))}
             </Tbody>
           </Table>
         </Box>
