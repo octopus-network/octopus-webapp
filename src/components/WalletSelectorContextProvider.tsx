@@ -7,8 +7,8 @@ import type { WalletSelectorModal } from "@near-wallet-selector/modal-ui";
 import { setupMyNearWallet } from "@near-wallet-selector/my-near-wallet";
 import { NETWORK_CONFIG } from "config";
 import { setupLedger } from "@near-wallet-selector/ledger";
+import { setupMeteorWallet } from "@near-wallet-selector/meteor-wallet";
 import { NetworkConfig, NetworkType } from "types";
-import { setupNearWallet } from "@near-wallet-selector/near-wallet";
 import { setupSender } from "@near-wallet-selector/sender";
 import posthog from "posthog-js";
 
@@ -55,10 +55,8 @@ export const WalletSelectorContextProvider = ({
       network: networkConfig.near.networkId,
       debug: false,
       modules: [
-        setupNearWallet({
-          deprecated: false,
-        }),
         setupMyNearWallet(),
+        setupMeteorWallet(),
         setupLedger(),
         setupSender(),
       ],
