@@ -200,7 +200,7 @@ export const Descriptions: React.FC<DescriptionsProps> = ({
           <MenuList>
             <MenuItem>
               <Link
-                href={`${networkConfig?.near.explorerUrl}/accounts/${appchain?.appchain_anchor}`}
+                href={`${networkConfig?.near.explorerUrl}/address/${appchain?.appchain_anchor}`}
                 isExternal
               >
                 <HStack gap={2}>

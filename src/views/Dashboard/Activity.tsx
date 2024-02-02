@@ -112,7 +112,7 @@ const ActivityItem: React.FC<{
               isExternal
               href={`${
                 networkConfig?.near.explorerUrl
-              }/accounts/${activityTranslator.getActionTarget()}`}
+              }/address/${activityTranslator.getActionTarget()}`}
             >
               <Text
                 whiteSpace="nowrap"
@@ -131,7 +131,7 @@ const ActivityItem: React.FC<{
           </Text>
         </VStack>
         <Link
-          href={`${networkConfig?.near.explorerUrl}/transactions/${activity.hash}`}
+          href={`${networkConfig?.near.explorerUrl}/txns/${activity.hash}`}
           isExternal
         >
           <Button size="sm" variant="ghost" colorScheme="octo-blue">

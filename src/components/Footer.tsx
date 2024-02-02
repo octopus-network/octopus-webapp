@@ -39,7 +39,7 @@ export const Footer: React.FC = () => {
           <Link
             variant="gray-underline"
             whiteSpace="nowrap"
-            href={`${networkConfig?.near.explorerUrl}/accounts/${networkConfig?.octopus.registryContractId}`}
+            href={`${networkConfig?.near.explorerUrl}/address/${networkConfig?.octopus.registryContractId}`}
             overflow="hidden"
             textOverflow="ellipsis"
             isExternal
@@ -52,7 +52,7 @@ export const Footer: React.FC = () => {
           <Link
             variant="gray-underline"
             whiteSpace="nowrap"
-            href={`${networkConfig?.near.explorerUrl}/accounts/${networkConfig?.octopus.octTokenContractId}`}
+            href={`${networkConfig?.near.explorerUrl}/address/${networkConfig?.octopus.octTokenContractId}`}
             overflow="hidden"
             textOverflow="ellipsis"
             isExternal

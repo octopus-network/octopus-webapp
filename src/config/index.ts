@@ -74,7 +74,7 @@ export const NETWORK_CONFIG = isMainnet
         archivalUrl: `https://archival-rpc.${env}.near.org`,
         walletUrl: `https://wallet.${env}.near.org`,
         helperUrl: `https://helper.${env}.near.org`,
-        explorerUrl: `https://explorer.${env}.near.org`,
+        explorerUrl: `https://nearblocks.io`,
         restApiUrl: "https://explorer.mainnet.oct.network/api",
       },
       octopus: {
@@ -97,7 +97,7 @@ export const NETWORK_CONFIG = isMainnet
         archivalUrl: "https://archival-rpc.testnet.near.org",
         walletUrl: "https://wallet.testnet.near.org",
         helperUrl: "https://helper.testnet.near.org",
-        explorerUrl: "https://explorer.testnet.near.org",
+        explorerUrl: "https://testnet.nearblocks.io",
         restApiUrl: "https://explorer.mainnet.oct.network/api",
       },
       octopus: {

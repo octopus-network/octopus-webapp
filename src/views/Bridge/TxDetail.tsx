@@ -225,7 +225,7 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
               href={
                 isAppchainSide
                   ? `${networkConfig?.octopus.explorerUrl}/${appchain?.appchain_id}/accounts/${transaction?.summary.from}`
-                  : `${networkConfig?.near.explorerUrl}/accounts/${transaction?.summary.from}`
+                  : `${networkConfig?.near.explorerUrl}/address/${transaction?.summary.from}`
               }
               _hover={{ textDecoration: "underline" }}
               color="#2468f2"
@@ -261,7 +261,7 @@ export const TxDetail: React.FC<TxDetailProps> = ({ onDrawerClose }) => {
               href={
                 !isAppchainSide
                   ? `${networkConfig?.octopus.explorerUrl}/${appchain?.appchain_id}/accounts/${transaction?.summary.to}`
-                  : `${networkConfig?.near.explorerUrl}/accounts/${transaction?.summary.to}`
+                  : `${networkConfig?.near.explorerUrl}/address/${transaction?.summary.to}`
               }
               _hover={{ textDecoration: "underline" }}
               color="#2468f2"

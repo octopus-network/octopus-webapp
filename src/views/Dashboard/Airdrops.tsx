@@ -55,7 +55,7 @@ export const AirdropItem: React.FC<{
           <Text variant="gray">{dayjs(airdrop.time).fromNow()}</Text>
         </VStack>
         <Link
-          href={`${networkConfig?.near.explorerUrl}/transactions/${airdrop.data.hash}`}
+          href={`${networkConfig?.near.explorerUrl}/txns/${airdrop.data.hash}`}
           isExternal
         >
           <Button size="sm" variant="ghost" colorScheme="octo-blue">
