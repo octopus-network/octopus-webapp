@@ -208,24 +208,7 @@ export const Dashboard: React.FC = () => {
           />
         </InputGroup>
       </HStack>
-      <Grid
-        templateColumns={{ base: "repeat(4, 1fr)", lg: "repeat(7, 1fr)" }}
-        mt={4}
-        gap={6}
-      >
-        <GridItem colSpan={{ base: 4, lg: 3 }}>
-          <Box p={6} borderRadius="md" bg={bg} h="100%">
-            <Assets viewingAccount={viewingAccount} />
-          </Box>
-        </GridItem>
-        <GridItem colSpan={4}>
-          <Box gap={6} h="100%">
-            <Rewards viewingAccount={viewingAccount} />
-            <Airdrops viewingAccount={viewingAccount} />
-            <Activity viewingAccount={viewingAccount} />
-          </Box>
-        </GridItem>
-      </Grid>
+      <Rewards viewingAccount={viewingAccount} />
     </Container>
   );
 };
