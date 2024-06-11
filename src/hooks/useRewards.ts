@@ -44,7 +44,7 @@ export default function useRewards(appchain_contract?: string) {
           }
         `;
         const result = await request(
-          "https://api.thegraph.com/subgraphs/name/hsxyl/appchain-anchor-mainnet",
+          "https://gateway-arbitrum.network.thegraph.com/api/2ce522b548669c2665faebea047254df/subgraphs/id/5tSoErooFHWnCgZeU15ipm7eMmMyvPiyGhFZtDYY1fYk",
           rewardsQuery
         );
         const rewards = result.rewards;

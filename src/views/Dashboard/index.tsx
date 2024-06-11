@@ -2,14 +2,11 @@ import React, { useEffect, useState } from "react";
 
 import {
   Container,
-  Grid,
-  GridItem,
   Box,
   Image,
   Heading,
   HStack,
   IconButton,
-  useColorModeValue,
   useClipboard,
   Input,
   InputGroup,
@@ -23,9 +20,6 @@ import {
 
 import { CheckIcon, CopyIcon, Search2Icon } from "@chakra-ui/icons";
 import octoAvatar from "assets/icons/avatar.png";
-import { Assets } from "./Assets";
-import { Activity } from "./Activity";
-import { Airdrops } from "./Airdrops";
 import Rewards from "./Rewards";
 import { useWalletSelector } from "components/WalletSelectorContextProvider";
 import { AppchainInfo, NetworkType, Validator } from "types";
@@ -37,7 +31,6 @@ import { CodeResult } from "near-api-js/lib/providers/provider";
 import { SIMPLE_CALL_GAS } from "primitives";
 
 export const Dashboard: React.FC = () => {
-  const bg = useColorModeValue("white", "#15172c");
   const { accountId, network, networkConfig, selector } = useWalletSelector();
   const [viewingAccount, setViewingAccount] = useState(accountId);
   const [isValidator, setIsValidator] = useState(false);
